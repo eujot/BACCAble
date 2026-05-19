@@ -9,6 +9,7 @@
 #define INC_SETUP_MENU_H_
 
 #include <stdint.h>
+#include "compile_time_defines.h"
 
 #if defined(C1baccable)
 
