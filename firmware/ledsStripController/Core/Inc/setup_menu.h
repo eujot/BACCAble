@@ -13,7 +13,6 @@
 
 #if defined(C1baccable)
 
-#define SETUP_MENU_NO_PAGE  0xFF  // entry is not shown in the setup menu
 #define SETUP_FLASH_SLOTS   30    // minimum reserved flash slots (1..SETUP_FLASH_SLOTS)
 #define SETUP_FLASH_PARAM_BUFFER_SIZE 40
 
@@ -31,16 +30,21 @@ typedef enum {
 typedef void (*SetupRenderFn)(uint8_t page_index);
 typedef void (*SetupActionFn)(void);
 
+typedef struct {
+    const char *text;            // NULL means hidden entry
+    uint8_t     first_char_override;
+} SetupMenuText;
+
 // Describes one parameter persisted to flash and optionally shown in setup.
 // Keep setup behavior in this table: storage, defaults, display and action.
 typedef struct {
     uint8_t         flash_index;  // 1-based slot (matches readFromFlash argument)
-    uint8_t         menu_page;    // page shown in the setup menu, or SETUP_MENU_NO_PAGE
     uint16_t        max_value;    // highest valid persisted value
     uint16_t        default_value;// used when flash is empty or invalid
     SetupValueType  value_type;   // runtime variable type
     SetupDisplayMode display_mode;// how the shared menu code may update display
     void           *value;        // pointer to the runtime variable
+    SetupMenuText   menu_text;    // text shown in setup menu; NULL text hides entry
     SetupRenderFn   render;       // optional per-page display update
     SetupActionFn   action;       // optional select action; NULL toggles bool
 } SetupParam;
