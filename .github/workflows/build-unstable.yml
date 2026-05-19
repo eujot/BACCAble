@@ -25,7 +25,7 @@ jobs:
       - run: arm-none-eabi-gcc --version
 
       - name: Clone
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
          fetch-depth: 0
 
@@ -80,7 +80,7 @@ jobs:
          git push -f origin ${{ github.event.inputs.TAG_NAME }}
 
       - name: Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           prerelease: true
           tag_name: ${{github.event.inputs.TAG_NAME}}
