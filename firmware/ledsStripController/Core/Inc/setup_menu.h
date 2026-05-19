@@ -30,11 +30,6 @@ typedef enum {
 typedef void (*SetupRenderFn)(uint8_t page_index);
 typedef void (*SetupActionFn)(void);
 
-typedef struct {
-    const char *text;            // NULL means hidden entry
-    uint8_t     first_char_override;
-} SetupMenuText;
-
 // Describes one parameter persisted to flash and optionally shown in setup.
 // Keep setup behavior in this table: storage, defaults, display and action.
 typedef struct {
@@ -44,7 +39,7 @@ typedef struct {
     SetupValueType  value_type;   // runtime variable type
     SetupDisplayMode display_mode;// how the shared menu code may update display
     void           *value;        // pointer to the runtime variable
-    SetupMenuText   menu_text;    // text shown in setup menu; NULL text hides entry
+    const char     *menu_text;    // text shown in setup menu; NULL text hides entry
     SetupRenderFn   render;       // optional per-page display update
     SetupActionFn   action;       // optional select action; NULL toggles bool
 } SetupParam;

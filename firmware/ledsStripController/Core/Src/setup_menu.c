@@ -51,9 +51,8 @@
 
 #define SETUP_SAVE_EXIT_PAGE               0
 #define SETUP_SAVE_EXIT_TEXT               "SAVE&EXIT"
-#define SETUP_TEXT(text)                   { text, 0 }
-#define SETUP_TEXT_FIRST(first, text)      { text, first }
-#define SETUP_TEXT_HIDDEN                  { 0, 0 }
+#define SETUP_TEXT_HIDDEN                  0
+#define SETUP_MARK_TEXT_START              3
 
 uint8_t setup_dashboardPageIndex = 0;
 uint8_t dashboard_setup_menu_array[SETUP_FLASH_PARAM_BUFFER_SIZE][DASHBOARD_MESSAGE_MAX_LENGTH];
@@ -282,38 +281,38 @@ static void setup_render_open_windows(uint8_t page);
 const SetupParam setup_params[] = {
     // Core setup
     SETUP_HIDDEN_BOOL(SETUP_FLASH_IMMOBILIZER, DEFAULT_IMMOBILIZER, immobilizerEnabled),
-    SETUP_BOOL_ACTION(SETUP_FLASH_START_STOP, SETUP_TEXT("O  Start&Stop"), DEFAULT_START_STOP, function_smart_disable_start_stop_enabled, setup_action_start_stop),
-    SETUP_UINT16_ACTION(SETUP_FLASH_LAUNCH_TORQUE, SETUP_TEXT("LaunchTorque 100Nm"), 600, DEFAULT_LAUNCH_TORQUE, launch_torque_threshold, setup_render_launch_torque, setup_action_launch_torque),
-    SETUP_BOOL(SETUP_FLASH_LED_CONTROLLER, SETUP_TEXT("O  Led Controller"), DEFAULT_LED_CONTROLLER, function_led_strip_controller_enabled),
-    SETUP_BOOL(SETUP_FLASH_SHIFT_INDICATOR, SETUP_TEXT("O  Shift Indicator"), DEFAULT_SHIFT_INDICATOR, function_shift_indicator_enabled),
-    SETUP_UINT16_ACTION(SETUP_FLASH_SHIFT_RPM, SETUP_TEXT("Shift RPM 3000"), 6000, DEFAULT_SHIFT_RPM, shift_threshold, setup_render_shift_rpm, setup_action_shift_rpm),
-    SETUP_BOOL(SETUP_FLASH_MY23_IPC, SETUP_TEXT("O  My23 IPC"), DEFAULT_MY23_IPC, function_ipc_my23_is_installed),
-    SETUP_BOOL(SETUP_FLASH_REGEN_ALERT, SETUP_TEXT("O  Regen. Alert"), DEFAULT_REGEN_ALERT, function_regeneration_alert_enabled),
-    SETUP_BOOL(SETUP_FLASH_SEATBELT_ALARM, SETUP_TEXT_FIRST(0xD8, "   Seatbelt Alarm"), DEFAULT_SEATBELT_ALARM, function_seatbelt_alarm_enabled),
+    SETUP_BOOL_ACTION(SETUP_FLASH_START_STOP, "Start&Stop", DEFAULT_START_STOP, function_smart_disable_start_stop_enabled, setup_action_start_stop),
+    SETUP_UINT16_ACTION(SETUP_FLASH_LAUNCH_TORQUE, "LaunchTorque 100Nm", 600, DEFAULT_LAUNCH_TORQUE, launch_torque_threshold, setup_render_launch_torque, setup_action_launch_torque),
+    SETUP_BOOL(SETUP_FLASH_LED_CONTROLLER, "Led Controller", DEFAULT_LED_CONTROLLER, function_led_strip_controller_enabled),
+    SETUP_BOOL(SETUP_FLASH_SHIFT_INDICATOR, "Shift Indicator", DEFAULT_SHIFT_INDICATOR, function_shift_indicator_enabled),
+    SETUP_UINT16_ACTION(SETUP_FLASH_SHIFT_RPM, "Shift RPM 3000", 6000, DEFAULT_SHIFT_RPM, shift_threshold, setup_render_shift_rpm, setup_action_shift_rpm),
+    SETUP_BOOL(SETUP_FLASH_MY23_IPC, "My23 IPC", DEFAULT_MY23_IPC, function_ipc_my23_is_installed),
+    SETUP_BOOL(SETUP_FLASH_REGEN_ALERT, "Regen. Alert", DEFAULT_REGEN_ALERT, function_regeneration_alert_enabled),
+    SETUP_BOOL(SETUP_FLASH_SEATBELT_ALARM, "Seatbelt Alarm", DEFAULT_SEATBELT_ALARM, function_seatbelt_alarm_enabled),
 
     // Diagnostics and messages
-    SETUP_BOOL(SETUP_FLASH_ROUTE_MESSAGES, SETUP_TEXT("O  Route Messages"), DEFAULT_ROUTE_MESSAGES, function_route_msg_enabled),
-    SETUP_BOOL_ACTION(SETUP_FLASH_ESC_TC_CUSTOMIZER, SETUP_TEXT("O  ESC/TC Custom."), DEFAULT_ESC_TC_CUSTOMIZER, function_esc_tc_customizator_enabled, setup_action_esc_tc),
-    SETUP_BOOL(SETUP_FLASH_DYNO, SETUP_TEXT("O  Dyno"), DEFAULT_DYNO, function_dyno_mode_master_enabled),
-    SETUP_BOOL(SETUP_FLASH_ACC_VIRTUAL_PAD, SETUP_TEXT("O  ACC Virtual Pad"), DEFAULT_ACC_VIRTUAL_PAD, function_acc_virtual_pad_enabled),
-    SETUP_BOOL(SETUP_FLASH_BRAKES_OVERRIDE, SETUP_TEXT("O  Brakes Override"), DEFAULT_BRAKES_OVERRIDE, function_front_brake_forcer_master),
-    SETUP_BOOL(SETUP_FLASH_4WD_DISABLER, SETUP_TEXT("O  4WD Disabler"), DEFAULT_4WD_DISABLER, function_4wd_disabler_enabled),
-    SETUP_BOOL(SETUP_FLASH_CLEAR_FAULTS, SETUP_TEXT("O  Clear Faults"), DEFAULT_CLEAR_FAULTS, function_clear_faults_enabled),
-    SETUP_BOOL(SETUP_FLASH_READ_FAULTS, SETUP_TEXT("O  Read  Faults"), DEFAULT_READ_FAULTS, function_read_faults_enabled),
-    SETUP_BOOL(SETUP_FLASH_REMOTE_START, SETUP_TEXT("O  Remote Start"), DEFAULT_REMOTE_START, function_remote_start_Enabled),
-    SETUP_BOOL_RENDER_ACTION(SETUP_FLASH_DIESEL_PARAMS, SETUP_TEXT_FIRST(0xD8, "   Diesel   Params"), DEFAULT_DIESEL_PARAMS, function_is_diesel_enabled, setup_render_diesel_params, setup_action_diesel_params),
+    SETUP_BOOL(SETUP_FLASH_ROUTE_MESSAGES, "Route Messages", DEFAULT_ROUTE_MESSAGES, function_route_msg_enabled),
+    SETUP_BOOL_ACTION(SETUP_FLASH_ESC_TC_CUSTOMIZER, "ESC/TC Custom.", DEFAULT_ESC_TC_CUSTOMIZER, function_esc_tc_customizator_enabled, setup_action_esc_tc),
+    SETUP_BOOL(SETUP_FLASH_DYNO, "Dyno", DEFAULT_DYNO, function_dyno_mode_master_enabled),
+    SETUP_BOOL(SETUP_FLASH_ACC_VIRTUAL_PAD, "ACC Virtual Pad", DEFAULT_ACC_VIRTUAL_PAD, function_acc_virtual_pad_enabled),
+    SETUP_BOOL(SETUP_FLASH_BRAKES_OVERRIDE, "Brakes Override", DEFAULT_BRAKES_OVERRIDE, function_front_brake_forcer_master),
+    SETUP_BOOL(SETUP_FLASH_4WD_DISABLER, "4WD Disabler", DEFAULT_4WD_DISABLER, function_4wd_disabler_enabled),
+    SETUP_BOOL(SETUP_FLASH_CLEAR_FAULTS, "Clear Faults", DEFAULT_CLEAR_FAULTS, function_clear_faults_enabled),
+    SETUP_BOOL(SETUP_FLASH_READ_FAULTS, "Read  Faults", DEFAULT_READ_FAULTS, function_read_faults_enabled),
+    SETUP_BOOL(SETUP_FLASH_REMOTE_START, "Remote Start", DEFAULT_REMOTE_START, function_remote_start_Enabled),
+    SETUP_BOOL_RENDER_ACTION(SETUP_FLASH_DIESEL_PARAMS, "Diesel   Params", DEFAULT_DIESEL_PARAMS, function_is_diesel_enabled, setup_render_diesel_params, setup_action_diesel_params),
 
     // Driver assistance and comfort
-    SETUP_BOOL_ACTION(SETUP_FLASH_ODOMETER_BLINK, SETUP_TEXT("O  Odometer Blink"), DEFAULT_ODOMETER_BLINK, function_disable_odometer_blink, setup_action_odometer_blink),
-    SETUP_UINT8_ACTION(SETUP_FLASH_PEDAL_BOOSTER, SETUP_TEXT("O  Pedal Booster"), 6, DEFAULT_PEDAL_BOOSTER, function_pedal_booster_enabled, setup_render_pedal_booster, setup_action_pedal_booster),
-    SETUP_INT8_ACTION(SETUP_FLASH_PEDAL_POWER, SETUP_TEXT("Pedal Power: 0"), DEFAULT_PEDAL_POWER, pedal_map_power, setup_render_pedal_power, setup_action_pedal_power),
-    SETUP_BOOL_ACTION(SETUP_FLASH_PARK_MIRROR, SETUP_TEXT("O  Park Mirror"), DEFAULT_PARK_MIRROR, function_park_mirror, setup_action_park_mirror),
-    SETUP_UINT8_ACTION(SETUP_FLASH_ACC_AUTOSTART, SETUP_TEXT("O  ACC Autostart"), 2, DEFAULT_ACC_AUTOSTART, function_acc_autostart, setup_render_acc_autostart, setup_action_acc_autostart),
-    SETUP_UINT8_ACTION(SETUP_FLASH_CLOSE_WINDOWS, SETUP_TEXT("O  Close Windows"), 2, DEFAULT_CLOSE_WINDOWS, function_close_windows_with_door_lock, setup_render_close_windows, setup_action_close_windows),
-    SETUP_UINT8_ACTION(SETUP_FLASH_OPEN_WINDOWS, SETUP_TEXT("O  Open  Windows"), 2, DEFAULT_OPEN_WINDOWS, function_open_windows_with_door_lock, setup_render_open_windows, setup_action_open_windows),
-    SETUP_BOOL_ACTION(SETUP_FLASH_HAS_VIRTUAL_PAD, SETUP_TEXT("O  HAS Virtual Pad"), DEFAULT_HAS_VIRTUAL_PAD, HAS_function_enabled, setup_action_has_virtual_pad),
-    SETUP_BOOL(SETUP_FLASH_QV_EXHAUST_FLAP, SETUP_TEXT("O  QV Exhaust Flap"), DEFAULT_QV_EXHAUST_FLAP, QV_exhaust_flap_function_enabled),
-    SETUP_BOOL(SETUP_FLASH_EUJOT, SETUP_TEXT("O  eujot"), DEFAULT_EUJOT, function_eujot_enabled),
+    SETUP_BOOL_ACTION(SETUP_FLASH_ODOMETER_BLINK, "Odometer Blink", DEFAULT_ODOMETER_BLINK, function_disable_odometer_blink, setup_action_odometer_blink),
+    SETUP_UINT8_ACTION(SETUP_FLASH_PEDAL_BOOSTER, "Pedal Booster", 6, DEFAULT_PEDAL_BOOSTER, function_pedal_booster_enabled, setup_render_pedal_booster, setup_action_pedal_booster),
+    SETUP_INT8_ACTION(SETUP_FLASH_PEDAL_POWER, "Pedal Power: 0", DEFAULT_PEDAL_POWER, pedal_map_power, setup_render_pedal_power, setup_action_pedal_power),
+    SETUP_BOOL_ACTION(SETUP_FLASH_PARK_MIRROR, "Park Mirror", DEFAULT_PARK_MIRROR, function_park_mirror, setup_action_park_mirror),
+    SETUP_UINT8_ACTION(SETUP_FLASH_ACC_AUTOSTART, "ACC Autostart", 2, DEFAULT_ACC_AUTOSTART, function_acc_autostart, setup_render_acc_autostart, setup_action_acc_autostart),
+    SETUP_UINT8_ACTION(SETUP_FLASH_CLOSE_WINDOWS, "Close Windows", 2, DEFAULT_CLOSE_WINDOWS, function_close_windows_with_door_lock, setup_render_close_windows, setup_action_close_windows),
+    SETUP_UINT8_ACTION(SETUP_FLASH_OPEN_WINDOWS, "Open  Windows", 2, DEFAULT_OPEN_WINDOWS, function_open_windows_with_door_lock, setup_render_open_windows, setup_action_open_windows),
+    SETUP_BOOL_ACTION(SETUP_FLASH_HAS_VIRTUAL_PAD, "HAS Virtual Pad", DEFAULT_HAS_VIRTUAL_PAD, HAS_function_enabled, setup_action_has_virtual_pad),
+    SETUP_BOOL(SETUP_FLASH_QV_EXHAUST_FLAP, "QV Exhaust Flap", DEFAULT_QV_EXHAUST_FLAP, QV_exhaust_flap_function_enabled),
+    SETUP_BOOL(SETUP_FLASH_EUJOT, "eujot", DEFAULT_EUJOT, function_eujot_enabled),
 
     // Hidden persisted values
     SETUP_HIDDEN_BOOL(SETUP_FLASH_SHOW_RACE_MASK, DEFAULT_SHOW_RACE_MASK, function_show_race_mask),
@@ -348,7 +347,7 @@ static void setup_set_value(const SetupParam *param, uint16_t value) {
 }
 
 static uint8_t setup_param_is_visible(const SetupParam *param) {
-    return param->menu_text.text != 0;
+    return param->menu_text != 0;
 }
 
 static uint8_t setup_menu_pages_count(void) {
@@ -379,17 +378,12 @@ static const SetupParam *setup_find_by_page(uint8_t page_index) {
 
 static void setup_reset_page_text(uint8_t page) {
     const SetupParam *param = setup_find_by_page(page);
-    const char *text = (page == SETUP_SAVE_EXIT_PAGE) ? SETUP_SAVE_EXIT_TEXT : (param ? param->menu_text.text : "");
-    uint8_t first_char_override = param ? param->menu_text.first_char_override : 0;
-    uint8_t col = 0;
+    const char *text = (page == SETUP_SAVE_EXIT_PAGE) ? SETUP_SAVE_EXIT_TEXT : (param ? param->menu_text : "");
+    uint8_t col = (param && param->display_mode == SETUP_DISPLAY_CHECKBOX) ? SETUP_MARK_TEXT_START : 0;
 
+    memset(dashboard_setup_menu_array[page], ' ', DASHBOARD_MESSAGE_MAX_LENGTH);
     while (col < DASHBOARD_MESSAGE_MAX_LENGTH && text && *text)
         dashboard_setup_menu_array[page][col++] = (uint8_t)*text++;
-    while (col < DASHBOARD_MESSAGE_MAX_LENGTH)
-        dashboard_setup_menu_array[page][col++] = ' ';
-
-    if (first_char_override)
-        dashboard_setup_menu_array[page][0] = first_char_override;
 }
 
 static void setup_write_text(uint8_t page, uint8_t start, const char *text) {
