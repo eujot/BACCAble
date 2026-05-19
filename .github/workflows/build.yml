@@ -22,7 +22,7 @@ jobs:
       - uses: carlosperate/arm-none-eabi-gcc-action@v1
       - run: arm-none-eabi-gcc --version
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -73,7 +73,7 @@ jobs:
           cp build/baccable-*.elf baccableActAsCanable_stable.elf
 
       - name: Stable Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           prerelease: false
           tag_name: ${{ env.TAG }}
