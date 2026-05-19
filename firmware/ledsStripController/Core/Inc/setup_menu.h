@@ -1,8 +1,8 @@
 /*
  * setup_menu.h
  *
- * Single source of truth for setup parameters persisted to flash.
- * See setup_menu.c for the table and how to add a new entry.
+ * Setup parameter contract. See setup_menu_entries.c for the table and how to
+ * add a new entry.
  */
 
 #ifndef INC_SETUP_MENU_H_
