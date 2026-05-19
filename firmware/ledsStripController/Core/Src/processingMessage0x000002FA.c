@@ -552,10 +552,7 @@ void processingMessage0x000002FA(){
 									switch(setup_dashboardPageIndex){
 										case 0: //{'S','A','V','E','&','E','X','I','T',},
 											//if some change occurred
-											if(	setup_is_dirty()                                              ||
-												((uint16_t)shift_threshold         != readFromFlash(5))       || //SHIFT_THRESHOLD
-												((uint16_t)launch_torque_threshold != readFromFlash(18))      || //LAUNCH_ASSIST_THRESHOLD
-												((uint16_t)(uint8_t)pedal_map_power!= readFromFlash(29))      ){ //PEDAL_MAP_POWER
+											if(setup_is_dirty()){
 													//save it on flash
 													saveOnflash();
 											}

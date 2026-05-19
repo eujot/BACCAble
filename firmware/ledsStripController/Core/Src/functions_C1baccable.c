@@ -20,9 +20,6 @@
 		if(immobilizerEnabled) executeDashboardBlinks=2; //shows the user that the immobilizer is active (or not)
 
 		setup_load_from_flash();
-		shift_threshold        = (uint16_t)readFromFlash(5);
-		launch_torque_threshold= (uint16_t)readFromFlash(18);
-		pedal_map_power        = (int8_t)(uint8_t)readFromFlash(29);
 		total_pages_in_params_setup_dashboard_menu = function_is_diesel_enabled ? total_pages_in_dashboard_menu_diesel : total_pages_in_dashboard_menu_gasoline;
 		//arise trigger to notify enabled functions to slave boards with dedicated messages,after some seconds
 		allProcessorsWakeupTime=currentTime;
@@ -1309,10 +1306,7 @@
 		//write parameter
 		uint16_t params[SETUP_FLASH_PARAM_BUFFER_SIZE] = {0};
 		params[1-1]  = immobilizerEnabled;
-		setup_fill_flash_params(params);         // fills all uint8_t params from the table
-		params[5-1]  = shift_threshold;          // uint16_t, not in table
-		params[18-1] = launch_torque_threshold;  // uint16_t, not in table
-		params[29-1] = (uint8_t)pedal_map_power; // int8_t, not in table
+		setup_fill_flash_params(params);
 
 		for (uint8_t i = 0; i < paramsNumber; i++) {
 		    if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, LAST_PAGE_ADDRESS + (i * 4), params[i]) != HAL_OK) {

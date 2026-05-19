@@ -1,7 +1,7 @@
 /*
  * setup_menu.h
  *
- * Single source of truth for uint8_t parameters persisted to flash.
+ * Single source of truth for setup parameters persisted to flash.
  * See setup_menu.c for the table and how to add a new entry.
  */
 
@@ -22,16 +22,28 @@ typedef enum {
     SETUP_TOGGLE_CUSTOM,    // caller must handle toggle and side effects
 } SetupToggleMode;
 
-// Describes one uint8_t parameter persisted to flash.
-// Entries with menu_page != SETUP_MENU_NO_PAGE appear as checkboxes in the
-// setup menu. toggle_mode decides whether the table may toggle the entry
-// automatically or the caller must handle side effects explicitly.
+typedef enum {
+    SETUP_VALUE_UINT8 = 0,
+    SETUP_VALUE_UINT16,
+    SETUP_VALUE_INT8_AS_UINT8,
+} SetupValueType;
+
+typedef enum {
+    SETUP_DISPLAY_NONE = 0,
+    SETUP_DISPLAY_CHECKBOX,
+} SetupDisplayMode;
+
+// Describes one parameter persisted to flash. toggle_mode decides whether the
+// table may toggle the entry automatically or the caller must handle side
+// effects explicitly.
 typedef struct {
     uint8_t         flash_index;  // 1-based slot (matches readFromFlash argument)
     uint8_t         menu_page;    // page shown in the setup menu, or SETUP_MENU_NO_PAGE
-    uint8_t         max_value;    // highest valid persisted value
+    uint16_t        max_value;    // highest valid persisted value
+    SetupValueType  value_type;   // runtime variable type
     SetupToggleMode toggle_mode;  // automatic, custom, or no menu toggle
-    uint8_t        *value;        // pointer to the runtime variable
+    SetupDisplayMode display_mode;// how the shared menu code may update display
+    void           *value;        // pointer to the runtime variable
 } SetupParam;
 
 extern const SetupParam setup_params[];
@@ -47,7 +59,6 @@ uint8_t setup_flash_slots_count(void);
 void setup_load_from_flash(void);
 
 // Write each table entry into params[flash_index-1].
-// Non-table slots (uint16_t and int8_t) must be filled by the caller.
 void setup_fill_flash_params(uint16_t *params);
 
 // Return 1 if any table entry differs from its stored flash value.
