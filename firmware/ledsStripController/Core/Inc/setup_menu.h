@@ -24,7 +24,7 @@ typedef enum {
 
 typedef enum {
     SETUP_DISPLAY_NONE = 0,
-    SETUP_DISPLAY_CHECKBOX,
+    SETUP_DISPLAY_STATUS_MARK,
 } SetupDisplayMode;
 
 typedef void (*SetupRenderFn)(uint8_t page_index);

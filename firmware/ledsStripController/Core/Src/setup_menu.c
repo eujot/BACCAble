@@ -3,9 +3,9 @@
  *
  * Single source of truth for setup menu entries.
  *
- * To add a simple checkbox:
+ * To add a simple on/off option:
  *   1. Add the runtime variable in globalVariables.c/.h.
- *   2. Add one SETUP_BOOL(...) entry below with its menu text.
+ *   2. Add one SETUP_TOGGLE(...) entry below with its menu text.
  *
  * Entries with side effects provide an action callback. Entries with dynamic
  * text provide a render callback. The caller does not need a page switch.
@@ -234,25 +234,25 @@ uint8_t total_pages_in_setup_dashboard_menu = 0;
 
 #define DEFAULT_EUJOT 0
 
-#define SETUP_BOOL(flash, text, def, variable) \
-    { flash, 1, def, SETUP_VALUE_UINT8, SETUP_DISPLAY_CHECKBOX, &(variable), text, 0, 0 }
+#define SETUP_TOGGLE(flash, text, def, variable) \
+    { flash, 1, def, SETUP_VALUE_UINT8, SETUP_DISPLAY_STATUS_MARK, &(variable), text, 0, 0 }
 
-#define SETUP_BOOL_ACTION(flash, text, def, variable, action_fn) \
-    { flash, 1, def, SETUP_VALUE_UINT8, SETUP_DISPLAY_CHECKBOX, &(variable), text, 0, action_fn }
+#define SETUP_TOGGLE_ACTION(flash, text, def, variable, action_fn) \
+    { flash, 1, def, SETUP_VALUE_UINT8, SETUP_DISPLAY_STATUS_MARK, &(variable), text, 0, action_fn }
 
-#define SETUP_BOOL_RENDER_ACTION(flash, text, def, variable, render_fn, action_fn) \
-    { flash, 1, def, SETUP_VALUE_UINT8, SETUP_DISPLAY_CHECKBOX, &(variable), text, render_fn, action_fn }
+#define SETUP_TOGGLE_RENDER_ACTION(flash, text, def, variable, render_fn, action_fn) \
+    { flash, 1, def, SETUP_VALUE_UINT8, SETUP_DISPLAY_STATUS_MARK, &(variable), text, render_fn, action_fn }
 
-#define SETUP_UINT8_ACTION(flash, text, max, def, variable, render_fn, action_fn) \
-    { flash, max, def, SETUP_VALUE_UINT8, SETUP_DISPLAY_CHECKBOX, &(variable), text, render_fn, action_fn }
+#define SETUP_VALUE8_ACTION(flash, text, max, def, variable, render_fn, action_fn) \
+    { flash, max, def, SETUP_VALUE_UINT8, SETUP_DISPLAY_STATUS_MARK, &(variable), text, render_fn, action_fn }
 
-#define SETUP_UINT16_ACTION(flash, text, max, def, variable, render_fn, action_fn) \
+#define SETUP_VALUE16_ACTION(flash, text, max, def, variable, render_fn, action_fn) \
     { flash, max, def, SETUP_VALUE_UINT16, SETUP_DISPLAY_NONE, &(variable), text, render_fn, action_fn }
 
-#define SETUP_INT8_ACTION(flash, text, def, variable, render_fn, action_fn) \
+#define SETUP_SIGNED_VALUE8_ACTION(flash, text, def, variable, render_fn, action_fn) \
     { flash, 255, def, SETUP_VALUE_INT8_AS_UINT8, SETUP_DISPLAY_NONE, &(variable), text, render_fn, action_fn }
 
-#define SETUP_HIDDEN_BOOL(flash, def, variable) \
+#define SETUP_HIDDEN_TOGGLE(flash, def, variable) \
     { flash, 1, def, SETUP_VALUE_UINT8, SETUP_DISPLAY_NONE, &(variable), SETUP_TEXT_HIDDEN, 0, 0 }
 
 static void setup_action_start_stop(void);
@@ -278,44 +278,48 @@ static void setup_render_acc_autostart(uint8_t page);
 static void setup_render_close_windows(uint8_t page);
 static void setup_render_open_windows(uint8_t page);
 
+// Common entry patterns:
+//   SETUP_TOGGLE(SETUP_FLASH_XXX, "Menu Text", DEFAULT_XXX, variable)
+//   SETUP_TOGGLE_ACTION(SETUP_FLASH_XXX, "Menu Text", DEFAULT_XXX, variable, setup_action_xxx)
+//   SETUP_VALUE8_ACTION(SETUP_FLASH_XXX, "Menu Text", max, DEFAULT_XXX, variable, setup_render_xxx, setup_action_xxx)
 const SetupParam setup_params[] = {
     // Core setup
-    SETUP_HIDDEN_BOOL(SETUP_FLASH_IMMOBILIZER, DEFAULT_IMMOBILIZER, immobilizerEnabled),
-    SETUP_BOOL_ACTION(SETUP_FLASH_START_STOP, "Start&Stop", DEFAULT_START_STOP, function_smart_disable_start_stop_enabled, setup_action_start_stop),
-    SETUP_UINT16_ACTION(SETUP_FLASH_LAUNCH_TORQUE, "LaunchTorque 100Nm", 600, DEFAULT_LAUNCH_TORQUE, launch_torque_threshold, setup_render_launch_torque, setup_action_launch_torque),
-    SETUP_BOOL(SETUP_FLASH_LED_CONTROLLER, "Led Controller", DEFAULT_LED_CONTROLLER, function_led_strip_controller_enabled),
-    SETUP_BOOL(SETUP_FLASH_SHIFT_INDICATOR, "Shift Indicator", DEFAULT_SHIFT_INDICATOR, function_shift_indicator_enabled),
-    SETUP_UINT16_ACTION(SETUP_FLASH_SHIFT_RPM, "Shift RPM 3000", 6000, DEFAULT_SHIFT_RPM, shift_threshold, setup_render_shift_rpm, setup_action_shift_rpm),
-    SETUP_BOOL(SETUP_FLASH_MY23_IPC, "My23 IPC", DEFAULT_MY23_IPC, function_ipc_my23_is_installed),
-    SETUP_BOOL(SETUP_FLASH_REGEN_ALERT, "Regen. Alert", DEFAULT_REGEN_ALERT, function_regeneration_alert_enabled),
-    SETUP_BOOL(SETUP_FLASH_SEATBELT_ALARM, "Seatbelt Alarm", DEFAULT_SEATBELT_ALARM, function_seatbelt_alarm_enabled),
+    SETUP_HIDDEN_TOGGLE(SETUP_FLASH_IMMOBILIZER, DEFAULT_IMMOBILIZER, immobilizerEnabled),
+    SETUP_TOGGLE_ACTION(SETUP_FLASH_START_STOP, "Start&Stop", DEFAULT_START_STOP, function_smart_disable_start_stop_enabled, setup_action_start_stop),
+    SETUP_VALUE16_ACTION(SETUP_FLASH_LAUNCH_TORQUE, "LaunchTorque 100Nm", 600, DEFAULT_LAUNCH_TORQUE, launch_torque_threshold, setup_render_launch_torque, setup_action_launch_torque),
+    SETUP_TOGGLE(SETUP_FLASH_LED_CONTROLLER, "Led Controller", DEFAULT_LED_CONTROLLER, function_led_strip_controller_enabled),
+    SETUP_TOGGLE(SETUP_FLASH_SHIFT_INDICATOR, "Shift Indicator", DEFAULT_SHIFT_INDICATOR, function_shift_indicator_enabled),
+    SETUP_VALUE16_ACTION(SETUP_FLASH_SHIFT_RPM, "Shift RPM 3000", 6000, DEFAULT_SHIFT_RPM, shift_threshold, setup_render_shift_rpm, setup_action_shift_rpm),
+    SETUP_TOGGLE(SETUP_FLASH_MY23_IPC, "My23 IPC", DEFAULT_MY23_IPC, function_ipc_my23_is_installed),
+    SETUP_TOGGLE(SETUP_FLASH_REGEN_ALERT, "Regen. Alert", DEFAULT_REGEN_ALERT, function_regeneration_alert_enabled),
+    SETUP_TOGGLE(SETUP_FLASH_SEATBELT_ALARM, "Seatbelt Alarm", DEFAULT_SEATBELT_ALARM, function_seatbelt_alarm_enabled),
 
     // Diagnostics and messages
-    SETUP_BOOL(SETUP_FLASH_ROUTE_MESSAGES, "Route Messages", DEFAULT_ROUTE_MESSAGES, function_route_msg_enabled),
-    SETUP_BOOL_ACTION(SETUP_FLASH_ESC_TC_CUSTOMIZER, "ESC/TC Custom.", DEFAULT_ESC_TC_CUSTOMIZER, function_esc_tc_customizator_enabled, setup_action_esc_tc),
-    SETUP_BOOL(SETUP_FLASH_DYNO, "Dyno", DEFAULT_DYNO, function_dyno_mode_master_enabled),
-    SETUP_BOOL(SETUP_FLASH_ACC_VIRTUAL_PAD, "ACC Virtual Pad", DEFAULT_ACC_VIRTUAL_PAD, function_acc_virtual_pad_enabled),
-    SETUP_BOOL(SETUP_FLASH_BRAKES_OVERRIDE, "Brakes Override", DEFAULT_BRAKES_OVERRIDE, function_front_brake_forcer_master),
-    SETUP_BOOL(SETUP_FLASH_4WD_DISABLER, "4WD Disabler", DEFAULT_4WD_DISABLER, function_4wd_disabler_enabled),
-    SETUP_BOOL(SETUP_FLASH_CLEAR_FAULTS, "Clear Faults", DEFAULT_CLEAR_FAULTS, function_clear_faults_enabled),
-    SETUP_BOOL(SETUP_FLASH_READ_FAULTS, "Read  Faults", DEFAULT_READ_FAULTS, function_read_faults_enabled),
-    SETUP_BOOL(SETUP_FLASH_REMOTE_START, "Remote Start", DEFAULT_REMOTE_START, function_remote_start_Enabled),
-    SETUP_BOOL_RENDER_ACTION(SETUP_FLASH_DIESEL_PARAMS, "Diesel   Params", DEFAULT_DIESEL_PARAMS, function_is_diesel_enabled, setup_render_diesel_params, setup_action_diesel_params),
+    SETUP_TOGGLE(SETUP_FLASH_ROUTE_MESSAGES, "Route Messages", DEFAULT_ROUTE_MESSAGES, function_route_msg_enabled),
+    SETUP_TOGGLE_ACTION(SETUP_FLASH_ESC_TC_CUSTOMIZER, "ESC/TC Custom.", DEFAULT_ESC_TC_CUSTOMIZER, function_esc_tc_customizator_enabled, setup_action_esc_tc),
+    SETUP_TOGGLE(SETUP_FLASH_DYNO, "Dyno", DEFAULT_DYNO, function_dyno_mode_master_enabled),
+    SETUP_TOGGLE(SETUP_FLASH_ACC_VIRTUAL_PAD, "ACC Virtual Pad", DEFAULT_ACC_VIRTUAL_PAD, function_acc_virtual_pad_enabled),
+    SETUP_TOGGLE(SETUP_FLASH_BRAKES_OVERRIDE, "Brakes Override", DEFAULT_BRAKES_OVERRIDE, function_front_brake_forcer_master),
+    SETUP_TOGGLE(SETUP_FLASH_4WD_DISABLER, "4WD Disabler", DEFAULT_4WD_DISABLER, function_4wd_disabler_enabled),
+    SETUP_TOGGLE(SETUP_FLASH_CLEAR_FAULTS, "Clear Faults", DEFAULT_CLEAR_FAULTS, function_clear_faults_enabled),
+    SETUP_TOGGLE(SETUP_FLASH_READ_FAULTS, "Read  Faults", DEFAULT_READ_FAULTS, function_read_faults_enabled),
+    SETUP_TOGGLE(SETUP_FLASH_REMOTE_START, "Remote Start", DEFAULT_REMOTE_START, function_remote_start_Enabled),
+    SETUP_TOGGLE_RENDER_ACTION(SETUP_FLASH_DIESEL_PARAMS, "Diesel   Params", DEFAULT_DIESEL_PARAMS, function_is_diesel_enabled, setup_render_diesel_params, setup_action_diesel_params),
 
     // Driver assistance and comfort
-    SETUP_BOOL_ACTION(SETUP_FLASH_ODOMETER_BLINK, "Odometer Blink", DEFAULT_ODOMETER_BLINK, function_disable_odometer_blink, setup_action_odometer_blink),
-    SETUP_UINT8_ACTION(SETUP_FLASH_PEDAL_BOOSTER, "Pedal Booster", 6, DEFAULT_PEDAL_BOOSTER, function_pedal_booster_enabled, setup_render_pedal_booster, setup_action_pedal_booster),
-    SETUP_INT8_ACTION(SETUP_FLASH_PEDAL_POWER, "Pedal Power: 0", DEFAULT_PEDAL_POWER, pedal_map_power, setup_render_pedal_power, setup_action_pedal_power),
-    SETUP_BOOL_ACTION(SETUP_FLASH_PARK_MIRROR, "Park Mirror", DEFAULT_PARK_MIRROR, function_park_mirror, setup_action_park_mirror),
-    SETUP_UINT8_ACTION(SETUP_FLASH_ACC_AUTOSTART, "ACC Autostart", 2, DEFAULT_ACC_AUTOSTART, function_acc_autostart, setup_render_acc_autostart, setup_action_acc_autostart),
-    SETUP_UINT8_ACTION(SETUP_FLASH_CLOSE_WINDOWS, "Close Windows", 2, DEFAULT_CLOSE_WINDOWS, function_close_windows_with_door_lock, setup_render_close_windows, setup_action_close_windows),
-    SETUP_UINT8_ACTION(SETUP_FLASH_OPEN_WINDOWS, "Open  Windows", 2, DEFAULT_OPEN_WINDOWS, function_open_windows_with_door_lock, setup_render_open_windows, setup_action_open_windows),
-    SETUP_BOOL_ACTION(SETUP_FLASH_HAS_VIRTUAL_PAD, "HAS Virtual Pad", DEFAULT_HAS_VIRTUAL_PAD, HAS_function_enabled, setup_action_has_virtual_pad),
-    SETUP_BOOL(SETUP_FLASH_QV_EXHAUST_FLAP, "QV Exhaust Flap", DEFAULT_QV_EXHAUST_FLAP, QV_exhaust_flap_function_enabled),
-    SETUP_BOOL(SETUP_FLASH_EUJOT, "eujot", DEFAULT_EUJOT, function_eujot_enabled),
+    SETUP_TOGGLE_ACTION(SETUP_FLASH_ODOMETER_BLINK, "Odometer Blink", DEFAULT_ODOMETER_BLINK, function_disable_odometer_blink, setup_action_odometer_blink),
+    SETUP_VALUE8_ACTION(SETUP_FLASH_PEDAL_BOOSTER, "Pedal Booster", 6, DEFAULT_PEDAL_BOOSTER, function_pedal_booster_enabled, setup_render_pedal_booster, setup_action_pedal_booster),
+    SETUP_SIGNED_VALUE8_ACTION(SETUP_FLASH_PEDAL_POWER, "Pedal Power: 0", DEFAULT_PEDAL_POWER, pedal_map_power, setup_render_pedal_power, setup_action_pedal_power),
+    SETUP_TOGGLE_ACTION(SETUP_FLASH_PARK_MIRROR, "Park Mirror", DEFAULT_PARK_MIRROR, function_park_mirror, setup_action_park_mirror),
+    SETUP_VALUE8_ACTION(SETUP_FLASH_ACC_AUTOSTART, "ACC Autostart", 2, DEFAULT_ACC_AUTOSTART, function_acc_autostart, setup_render_acc_autostart, setup_action_acc_autostart),
+    SETUP_VALUE8_ACTION(SETUP_FLASH_CLOSE_WINDOWS, "Close Windows", 2, DEFAULT_CLOSE_WINDOWS, function_close_windows_with_door_lock, setup_render_close_windows, setup_action_close_windows),
+    SETUP_VALUE8_ACTION(SETUP_FLASH_OPEN_WINDOWS, "Open  Windows", 2, DEFAULT_OPEN_WINDOWS, function_open_windows_with_door_lock, setup_render_open_windows, setup_action_open_windows),
+    SETUP_TOGGLE_ACTION(SETUP_FLASH_HAS_VIRTUAL_PAD, "HAS Virtual Pad", DEFAULT_HAS_VIRTUAL_PAD, HAS_function_enabled, setup_action_has_virtual_pad),
+    SETUP_TOGGLE(SETUP_FLASH_QV_EXHAUST_FLAP, "QV Exhaust Flap", DEFAULT_QV_EXHAUST_FLAP, QV_exhaust_flap_function_enabled),
+    SETUP_TOGGLE(SETUP_FLASH_EUJOT, "eujot", DEFAULT_EUJOT, function_eujot_enabled),
 
     // Hidden persisted values
-    SETUP_HIDDEN_BOOL(SETUP_FLASH_SHOW_RACE_MASK, DEFAULT_SHOW_RACE_MASK, function_show_race_mask),
+    SETUP_HIDDEN_TOGGLE(SETUP_FLASH_SHOW_RACE_MASK, DEFAULT_SHOW_RACE_MASK, function_show_race_mask),
 };
 const uint8_t setup_params_count = sizeof(setup_params) / sizeof(setup_params[0]);
 
@@ -379,7 +383,7 @@ static const SetupParam *setup_find_by_page(uint8_t page_index) {
 static void setup_reset_page_text(uint8_t page) {
     const SetupParam *param = setup_find_by_page(page);
     const char *text = (page == SETUP_SAVE_EXIT_PAGE) ? SETUP_SAVE_EXIT_TEXT : (param ? param->menu_text : "");
-    uint8_t col = (param && param->display_mode == SETUP_DISPLAY_CHECKBOX) ? SETUP_MARK_TEXT_START : 0;
+    uint8_t col = (param && param->display_mode == SETUP_DISPLAY_STATUS_MARK) ? SETUP_MARK_TEXT_START : 0;
 
     memset(dashboard_setup_menu_array[page], ' ', DASHBOARD_MESSAGE_MAX_LENGTH);
     while (col < DASHBOARD_MESSAGE_MAX_LENGTH && text && *text)
@@ -404,7 +408,7 @@ static void setup_toggle_bool(const SetupParam *param) {
 }
 
 static void setup_render_checkbox(const SetupParam *param, uint8_t page) {
-    if (param->display_mode == SETUP_DISPLAY_CHECKBOX)
+    if (param->display_mode == SETUP_DISPLAY_STATUS_MARK)
         dashboard_setup_menu_array[page][0] = checkbox_symbols[!!setup_get_value(param)];
 }
 
