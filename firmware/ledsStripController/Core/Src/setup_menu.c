@@ -5,7 +5,7 @@
  *
  * To add a simple checkbox:
  *   1. Add the runtime variable in globalVariables.c/.h.
- *   2. Add a row in dashboard_setup_menu_array.
+ *   2. Add a row in setup_page_texts[].
  *   3. Add one SETUP_BOOL(...) entry below.
  *
  * Entries with side effects provide an action callback. Entries with dynamic
@@ -81,37 +81,47 @@
 #define SETUP_PAGE_EUJOT                  28
 #define SETUP_PAGE_COUNT                  29
 
+#define SETUP_TEXT(text) { text, 0 }
+#define SETUP_TEXT_FIRST(first, text) { text, first }
+
+typedef struct {
+    const char *text;
+    uint8_t first_char_override;
+} SetupPageText;
+
 uint8_t setup_dashboardPageIndex = 0;
-uint8_t dashboard_setup_menu_array[SETUP_PAGE_COUNT][DASHBOARD_MESSAGE_MAX_LENGTH] = {
-    [SETUP_PAGE_SAVE_EXIT] = {'S','A','V','E','&','E','X','I','T',' ',' ',' ',' ',' ',' ',' ',' ',' '},
-    [SETUP_PAGE_START_STOP] = {'O',' ',' ','S','t','a','r','t','&','S','t','o','p',' ',' ',' ',' ',' '},
-    [SETUP_PAGE_LAUNCH_TORQUE] = {'L','a','u','n','c','h','T','o','r','q','u','e',' ','1','0','0','N','m'},
-    [SETUP_PAGE_LED_CONTROLLER] = {'O',' ',' ','L','e','d',' ','C','o','n','t','r','o','l','l','e','r',' '},
-    [SETUP_PAGE_SHIFT_INDICATOR] = {'O',' ',' ','S','h','i','f','t',' ','I','n','d','i','c','a','t','o','r'},
-    [SETUP_PAGE_SHIFT_RPM] = {'S','h','i','f','t',' ','R','P','M',' ','3','0','0','0',' ',' ',' ',' '},
-    [SETUP_PAGE_MY23_IPC] = {'O',' ',' ','M','y','2','3',' ','I','P','C',' ',' ',' ',' ',' ',' ',' '},
-    [SETUP_PAGE_REGEN_ALERT] = {'O',' ',' ','R','e','g','e','n','.',' ','A','l','e','r','t',' ',' ',' '},
-    [SETUP_PAGE_SEATBELT_ALARM] = {0xD8,' ',' ','S','e','a','t','b','e','l','t',' ','A','l','a','r','m',' '},
-    [SETUP_PAGE_ROUTE_MESSAGES] = {'O',' ',' ','R','o','u','t','e',' ','M','e','s','s','a','g','e','s',' '},
-    [SETUP_PAGE_ESC_TC_CUSTOMIZER] = {'O',' ',' ','E','S','C','/','T','C',' ','C','u','s','t','o','m','.',' '},
-    [SETUP_PAGE_DYNO] = {'O',' ',' ','D','y','n','o',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '},
-    [SETUP_PAGE_ACC_VIRTUAL_PAD] = {'O',' ',' ','A','C','C',' ','V','i','r','t','u','a','l',' ','P','a','d'},
-    [SETUP_PAGE_BRAKES_OVERRIDE] = {'O',' ',' ','B','r','a','k','e','s',' ','O','v','e','r','r','i','d','e'},
-    [SETUP_PAGE_4WD_DISABLER] = {'O',' ',' ','4','W','D',' ','D','i','s','a','b','l','e','r',' ',' ',' '},
-    [SETUP_PAGE_CLEAR_FAULTS] = {'O',' ',' ','C','l','e','a','r',' ','F','a','u','l','t','s',' ',' ',' '},
-    [SETUP_PAGE_READ_FAULTS] = {'O',' ',' ','R','e','a','d',' ',' ','F','a','u','l','t','s',' ',' ',' '},
-    [SETUP_PAGE_REMOTE_START] = {'O',' ',' ','R','e','m','o','t','e',' ','S','t','a','r','t',' ',' ',' '},
-    [SETUP_PAGE_DIESEL_PARAMS] = {0xD8,' ',' ','D','i','e','s','e','l',' ',' ',' ','P','a','r','a','m','s'},
-    [SETUP_PAGE_ODOMETER_BLINK] = {'O',' ',' ','O','d','o','m','e','t','e','r',' ','B','l','i','n','k',' '},
-    [SETUP_PAGE_PEDAL_BOOSTER] = {'O',' ',' ','P','e','d','a','l',' ','B','o','o','s','t','e','r',' ',' '},
-    [SETUP_PAGE_PEDAL_POWER] = {'P','e','d','a','l',' ','P','o','w','e','r',':',' ','0',' ',' ',' ',' '},
-    [SETUP_PAGE_PARK_MIRROR] = {'O',' ',' ','P','a','r','k',' ','M','i','r','r','o','r',' ',' ',' ',' '},
-    [SETUP_PAGE_ACC_AUTOSTART] = {'O',' ',' ','A','C','C',' ','A','u','t','o','s','t','a','r','t',' ',' '},
-    [SETUP_PAGE_CLOSE_WINDOWS] = {'O',' ',' ','C','l','o','s','e',' ','W','i','n','d','o','w','s',' ',' '},
-    [SETUP_PAGE_OPEN_WINDOWS] = {'O',' ',' ','O','p','e','n',' ',' ','W','i','n','d','o','w','s',' ',' '},
-    [SETUP_PAGE_HAS_VIRTUAL_PAD] = {'O',' ',' ','H','A','S',' ','V','i','r','t','u','a','l',' ','P','a','d'},
-    [SETUP_PAGE_QV_EXHAUST_FLAP] = {'O',' ',' ','Q','V',' ','E','x','h','a','u','s','t',' ','F','l','a','p'},
-    [SETUP_PAGE_EUJOT] = {'O',' ',' ','e','u','j','o','t',' ',' ',' ',' ',' ',' ',' ',' ',' ',' '},
+uint8_t dashboard_setup_menu_array[SETUP_PAGE_COUNT][DASHBOARD_MESSAGE_MAX_LENGTH];
+
+static const SetupPageText setup_page_texts[SETUP_PAGE_COUNT] = {
+    [SETUP_PAGE_SAVE_EXIT] = SETUP_TEXT("SAVE&EXIT"),
+    [SETUP_PAGE_START_STOP] = SETUP_TEXT("O  Start&Stop"),
+    [SETUP_PAGE_LAUNCH_TORQUE] = SETUP_TEXT("LaunchTorque 100Nm"),
+    [SETUP_PAGE_LED_CONTROLLER] = SETUP_TEXT("O  Led Controller"),
+    [SETUP_PAGE_SHIFT_INDICATOR] = SETUP_TEXT("O  Shift Indicator"),
+    [SETUP_PAGE_SHIFT_RPM] = SETUP_TEXT("Shift RPM 3000"),
+    [SETUP_PAGE_MY23_IPC] = SETUP_TEXT("O  My23 IPC"),
+    [SETUP_PAGE_REGEN_ALERT] = SETUP_TEXT("O  Regen. Alert"),
+    [SETUP_PAGE_SEATBELT_ALARM] = SETUP_TEXT_FIRST(0xD8, "   Seatbelt Alarm"),
+    [SETUP_PAGE_ROUTE_MESSAGES] = SETUP_TEXT("O  Route Messages"),
+    [SETUP_PAGE_ESC_TC_CUSTOMIZER] = SETUP_TEXT("O  ESC/TC Custom."),
+    [SETUP_PAGE_DYNO] = SETUP_TEXT("O  Dyno"),
+    [SETUP_PAGE_ACC_VIRTUAL_PAD] = SETUP_TEXT("O  ACC Virtual Pad"),
+    [SETUP_PAGE_BRAKES_OVERRIDE] = SETUP_TEXT("O  Brakes Override"),
+    [SETUP_PAGE_4WD_DISABLER] = SETUP_TEXT("O  4WD Disabler"),
+    [SETUP_PAGE_CLEAR_FAULTS] = SETUP_TEXT("O  Clear Faults"),
+    [SETUP_PAGE_READ_FAULTS] = SETUP_TEXT("O  Read  Faults"),
+    [SETUP_PAGE_REMOTE_START] = SETUP_TEXT("O  Remote Start"),
+    [SETUP_PAGE_DIESEL_PARAMS] = SETUP_TEXT_FIRST(0xD8, "   Diesel   Params"),
+    [SETUP_PAGE_ODOMETER_BLINK] = SETUP_TEXT("O  Odometer Blink"),
+    [SETUP_PAGE_PEDAL_BOOSTER] = SETUP_TEXT("O  Pedal Booster"),
+    [SETUP_PAGE_PEDAL_POWER] = SETUP_TEXT("Pedal Power: 0"),
+    [SETUP_PAGE_PARK_MIRROR] = SETUP_TEXT("O  Park Mirror"),
+    [SETUP_PAGE_ACC_AUTOSTART] = SETUP_TEXT("O  ACC Autostart"),
+    [SETUP_PAGE_CLOSE_WINDOWS] = SETUP_TEXT("O  Close Windows"),
+    [SETUP_PAGE_OPEN_WINDOWS] = SETUP_TEXT("O  Open  Windows"),
+    [SETUP_PAGE_HAS_VIRTUAL_PAD] = SETUP_TEXT("O  HAS Virtual Pad"),
+    [SETUP_PAGE_QV_EXHAUST_FLAP] = SETUP_TEXT("O  QV Exhaust Flap"),
+    [SETUP_PAGE_EUJOT] = SETUP_TEXT("O  eujot"),
 };
 uint8_t total_pages_in_setup_dashboard_menu = SETUP_PAGE_COUNT;
 
@@ -415,6 +425,19 @@ static const SetupParam *setup_find_by_page(uint8_t page_index) {
     return 0;
 }
 
+static void setup_reset_page_text(uint8_t page) {
+    const char *text = setup_page_texts[page].text;
+    uint8_t col = 0;
+
+    while (col < DASHBOARD_MESSAGE_MAX_LENGTH && text && *text)
+        dashboard_setup_menu_array[page][col++] = (uint8_t)*text++;
+    while (col < DASHBOARD_MESSAGE_MAX_LENGTH)
+        dashboard_setup_menu_array[page][col++] = ' ';
+
+    if (setup_page_texts[page].first_char_override)
+        dashboard_setup_menu_array[page][0] = setup_page_texts[page].first_char_override;
+}
+
 static void setup_write_text(uint8_t page, uint8_t start, const char *text) {
     uint8_t col = start;
     while (col < DASHBOARD_MESSAGE_MAX_LENGTH && *text)
@@ -481,6 +504,11 @@ uint8_t setup_is_dirty(void) {
 }
 
 void setup_render_page(uint8_t page_index) {
+    if (page_index >= total_pages_in_setup_dashboard_menu)
+        return;
+
+    setup_reset_page_text(page_index);
+
     const SetupParam *param = setup_find_by_page(page_index);
     if (!param)
         return;
