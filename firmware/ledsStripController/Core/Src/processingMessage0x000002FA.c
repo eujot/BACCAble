@@ -153,14 +153,7 @@ void processingMessage0x000002FA(){
 										sendDashboardPageToSlaveBaccable(); //send dashboard page to BH
 									}
 									if(main_dashboardPageIndex==9){ //we are in setup menu
-										setup_dashboardPageIndex+=1;//set next page
-										//if(setup_dashboardPageIndex==2) setup_dashboardPageIndex++; //future growth
-
-										//if(setup_dashboardPageIndex==8) setup_dashboardPageIndex++; //future growth
-
-										if(setup_dashboardPageIndex>=total_pages_in_setup_dashboard_menu)  setup_dashboardPageIndex=0; // make a rotative menu
-
-										//onboardLed_blue_on();
+										setup_move_page(1);
 										sendSetupDashboardPageToSlaveBaccable(); //send
 									}
 									if(main_dashboardPageIndex==10){ //we are in params setup menu
@@ -230,11 +223,7 @@ void processingMessage0x000002FA(){
 											sendDashboardPageToSlaveBaccable(); //send dashboard page to BH
 										}
 										if(main_dashboardPageIndex==9){ //we are in setup menu
-											setup_dashboardPageIndex+=10;//set next page
-											//if(setup_dashboardPageIndex==2) setup_dashboardPageIndex++; //future growth
-											//if(setup_dashboardPageIndex==8) setup_dashboardPageIndex++; //future growth
-											if(setup_dashboardPageIndex>=total_pages_in_setup_dashboard_menu)  setup_dashboardPageIndex=0; // make a rotative menu
-											//onboardLed_blue_on();
+											setup_move_page(10);
 											sendSetupDashboardPageToSlaveBaccable(); //send
 										}
 										if(main_dashboardPageIndex==10){ //we are in params setup menu
@@ -308,12 +297,7 @@ void processingMessage0x000002FA(){
 										sendDashboardPageToSlaveBaccable(); //send dashboard page to BH
 									}
 									if(main_dashboardPageIndex==9){ //we are in setup menu
-										setup_dashboardPageIndex-=1;//set next page
-										//if(setup_dashboardPageIndex==8) setup_dashboardPageIndex--; //future growth
-										//if(setup_dashboardPageIndex==2) setup_dashboardPageIndex--; //future growth
-
-										if(setup_dashboardPageIndex>=total_pages_in_setup_dashboard_menu)  setup_dashboardPageIndex=total_pages_in_setup_dashboard_menu-1; // make a rotative menu
-										//onboardLed_blue_on();
+										setup_move_page(-1);
 										sendSetupDashboardPageToSlaveBaccable(); //send
 									}
 									if(main_dashboardPageIndex==10){ //we are in params setup menu
@@ -388,11 +372,7 @@ void processingMessage0x000002FA(){
 											sendDashboardPageToSlaveBaccable(); //send dashboard page to BH
 										}
 										if(main_dashboardPageIndex==9){ //we are in setup menu
-											setup_dashboardPageIndex-=10;//set prev page
-											//if(setup_dashboardPageIndex==8) setup_dashboardPageIndex--; //future growth
-											//if(setup_dashboardPageIndex==2) setup_dashboardPageIndex--; //future growth
-											if(setup_dashboardPageIndex>=total_pages_in_setup_dashboard_menu)  setup_dashboardPageIndex=0; // make a rotative menu
-											//onboardLed_blue_on();
+											setup_move_page(-10);
 											sendSetupDashboardPageToSlaveBaccable(); //send
 										}
 										if(main_dashboardPageIndex==10){ //we are in params setup menu
@@ -549,104 +529,7 @@ void processingMessage0x000002FA(){
 						}else{ //indent level >0
 							switch(main_dashboardPageIndex){
 								case 9: //setup menu
-									switch(setup_dashboardPageIndex){
-										case 0: //{'S','A','V','E','&','E','X','I','T',},
-											//if some change occurred
-											if(setup_is_dirty()){
-													//save it on flash
-													saveOnflash();
-											}
-											dashboard_menu_indent_level=0;
-											break;
-										// Custom toggles and side-effect entries are handled explicitly.
-										// All other pages are simple booleans – the table handles them via default.
-										case 1: //{'O',' ',' ','S','t','a','r','t','&','S','t','o','p',' ',' ',' ',' ',' '},
-											function_smart_disable_start_stop_enabled=!function_smart_disable_start_stop_enabled;
-											requestToDisableStartAndStop=0;
-											break;
-										case 2: //{'L','a','u','n','c','h','T','o','r','q','u','e',' ','1','0','0','N','m'},
-											launch_torque_threshold=launch_torque_threshold+25;
-											if(launch_torque_threshold>600) launch_torque_threshold=25;
-											break;
-										case 5: //{'S','h','i','f','t',' ','R','P','M',' ','3','0','0','0',' ',' ',' ',' '},
-											shift_threshold=shift_threshold+250;
-											if(shift_threshold>6000) shift_threshold=1500;
-											break;
-										case 10: //{'O',' ',' ','E','S','C','/','T','C',' ','C','u','s','t','o','m','.',' '},
-											function_esc_tc_customizator_enabled=!function_esc_tc_customizator_enabled;
-											{
-												uint8_t tmpArr0[2]={C2_Bh_BusID,C2_Bh_cmdFunction_ESC_TC_Enabled};
-												if(!function_esc_tc_customizator_enabled){
-													ESCandTCinversion=0;
-													tmpArr0[1]=C2_Bh_cmdFunction_ESC_TC_Disabled;
-												}
-												addToUARTSendQueue(tmpArr0, 2);
-											}
-											break;
-										case 18: //{'Ø',' ',' ','D','i','e','s','e','l',' ',' ',' ','P','a','r','a','m','s'},
-											function_is_diesel_enabled=!function_is_diesel_enabled;
-											total_pages_in_params_setup_dashboard_menu = function_is_diesel_enabled ? total_pages_in_dashboard_menu_diesel : total_pages_in_dashboard_menu_gasoline;
-											break;
-										case 19: //{'O',' ',' ','O','d','o','m','e','t','e','r',' ','B','l','i','n','k',' '},
-											function_disable_odometer_blink=!function_disable_odometer_blink;
-											{
-												uint8_t tmpArr2[2]={BhBusID,BHcmdOdometerBlinkDefault};
-												if(function_disable_odometer_blink) tmpArr2[1]=BHcmdOdometerBlinkDisable;
-												addToUARTSendQueue(tmpArr2, 2);
-											}
-											break;
-										case 20: //{'O',' ',' ','P','e','d','a','l',' ','B','o','o','s','t','e','r',' ',' '},
-											function_pedal_booster_enabled++;
-											if(function_pedal_booster_enabled>6) function_pedal_booster_enabled=0;
-											if(function_pedal_booster_enabled==0) setSchizzaforteMap(2);
-											{
-												uint8_t tmpArr1[3]={C2_Bh_BusID,C2_Bh_cmdSetPedalBoostStatus,function_pedal_booster_enabled};
-												addToUARTSendQueue(tmpArr1, 3);
-											}
-											break;
-										case 21: //{'P','e','d','a','l',' ','P','o','w','e','r',':',' ','0',' ',' ',' ',' '},
-											pedal_map_power=pedal_map_power+2;
-											if(pedal_map_power>10) pedal_map_power=-10;
-											currentSchizzaforteMap='-';
-											break;
-										case 22: //{'O',' ',' ','P','a','r','k',' ','M','i','r','r','o','r',' ',' ',' ',' '},
-											function_park_mirror=!function_park_mirror;
-											{
-												uint8_t tmpArr4[2]={BhBusID,BHcmdFunctParkMirrorDisabled};
-												if(function_park_mirror) tmpArr4[1]=BHcmdFunctParkMirrorStoreCurPos;
-												addToUARTSendQueue(tmpArr4, 2);
-											}
-											break;
-										case 23: //{'O',' ',' ','A','C','C','+',' ','A','u','t','o','s','t','a','r','t',' '},
-											function_acc_autostart++;
-											if(function_acc_autostart>2) function_acc_autostart=0;
-											break;
-										case 24: //{'O',' ',' ','C','l','o','s','e',' ','W','i','n','d','o','w','s',' ',' '},
-											function_close_windows_with_door_lock++;
-											if(function_close_windows_with_door_lock>2) function_close_windows_with_door_lock=0;
-											closeWindowsRequest=0;
-											doorLocksRequestsCounter=0;
-											break;
-										case 25: //{'O',' ',' ','O','p','e','n',' ',' ','W','i','n','d','o','w','s',' ',' '},
-											function_open_windows_with_door_lock++;
-											if(function_open_windows_with_door_lock>2) function_open_windows_with_door_lock=0;
-											openWindowsRequest=0;
-											doorUnlocksRequestsCounter=0;
-											break;
-										case 26: //{'O',' ',' ','H','A','S',' ','V','i','r','t','u','a','l',' ','P','a','d'},
-											HAS_function_enabled=!HAS_function_enabled;
-											{
-												uint8_t tmpArr5[2]={C2_Bh_BusID,C2_Bh_cmdFunctHAS_Disabled};
-												if(HAS_function_enabled) tmpArr5[1]=C2_Bh_cmdFunctHAS_Enabled;
-												addToUARTSendQueue(tmpArr5, 2);
-											}
-											break;
-										default:
-											// Simple boolean entries are toggled via the table.
-											setup_toggle_if_auto_bool(setup_dashboardPageIndex);
-											break;
-									}
-
+									setup_select_page(setup_dashboardPageIndex);
 									sendSetupDashboardPageToSlaveBaccable();
 									break;
 								case 10: //PARAMS SETUP MENU

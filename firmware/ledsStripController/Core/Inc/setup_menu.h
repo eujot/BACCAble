@@ -18,12 +18,6 @@
 #define SETUP_FLASH_PARAM_BUFFER_SIZE 40
 
 typedef enum {
-    SETUP_TOGGLE_NONE = 0,  // no setup-menu toggle
-    SETUP_TOGGLE_AUTO_BOOL, // simple bool handled by setup_toggle_if_auto_bool()
-    SETUP_TOGGLE_CUSTOM,    // caller must handle toggle and side effects
-} SetupToggleMode;
-
-typedef enum {
     SETUP_VALUE_UINT8 = 0,
     SETUP_VALUE_UINT16,
     SETUP_VALUE_INT8_AS_UINT8,
@@ -34,17 +28,21 @@ typedef enum {
     SETUP_DISPLAY_CHECKBOX,
 } SetupDisplayMode;
 
-// Describes one parameter persisted to flash. toggle_mode decides whether the
-// table may toggle the entry automatically or the caller must handle side
-// effects explicitly.
+typedef void (*SetupRenderFn)(uint8_t page_index);
+typedef void (*SetupActionFn)(void);
+
+// Describes one parameter persisted to flash and optionally shown in setup.
+// Keep setup behavior in this table: storage, defaults, display and action.
 typedef struct {
     uint8_t         flash_index;  // 1-based slot (matches readFromFlash argument)
     uint8_t         menu_page;    // page shown in the setup menu, or SETUP_MENU_NO_PAGE
     uint16_t        max_value;    // highest valid persisted value
+    uint16_t        default_value;// used when flash is empty or invalid
     SetupValueType  value_type;   // runtime variable type
-    SetupToggleMode toggle_mode;  // automatic, custom, or no menu toggle
     SetupDisplayMode display_mode;// how the shared menu code may update display
     void           *value;        // pointer to the runtime variable
+    SetupRenderFn   render;       // optional per-page display update
+    SetupActionFn   action;       // optional select action; NULL toggles bool
 } SetupParam;
 
 extern const SetupParam setup_params[];
@@ -65,13 +63,17 @@ void setup_fill_flash_params(uint16_t *params);
 // Return 1 if any table entry differs from its stored flash value.
 uint8_t setup_is_dirty(void);
 
-// If page_index has a table entry, write checkbox_symbols[!!*value] into
-// dashboard_setup_menu_array[page_index][0]. Returns 1 if handled.
-uint8_t setup_update_checkbox(uint8_t page_index);
+// Return a validated value from flash or the table default for an invalid slot.
+uint16_t setup_read_flash_value(uint8_t flash_index, uint16_t stored_value);
 
-// If page_index maps to a SETUP_TOGGLE_AUTO_BOOL entry, toggle *value and
-// return 1. Returns 0 when the page needs custom toggle logic in the caller.
-uint8_t setup_toggle_if_auto_bool(uint8_t page_index);
+// Render one setup page into dashboard_setup_menu_array.
+void setup_render_page(uint8_t page_index);
+
+// Move current setup page by delta and wrap inside the setup menu.
+void setup_move_page(int8_t delta);
+
+// Execute the action for the selected setup page. Handles SAVE&EXIT too.
+void setup_select_page(uint8_t page_index);
 
 #endif /* C1baccable */
 
