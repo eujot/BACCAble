@@ -56,7 +56,7 @@ jobs:
       - name: Install ARM GCC
         uses: carlosperate/arm-none-eabi-gcc-action@v1
         with:
-          release: "15.2.rel1"
+          release: "15.3.Rel1"
       - name: Analyze and build
         if: matrix.flavor != 'CAN' || !contains(inputs.extra_cppflags, '-DDEBUG_MODE')
         working-directory: firmware/baccable
