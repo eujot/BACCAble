@@ -5,6 +5,7 @@
  */
 
 #include "settings/setup_menu.h"
+#include "features/menu.h"
 
 #if defined(BACCABLE_C1)
 
@@ -12,7 +13,7 @@
     #include "app/powertrain.h"
 
     #define SETUP_SAVE_EXIT_PAGE 0
-    #define SETUP_SAVE_EXIT_TEXT "SAVE&EXIT"
+    #define SETUP_SAVE_EXIT_TEXT "Save and back"
     #define SETUP_MARK_TEXT_START 3
 
 uint8_t setup_dashboardPageIndex = 0;
@@ -49,7 +50,7 @@ static void setup_set_value(const SetupParam *param, uint16_t value) {
 static uint8_t setup_param_is_visible(const SetupParam *param) { return param->menu_text != 0; }
 
 static uint8_t setup_menu_pages_count(void) {
-    uint8_t count = 1; // page 0 is SAVE&EXIT
+    uint8_t count = 1; // page 0 is Save and back
     for (uint8_t i = 0; i < setup_params_count; i++)
         if (setup_param_is_visible(&setup_params[i]))
             count++;
@@ -59,19 +60,60 @@ static uint8_t setup_menu_pages_count(void) {
     return count;
 }
 
-static const SetupParam *setup_find_by_page(uint8_t page_index) {
-    if (page_index == SETUP_SAVE_EXIT_PAGE)
-        return 0;
-
-    uint8_t visible_page = 1;
-    for (uint8_t i = 0; i < setup_params_count; i++) {
-        if (!setup_param_is_visible(&setup_params[i]))
-            continue;
-        if (visible_page == page_index)
-            return &setup_params[i];
-        visible_page++;
+static uint8_t setup_group(uint8_t id) {
+    switch (id) {
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 17:
+        return 0; /* Display */
+    case 19:
+    case 21:
+    case 23:
+    case 25:
+    case 26:
+    case 28:
+        return 1; /* Comfort */
+    case 9:
+    case 24:
+    case 27:
+        return 2; /* Assistance */
+    case 8:
+    case 10:
+    case 11:
+    case 14:
+    case 18:
+    case 20:
+    case 29:
+        return 3; /* Drivetrain */
+    default:
+        return 4; /* Device */
     }
-    return 0;
+}
+static const SetupParam *setup_find_by_page(uint8_t page_index) {
+    if (!page_index)
+        return NULL;
+    uint8_t visible_page = 1;
+    for (unsigned group = 0; group < 5; ++group)
+        for (unsigned i = 0; i < setup_params_count; ++i) {
+            const SetupParam *param = &setup_params[i];
+            if (!setup_param_is_visible(param) || setup_group(param->flash_index) != group)
+                continue;
+            if (visible_page++ == page_index)
+                return param;
+        }
+    return NULL;
+}
+void setup_move_group(int8_t delta) {
+    const SetupParam *current = setup_find_by_page(setup_dashboardPageIndex);
+    uint8_t group = current ? setup_group(current->flash_index) : 255;
+    for (unsigned i = 0; i < setup_menu_pages_count(); ++i) {
+        setup_move_page(delta);
+        const SetupParam *next = setup_find_by_page(setup_dashboardPageIndex);
+        if (!next || setup_group(next->flash_index) != group)
+            return;
+    }
 }
 
 static void setup_reset_page_text(uint8_t page) {
@@ -165,8 +207,11 @@ void setup_move_page(int8_t delta) {
 
 void setup_select_page(uint8_t page_index) {
     if (page_index == 0) {
-        if (setup_is_dirty())
-            settings_save();
+        if (setup_is_dirty() && settings_save() != 0) {
+            menu_notice("Save failed: RES");
+            return;
+        }
+        menu_notice("Saved");
         dashboard_state.dashboard_menu_indent_level = 0;
         return;
     }

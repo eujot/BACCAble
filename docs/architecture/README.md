@@ -3,6 +3,7 @@
 Analiza i plan: [ANALYSIS_PL.md](ANALYSIS_PL.md).
 Polecenia lokalne i CI: [MAKEFILE.md](../../firmware/baccable/MAKEFILE.md).
 Wyniki weryfikacji: [VALIDATION_PL.md](VALIDATION_PL.md).
+Menu, personalizacja i nowe zasady dodawania stron: [MENU_UX_PL.md](MENU_UX_PL.md).
 
 ## Podzial odpowiedzialnosci
 
@@ -52,7 +53,8 @@ Ich testy wykonuja ten sam kod, ktory trafia do firmware.
 - Nowa funkcja okresowa: plik w `features`, funkcja `*_process` oraz wywolanie
   z `powertrain_process`, `chassis_process` lub `body_process`.
 - Parametr: `ParameterDefinition` w `diagnostics/parameter_catalog.c`, nastepnie
-  `ParameterPage` z dwoma indeksami i szablonem `$x.yf` albo `$enum`.
+  `ParameterPage` z trwalym ID strony, grupa, krotka etykieta, dwoma indeksami
+  parametrow i szablonem `$x.yf` albo `$enum`. Nie zmieniaj istniejacych ID stron.
   Pole `raw_offset` jest podpisane; wynik to `(raw + raw_offset) * scale + scaled_offset`.
 - UDS akceptuje pojedyncza ramke `0x62` tylko dla aktualnego ECU, DID i strony.
   Obsluga ISO-TP multi-frame nie jest implementowana; dodanie takich parametrow

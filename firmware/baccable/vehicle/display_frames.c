@@ -1,23 +1,12 @@
 #include "vehicle/standard_frames.h"
 #include "app/powertrain.h"
+#include "features/body.h"
 /* CAN ID 0x00000090. */
 void vehicle_handle_display_content(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
 
-#if defined(BACCABLE_BH)                    // the car is showing something (ie:radio name) on the dashboard
-    if (chassis_state.stability_inverted) { // if esc/tc is active, don't show baccable menu
-        display_state.request_to_send_one_frame = 0;
-    } else {
-        // override the displaied string, by restarting the frame
-        display_state.params_string_char_index = 0; // prepare to send first char of the string
-        display_state.telematic_display_info_field_frame_number = 0; // prepare to send first frame
-        if ((display_state.request_to_send_one_frame == 0) &&
-            (dashboard_state.dashboard_page_string_array[0] != ' '))
-            display_state.request_to_send_one_frame++; // if message is not empty (we check only first char)
-                                                       // and if required, increment messages sequence to
-                                                       // send, in order to send at least one
-        display_state.last_sent_telematic_display_info_msg_time =
-            0; // if required will immediately send a sequence
-    }
+#if defined(BACCABLE_BH)
+    /* Restore after factory text without restarting a partially transmitted view. */
+    body_display_refresh();
 #endif
     // on BH can bus, slow bus at 125kbps, this message contains:
 

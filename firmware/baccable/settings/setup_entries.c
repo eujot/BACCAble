@@ -4,7 +4,7 @@
  * Single source of truth for setup menu entries.
  *
  * To add a simple on/off option:
- *   1. Add the runtime variable in globalVariables.c/.h.
+ *   1. Add the runtime field in state/settings.c and state/settings.h.
  *   2. Add one SETUP_TOGGLE(...) entry below with its menu text.
  *
  * Entries with side effects provide an action callback. Entries with dynamic
@@ -313,10 +313,8 @@ const SetupParam setup_params[] = {
                  settings_state.awd_disabler_enabled),
     SETUP_TOGGLE(SETUP_FLASH_CLEAR_FAULTS, "Clear Faults", DEFAULT_CLEAR_FAULTS,
                  settings_state.clear_faults_enabled),
-    SETUP_TOGGLE(SETUP_FLASH_READ_FAULTS, "Read  Faults", DEFAULT_READ_FAULTS,
-                 settings_state.read_faults_enabled),
-    SETUP_TOGGLE(SETUP_FLASH_REMOTE_START, "Remote Start", DEFAULT_REMOTE_START,
-                 settings_state.remote_start_enabled),
+    SETUP_HIDDEN_TOGGLE(SETUP_FLASH_READ_FAULTS, DEFAULT_READ_FAULTS, settings_state.read_faults_enabled),
+    SETUP_HIDDEN_TOGGLE(SETUP_FLASH_REMOTE_START, DEFAULT_REMOTE_START, settings_state.remote_start_enabled),
     SETUP_TOGGLE_RENDER_ACTION(SETUP_FLASH_DIESEL_PARAMS, "Diesel   Params", DEFAULT_DIESEL_PARAMS,
                                settings_state.is_diesel_enabled, setup_render_diesel_params,
                                setup_action_diesel_params),
@@ -344,7 +342,7 @@ const SetupParam setup_params[] = {
                         settings_state.has_function_enabled, setup_action_has_virtual_pad),
     SETUP_TOGGLE(SETUP_FLASH_QV_EXHAUST_FLAP, "QV Exhaust Flap", DEFAULT_QV_EXHAUST_FLAP,
                  settings_state.qv_exhaust_flap_function_enabled),
-    SETUP_TOGGLE(SETUP_FLASH_EUJOT, "eujot", DEFAULT_EUJOT, settings_state.eujot_enabled),
+    SETUP_HIDDEN_TOGGLE(SETUP_FLASH_EUJOT, DEFAULT_EUJOT, settings_state.eujot_enabled),
 
     // Hidden persisted values
     SETUP_HIDDEN_TOGGLE(SETUP_FLASH_SHOW_RACE_MASK, DEFAULT_SHOW_RACE_MASK, settings_state.show_race_mask),

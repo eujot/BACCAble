@@ -44,6 +44,8 @@
 #define C1usbConnected                                                                                       \
     0x23 // second byte of the message to C1 bus, identifies the connection to usb connector of the slave
          // board
+#define C1cmdStatusC2 0x40
+#define C1cmdStatusBH 0x41
 #define C1cmdDynoActive 0x25    // second byte of the message to C2 bus, identifies the status dyno Active
 #define C1cmdDynoNotActive 0x26 // second byte of the message to C2 bus, identifies the status dyno Not Active
 
@@ -110,7 +112,7 @@ void uart_resume(UART_HandleTypeDef *huart);
 // void enter_standby_mode();
 // void resetOtherProcessorsSleepStatus();
 // uint8_t getOtherProcessorsSleepingStatus();
-void board_uart_send(const uint8_t *data, size_t length);
+uint8_t board_uart_send(const uint8_t *data, size_t length);
 
 #if (defined(BACCABLE_C1) || defined(ACT_AS_SCHIZZAFORTE_SERIAL_CONTROLLER))
 void pedal_uart_send(const uint8_t *data, size_t length);

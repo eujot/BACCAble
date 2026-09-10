@@ -1,7 +1,19 @@
 #include "features/body.h"
+#include "features/display_stream.h"
 #include "storage/flash_records.h"
 
 #if defined(BACCABLE_BH)
+
+static DisplayStream screen;
+void body_display_submit(const uint8_t *text) {
+    if (!chassis_state.stability_inverted)
+        display_stream_submit(&screen, text);
+}
+
+void body_display_refresh(void) {
+    if (!chassis_state.stability_inverted)
+        display_stream_refresh(&screen);
+}
 
 void body_init() {
     // let's open the can bus because we may need data
@@ -36,43 +48,20 @@ void body_init() {
 }
 
 void body_process() {
-    if (display_state.request_to_send_one_frame >
-        0) { // if requested by a message received from master baccable
-        // send one msg to write something on the dashboard each 50msec (one frame each 300msec)
-        if (currentTime - display_state.last_sent_telematic_display_info_msg_time > 50) {
-            display_state.last_sent_telematic_display_info_msg_time = currentTime;
-            // prepare msg to send:
-            // frame number is on byte 0 from bit 2 to 0 and byte1 from bit7 to 6
-            display_state.telematic_display_info_msg_data[0] =
-                (display_state.telematic_display_info_msg_data[0] & ~0x07) |
-                ((display_state.telematic_display_info_field_frame_number >> 2) & 0x07);
-            display_state.telematic_display_info_msg_data[1] =
-                (display_state.telematic_display_info_msg_data[1] & ~0xC0) |
-                ((display_state.telematic_display_info_field_frame_number << 6) & 0xC0);
-
-            // UTF text 1 is on byte 2 and byte 3
-            display_state.telematic_display_info_msg_data[3] =
-                dashboard_state.dashboard_page_string_array[display_state.params_string_char_index];
-            display_state.params_string_char_index++; // prepare to send next char
-            // UTF text 2 is on byte 4 (set to zero ) and byte 5
-            display_state.telematic_display_info_msg_data[5] =
-                dashboard_state.dashboard_page_string_array[display_state.params_string_char_index];
-            display_state.params_string_char_index++; // prepare to send next char
-            // UTF text 3 is on byte 6 (set to zero) and byte 7
-            display_state.telematic_display_info_msg_data[7] =
-                dashboard_state.dashboard_page_string_array[display_state.params_string_char_index];
-            display_state.params_string_char_index++; // prepare to send next char
-            // send it
-            can_tx(&display_state.telematic_display_info_msg_header,
-                   display_state.telematic_display_info_msg_data); // transmit the packet
-
-            display_state.telematic_display_info_field_frame_number++; // prepare for next frame to send
-            if (display_state.params_string_char_index >=
-                DASHBOARD_MESSAGE_MAX_LENGTH) {             // if we sent the entire string
-                display_state.params_string_char_index = 0; // prepare to send first char of the string
-                display_state.telematic_display_info_field_frame_number = 0; // prepare to send first frame
-                display_state.request_to_send_one_frame -= 1;
-                status_led_activity();
+    if (chassis_state.stability_inverted) {
+        display_stream_reset(&screen);
+    } else if (currentTime - display_state.last_sent_telematic_display_info_msg_time >= 50) {
+        uint8_t fragment, text[3];
+        if (display_stream_peek(&screen, &fragment, text)) {
+            uint8_t *data = display_state.telematic_display_info_msg_data;
+            data[0] = (data[0] & ~0x07) | ((fragment >> 2) & 0x07);
+            data[1] = (data[1] & ~0xC0) | ((fragment << 6) & 0xC0);
+            data[3] = text[0];
+            data[5] = text[1];
+            data[7] = text[2];
+            if (can_tx(&display_state.telematic_display_info_msg_header, data) == HAL_OK) {
+                display_stream_accept(&screen);
+                display_state.last_sent_telematic_display_info_msg_time = currentTime;
             }
         }
     }

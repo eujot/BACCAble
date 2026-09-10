@@ -29,11 +29,7 @@ void vehicle_handle_engine_status(const CAN_RxHeaderTypeDef *rx_header, uint8_t 
 
         if (chassis_state.awd_sequence > 0) {
             // disable 4dw function
-            chassis_state.awd_sequence = 0; // disable 4dw function
-            dashboard_state.dashboard_main_menu_array[dashboard_state.main_dashboard_page_index][4] =
-                ' '; // enabled
-            dashboard_state.dashboard_main_menu_array[dashboard_state.main_dashboard_page_index][5] = 'E';
-            dashboard_state.dashboard_main_menu_array[dashboard_state.main_dashboard_page_index][6] = 'n';
+            chassis_state.awd_sequence = 0;            // disable 4dw function
             dashboard_state.commands_menu_enabled = 1; // enable menu commands
         }
 

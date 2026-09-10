@@ -8,8 +8,11 @@
     (((uint32_t)(x) >> 24) & 0x000000FF) | (((uint32_t)(x) >> 8) & 0x0000FF00) |                             \
         (((uint32_t)(x) << 8) & 0x00FF0000) | (((uint32_t)(x) << 24) & 0xFF000000)
 typedef struct {
-    char name[DASHBOARD_MESSAGE_MAX_LENGTH + 5];
+    uint8_t id; /* Stable ID, independent of table position: never reuse. */
+    uint8_t group;
     uint8_t parameter_ids[2];
+    const char *label;
+    const char *name;
 } ParameterPage;
 
 typedef struct {

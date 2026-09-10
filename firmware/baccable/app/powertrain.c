@@ -1,5 +1,6 @@
 #include "app/powertrain.h"
 #include "features/periodic.h"
+#include "features/menu.h"
 #include "diagnostics/parameter_request.h"
 
 // uint8_t tmpArr3[2]={C2BusID,C2cmdRaceMaskDefault};
@@ -19,7 +20,7 @@ void powertrain_init() {
     runtime_state.all_processors_wakeup_time = currentTime;
     runtime_state.instruct_slave_boards_trigger_enabled = 1;
 
-    visibility_load();
+    menu_init();
 }
 
 void powertrain_process(void) {

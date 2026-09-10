@@ -1,5 +1,6 @@
 #include "app/powertrain.h"
 #include "storage/flash_records.h"
+#include "features/menu.h"
 #if defined(BACCABLE_C1)
 static uint16_t saved_settings[SETUP_FLASH_PARAM_BUFFER_SIZE];
 static uint16_t best_times[2];
@@ -72,18 +73,6 @@ uint8_t statistics_save_best(void) {
     memcpy(best_times, next, sizeof(next));
     return 0;
 }
-uint8_t visibility_save(void) {
-    uint8_t bits[30] = {0};
-    for (unsigned i = 0; i < sizeof(parameter_page_visibility); ++i)
-        if (parameter_page_visibility[i])
-            bits[i / 8] |= 1U << (i % 8);
-    return flash_record_save(VISIBILITY_RECORD, 0x103, bits, sizeof(bits)) ? 0 : 255;
-}
-void visibility_load(void) {
-    uint8_t bits[30];
-    memset(bits, 0xff, sizeof(bits));
-    flash_record_load(VISIBILITY_RECORD, 0x103, bits, sizeof(bits));
-    for (unsigned i = 0; i < sizeof(parameter_page_visibility); ++i)
-        parameter_page_visibility[i] = (bits[i / 8] >> (i % 8)) & 1;
-}
+uint8_t visibility_save(void) { return menu_preferences_save(); }
+void visibility_load(void) { menu_init(); }
 #endif

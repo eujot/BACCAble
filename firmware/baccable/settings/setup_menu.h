@@ -73,6 +73,7 @@ void setup_render_page(uint8_t page_index);
 
 // Move current setup page by delta and wrap inside the setup menu.
 void setup_move_page(int8_t delta);
+void setup_move_group(int8_t delta);
 
 // Execute the action for the selected setup page. Handles SAVE&EXIT too.
 void setup_select_page(uint8_t page_index);

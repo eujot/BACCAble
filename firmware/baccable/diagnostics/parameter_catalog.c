@@ -18,93 +18,255 @@ uint8_t selected_parameter_element = 0;
 const ParameterPage parameter_pages[2][60] = {
     {
         // Gasoline
-        {.name = "PWR $3.0fCV $3.0fNm", .parameter_ids = {1, 2}}, // param couple: PWR and Torque
-        {.name = "OIL $1.1fbar W.$3.0f"
+        {.id = 0x01,
+         .group = 5,
+         .label = "Moc / moment",
+         .name = "PWR $3.0fCV $3.0fNm",
+         .parameter_ids = {1, 2}}, // param couple: PWR and Torque
+        {.id = 0x02,
+         .group = 2,
+         .label = "Olej / woda",
+         .name = "OIL $1.1fbar W.$3.0f"
                  "\xB0"
                  "C",
          .parameter_ids = {0, 42}}, // param couple: OIL pressure and Water Temp.
-        {.name = "OIL $1.1fbar O.$3.0f"
+        {.id = 0x03,
+         .group = 2,
+         .label = "Olej bar / temp",
+         .name = "OIL $1.1fbar O.$3.0f"
                  "\xB0"
                  "C",
          .parameter_ids = {0, 5}}, // param couple: OIL pressure and Oil Temp.
-        {.name = "OIL $3.0f"
+        {.id = 0x04,
+         .group = 2,
+         .label = "Olej / woda C",
+         .name = "OIL $3.0f"
                  "\xB0"
                  "C W.$3.0f"
                  "\xB0"
                  "C",
          .parameter_ids = {5, 42}}, // param couple: OIL temp. and Water Temp.
-        {.name = "OIL $1.1fL Qual.$3.0f%",
+        {.id = 0x05,
+         .group = 1,
+         .label = "Olej poziom",
+         .name = "OIL $1.1fL Qual.$3.0f%",
          .parameter_ids = {28, 31}}, // param couple: OIL level and Oil Quality
-        {.name = "BAT $3.0f% $2.1fA",
+        {.id = 0x06,
+         .group = 3,
+         .label = "Aku SOC / prad",
+         .name = "BAT $3.0f% $2.1fA",
          .parameter_ids = {3, 4}}, // param couple: BAT State Of Charge and current
-        {.name = "BAT $2.2fV $2.1fA", .parameter_ids = {35, 4}}, // param couple: BAT voltage and current
-        {.name = "PWR: $3.2fCV   ", .parameter_ids = {1, 1}},    // Power
-        {.name = "TORQUE: $3.2fNm", .parameter_ids = {2, 2}},    // Torque
-        {.name = "IC AirOut: $3.1f"
+        {.id = 0x07,
+         .group = 3,
+         .label = "Aku V / prad",
+         .name = "BAT $2.2fV $2.1fA",
+         .parameter_ids = {35, 4}}, // param couple: BAT voltage and current
+        {.id = 0x08, .group = 5, .label = "Moc", .name = "PWR: $3.2fCV   ", .parameter_ids = {1, 1}}, // Power
+        {.id = 0x09,
+         .group = 5,
+         .label = "Moment",
+         .name = "TORQUE: $3.2fNm",
+         .parameter_ids = {2, 2}}, // Torque
+        {.id = 0x0a,
+         .group = 2,
+         .label = "IC wylot",
+         .name = "IC AirOut: $3.1f"
                  "\xB0"
                  "C",
          .parameter_ids = {22, 22}}, // Intercooler output air temperature
-        {.name = "IC AirIn:  $3.1f"
+        {.id = 0x0b,
+         .group = 2,
+         .label = "IC wlot",
+         .name = "IC AirIn:  $3.1f"
                  "\xB0"
                  "C",
-         .parameter_ids = {23, 23}},                                // Intercooler input  air temperature
-        {.name = "BOOST ABS: $2.1fbar", .parameter_ids = {24, 24}}, // Boost Absolute Pressure
-        {.name = "BOOST: $3.1fbar",
+         .parameter_ids = {23, 23}}, // Intercooler input  air temperature
+        {.id = 0x0c,
+         .group = 1,
+         .label = "Dolot abs",
+         .name = "BOOST ABS: $2.1fbar",
+         .parameter_ids = {24, 24}}, // Boost Absolute Pressure
+        {.id = 0x0d,
+         .group = 1,
+         .label = "Doladowanie",
+         .name = "BOOST: $3.1fbar",
          .parameter_ids = {25, 25}}, // Boost Pressure calculated from Absolute pressure
-        {.name = "TURBO: $2.3fV  ", .parameter_ids = {26, 26}}, // Turbo Sensor Voltage
-        {.name = "ODOM.LAST:$6.0fkm",
+        {.id = 0x0e,
+         .group = 1,
+         .label = "Czujnik turbo",
+         .name = "TURBO: $2.3fV  ",
+         .parameter_ids = {26, 26}}, // Turbo Sensor Voltage
+        {.id = 0x0f,
+         .group = 5,
+         .label = "Dystans",
+         .name = "ODOM.LAST:$6.0fkm",
          .parameter_ids = {27, 27}}, // distance since last time odometer was zeroized
-        {.name = "OIL: $1.3fL    ", .parameter_ids = {28, 28}}, // Oil Quantity
-        {.name = "OIL: $1.3fbar  ", .parameter_ids = {29, 29}}, // Oil Pressure
-        {.name = "OIL: $3.0f"
+        {.id = 0x10,
+         .group = 1,
+         .label = "Olej ilosc",
+         .name = "OIL: $1.3fL    ",
+         .parameter_ids = {28, 28}}, // Oil Quantity
+        {.id = 0x11,
+         .group = 1,
+         .label = "Olej cisnienie",
+         .name = "OIL: $1.3fbar  ",
+         .parameter_ids = {29, 29}}, // Oil Pressure
+        {.id = 0x12,
+         .group = 2,
+         .label = "Olej temp ECU",
+         .name = "OIL: $3.0f"
                  "\xB0"
                  "C   ",
-         .parameter_ids = {30, 30}},                              // Oil Temperature
-        {.name = "OIL QUALY: $3.0f%", .parameter_ids = {31, 31}}, // Oil Quality
-        {.name = "OIL UnAir: $2.2f"
+         .parameter_ids = {30, 30}}, // Oil Temperature
+        {.id = 0x13,
+         .group = 1,
+         .label = "Olej jakosc",
+         .name = "OIL QUALY: $3.0f%",
+         .parameter_ids = {31, 31}}, // Oil Quality
+        {.id = 0x14,
+         .group = 2,
+         .label = "Multiair temp",
+         .name = "OIL UnAir: $2.2f"
                  "\xB0"
                  "C",
          .parameter_ids = {32, 32}}, // Multiair Module Oil Temperature
-        {.name = "GEARBOX: $2.2f"
+        {.id = 0x15,
+         .group = 2,
+         .label = "Skrzynia temp",
+         .name = "GEARBOX: $2.2f"
                  "\xB0"
                  "C",
-         .parameter_ids = {33, 33}},                                // Gearbox Temperature
-        {.name = "BATT.: $3.0f%  ", .parameter_ids = {34, 34}},     // Battery State Of Charge
-        {.name = "BATT.: $3.3fA  ", .parameter_ids = {4, 4}},       // Battery Current
-        {.name = "BATT.: $3.3fV  ", .parameter_ids = {35, 35}},     // Battery Voltage
-        {.name = "AIR COND.: $3.3fbar", .parameter_ids = {36, 36}}, // Air Conditioner Pressure
-        {.name = "CUR. GEAR: $enum", .parameter_ids = {6, 6}},      // Current Gear
-        {.name = "Time ON: $6.0fmin", .parameter_ids = {37, 37}},   // Time Since engine on
-        {.name = "OVER RPM: $3.0fsec",
+         .parameter_ids = {33, 33}}, // Gearbox Temperature
+        {.id = 0x16,
+         .group = 3,
+         .label = "Aku SOC ECU",
+         .name = "BATT.: $3.0f%  ",
+         .parameter_ids = {34, 34}}, // Battery State Of Charge
+        {.id = 0x17,
+         .group = 3,
+         .label = "Aku prad",
+         .name = "BATT.: $3.3fA  ",
+         .parameter_ids = {4, 4}}, // Battery Current
+        {.id = 0x18,
+         .group = 3,
+         .label = "Aku napiecie",
+         .name = "BATT.: $3.3fV  ",
+         .parameter_ids = {35, 35}}, // Battery Voltage
+        {.id = 0x19,
+         .group = 6,
+         .label = "Klima cisnienie",
+         .name = "AIR COND.: $3.3fbar",
+         .parameter_ids = {36, 36}}, // Air Conditioner Pressure
+        {.id = 0x1a,
+         .group = 1,
+         .label = "Bieg",
+         .name = "CUR. GEAR: $enum",
+         .parameter_ids = {6, 6}}, // Current Gear
+        {.id = 0x1b,
+         .group = 1,
+         .label = "Czas silnika",
+         .name = "Time ON: $6.0fmin",
+         .parameter_ids = {37, 37}}, // Time Since engine on
+        {.id = 0x1c,
+         .group = 1,
+         .label = "Obroty czas",
+         .name = "OVER RPM: $3.0fsec",
          .parameter_ids = {38, 38}}, // elapsed time in engine overspeed condition
-        {.name = "OVER RPM: $6.0f",
+        {.id = 0x1d,
+         .group = 1,
+         .label = "Obroty licznik",
+         .name = "OVER RPM: $6.0f",
          .parameter_ids = {39, 39}}, // number of times of engine overspeed condition
-        {.name = "EXHAUST GAS:$4.0f"
+        {.id = 0x1e,
+         .group = 2,
+         .label = "Spaliny temp",
+         .name = "EXHAUST GAS:$4.0f"
                  "\xB0"
                  "C",
          .parameter_ids = {40, 40}}, // Exaust gas temperature
-        {.name = "CATAL.: $4.1f"
+        {.id = 0x1f,
+         .group = 2,
+         .label = "Katalizator temp",
+         .name = "CATAL.: $4.1f"
                  "\xB0"
                  "C",
          .parameter_ids = {41, 41}}, // catalytic converter temperature sensor
-        {.name = "WATER: $3.2f"
+        {.id = 0x20,
+         .group = 2,
+         .label = "Woda temp",
+         .name = "WATER: $3.2f"
                  "\xB0"
                  "C ",
-         .parameter_ids = {42, 42}},                                 // water temperature
-        {.name = "KNOCK: $4.3fmV ", .parameter_ids = {43, 43}},      // head knock sensor voltage
-        {.name = "KEY ID: $4.0f  ", .parameter_ids = {44, 44}},      // inserted Key ID
-        {.name = "SparkCYL1: $1.2fdeg", .parameter_ids = {45, 45}},  // Cylinder correction
-        {.name = "SparkCYL2: $1.2fdeg", .parameter_ids = {46, 46}},  // Cylinder correction
-        {.name = "SparkCYL3: $1.2fdeg", .parameter_ids = {47, 47}},  // Cylinder correction
-        {.name = "SparkCYL4: $1.2fdeg", .parameter_ids = {48, 48}},  // Cylinder correction
-        {.name = "DRIVE STYLE: $enum", .parameter_ids = {15, 15}},   // Drive Style
-        {.name = "SPEED: $3.3fkm/h", .parameter_ids = {7, 7}},       // Speed
-        {.name = "Seatbelt Alarm:$enum", .parameter_ids = {13, 13}}, // SeatBelt Alarm
-        {.name = "  0-100Km/h $1.3fs", .parameter_ids = {9, 9}},     // 0-100km/h time statistic
-        {.name = "100-200Km/h $1.3fs", .parameter_ids = {10, 10}},   // 100-200km/h time statistic
-        {.name = "Best  0-100: $1.2fs", .parameter_ids = {11, 11}},  // 0-100km/h Best time statistic
-        {.name = "Best100-200: $1.2fs", .parameter_ids = {12, 12}},  // 100-200km/h Best time statistic
-        {.name = "Pedal Map: $enum",
+         .parameter_ids = {42, 42}}, // water temperature
+        {.id = 0x21,
+         .group = 1,
+         .label = "Spalanie stukowe",
+         .name = "KNOCK: $4.3fmV ",
+         .parameter_ids = {43, 43}}, // head knock sensor voltage
+        {.id = 0x22,
+         .group = 6,
+         .label = "Klucz ID",
+         .name = "KEY ID: $4.0f  ",
+         .parameter_ids = {44, 44}}, // inserted Key ID
+        {.id = 0x23,
+         .group = 1,
+         .label = "Zaplon cyl 1",
+         .name = "SparkCYL1: $1.2fdeg",
+         .parameter_ids = {45, 45}}, // Cylinder correction
+        {.id = 0x24,
+         .group = 1,
+         .label = "Zaplon cyl 2",
+         .name = "SparkCYL2: $1.2fdeg",
+         .parameter_ids = {46, 46}}, // Cylinder correction
+        {.id = 0x25,
+         .group = 1,
+         .label = "Zaplon cyl 3",
+         .name = "SparkCYL3: $1.2fdeg",
+         .parameter_ids = {47, 47}}, // Cylinder correction
+        {.id = 0x26,
+         .group = 1,
+         .label = "Zaplon cyl 4",
+         .name = "SparkCYL4: $1.2fdeg",
+         .parameter_ids = {48, 48}}, // Cylinder correction
+        {.id = 0x27,
+         .group = 6,
+         .label = "Tryb DNA",
+         .name = "DRIVE STYLE: $enum",
+         .parameter_ids = {15, 15}}, // Drive Style
+        {.id = 0x28,
+         .group = 5,
+         .label = "Predkosc",
+         .name = "SPEED: $3.3fkm/h",
+         .parameter_ids = {7, 7}}, // Speed
+        {.id = 0x29,
+         .group = 6,
+         .label = "Alarm pasow",
+         .name = "Seatbelt Alarm:$enum",
+         .parameter_ids = {13, 13}}, // SeatBelt Alarm
+        {.id = 0x2a,
+         .group = 5,
+         .label = "0-100",
+         .name = "  0-100Km/h $1.3fs",
+         .parameter_ids = {9, 9}}, // 0-100km/h time statistic
+        {.id = 0x2b,
+         .group = 5,
+         .label = "100-200",
+         .name = "100-200Km/h $1.3fs",
+         .parameter_ids = {10, 10}}, // 100-200km/h time statistic
+        {.id = 0x2c,
+         .group = 5,
+         .label = "Rekord 0-100",
+         .name = "Best  0-100: $1.2fs",
+         .parameter_ids = {11, 11}}, // 0-100km/h Best time statistic
+        {.id = 0x2d,
+         .group = 5,
+         .label = "Rekord 100-200",
+         .name = "Best100-200: $1.2fs",
+         .parameter_ids = {12, 12}}, // 100-200km/h Best time statistic
+        {.id = 0x2e,
+         .group = 6,
+         .label = "Mapa pedalu",
+         .name = "Pedal Map: $enum",
          .parameter_ids =
              {17, 17}}, // selected Pedal Map
                         //					{.name="RAM: $5.0fB",
@@ -149,105 +311,304 @@ const ParameterPage parameter_pages[2][60] = {
     },
     {
         // diesel
-        {.name = "PWR $3.0fCV $3.0fNm", .parameter_ids = {1, 2}}, // param couple: PWR and Torque
-        {.name = "OIL $1.1fbar W.$3.0f"
+        {.id = 0x81,
+         .group = 5,
+         .label = "Moc / moment",
+         .name = "PWR $3.0fCV $3.0fNm",
+         .parameter_ids = {1, 2}}, // param couple: PWR and Torque
+        {.id = 0x82,
+         .group = 2,
+         .label = "Olej / woda",
+         .name = "OIL $1.1fbar W.$3.0f"
                  "\xB0"
                  "C",
          .parameter_ids = {0, 68}}, // param couple: OIL pressure and Water Temp.
-        {.name = "OIL $1.1fbar O.$3.0f"
+        {.id = 0x83,
+         .group = 2,
+         .label = "Olej bar / temp",
+         .name = "OIL $1.1fbar O.$3.0f"
                  "\xB0"
                  "C",
          .parameter_ids = {0, 5}}, // param couple: OIL pressure and Oil Temp.
-        {.name = "OIL $3.0f"
+        {.id = 0x84,
+         .group = 2,
+         .label = "Olej / woda C",
+         .name = "OIL $3.0f"
                  "\xB0"
                  "C W.$3.0f"
                  "\xB0"
                  "C",
          .parameter_ids = {5, 68}}, // param couple: OIL temp. and Water Temp.
-        {.name = "OIL $2.1fmm Qu.$3.0f%",
+        {.id = 0x85,
+         .group = 1,
+         .label = "Olej poziom",
+         .name = "OIL $2.1fmm Qu.$3.0f%",
          .parameter_ids = {64, 63}}, // param couple: OIL level and Oil Quality
-        {.name = "BAT $3.0f% $2.1fA",
+        {.id = 0x86,
+         .group = 3,
+         .label = "Aku SOC / prad",
+         .name = "BAT $3.0f% $2.1fA",
          .parameter_ids = {3, 4}}, // param couple: BAT State Of Charge and current
-        {.name = "BAT $2.2fV $2.1fA", .parameter_ids = {62, 4}}, // param couple: BAT voltage and current
-        {.name = "DPF $2.2f% $2.2f"
+        {.id = 0x87,
+         .group = 3,
+         .label = "Aku V / prad",
+         .name = "BAT $2.2fV $2.1fA",
+         .parameter_ids = {62, 4}}, // param couple: BAT voltage and current
+        {.id = 0x88,
+         .group = 4,
+         .label = "DPF stan",
+         .name = "DPF $2.2f% $2.2f"
                  "\xB0"
                  "C",
          .parameter_ids = {55, 56}}, // param couple: DPF clogging percentage and temperature
-        {.name = "REGEN $2.1f% $3.0f"
+        {.id = 0x89,
+         .group = 4,
+         .label = "DPF regeneracja",
+         .name = "REGEN $2.1f% $3.0f"
                  "\xB0"
                  "C",
          .parameter_ids = {57, 56}}, // param couple: DPF regeneration progress percentage and temperature
-        {.name = "PWR: $3.2fCV   ", .parameter_ids = {1, 1}},   // Power
-        {.name = "TORQUE: $3.2fNm", .parameter_ids = {2, 2}},   // Torque
-        {.name = "DPF: $3.2f%    ", .parameter_ids = {55, 55}}, // DPF clogging percentage
-        {.name = "DPF: $3.2f"
+        {.id = 0x8a, .group = 5, .label = "Moc", .name = "PWR: $3.2fCV   ", .parameter_ids = {1, 1}}, // Power
+        {.id = 0x8b,
+         .group = 5,
+         .label = "Moment",
+         .name = "TORQUE: $3.2fNm",
+         .parameter_ids = {2, 2}}, // Torque
+        {.id = 0x8c,
+         .group = 4,
+         .label = "DPF zapelnienie",
+         .name = "DPF: $3.2f%    ",
+         .parameter_ids = {55, 55}}, // DPF clogging percentage
+        {.id = 0x8d,
+         .group = 4,
+         .label = "DPF temperatura",
+         .name = "DPF: $3.2f"
                  "\xB0"
                  "C   ",
-         .parameter_ids = {56, 56}},                               // DPF Temperature
-        {.name = "DPF REGEN: $3.2f%", .parameter_ids = {57, 57}},  // DPF regeneration progress percentage
-        {.name = "REGEN: $enum   ", .parameter_ids = {8, 8}},      // DPF regeneration type
-        {.name = "LAST REGEN:$5.0fkm", .parameter_ids = {58, 58}}, // DPF last regeneration distance in km
-        {.name = "TOT REGEN: $5.0f", .parameter_ids = {59, 59}},   // DPF total number of regenerations
-        {.name = "MEAN REGEN:$5.0fkm", .parameter_ids = {60, 60}}, // DPF mean regeneration distance in km
-        {.name = "MEAN REGEN:$3.0fmin",
-         .parameter_ids = {61, 61}},                              // DPF mean regeneration duration in minutes
-        {.name = "BAT $2.2fV     ", .parameter_ids = {62, 62}},   // Battery Voltage
-        {.name = "BAT $3.0f%     ", .parameter_ids = {3, 3}},     // Battery State Of Charge percentage
-        {.name = "BAT $3.1fA     ", .parameter_ids = {4, 4}},     // Battery current
-        {.name = "OIL QUALY: $3.0f%", .parameter_ids = {63, 63}}, // Oil Quality
-        {.name = "OIL: $3.0f"
+         .parameter_ids = {56, 56}}, // DPF Temperature
+        {.id = 0x8e,
+         .group = 4,
+         .label = "DPF postep",
+         .name = "DPF REGEN: $3.2f%",
+         .parameter_ids = {57, 57}}, // DPF regeneration progress percentage
+        {.id = 0x8f,
+         .group = 4,
+         .label = "DPF tryb",
+         .name = "REGEN: $enum   ",
+         .parameter_ids = {8, 8}}, // DPF regeneration type
+        {.id = 0x90,
+         .group = 4,
+         .label = "DPF od ostatniej",
+         .name = "LAST REGEN:$5.0fkm",
+         .parameter_ids = {58, 58}}, // DPF last regeneration distance in km
+        {.id = 0x91,
+         .group = 4,
+         .label = "DPF licznik",
+         .name = "TOT REGEN: $5.0f",
+         .parameter_ids = {59, 59}}, // DPF total number of regenerations
+        {.id = 0x92,
+         .group = 4,
+         .label = "DPF dystans sr",
+         .name = "MEAN REGEN:$5.0fkm",
+         .parameter_ids = {60, 60}}, // DPF mean regeneration distance in km
+        {.id = 0x93,
+         .group = 4,
+         .label = "DPF czas sr",
+         .name = "MEAN REGEN:$3.0fmin",
+         .parameter_ids = {61, 61}}, // DPF mean regeneration duration in minutes
+        {.id = 0x94,
+         .group = 3,
+         .label = "Aku napiecie",
+         .name = "BAT $2.2fV     ",
+         .parameter_ids = {62, 62}}, // Battery Voltage
+        {.id = 0x95,
+         .group = 3,
+         .label = "Aku SOC",
+         .name = "BAT $3.0f%     ",
+         .parameter_ids = {3, 3}}, // Battery State Of Charge percentage
+        {.id = 0x96,
+         .group = 3,
+         .label = "Aku prad",
+         .name = "BAT $3.1fA     ",
+         .parameter_ids = {4, 4}}, // Battery current
+        {.id = 0x97,
+         .group = 1,
+         .label = "Olej jakosc",
+         .name = "OIL QUALY: $3.0f%",
+         .parameter_ids = {63, 63}}, // Oil Quality
+        {.id = 0x98,
+         .group = 2,
+         .label = "Olej temperatura",
+         .name = "OIL: $3.0f"
                  "\xB0"
                  "C   ",
-         .parameter_ids = {5, 5}},                              // Oil temperature
-        {.name = "OIL: $2.2fbar  ", .parameter_ids = {0, 0}},   // Oil pressure
-        {.name = "OIL: $3.2fmm   ", .parameter_ids = {64, 64}}, // Oil quantity in mm
-        {.name = "ADBLUE: $3.2fL ", .parameter_ids = {65, 65}}, // Adblue quantity in Liters
-        {.name = "ADBLUE: $3.2f% ", .parameter_ids = {66, 66}}, // Adblue quantity in percentage
-        {.name = "GEARBOX: $3.2f"
+         .parameter_ids = {5, 5}}, // Oil temperature
+        {.id = 0x99,
+         .group = 1,
+         .label = "Olej cisnienie",
+         .name = "OIL: $2.2fbar  ",
+         .parameter_ids = {0, 0}}, // Oil pressure
+        {.id = 0x9a,
+         .group = 1,
+         .label = "Olej poziom mm",
+         .name = "OIL: $3.2fmm   ",
+         .parameter_ids = {64, 64}}, // Oil quantity in mm
+        {.id = 0x9b,
+         .group = 4,
+         .label = "AdBlue litry",
+         .name = "ADBLUE: $3.2fL ",
+         .parameter_ids = {65, 65}}, // Adblue quantity in Liters
+        {.id = 0x9c,
+         .group = 4,
+         .label = "AdBlue procent",
+         .name = "ADBLUE: $3.2f% ",
+         .parameter_ids = {66, 66}}, // Adblue quantity in percentage
+        {.id = 0x9d,
+         .group = 2,
+         .label = "Skrzynia temp",
+         .name = "GEARBOX: $3.2f"
                  "\xB0"
                  "C",
          .parameter_ids = {33, 33}}, // gearbox temperature
-        {.name = "EXHAUST GAS:$4.0f"
+        {.id = 0x9e,
+         .group = 2,
+         .label = "Spaliny temp",
+         .name = "EXHAUST GAS:$4.0f"
                  "\xB0"
                  "C",
-         .parameter_ids = {67, 67}},                           // exhaust gas temperature (turbo input)
-        {.name = "CUR. GEAR: $enum", .parameter_ids = {6, 6}}, // current gear
-        {.name = "WATER: $3.0f"
+         .parameter_ids = {67, 67}}, // exhaust gas temperature (turbo input)
+        {.id = 0x9f,
+         .group = 1,
+         .label = "Bieg",
+         .name = "CUR. GEAR: $enum",
+         .parameter_ids = {6, 6}}, // current gear
+        {.id = 0xa0,
+         .group = 2,
+         .label = "Woda temp",
+         .name = "WATER: $3.0f"
                  "\xB0"
                  "C ",
-         .parameter_ids = {68, 68}},                                // water temperature
-        {.name = "EGR CMD:$2.2f% ", .parameter_ids = {73, 73}},     // EGR command
-        {.name = "EGR:    $2.2f% ", .parameter_ids = {74, 74}},     // EGR status
-        {.name = "TURBO REQ: $2.1fbar", .parameter_ids = {76, 76}}, // Turbo Request pressure
-        {.name = "TURBO REQ: $2.2f%", .parameter_ids = {77, 77}},   // Turbo Request percentage
-        {.name = "TURBO: $2.2f"
+         .parameter_ids = {68, 68}}, // water temperature
+        {.id = 0xa1,
+         .group = 1,
+         .label = "EGR zadane",
+         .name = "EGR CMD:$2.2f% ",
+         .parameter_ids = {73, 73}}, // EGR command
+        {.id = 0xa2,
+         .group = 1,
+         .label = "EGR aktualne",
+         .name = "EGR:    $2.2f% ",
+         .parameter_ids = {74, 74}}, // EGR status
+        {.id = 0xa3,
+         .group = 1,
+         .label = "Turbo bar zad",
+         .name = "TURBO REQ: $2.1fbar",
+         .parameter_ids = {76, 76}}, // Turbo Request pressure
+        {.id = 0xa4,
+         .group = 1,
+         .label = "Turbo proc zad",
+         .name = "TURBO REQ: $2.2f%",
+         .parameter_ids = {77, 77}}, // Turbo Request percentage
+        {.id = 0xa5,
+         .group = 2,
+         .label = "Turbo temp",
+         .name = "TURBO: $2.2f"
                  "\xB0"
                  "C ",
-         .parameter_ids = {78, 78}},                                // Turbo temperature
-        {.name = "TURBO: $2.2fbar", .parameter_ids = {79, 79}},     // Turbo pressure
-        {.name = "TURBO: $2.2f%  ", .parameter_ids = {80, 80}},     // Turbo percentage
-        {.name = "BOOST REQ.:$2.1fbar", .parameter_ids = {81, 81}}, // Boost Request pressure
-        {.name = "BOOST: $1.2fV  ", .parameter_ids = {82, 82}},     // Boost sensor voltage
-        {.name = "RAIL: $5.2fbar ", .parameter_ids = {83, 83}},     // Rail pressure
-        {.name = "DIESEL: $2.2f"
+         .parameter_ids = {78, 78}}, // Turbo temperature
+        {.id = 0xa6,
+         .group = 1,
+         .label = "Turbo bar",
+         .name = "TURBO: $2.2fbar",
+         .parameter_ids = {79, 79}}, // Turbo pressure
+        {.id = 0xa7,
+         .group = 1,
+         .label = "Turbo procent",
+         .name = "TURBO: $2.2f%  ",
+         .parameter_ids = {80, 80}}, // Turbo percentage
+        {.id = 0xa8,
+         .group = 1,
+         .label = "Dolot bar zad",
+         .name = "BOOST REQ.:$2.1fbar",
+         .parameter_ids = {81, 81}}, // Boost Request pressure
+        {.id = 0xa9,
+         .group = 1,
+         .label = "Dolot czujnik",
+         .name = "BOOST: $1.2fV  ",
+         .parameter_ids = {82, 82}}, // Boost sensor voltage
+        {.id = 0xaa,
+         .group = 1,
+         .label = "Paliwo cisnienie",
+         .name = "RAIL: $5.2fbar ",
+         .parameter_ids = {83, 83}}, // Rail pressure
+        {.id = 0xab,
+         .group = 2,
+         .label = "Paliwo temp",
+         .name = "DIESEL: $2.2f"
                  "\xB0"
                  "C",
-         .parameter_ids = {84, 84}},                               // Diesel temperature
-        {.name = "ODOM.LAST: $5.0fkm", .parameter_ids = {85, 85}}, // Distance in km since last odometer reset
-        {.name = "AIR COND.:$2.2fbar", .parameter_ids = {86, 86}}, // Air conditioner pressure
-        {.name = "FUEL CONS.:$1.2fL/h", .parameter_ids = {87, 87}}, // Fuel Consume
-        {.name = "DEBIMETER:$3.2f"
+         .parameter_ids = {84, 84}}, // Diesel temperature
+        {.id = 0xac,
+         .group = 5,
+         .label = "Dystans",
+         .name = "ODOM.LAST: $5.0fkm",
+         .parameter_ids = {85, 85}}, // Distance in km since last odometer reset
+        {.id = 0xad,
+         .group = 6,
+         .label = "Klima cisnienie",
+         .name = "AIR COND.:$2.2fbar",
+         .parameter_ids = {86, 86}}, // Air conditioner pressure
+        {.id = 0xae,
+         .group = 1,
+         .label = "Zuzycie paliwa",
+         .name = "FUEL CONS.:$1.2fL/h",
+         .parameter_ids = {87, 87}}, // Fuel Consume
+        {.id = 0xaf,
+         .group = 2,
+         .label = "Powietrze temp",
+         .name = "DEBIMETER:$3.2f"
                  "\xB0"
                  "C",
-         .parameter_ids = {88, 88}},                                 // Debimeter temperature
-        {.name = "SPEED:$3.2fkm/h", .parameter_ids = {7, 7}},        // speed
-        {.name = "Seatbelt Alarm:$enum", .parameter_ids = {13, 13}}, // Seatbelt Alarm Status
-        {.name = "0-100Km/h:  $2.2fs", .parameter_ids = {9, 9}},     // 0-100km/h Statistic
-        {.name = "100-200Km/h:$2.2fs", .parameter_ids = {10, 10}},   // 100-200km/h Statistic
-        {.name = "Best  0-100:$2.2fs", .parameter_ids = {11, 11}},   // 0-100km/h Best Statistic
-        {.name = "Best100-200:$2.2fs", .parameter_ids = {12, 12}},   // 0-100km/h Best Statistic
-        {.name = "DRIVE STYLE: $enum", .parameter_ids = {15, 15}},   // Drive Style
-        {.name = "Pedal Map: $enum",
+         .parameter_ids = {88, 88}}, // Debimeter temperature
+        {.id = 0xb0,
+         .group = 5,
+         .label = "Predkosc",
+         .name = "SPEED:$3.2fkm/h",
+         .parameter_ids = {7, 7}}, // speed
+        {.id = 0xb1,
+         .group = 6,
+         .label = "Alarm pasow",
+         .name = "Seatbelt Alarm:$enum",
+         .parameter_ids = {13, 13}}, // Seatbelt Alarm Status
+        {.id = 0xb2,
+         .group = 5,
+         .label = "0-100",
+         .name = "0-100Km/h:  $2.2fs",
+         .parameter_ids = {9, 9}}, // 0-100km/h Statistic
+        {.id = 0xb3,
+         .group = 5,
+         .label = "100-200",
+         .name = "100-200Km/h:$2.2fs",
+         .parameter_ids = {10, 10}}, // 100-200km/h Statistic
+        {.id = 0xb4,
+         .group = 5,
+         .label = "Rekord 0-100",
+         .name = "Best  0-100:$2.2fs",
+         .parameter_ids = {11, 11}}, // 0-100km/h Best Statistic
+        {.id = 0xb5,
+         .group = 5,
+         .label = "Rekord 100-200",
+         .name = "Best100-200:$2.2fs",
+         .parameter_ids = {12, 12}}, // 0-100km/h Best Statistic
+        {.id = 0xb6,
+         .group = 6,
+         .label = "Tryb DNA",
+         .name = "DRIVE STYLE: $enum",
+         .parameter_ids = {15, 15}}, // Drive Style
+        {.id = 0xb7,
+         .group = 6,
+         .label = "Mapa pedalu",
+         .name = "Pedal Map: $enum",
          .parameter_ids = {17, 17}}, // selected Pedal Map
                                      //						{.name="RAM: $5.0fB",
                                      //.parameter_ids={16,	16		}}, //Free RAM

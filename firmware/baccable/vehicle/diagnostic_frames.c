@@ -1,3 +1,4 @@
+#include "diagnostics/parameter_cache.h"
 #include "vehicle/diagnostic_frames.h"
 #include "diagnostics/parameter_request.h"
 
@@ -86,10 +87,12 @@ void vehicle_dispatch_diagnostic(const CAN_RxHeaderTypeDef *rx_header, uint8_t *
                     if ((frame_data[2] == 0x55) &&
                         (frame_data[3] == 0xA0)) { // if param wrote was 55A0 (en/dis seatbelt alam)
                         if (diagnostics_state.seatbelt_alarm_disabled == 0x11) { // if seatbelt disabling
-                            diagnostics_state.seatbelt_alarm_disabled = 1;       // seatbelt disabled
+                            diagnostics_state.seatbelt_alarm_disabled = 1;
+                            parameter_cache_put(13, 1, currentTime); // seatbelt disabled
                         }
                         if (diagnostics_state.seatbelt_alarm_disabled == 0x21) { // if seatbelt enabling
-                            diagnostics_state.seatbelt_alarm_disabled = 0;       // seatbelt enabled
+                            diagnostics_state.seatbelt_alarm_disabled = 0;
+                            parameter_cache_put(13, 0, currentTime); // seatbelt enabled
                         }
                     }
                 }

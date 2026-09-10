@@ -121,12 +121,15 @@ Firmware is organized under [firmware/baccable](firmware/baccable).
 See the [architecture and extension guide](docs/architecture/README.md),
 [analysis](docs/architecture/ANALYSIS_PL.md), and
 [verification report](docs/architecture/VALIDATION_PL.md).
+The [menu UX guide](docs/architecture/MENU_UX_PL.md) describes navigation,
+favorites, sorting, display transport and the new preference format.
 
 Parameter definitions and dashboard pages are in
 [parameter_catalog.c](firmware/baccable/diagnostics/parameter_catalog.c).
 `ParameterDefinition` describes the request, response ID, byte offset/length,
 signed raw offset, scale, unit and decimal places. `ParameterPage` associates
-two parameter IDs with a display template. Update the gasoline/diesel page
+two parameter IDs with a stable page ID, group, short label and display template.
+Never renumber existing page IDs. Update the gasoline/diesel page
 counts when extending the page tables.
 
 ## BACCABLE Compile Instructions

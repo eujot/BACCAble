@@ -1,6 +1,7 @@
 #include "transport/board_uart.h"
 #include "stm32f0xx_hal.h"
 #include "app/main.h"
+#include "diagnostics/parameter_cache.h"
 // #include "app/application_state.h"
 // extern void Error_Handler(void);
 
@@ -13,6 +14,9 @@ static uint8_t active_tx[UART_BUFFER_SIZE];
 #endif
 #if defined(BACCABLE_C1)
 static uint8_t active_pedal_tx[UART1_BUFFER_SIZE];
+static uint8_t pending_screen[UART_BUFFER_SIZE];
+static uint8_t screen_pending;
+static uint8_t screen_overtook_poll;
 #endif
 static volatile uint8_t board_tx_active, pedal_tx_active;
 static volatile uint8_t pedal_response, pedal_response_pending;
@@ -267,14 +271,15 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
         uart_resume(huart);
 }
 
-static void queue_send(SendQueue *queue, const uint8_t *data, size_t length, size_t frame_length) {
+static uint8_t queue_send(SendQueue *queue, const uint8_t *data, size_t length, size_t frame_length) {
     if (!data || !length || length > frame_length) {
         status_led_error();
-        return;
+        return 0;
     }
     uint32_t irq = __get_PRIMASK();
     __disable_irq();
-    if (queue->count < QUEUE_SIZE) {
+    uint8_t accepted = queue->count < QUEUE_SIZE;
+    if (accepted) {
         memset(queue->tx_buffer[queue->tail], ' ', frame_length);
         memcpy(queue->tx_buffer[queue->tail], data, length);
         queue->tail = (queue->tail + 1) % QUEUE_SIZE;
@@ -283,6 +288,7 @@ static void queue_send(SendQueue *queue, const uint8_t *data, size_t length, siz
         status_led_error();
     }
     __set_PRIMASK(irq);
+    return accepted;
 }
 
 #if !defined(ACT_AS_CANABLE)
@@ -291,12 +297,37 @@ static uint8_t queue_start(SendQueue *queue, UART_HandleTypeDef *uart, uint8_t *
     uint32_t irq = __get_PRIMASK();
     __disable_irq();
     uint8_t started = 0;
-    if (!*active && queue->count) {
-        memcpy(active_buffer, queue->tx_buffer[queue->head], length);
+    uint8_t use_screen = 0;
+    #if defined(BACCABLE_C1)
+    if (queue == tx_queue && screen_pending) {
+        /* Display replaces old display only; vehicle commands retain FIFO order. */
+        use_screen = !queue->count ||
+                     (!screen_overtook_poll && (queue->tx_buffer[queue->head][0] == BhBusIDgetStatus ||
+                                                (queue->tx_buffer[queue->head][0] == C2BusID &&
+                                                 queue->tx_buffer[queue->head][1] == C2cmdGetStatus)));
+    }
+    #endif
+    if (!*active && (queue->count || use_screen)) {
+    #if defined(BACCABLE_C1)
+        if (use_screen)
+            memcpy(active_buffer, pending_screen, length);
+        else
+    #endif
+            memcpy(active_buffer, queue->tx_buffer[queue->head], length);
         if (HAL_UART_Transmit_IT(uart, active_buffer, length) == HAL_OK) {
             *active = 1;
-            queue->head = (queue->head + 1) % QUEUE_SIZE;
-            --queue->count;
+    #if defined(BACCABLE_C1)
+            /* At most one display may overtake a queued poll, even during continuous scrolling. */
+            if (queue == tx_queue)
+                screen_overtook_poll = use_screen && queue->count;
+            if (use_screen)
+                screen_pending = 0;
+            else
+    #endif
+            {
+                queue->head = (queue->head + 1) % QUEUE_SIZE;
+                --queue->count;
+            }
             started = 1;
         }
     }
@@ -306,8 +337,19 @@ static uint8_t queue_start(SendQueue *queue, UART_HandleTypeDef *uart, uint8_t *
 
 #endif
 
-void board_uart_send(const uint8_t *data, size_t length) {
-    queue_send(tx_queue, data, length, UART_BUFFER_SIZE);
+uint8_t board_uart_send(const uint8_t *data, size_t length) {
+#if defined(BACCABLE_C1)
+    if (data && length && length <= UART_BUFFER_SIZE && data[0] == BhBusIDparamString) {
+        uint32_t irq = __get_PRIMASK();
+        __disable_irq();
+        memset(pending_screen, ' ', sizeof(pending_screen));
+        memcpy(pending_screen, data, length);
+        screen_pending = 1;
+        __set_PRIMASK(irq);
+        return 1;
+    }
+#endif
+    return queue_send(tx_queue, data, length, UART_BUFFER_SIZE);
 }
 
 #if defined(BACCABLE_C1)
@@ -343,6 +385,8 @@ void pedal_uart_process(void) {
             break;
         }
     }
+    if (pending && pedal_state.current_schizzaforte_map != '?')
+        parameter_cache_put(17, native_parameter_read(17), currentTime);
     if (currentTime < TIMING__ALL___SERIAL_IGNORE_WINDOW_MS || pedal_tx_active || !tx_queue_uart1->count)
         return;
     if (currentTime - last_pedal_tx_time <= TIMING__C1____SCHIZZAFORTE_SERIAL_TIMEOUT_REPLY_MS)
@@ -392,10 +436,7 @@ void board_uart_process(void) {
         case AllResetFaults:
             last_c2_poll_time = currentTime;
             break;
-        case BhBusIDparamString:
         case BhBusIDgetStatus:
-        case BhBusChimeRequest:
-        case BhBusID:
             last_bh_poll_time = currentTime;
             break;
         default:

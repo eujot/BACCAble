@@ -20,7 +20,7 @@ static const char *enum_text(uint32_t id, float value, char symbol[2]) {
     case 0x1e:
         return seatbelt_labels[enum_index(value, 2)];
     case 0x20:
-        switch (telemetry_state.drive_mode) {
+        switch ((unsigned)value) {
         case 0x00:
             return "N";
         case 0x08:
@@ -33,7 +33,7 @@ static const char *enum_text(uint32_t id, float value, char symbol[2]) {
             return "?";
         }
     case 0x22:
-        symbol[0] = pedal_state.current_schizzaforte_map;
+        symbol[0] = (char)value;
         return symbol;
     default:
         return "";
@@ -48,7 +48,20 @@ static const char *number_text(uint32_t id, float value, unsigned decimals, unsi
     if ((id == 0x1a && statistics_state.statistics_0_100_started) ||
         (id == 0x1b && statistics_state.statistics_100_200_started))
         return statistics_labels[1];
-    format_number(buffer, value, decimals, width + 1);
+    if (width > 19)
+        width = 19;
+    char number[32];
+    int length =
+        isfinite(value) ? snprintf_(number, sizeof(number), "%.*f", (int)decimals, (double)value) : -1;
+    memset(buffer, ' ', width);
+    buffer[width] = 0;
+    if (length < 0 || (unsigned)length > width) {
+        if (width)
+            buffer[width - 1] = '-';
+        if (width > 1)
+            buffer[width - 2] = '-';
+    } else
+        memcpy(buffer + width - length, number, length);
     return buffer;
 }
 
@@ -77,7 +90,7 @@ void dashboard_format_values(const char *template, float values[2], const uint8_
             unsigned width = text[1] - '0' + decimals + (decimals > 0);
             formatted = number_text(id, values[element], decimals, width, buffer);
         } else {
-            formatted = enum_text(id, values[element], symbol);
+            formatted = isfinite(values[element]) ? enum_text(id, values[element], symbol) : "--";
         }
         append_text(result, &length, formatted);
         ++element;

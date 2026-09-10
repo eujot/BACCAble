@@ -1,4 +1,5 @@
 #include "vehicle/standard_frames.h"
+#include "features/menu.h"
 #include "app/powertrain.h"
 /* CAN ID 0x000000FA. */
 void vehicle_handle_brake_pedal(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
@@ -30,10 +31,7 @@ void vehicle_handle_engine_torque(const CAN_RxHeaderTypeDef *rx_header, uint8_t 
             board_uart_send(tmpArr3, 2);
             chassis_state.launch_assist_enabled = 0; // ensure we do not return here
             // jump to statistics
-            dashboard_state.dashboard_menu_indent_level = 1;
-            dashboard_state.main_dashboard_page_index = 1; // params submenu
-
-            dashboard_state.dashboard_page_index = parameter_page_find(0x1A); // 0-100km/h statistics
+            menu_show_parameter(parameter_page_find(0x1A));
         }
     }
 #endif

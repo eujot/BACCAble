@@ -15,14 +15,10 @@ typedef struct {
     uint8_t execute_dashboard_blinks;
     uint8_t main_dashboard_page_index;
     uint8_t dashboard_menu_indent_level;
-    uint8_t dashboard_main_menu_array_len;
-    uint8_t dashboard_main_menu_array[20][DASHBOARD_MESSAGE_MAX_LENGTH];
     uint8_t baccable_dashboard_menu_visible;
     uint8_t baccabledashboard_menu_was_visible;
     uint8_t dashboard_page_index;
 #endif
-
-    uint8_t dashboard_page_string_array[DASHBOARD_MESSAGE_MAX_LENGTH];
 
     uint8_t commands_menu_enabled;
 } DashboardState;

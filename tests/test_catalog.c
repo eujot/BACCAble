@@ -10,8 +10,7 @@ int main(void) {
         assert(counts[engine] <= 60);
         for (unsigned page = 0; page < 60; ++page) {
             const ParameterPage *entry = &parameter_pages[engine][page];
-            assert(memchr(entry->name, 0, sizeof(entry->name)));
-            assert((entry->name[0] != 0) == (page < counts[engine]));
+            assert((entry->name != NULL) == (page < counts[engine]));
             if (page >= counts[engine])
                 continue;
             for (unsigned element = 0; element < 2; ++element) {

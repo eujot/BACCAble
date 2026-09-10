@@ -1,13 +1,19 @@
 #include "app/powertrain.h"
 #include "diagnostics/parameter_request.h"
 #include "diagnostics/uds_decode.h"
+#include "diagnostics/parameter_cache.h"
+#include "features/menu.h"
 #if defined(BACCABLE_C1)
 static struct {
     uint8_t active, engine, page, element, parameter;
     uint32_t started;
 } request;
 
+void parameter_request_cancel(void) { request.active = 0; }
+
 void parameter_request_begin(void) {
+    if (request.active && currentTime - request.started < 500)
+        return;
     request.active = 0;
     if (settings_state.is_diesel_enabled > 1 ||
         dashboard_state.dashboard_page_index >= parameter_page_count || selected_parameter_element > 1)
@@ -38,8 +44,7 @@ void parameter_request_receive(const CAN_RxHeaderTypeDef *header, const uint8_t 
     if (!request.active)
         return;
     if (currentTime - request.started > 500 || !dashboard_state.baccable_dashboard_menu_visible ||
-        dashboard_state.dashboard_menu_indent_level != 1 || dashboard_state.main_dashboard_page_index != 1 ||
-        settings_state.is_diesel_enabled != request.engine ||
+        !menu_parameters_active() || settings_state.is_diesel_enabled != request.engine ||
         dashboard_state.dashboard_page_index != request.page) {
         request.active = 0;
         return;
@@ -51,8 +56,9 @@ void parameter_request_receive(const CAN_RxHeaderTypeDef *header, const uint8_t 
         !uds_decode_value(data, header->DLC, did, parameter->value_offset, parameter->value_length,
                           parameter->raw_offset, parameter->scale, parameter->scaled_offset, &value))
         return;
+    parameter_cache_put(request.parameter, value, currentTime);
     displayed_parameter_values[request.element] = value;
     request.active = 0;
-    dashboard_send_values();
+    menu_render();
 }
 #endif

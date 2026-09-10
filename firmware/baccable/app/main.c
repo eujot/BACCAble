@@ -1,5 +1,6 @@
 #include "app/main.h"
 #include "stm32f0xx_it.h"
+#include "diagnostics/parameter_cache.h"
 
 static void application_init(void) {
     SystemClock_Config();
@@ -49,6 +50,10 @@ static void receive_can_frames(void) {
             vehicle_dispatch_diagnostic(&header, data);
         if (header.IDE == CAN_ID_STD)
             vehicle_dispatch_standard(&header, data);
+#endif
+#if defined(BACCABLE_C1)
+        if (header.IDE == CAN_ID_STD)
+            parameter_cache_observe(header.StdId, header.DLC);
 #endif
         can_process();
     }

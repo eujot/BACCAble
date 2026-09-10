@@ -1,10 +1,30 @@
 #include "app/main.h"
+#include "features/body.h"
+#include "features/menu.h"
+#if defined(BACCABLE_C2) || defined(BACCABLE_BH)
+static void reply_version(uint8_t command) {
+    uint8_t reply[UART_BUFFER_SIZE] = {C1BusID, command};
+    const char *version = BUILD_VERSION;
+    size_t length = strlen(version);
+    size_t capacity = UART_BUFFER_SIZE - 2;
+    if (length > capacity)
+        version += length - capacity;
+    memcpy(reply + 2, version, strlen(version));
+    board_uart_send(reply, sizeof(reply));
+}
+#endif
 void board_commands_dispatch(const uint8_t *message) {
     switch (message[0]) {
     case C1BusID: // message directed to baccable connected to C1 bus
 
 #if defined(BACCABLE_C1)
         switch (message[1]) {
+        case C1cmdStatusC2:
+            menu_peer_status(0, message + 2);
+            break;
+        case C1cmdStatusBH:
+            menu_peer_status(1, message + 2);
+            break;
         case C1cmdForceFrontBrake:
             chassis_state.front_brake_forced = 1;    // update status
             chassis_state.launch_assist_enabled = 1; // enable launch assist
@@ -77,7 +97,7 @@ void board_commands_dispatch(const uint8_t *message) {
             comfort_state.has_button_press_requested = 5;
             break;
         case C2cmdGetStatus:
-            // nothing to do, since we just need to set weCanSendAMessageReply
+            reply_version(C1cmdStatusC2);
             break;
         default:
             break;
@@ -118,15 +138,7 @@ void board_commands_dispatch(const uint8_t *message) {
     case BhBusIDparamString: // message directed to baccable connected to BH bus in order to transfer a
                              // parameter to print
 #if defined(BACCABLE_BH)
-        memcpy(&dashboard_state.dashboard_page_string_array[0], &message[1],
-               DASHBOARD_MESSAGE_MAX_LENGTH); // copy array that we will use in the main
-
-        if (chassis_state.stability_inverted) { // if esc/tc is active, don't show baccable menu
-            display_state.request_to_send_one_frame = 0;
-        } else {
-            if (display_state.request_to_send_one_frame <= 2)
-                display_state.request_to_send_one_frame += 1; // Send one frame
-        }
+        body_display_submit(&message[1]);
         runtime_state.we_can_send_a_message_reply = currentTime;
         status_led_activity();
 #endif
@@ -134,6 +146,7 @@ void board_commands_dispatch(const uint8_t *message) {
 
     case BhBusIDgetStatus:
 #if defined(BACCABLE_BH)
+        reply_version(C1cmdStatusBH);
         runtime_state.we_can_send_a_message_reply = currentTime;
         status_led_activity();
 #endif
