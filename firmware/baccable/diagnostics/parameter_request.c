@@ -9,8 +9,10 @@ static struct {
     uint32_t started;
 } request;
 
+/* Discard a pending reading when its screen is no longer relevant. */
 void parameter_request_cancel(void) { request.active = 0; }
 
+/* Ask the vehicle for the diagnostic value selected on the current screen. */
 void parameter_request_begin(void) {
     if (request.active && currentTime - request.started < 500)
         return;
@@ -40,6 +42,7 @@ void parameter_request_begin(void) {
     request.active = 1;
 }
 
+/* Accept a matching diagnostic reply and update the current reading. */
 void parameter_request_receive(const CAN_RxHeaderTypeDef *header, const uint8_t *data) {
     if (!request.active)
         return;

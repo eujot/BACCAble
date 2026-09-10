@@ -119,8 +119,9 @@ This function, is enabled by default. If using the new Baccable PCB Board (it in
 
 Firmware is organized under [firmware/baccable](firmware/baccable).
 See the [architecture and extension guide](docs/architecture/README.md),
-[analysis](docs/architecture/ANALYSIS_PL.md), and
-[verification report](docs/architecture/VALIDATION_PL.md).
+[analysis](docs/architecture/ANALYSIS_PL.md),
+[initial verification report](docs/architecture/VALIDATION_PL.md), and
+[final cleanup and validation](docs/architecture/CLEANUP.md).
 The [menu UX guide](docs/architecture/MENU_UX_PL.md) describes navigation,
 favorites, sorting, display transport and the new preference format.
 
@@ -148,7 +149,7 @@ Select `C1`, `C2`, `BH`, or `CAN`. Artifacts are produced in
 longer describe this source tree; use an external Makefile project in your IDE.
 
 The new persistence format is incompatible with previous firmware. Review the
-[storage migration and hardware requirements](docs/architecture/README.md#trwale-dane-i-zgodnosc)
+[storage migration and hardware requirements](docs/architecture/README.md#persistent-data-and-compatibility)
 before updating boards. Vehicle behavior, particularly the Race mask, requires
 hardware validation after the refactor.
 

@@ -9,6 +9,7 @@
 #define TOTAL_USB_DEVICE_SIZE (STORAGE_RECORDS_START - USB_FLASH_START_ADDRESS)
 #define STORAGE_SECTOR_SIZE 512U
 #define STORAGE_SECTOR_COUNT (TOTAL_USB_DEVICE_SIZE / STORAGE_SECTOR_SIZE)
+/* Check that a file-storage request stays within the reserved disk area. */
 static inline bool storage_sector_range(uint32_t sector, uint32_t count) {
     return count > 0 && sector < STORAGE_SECTOR_COUNT && count <= STORAGE_SECTOR_COUNT - sector;
 }

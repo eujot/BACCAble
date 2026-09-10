@@ -1,7 +1,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "platform/stm32/stm32f0xx_it.h"
-// #include "app/main.h"
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_tim1_ch4_trig_com;
 extern PCD_HandleTypeDef hpcd_USB_FS;
@@ -10,9 +9,7 @@ extern UART_HandleTypeDef huart2;
 /******************************************************************************/
 /*           Cortex-M0 Processor Interruption and Exception Handlers          */
 /******************************************************************************/
-/**
- * @brief This function handles Non maskable interrupt.
- */
+/* Halt operation and blink both status LEDs after a non-maskable fault. */
 void NMI_Handler(void) {
     RCC->AHBENR |= RCC_AHBENR_GPIOAEN; // ensure clock is enabled on port gpioA
 
@@ -32,15 +29,10 @@ void NMI_Handler(void) {
 
         tmpBool01 = !tmpBool01;
     }
-    /* USER CODE END NonMaskableInt_IRQn 1 */
 }
 
-/**
- * @brief This function handles Hard fault interrupt.
- */
+/* Halt operation and alternate the status LEDs after a processor fault. */
 void HardFault_Handler(void) {
-
-    // NVIC_SystemReset(); //reset the chip (temporary mask problems)
     // execution ends here
 
     RCC->AHBENR |= RCC_AHBENR_GPIOAEN; // ensure clock is enabled on port gpioA
@@ -64,33 +56,13 @@ void HardFault_Handler(void) {
     }
 }
 
-/**
- * @brief This function handles System service call via SWI instruction.
- */
-void SVC_Handler(void) {
-    /* USER CODE BEGIN SVC_IRQn 0 */
+/* Provide the required service-call entry point; this firmware has no service-call work. */
+void SVC_Handler(void) {}
 
-    /* USER CODE END SVC_IRQn 0 */
-    /* USER CODE BEGIN SVC_IRQn 1 */
+/* Provide the required deferred-service entry point; this firmware has no deferred-service work. */
+void PendSV_Handler(void) {}
 
-    /* USER CODE END SVC_IRQn 1 */
-}
-
-/**
- * @brief This function handles Pendable request for system service.
- */
-void PendSV_Handler(void) {
-    /* USER CODE BEGIN PendSV_IRQn 0 */
-
-    /* USER CODE END PendSV_IRQn 0 */
-    /* USER CODE BEGIN PendSV_IRQn 1 */
-
-    /* USER CODE END PendSV_IRQn 1 */
-}
-
-/**
- * @brief This function handles System tick timer.
- */
+/* Advance the clock used by feature delays and timeouts. */
 void SysTick_Handler(void) { HAL_IncTick(); }
 
 /******************************************************************************/
@@ -100,31 +72,16 @@ void SysTick_Handler(void) { HAL_IncTick(); }
 /* please refer to the startup file (startup_stm32f0xx.s).                    */
 /******************************************************************************/
 
-/**
- * @brief This function handles DMA1 channel 4, 5, 6 and 7 interrupts.
- */
-void DMA1_Channel4_5_6_7_IRQHandler(void) {
-    /* USER CODE BEGIN DMA1_Channel4_5_6_7_IRQn 0 */
+/* Handle completion and errors for the LED-strip transfer. */
+void DMA1_Channel4_5_6_7_IRQHandler(void) { HAL_DMA_IRQHandler(&hdma_tim1_ch4_trig_com); }
 
-    /* USER CODE END DMA1_Channel4_5_6_7_IRQn 0 */
-    HAL_DMA_IRQHandler(&hdma_tim1_ch4_trig_com);
-    /* USER CODE BEGIN DMA1_Channel4_5_6_7_IRQn 1 */
+/* Service USB connection and transfer events. */
+void USB_IRQHandler(void) { HAL_PCD_IRQHandler(&hpcd_USB_FS); }
 
-    /* USER CODE END DMA1_Channel4_5_6_7_IRQn 1 */
-}
-
-void USB_IRQHandler(void) {
-    /* USER CODE BEGIN USB_IRQn 0 */
-
-    /* USER CODE END USB_IRQn 0 */
-    HAL_PCD_IRQHandler(&hpcd_USB_FS);
-    /* USER CODE BEGIN USB_IRQn 1 */
-
-    /* USER CODE END USB_IRQn 1 */
-}
-
+/* Service communication with the other BACCAble boards. */
 void USART2_IRQHandler(void) { HAL_UART_IRQHandler(&huart2); }
 
 #if defined(BACCABLE_C1) || defined(ACT_AS_SCHIZZAFORTE_SERIAL_CONTROLLER)
+/* Service communication with the pedal controller. */
 void USART1_IRQHandler(void) { HAL_UART_IRQHandler(&huart1); }
 #endif

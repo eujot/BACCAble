@@ -4,8 +4,7 @@ CPPFLAGS := -I$(FIRMWARE)
 CFLAGS := -std=c11 -Wall -Wextra -Werror -g -O1 -fsanitize=address,undefined -fno-omit-frame-pointer
 HEADERS := $(shell find stubs $(FIRMWARE)/app $(FIRMWARE)/protocol $(FIRMWARE)/diagnostics $(FIRMWARE)/storage $(FIRMWARE)/features $(FIRMWARE)/transport $(FIRMWARE)/platform $(FIRMWARE)/USB_DEVICE/App $(FIRMWARE)/third_party/printf -name '*.h')
 SOURCES := test_core.c $(FIRMWARE)/protocol/slcan_codec.c $(FIRMWARE)/diagnostics/uds_decode.c \
- $(FIRMWARE)/storage/record_store.c $(FIRMWARE)/features/visible_pages.c \
- $(FIRMWARE)/features/number_format.c $(FIRMWARE)/third_party/printf/printf.c
+ $(FIRMWARE)/storage/record_store.c
 
 test: build/test_core build/test_transport build/test_catalog build/test_menu build/test_menu_large build/test_uart_menu
 	./build/test_core
@@ -31,7 +30,7 @@ build/test_core: $(SOURCES) $(HEADERS) Makefile
 .PHONY: test
 
 MENU_SOURCES := test_menu.c $(addprefix $(FIRMWARE)/, features/menu.c features/menu_model.c \
- features/menu_input.c features/display_stream.c features/dashboard.c features/dashboard_format.c features/number_format.c \
+ features/menu_input.c features/display_stream.c features/dashboard.c features/dashboard_format.c \
  diagnostics/parameter_cache.c diagnostics/parameter_request.c diagnostics/parameter_catalog.c \
  diagnostics/uds_decode.c settings/persistence.c settings/setup_menu.c settings/setup_entries.c \
  third_party/printf/printf.c)

@@ -1,7 +1,7 @@
 #include "platform/system.h"
 #include "platform/debug.h"
 
-// System Clock Configuration
+/* Prepare the clocks required for reliable device and USB operation. */
 void SystemClock_Config(void) {
     HAL_Init();
     RCC_OscInitTypeDef RCC_OscInitStruct = {0};
@@ -18,16 +18,6 @@ void SystemClock_Config(void) {
     }
 
     // configure CRS to stabilize HSI48
-    //__HAL_RCC_CRS_CLK_ENABLE();
-    //
-    // RCC_CRSInitTypeDef crs = {0};
-    // crs.Prescaler = RCC_CRS_SYNC_DIV1;
-    // crs.Source = RCC_CRS_SYNC_SOURCE_USB;
-    // crs.Polarity = RCC_CRS_SYNC_POLARITY_RISING;
-    // crs.ReloadValue = __HAL_RCC_CRS_RELOADVALUE_CALCULATE(48000000, 1000);
-    // crs.ErrorLimitValue = RCC_CRS_ERRORLIMIT_DEFAULT;
-    // crs.HSI48CalibrationValue = 0x20;
-    // HAL_RCCEx_CRSConfig(&crs);
 
     /** Initializes the CPU, AHB and APB buses clocks
      */
@@ -53,11 +43,8 @@ void SystemClock_Config(void) {
     __HAL_RCC_GPIOA_CLK_ENABLE();
 }
 
+/* Stop normal operation and show a persistent fault indication. */
 void Error_Handler(uint16_t halfPeriod) {
-    // status_led_error();
-    // LOGS("System error\r\n");
-    //__disable_irq();
-    // NVIC_SystemReset();
 
     RCC->AHBENR |= RCC_AHBENR_GPIOAEN; // ensure clock is enabled on port gpioA
 
@@ -81,11 +68,4 @@ void Error_Handler(uint16_t halfPeriod) {
 }
 
 // Disable all interrupts
-void system_irq_disable(void) {
-    __disable_irq();
-    __DSB();
-    __ISB();
-}
-
 // Enable all interrupts
-void system_irq_enable(void) { __enable_irq(); }

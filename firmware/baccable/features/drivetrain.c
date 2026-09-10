@@ -1,7 +1,8 @@
 #include "app/powertrain.h"
 #include "features/periodic.h"
-#include "diagnostics/parameter_request.h"
 #if defined(BACCABLE_C1)
+
+/* Advance requested drive-mode, brake and all-wheel-drive changes. */
 void drivetrain_process(void) {
     if (settings_state.awd_disabler_enabled == 1) {
         if (chassis_state.awd_sequence > 0) {

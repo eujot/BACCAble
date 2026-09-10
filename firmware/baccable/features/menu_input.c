@@ -1,5 +1,7 @@
 #include "features/menu_input.h"
 #include <string.h>
+
+/* Recognize one deliberate navigation gesture, including hold-to-return behavior. */
 MenuEvent menu_input_update(MenuInput *input, uint8_t button, bool allowed, uint32_t now) {
     if (!allowed) {
         memset(input, 0, sizeof(*input));

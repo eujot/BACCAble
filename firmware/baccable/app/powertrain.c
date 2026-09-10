@@ -1,11 +1,10 @@
 #include "app/powertrain.h"
 #include "features/periodic.h"
 #include "features/menu.h"
-#include "diagnostics/parameter_request.h"
-
-// uint8_t tmpArr3[2]={C2BusID,C2cmdRaceMaskDefault};
 
 #if defined(BACCABLE_C1)
+
+/* Restore driver preferences and prepare the main board for vehicle operation. */
 void powertrain_init() {
     #ifndef DISABLE_LOW_CONSUME
     power_init();
@@ -23,6 +22,7 @@ void powertrain_init() {
     menu_init();
 }
 
+/* Run the enabled driving, comfort and display features on the main board. */
 void powertrain_process(void) {
     #ifndef DISABLE_LOW_CONSUME
     power_process();

@@ -1,5 +1,6 @@
 #include "vehicle/body_commands.h"
 
+/* Apply enabled locking, window and security behavior to body-control reports. */
 void vehicle_handle_body_commands(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 8)
         return;
@@ -98,20 +99,11 @@ void vehicle_handle_body_commands(const CAN_RxHeaderTypeDef *rx_header, uint8_t 
                 break;
                 // case 3: //we have to close the convertible top
                 //	//send message to close convertible top
-                //	if(currentTime-doorCloseTime>9400){
-                //		frame_data[1]= RF_fob_number; //set proper key fob
-                //		frame_data[2]= 0xD0 | RF_requestor; //set request to close top (0xD0) and
+
                 // requestor 		frame_data[7] = frame_checksum(frame_data,rx_header->DLC); //update
                 // checksum 		can_forward(rx_header, frame_data); //send msg
-                //	}
-                //
-                //
-                //	if(currentTime-doorCloseTime>13400){ //if at least 4sec from close top command is
+
                 // passed, the top shoud be closed 		closeWindowsRequest=0; //task completed
-                //		doorLocksRequestsCounter=0;
-                //	}
-                //
-                //	break;
 
             default:
             }

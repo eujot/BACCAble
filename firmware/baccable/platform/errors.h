@@ -15,8 +15,6 @@ typedef enum _error_t {
 
 // Prototypes
 void error_assert(error_t err);
-uint32_t error_timestamp(error_t err);
-uint8_t error_occurred(error_t err);
 uint32_t error_reg(void);
 
 #endif /* BACCABLE_PLATFORM_ERRORS_H */

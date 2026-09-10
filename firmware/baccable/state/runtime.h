@@ -13,15 +13,11 @@ typedef struct {
 
     uint32_t we_can_send_a_message_reply;
 
-    uint8_t uart_tx_msg[UART_BUFFER_SIZE];
-
     uint8_t low_consume_is_active;
 
     uint32_t last_received_can_msg_time;
 
     uint32_t all_processors_wakeup_time;
-
-    uint8_t usb_inited;
 
     uint32_t last_uart_error_callback;
 

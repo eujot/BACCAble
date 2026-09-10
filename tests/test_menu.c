@@ -173,6 +173,8 @@ static void test_preferences(void) {
     assert(!menu_preferences_decode(&copy, raw));
 }
 static void fresh_menu(void) {
+    dashboard_state.checkbox_symbols[0] = '-';
+    dashboard_state.checkbox_symbols[1] = '+';
     settings_state.is_diesel_enabled = 0;
     dashboard_state.baccable_dashboard_menu_visible = 0;
     now = 1000;
@@ -248,7 +250,7 @@ static void test_controller(void) {
     assert(isnan(parameter_cache_get(35, now)));
     parameter_cache_put(35, 14.2f, now);
     menu_render();
-    assert(strstr(screen, "14.200"));
+    assert(strstr(screen, "14.20"));
     parameter_cache_reset();
     assert(isnan(parameter_cache_get(35, now)));
     /* Data from an unrelated CAN frame cannot refresh an expired oil value. */
@@ -329,11 +331,103 @@ static void test_navigation_regressions(void) {
     assert(menu_preferences_decode(&prefs, saved));
     assert(!menu_page_visible(&prefs, 0, 23));
 }
+static void expect_reading(uint8_t engine, uint16_t id, float first, float second, const char *expected) {
+    int index = menu_page_index(engine, id);
+    assert(index >= 0);
+    const ParameterPage *page = &parameter_pages[engine][index];
+    float values[] = {first, second};
+    char text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
+    dashboard_format_values(page->name, values, page->parameter_ids, text);
+    assert(!strcmp(text, expected));
+}
+static void expect_setup(uint8_t id, const char *expected) {
+    const SetupParam *param = setup_find_by_flash_index(id);
+    assert(param && param->render);
+    memset(dashboard_setup_screen, 'X', sizeof(dashboard_setup_screen));
+    param->render();
+    assert(!memcmp(dashboard_setup_screen, expected, strlen(expected)));
+    for (unsigned i = strlen(expected); i < sizeof(dashboard_setup_screen); ++i)
+        assert(dashboard_setup_screen[i] == ' ');
+}
+static void test_readable_screens(void) {
+    fresh_menu();
+    expect_reading(0, 0x12, 100, 100, "Oil temp 100 C");
+    expect_reading(1, 0x98, 100, 100, "Oil temp 100 C");
+    expect_reading(0, 0x20, 90, 90, "Coolant temp  90C");
+    expect_reading(1, 0xa0, -20, -20, "Coolant temp -20C");
+    expect_reading(0, 0x18, 14.2f, 14.2f, "Battery 14.20 V");
+    expect_reading(0, 0x17, -12.3f, -12.3f, "Battery  -12.3 A");
+    expect_reading(0, 0x07, 14.2f, -12.3f, "Batt 14.2V  -12.3A");
+    expect_reading(0, 0x07, 12.1f, -150.5f, "Batt 12.1V -150.5A");
+    expect_reading(0, 0x04, 100, 90, "Oil 100C Cool  90C");
+    expect_reading(0, 0x02, 1.2f, 90, "Oil1.2bar Cool 90C");
+    expect_reading(1, 0x8d, 650, 650, "DPF temp  650 C");
+    expect_reading(1, 0x99, 12.34f, 12.34f, "Oil press 12.34bar");
+    expect_reading(1, 0xa6, -0.65f, -0.65f, "Turbo  -0.65 bar");
+    expect_reading(1, 0xa8, -0.5f, -0.5f, "Boost req -0.50bar");
+    expect_reading(1, 0xa6, -33.768f, -33.768f, "Turbo -33.77 bar");
+    expect_reading(0, 0x18, NAN, NAN, "Battery    -- V");
+    expect_reading(0, 0x2d, 41, 41, "Best100-200 MISS");
+
+    settings_state.launch_torque_threshold = 25;
+    expect_setup(18, "Launch  25 Nm");
+    settings_state.launch_torque_threshold = 600;
+    expect_setup(18, "Launch 600 Nm");
+    settings_state.shift_threshold = 4500;
+    expect_setup(5, "Shift at 4500 RPM");
+    settings_state.is_diesel_enabled = 0;
+    expect_setup(16, "Engine: Gasoline");
+    settings_state.is_diesel_enabled = 1;
+    expect_setup(16, "Engine: Diesel");
+    settings_state.pedal_map_power = -10;
+    expect_setup(29, "Pedal trim -10");
+    settings_state.pedal_map_power = 10;
+    expect_setup(29, "Pedal trim +10");
+    settings_state.close_windows_with_door_lock = 2;
+    expect_setup(25, "Close: 2 locks");
+    settings_state.open_windows_with_door_lock = 0;
+    expect_setup(26, "Open windows OFF");
+    settings_state.pedal_booster_enabled = 2;
+    expect_setup(20, "Pedal: Bypass");
+
+    const char *short_templates[] = {"", "$", "$1", "$1.", "$1.0"};
+    float values[] = {0, 0};
+    const uint8_t ids[] = {1, 1};
+    char text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
+    for (unsigned i = 0; i < sizeof(short_templates) / sizeof(short_templates[0]); ++i) {
+        dashboard_format_values(short_templates[i], values, ids, text);
+        assert(!strcmp(text, short_templates[i]));
+    }
+}
+static void test_cache_flags(void) {
+    parameter_cache_reset();
+    const uint8_t ids[] = {0, 7, 8, 31, 32, 95, 96, 99};
+    for (unsigned i = 0; i < sizeof(ids); ++i) {
+        assert(isnan(parameter_cache_get(ids[i], 0)));
+        parameter_cache_put(ids[i], i + 0.5f, UINT32_MAX - 100);
+    }
+    parameter_cache_put(7, NAN, UINT32_MAX - 100);
+    parameter_cache_put(96, INFINITY, UINT32_MAX - 100);
+    for (unsigned i = 0; i < sizeof(ids); ++i) {
+        float value = parameter_cache_get(ids[i], 100);
+        if (ids[i] == 7 || ids[i] == 96)
+            assert(isnan(value));
+        else
+            assert(value == i + 0.5f);
+        assert(isnan(parameter_cache_get(ids[i], 3000)));
+    }
+    parameter_cache_put(255, 1, 0);
+    assert(isnan(parameter_cache_get(255, 0)));
+    parameter_cache_reset();
+    assert(isnan(parameter_cache_get(99, 0)));
+}
 int main(void) {
     test_input();
     test_display();
     test_preferences();
     test_controller();
     test_navigation_regressions();
+    test_readable_screens();
+    test_cache_flags();
     puts("PASS: menu gestures, stable views, favorites, sorting, migration, save failure, UDS freshness");
 }

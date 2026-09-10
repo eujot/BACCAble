@@ -2,6 +2,7 @@
 #include "app/powertrain.h"
 #include "features/body.h"
 /* CAN ID 0x00000090. */
+/* Restore BACCAble text when factory display content would replace it. */
 void vehicle_handle_display_content(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
 
 #if defined(BACCABLE_BH)
@@ -18,6 +19,7 @@ void vehicle_handle_display_content(const CAN_RxHeaderTypeDef *rx_header, uint8_
 }
 
 /* CAN ID 0x0000025A. */
+/* Apply the configured driving-mode presentation on the dashboard. */
 void vehicle_handle_drive_style_display(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 1)
         return;
@@ -30,7 +32,6 @@ void vehicle_handle_drive_style_display(const CAN_RxHeaderTypeDef *rx_header, ui
                         // 0x20=dynamic, 0x10=Allweather, 0x04=race)
                 frame_data[0] = (frame_data[0] & ~0x7C) | 0x04;
                 can_forward(rx_header, frame_data); // transmit the modified packet
-                // status_led_activity();
             }
         }
     }
@@ -38,6 +39,7 @@ void vehicle_handle_drive_style_display(const CAN_RxHeaderTypeDef *rx_header, ui
 }
 
 /* CAN ID 0x00000356. */
+/* Apply the preference for suppressing a blinking odometer. */
 void vehicle_handle_odometer(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 5)
         return;
@@ -53,6 +55,7 @@ void vehicle_handle_odometer(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fram
 }
 
 /* CAN ID 0x0000046C. */
+/* Update body-side driving-mode presentation and related requests. */
 void vehicle_handle_body_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 8)
         return;
@@ -72,7 +75,7 @@ void vehicle_handle_body_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_
                 (frame_data[7] & ~0x1F) |
                 0x0C; // set Race mode (0x30) to show on IPC the race screen (msg from body to IPC, ETM, ESEM)
             can_forward(rx_header, frame_data); // transmit the modified packet
-            // can_process(); //we try to send it ASAP - I commented it since it is not solving the delay
+
             // problem as expected status_led_activity();
         }
     }
@@ -83,6 +86,7 @@ void vehicle_handle_body_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_
 }
 
 /* CAN ID 0x000004AF. */
+/* Track stability-control status and the permitted dashboard presentation. */
 void vehicle_handle_stability_status(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 2)
         return;
@@ -100,7 +104,6 @@ void vehicle_handle_stability_status(const CAN_RxHeaderTypeDef *rx_header, uint8
                     frame_data[1] |
                     0x04; // set function2status bit (on C1 it is a msg from BSM to IPC, DASM, CDCM)
                 can_forward(rx_header, frame_data); // transmit the modified packet
-                // can_process(); //we try to send it ASAP - Commented since it is not solving delay problem
             }
         }
     }
@@ -108,6 +111,7 @@ void vehicle_handle_stability_status(const CAN_RxHeaderTypeDef *rx_header, uint8
 }
 
 /* CAN ID 0x00000545. */
+/* Apply requested dashboard-brightness feedback. */
 void vehicle_handle_brightness(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
 
 #if defined(BACCABLE_C1)
@@ -123,6 +127,7 @@ void vehicle_handle_brightness(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
 }
 
 /* CAN ID 0x000005AC. */
+/* Apply pending audible-feedback requests to the vehicle's chime report. */
 void vehicle_handle_chime(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
 
 #if defined(BACCABLE_BH)

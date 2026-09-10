@@ -2,6 +2,8 @@
 #include "features/periodic.h"
 #include "diagnostics/parameter_request.h"
 #if defined(BACCABLE_C1)
+
+/* Keep the pedal controller aligned with the selected driving preferences. */
 void pedal_booster_process(void) {
     if (settings_state.pedal_booster_enabled) { // if enabled, communicate with schizzaForte each 250msec
         if (telemetry_state.current_rpm_speed < 400)

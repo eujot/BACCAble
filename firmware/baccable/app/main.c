@@ -2,6 +2,7 @@
 #include "stm32f0xx_it.h"
 #include "diagnostics/parameter_cache.h"
 
+/* Prepare this board's enabled features and restore its saved preferences. */
 static void application_init(void) {
     SystemClock_Config();
     status_led_init();
@@ -28,6 +29,7 @@ static void application_init(void) {
 #endif
 }
 
+/* Deliver incoming vehicle updates while leaving time for other device features. */
 static void receive_can_frames(void) {
     /* A bounded batch drains the hardware FIFO without starving periodic work. */
     for (unsigned budget = 0; budget < 8 && is_can_msg_pending(CAN_RX_FIFO0); ++budget) {
@@ -59,6 +61,7 @@ static void receive_can_frames(void) {
     }
 }
 
+/* Continue the requested fault-clearing sequence across vehicle controllers. */
 static void clear_faults_process(void) {
 #if defined(BACCABLE_C1) || defined(BACCABLE_C2) || defined(BACCABLE_BH)
     if (!diagnostics_state.clear_faults_request ||
@@ -80,6 +83,7 @@ static void clear_faults_process(void) {
 #endif
 }
 
+/* Keep vehicle communication, user controls and enabled features running. */
 int main(void) {
     application_init();
     for (;;) {

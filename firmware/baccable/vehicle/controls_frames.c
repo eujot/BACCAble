@@ -1,6 +1,7 @@
 #include "vehicle/standard_frames.h"
 #include "app/powertrain.h"
 /* CAN ID 0x00000192. */
+/* Interpret gear-lever controls used by enabled driving features. */
 void vehicle_handle_gear_lever(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 1)
         return;
@@ -40,7 +41,7 @@ void vehicle_handle_gear_lever(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
                 if (comfort_state.force_q_vexhaust_valve_opened == 0) { // if valves are closed
                     comfort_state.force_q_vexhaust_valve_opened = 1;    // start override sequence
                 } else {
-                    comfort_state.force_q_vexhaust_valve_opened = 4; // return control to ecu
+                    comfort_state.force_q_vexhaust_valve_opened = 4;
                 }
 
                 // equivalent activity for chinese valves
@@ -53,33 +54,13 @@ void vehicle_handle_gear_lever(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
         }
     }
     // P button, located on the gear shift lever, is on byte 0, bit 0 and 1 (3=failure, 2=pressed, 1=not
-    // pressed,0=init) gear shift requested position is on byte 0 da bit 7 a bit 4. release button, located on
+    // pressed,0=init) gear shift requested position is on byte 0 bits 7 through 4. release button, located on
     // the gear shift lever, is on byte 0, bit 3 and 2 (0=not pressed, 1=pressed)
 #endif
 }
 
-/* CAN ID 0x000002EE. */
-void vehicle_handle_radio_buttons(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
-    // presente solo su BH can bus a 125kbps
-    // this message contains the following radio buttons on the steering wheel:
-    // radio right button is on byte 3 bit6 (1=button pressed)
-    // radio left button on the steering wheel is on byte 3 bit4 (1=button pressed)
-    // radio Voice command button is on byte 3 bit2 (1= button pressed)
-    // phone call button is on byte3 bit0(1=button pressed)
-    // volume  is on byte 4 (volume up increases the value, volume down reduces the value. once arrived to 255
-    // restarts from 0 and under 0 goes to 255) volume change is on byte5 bit 7 and bit6 (1=volume was
-    // increased rotation, 2=volume decreased rotation, 3=volume mute button press) (then reading the entire
-    // byte we will see respectively, 0x40, 0x80,  0xC0) sample: uint8_t tmpCmd=frame_data[5] >>6; //1=volume
-    // was increased rotation, 2=volume decreased rotation
-}
-
-/* CAN ID 0x00000358. */
-void vehicle_handle_volume(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
-
-    // should contain volume position (number of ticks in byte2, and direction in byte 2, bit 6 and 5)
-}
-
 /* CAN ID 0x000004B1. */
+/* Maintain the selected Start/Stop preference from reported vehicle status. */
 void vehicle_handle_start_stop(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
 
 #if defined(BACCABLE_C1)
@@ -119,6 +100,7 @@ void vehicle_handle_start_stop(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
 }
 
 /* CAN ID 0x000005A0. */
+/* Interpret lane-assist button activity used by the virtual controls. */
 void vehicle_handle_lane_button(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 5)
         return;
@@ -140,7 +122,7 @@ void vehicle_handle_lane_button(const CAN_RxHeaderTypeDef *rx_header, uint8_t *f
 
         if ((currentTime - chassis_state.lan_ebutton_press_begin_time) > 2000) { // if pressed since 2 seconds
             // notify to C2, that LANE was pressed for more than 3 seconds -> request to toggle ESC/TC
-            // status_led_error();
+
             if (settings_state.esc_tc_customizator_enabled) {
                 uint8_t tmpArr1[2] = {C1BusID, C1cmdLaneSingleTap};
                 board_uart_send(tmpArr1, 2);
@@ -171,6 +153,7 @@ void vehicle_handle_lane_button(const CAN_RxHeaderTypeDef *rx_header, uint8_t *f
 }
 
 /* CAN ID 0x000005A5. */
+/* Track cruise-control availability for steering-wheel menu use. */
 void vehicle_handle_cruise_control(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 1)
         return;
@@ -179,15 +162,15 @@ void vehicle_handle_cruise_control(const CAN_RxHeaderTypeDef *rx_header, uint8_t
 #if defined(BACCABLE_C1)
     if ((frame_data[0] >> 7) == 1) {
         comfort_state.cruise_control_disabled = 0; // disable additional parameter menu commands
-        // status_led_activity();
+
     } else {
         comfort_state.cruise_control_disabled = 1; // enable additional parameter menu commands
-        // status_led_error();
     }
 #endif
 }
 
 /* CAN ID 0x000005B0. */
+/* Track park-assist state used by parking features. */
 void vehicle_handle_park_assist(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 2)
         return;
@@ -197,7 +180,7 @@ void vehicle_handle_park_assist(const CAN_RxHeaderTypeDef *rx_header, uint8_t *f
     if ((frame_data[1] == 0x20) &&
         (chassis_state.dyno_state_machine ==
          0xff)) { // park assist button was pressed and there is no dyno Start sequence in progress
-        // HAS_buttonPressRequested=1;
+
         chassis_state.park_assist_button_press_count++;
         if (chassis_state.park_assist_button_press_count > 5) { // more or less 6 seconds
             chassis_state.park_assist_button_press_count = 0;   // reset the count
@@ -206,13 +189,13 @@ void vehicle_handle_park_assist(const CAN_RxHeaderTypeDef *rx_header, uint8_t *f
         }
     } else {
         chassis_state.park_assist_button_press_count = 0; // reset the count assigning it zero
-                                                          // HAS_buttonPressRequested=0;
     }
 #endif
     // the park assistant button press event is on byte 1 bit 5 (1=pressed)
 }
 
 /* CAN ID 0x0000073C. */
+/* Track adaptive-cruise operation and supported automatic-resume conditions. */
 void vehicle_handle_adaptive_cruise(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 8)
         return;
@@ -221,7 +204,7 @@ void vehicle_handle_adaptive_cruise(const CAN_RxHeaderTypeDef *rx_header, uint8_
     if (rx_header->DLC >= 8) {
         switch ((frame_data[7] >> 4) & 0x07) {
         case 0x00: // ACC is off
-            // status_led_error();
+
             comfort_state.acc_disabled = 1; // enable additional parameter menu commands
             comfort_state.acc_engaged = 0;  // acc not engaged
             break;

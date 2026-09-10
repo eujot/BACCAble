@@ -2,6 +2,7 @@
 #include "vehicle/diagnostic_frames.h"
 #include "diagnostics/parameter_request.h"
 
+/* Deliver diagnostic replies and acknowledge supported vehicle-state changes. */
 void vehicle_dispatch_diagnostic(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
 #if defined(BACCABLE_C1)
     if (security_state.immobilizer_enabled &&
@@ -32,7 +33,7 @@ void vehicle_dispatch_diagnostic(const CAN_RxHeaderTypeDef *rx_header, uint8_t *
                     }
                 }
             } else if ((rx_header->ExtId & 0xFFFFF0FF) == 0x18DAF0C7) { // if it is a reply from rfhub
-                // if(floodTheBusStartTime==0){ //this allows to read rfhub messages only if it was the first
+
                 // time
                 if (responseOffset < 2 &&
                     rx_header->DLC >
@@ -52,7 +53,6 @@ void vehicle_dispatch_diagnostic(const CAN_RxHeaderTypeDef *rx_header, uint8_t *
                         break;
                     }
                 }
-                //}
             }
             if (security_state.flood_the_bus == 1) { // if we engaged the immobilizer
                 security_state.flood_the_bus_start_time =
@@ -130,7 +130,6 @@ void vehicle_dispatch_diagnostic(const CAN_RxHeaderTypeDef *rx_header, uint8_t *
 
                     diagnostics_state.seatbelt_alarm_disabled++; // record that operation was executed
                     diagnostics_state.seatbelt_alarm_status_request_time = currentTime;
-                    diagnostics_state.last_sent_uds_parameter_request_time = currentTime;
                 }
             }
         }
@@ -163,7 +162,7 @@ void vehicle_dispatch_diagnostic(const CAN_RxHeaderTypeDef *rx_header, uint8_t *
                 diagnostics_state.route_std_id_msg =
                     0xFF; // set this to disable the request. only one message is routed to avoid bus flood
                 if (diagnostics_state.route_offset < rx_header->DLC) { // send only if offset is correct
-                    uint8_t sizeToCopy = 5;                            //
+                    uint8_t sizeToCopy = 5;
                     if ((rx_header->DLC - diagnostics_state.route_offset) < sizeToCopy)
                         sizeToCopy = rx_header->DLC - diagnostics_state.route_offset;
                     memcpy(&diagnostics_state.route_msg_data[3], &frame_data[diagnostics_state.route_offset],
@@ -171,7 +170,6 @@ void vehicle_dispatch_diagnostic(const CAN_RxHeaderTypeDef *rx_header, uint8_t *
                     if (sizeToCopy < 5)
                         memset(&diagnostics_state.route_msg_data[3 + sizeToCopy], 0x00, 5 - sizeToCopy);
 
-                    // send it
                     can_tx(&diagnostics_state.route_msg_header, diagnostics_state.route_msg_data);
                     status_led_activity();
                 }

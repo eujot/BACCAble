@@ -16,22 +16,19 @@ typedef struct {
 } ParameterPage;
 
 typedef struct {
+    /* Group naturally aligned fields together; no packed/unaligned accesses. */
     uint32_t request_id;
-    uint8_t request_length;
     uint32_t request_data;
     uint32_t response_id;
-    uint8_t value_length;
-    uint8_t value_offset;
     int32_t raw_offset;
     float scale;
     int32_t scaled_offset;
-    uint8_t unit[7];
-    uint8_t decimal_places;
+    uint8_t request_length;
+    uint8_t value_length;
+    uint8_t value_offset;
 } ParameterDefinition;
 
 extern float displayed_parameter_values[2];
-extern uint8_t parameter_page_visibility[240];
-extern uint8_t parameter_setup_page_index;
 extern uint8_t parameter_page_count;
 extern uint8_t gasoline_page_count;
 extern uint8_t diesel_page_count;

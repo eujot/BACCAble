@@ -2,6 +2,7 @@
 #include "vehicle/steering_controls.h"
 #include "features/menu.h"
 
+/* Interpret steering-wheel controls for the menu and enabled driving assistance. */
 void vehicle_handle_steering_controls(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC != 3)
         return;

@@ -13,6 +13,7 @@ static const PedalMap maps[] = {{0x00, 'B', 0, 0, 0},
                                 {0xdb, 'D', 192, 2.0f, 3.2f},
                                 {0x24, 'R', 230, 2.4f, 1.8f}};
 
+/* Request a new accelerator-response map from the pedal controller. */
 void pedal_booster_set_map(uint8_t selection) {
     unsigned index = selection >= 2 && selection <= 6 ? selection - 2 : 0;
     const PedalMap *map = &maps[index];
@@ -32,6 +33,7 @@ void pedal_booster_set_map(uint8_t selection) {
     pedal_uart_send(message, sizeof(message));
 }
 
+/* Check whether the selected pedal behavior needs a controller update. */
 uint8_t pedal_booster_needs_update(void) {
     unsigned selection = settings_state.pedal_booster_enabled;
     if (selection == 0)

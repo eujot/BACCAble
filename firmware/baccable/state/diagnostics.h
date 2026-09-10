@@ -7,7 +7,6 @@ typedef struct {
 #if defined(BACCABLE_C1) || defined(ACT_AS_SCHIZZAFORTE_SERIAL_CONTROLLER)
     CAN_TxHeaderTypeDef uds_parameter_request_msg_header;
     uint8_t uds_parameter_request_msg_data[8];
-    uint32_t last_sent_uds_parameter_request_time;
     uint8_t route_std_id_msg;
     uint8_t route_offset;
     uint32_t route_msg_id;
@@ -15,8 +14,6 @@ typedef struct {
     uint8_t route_msg_data[8];
     uint8_t seatbelt_alarm_disabled;
     uint32_t seatbelt_alarm_status_request_time;
-    CAN_TxHeaderTypeDef seat_belt_msg_header[2];
-    uint8_t seatbelt_msg_data[2][8];
 #endif
 
     uint8_t clear_faults_request;

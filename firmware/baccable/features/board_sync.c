@@ -1,12 +1,13 @@
 #include "app/powertrain.h"
 #include "features/periodic.h"
-#include "diagnostics/parameter_request.h"
 #if defined(BACCABLE_C1)
+
+/* Keep auxiliary boards informed of the main board's enabled features. */
 void board_sync_process(void) {
     if (runtime_state.instruct_slave_boards_trigger_enabled) {
         if ((currentTime - runtime_state.all_processors_wakeup_time) >
             TIMING__C1____DELAY_BEFORE_SERIAL_INSTRUCT_OF_C2BH_AFTER_OTHER_CHIP_WAKE_MS) {
-            // status_led_blink_error(5);
+
             runtime_state.instruct_slave_boards_trigger_enabled = 0; // avoid to return here
 
             // send messages to slave boards

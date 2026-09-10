@@ -1,5 +1,6 @@
 #include "vehicle/engine_status.h"
 
+/* Track engine operation and update features that depend on startup or shutdown. */
 void vehicle_handle_engine_status(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 2)
         return;
@@ -9,7 +10,6 @@ void vehicle_handle_engine_status(const CAN_RxHeaderTypeDef *rx_header, uint8_t 
     if (rx_header->DLC >= 2) {
         telemetry_state.current_rpm_speed =
             (frame_data[0] * 256 + (frame_data[1] & ~0x3)) / 4; // extract rpm speed
-        // status_led_activity();
     }
 #endif
 #if defined(BACCABLE_C2)
@@ -29,8 +29,7 @@ void vehicle_handle_engine_status(const CAN_RxHeaderTypeDef *rx_header, uint8_t 
 
         if (chassis_state.awd_sequence > 0) {
             // disable 4dw function
-            chassis_state.awd_sequence = 0;            // disable 4dw function
-            dashboard_state.commands_menu_enabled = 1; // enable menu commands
+            chassis_state.awd_sequence = 0; // disable 4dw function
         }
 
         if (dashboard_state.baccable_dashboard_menu_visible == 1) {

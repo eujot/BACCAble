@@ -38,6 +38,7 @@
 
 USBD_HandleTypeDef hUsbDeviceFS;
 
+/* Start the USB disk or serial interface selected for this board. */
 void MX_USB_DEVICE_Init(void) {
     // --- Reset USB core --- prevents problems when exiting from a Hardware Reset
     __HAL_RCC_USB_FORCE_RESET();
@@ -47,37 +48,24 @@ void MX_USB_DEVICE_Init(void) {
 
     /* Init Device Library, add supported class and start the library. */
     if (USBD_Init(&hUsbDeviceFS, &FS_Desc, DEVICE_FS) != USBD_OK) {
-        // status_led_error();
-        // status_led_activity();
         Error_Handler(6000);
     }
-
-//*/
 #ifdef ENABLE_USB_MASS_STORAGE
     if (USBD_RegisterClass(&hUsbDeviceFS, &USBD_MSC) != USBD_OK) {
 #else
     if (USBD_RegisterClass(&hUsbDeviceFS, &USBD_CDC) != USBD_OK) {
 #endif
-        // status_led_error();
-        // status_led_activity();
         Error_Handler(6500);
     }
-//*/
 #ifdef ENABLE_USB_MASS_STORAGE
     if (USBD_MSC_RegisterStorage(&hUsbDeviceFS, &USBD_Storage_Interface_fops_FS) != USBD_OK) {
 #else
     if (USBD_CDC_RegisterInterface(&hUsbDeviceFS, &USBD_Interface_fops_FS) != USBD_OK) {
 #endif
-        // status_led_error();
-        // status_led_activity();
         Error_Handler(7000);
     }
 
     if (USBD_Start(&hUsbDeviceFS) != USBD_OK) {
-        // status_led_error();
-        // status_led_activity();
         Error_Handler(7500);
     }
-
-    //*/
 }

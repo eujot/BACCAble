@@ -7,13 +7,10 @@ typedef struct {
 #if defined(BACCABLE_C1) || defined(ACT_AS_SCHIZZAFORTE_SERIAL_CONTROLLER)
     uint16_t engine_on_since_more_than5seconds;
     uint8_t oil_pressure;
-    uint8_t oil_level;
     uint8_t oil_temperature;
-    uint8_t water_temperature;
     int16_t torque;
     uint8_t battery_state_of_charge;
     uint16_t battery_current;
-    uint8_t transmission_temperature;
     uint8_t diesel_engine_regeneration_mode;
     uint8_t regeneration_in_progress;
     uint8_t loops_from_regeneration_ended;

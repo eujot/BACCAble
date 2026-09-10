@@ -37,7 +37,6 @@ ChassisState chassis_state = {
 #if defined(BACCABLE_C2)
     .dyno_mode_enabled = 0,
     .dyno_state_machine = 0xff,
-    .tester_msg_sent = 0,
     .dyno_msg_data = {{
                           0x02,
                           0x10,

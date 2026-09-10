@@ -13,7 +13,6 @@ typedef struct {
 #if defined(BACCABLE_C2)
     uint8_t dyno_mode_enabled;
     uint8_t dyno_state_machine;
-    uint16_t tester_msg_sent;
     uint8_t dyno_msg_data[5][6];
     CAN_TxHeaderTypeDef dyno_msg_header;
     uint32_t last_sent_tester_presence_msg_time;

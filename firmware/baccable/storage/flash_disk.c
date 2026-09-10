@@ -8,9 +8,12 @@
 
 static uint8_t page_buffer[STORAGE_PAGE_SIZE];
 
+/* Report whether the device's file storage is available. */
 DSTATUS disk_status(BYTE drive) { return drive == 0 && flash_storage_available() ? 0 : STA_NOINIT; }
+/* Check that the device has the supported storage capacity. */
 DSTATUS disk_initialize(BYTE drive) { return disk_status(drive); }
 
+/* Read requested file-storage sectors within the reserved disk area. */
 DRESULT disk_read(BYTE drive, BYTE *buffer, LBA_t sector, UINT count) {
     if (drive || !buffer || !storage_sector_range(sector, count))
         return RES_PARERR;
@@ -21,6 +24,7 @@ DRESULT disk_read(BYTE drive, BYTE *buffer, LBA_t sector, UINT count) {
     return RES_OK;
 }
 #if FF_FS_READONLY == 0
+/* Update file-storage sectors without overwriting neighboring data. */
 DRESULT disk_write(BYTE drive, const BYTE *buffer, LBA_t sector, UINT count) {
     if (drive || !buffer || !storage_sector_range(sector, count))
         return RES_PARERR;
@@ -66,6 +70,7 @@ DRESULT disk_write(BYTE drive, const BYTE *buffer, LBA_t sector, UINT count) {
     return result;
 }
 #endif
+/* Provide the storage geometry and completion status requested by the filesystem. */
 DRESULT disk_ioctl(BYTE drive, BYTE command, void *buffer) {
     if (drive)
         return RES_PARERR;

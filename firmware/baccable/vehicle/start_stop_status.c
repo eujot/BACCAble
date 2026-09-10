@@ -1,5 +1,6 @@
 #include "vehicle/start_stop_status.h"
 
+/* Keep automatic engine-stop control aligned with vehicle status. */
 void vehicle_handle_start_stop_status(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 3)
         return;

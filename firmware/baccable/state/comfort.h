@@ -19,15 +19,7 @@ typedef struct {
     uint8_t acc_disabled;
     uint8_t acc_engaged;
     uint8_t wheel_pressed_button_id;
-    uint8_t last_pressed_wheel_button;
-    uint32_t last_pressed_wheel_button_time;
-    uint32_t last_pressed_wheel_button_duration;
     uint32_t last_pressed_speed_up_wheel_button_duration;
-    uint8_t engine_remote_start_request;
-    CAN_TxHeaderTypeDef remote_start_msg_header;
-    uint8_t remote_start_msg_data[8];
-    uint8_t press_start_button;
-    CAN_TxHeaderTypeDef body4_msg_header;
     uint32_t time_since_last_received_accelerator_message;
     uint8_t close_windows_request;
     uint32_t door_close_time;

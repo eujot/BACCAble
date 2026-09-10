@@ -1,5 +1,6 @@
 #include "diagnostics/uds_decode.h"
 
+/* Convert a valid diagnostic reply into its displayed measurement. */
 bool uds_decode_value(const uint8_t *data, size_t length, uint16_t did, uint8_t offset, uint8_t width,
                       int32_t raw_offset, float scale, int32_t scaled_offset, float *value) {
     if (!data || !value || length < 4 || length > 8 || width == 0 || width > 4)

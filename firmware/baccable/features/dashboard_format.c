@@ -1,15 +1,19 @@
 #include "app/powertrain.h"
 #include <stdbool.h>
 #if defined(BACCABLE_C1)
+
+/* Append display text while respecting the available screen width. */
 static void append_text(char *output, size_t *length, const char *text) {
     while (*text && *length < DASHBOARD_MESSAGE_MAX_LENGTH)
         output[(*length)++] = *text++;
 }
 
+/* Choose a known status label or the unavailable fallback. */
 static unsigned enum_index(float value, unsigned fallback) {
     return isfinite(value) && value >= 0 && value < fallback ? (unsigned)value : fallback;
 }
 
+/* Describe a reported gear, regeneration, drive mode or pedal-map status. */
 static const char *enum_text(uint32_t id, float value, char symbol[2]) {
     switch (id) {
     case 0x17:
@@ -40,6 +44,7 @@ static const char *enum_text(uint32_t id, float value, char symbol[2]) {
     }
 }
 
+/* Format a reading or performance-run status without showing truncated numbers. */
 static const char *number_text(uint32_t id, float value, unsigned decimals, unsigned width, char buffer[20]) {
     bool short_run = id == 0x1a || id == 0x1c;
     bool long_run = id == 0x1b || id == 0x1d;
@@ -65,12 +70,16 @@ static const char *number_text(uint32_t id, float value, unsigned decimals, unsi
     return buffer;
 }
 
+/* Recognize a numeric field in a display template. */
 static bool number_placeholder(const char *text) {
-    return strlen(text) >= 5 && text[0] == '$' && text[1] >= '0' && text[1] <= '9' && text[2] == '.' &&
-           text[3] >= '0' && text[3] <= '9' && text[4] == 'f';
+    /* Each successful check also proves that byte is not the string terminator. */
+    return text[0] == '$' && text[1] >= '0' && text[1] <= '9' && text[2] == '.' && text[3] >= '0' &&
+           text[3] <= '9' && text[4] == 'f';
 }
 
 /* The caller provides DASHBOARD_MESSAGE_MAX_LENGTH + 1 output bytes. */
+
+/* Build a readable screen from its labels, values and units. */
 void dashboard_format_values(const char *template, float values[2], const uint8_t paramId[2], char *result) {
     size_t length = 0;
     unsigned element = 0;
@@ -95,20 +104,15 @@ void dashboard_format_values(const char *template, float values[2], const uint8_
         append_text(result, &length, formatted);
         ++element;
         text += 5;
+        /* A run status is text, so it must not acquire the numeric seconds suffix. */
+        if (formatted == statistics_labels[0] || formatted == statistics_labels[1]) {
+            if (*text == ' ')
+                ++text;
+            if (*text == 's')
+                ++text;
+        }
     }
     result[length] = '\0';
 }
 
-uint8_t dashboard_remove_placeholders(char *text) {
-    char *read = text, *write = text;
-    while (*read) {
-        if (number_placeholder(read) || !strncmp(read, "$enum", 5)) {
-            read += 5;
-        } else {
-            *write++ = *read++;
-        }
-    }
-    *write = '\0';
-    return (uint8_t)(write - text);
-}
 #endif

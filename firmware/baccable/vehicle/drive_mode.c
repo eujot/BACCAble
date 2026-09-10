@@ -1,5 +1,6 @@
 #include "vehicle/drive_mode.h"
 
+/* Update the current driving mode and its related feature behavior. */
 void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 8)
         return;
@@ -21,15 +22,10 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
                 (frame_data[1] & ~0x7C) | 0x30; // set Race mode (0x30) to show on IPC the race screen (msg
                                                 // from body to TCM, IPC, ECM, DTCM, DCTM, DASM, CDCM, BCM)
         }
-        // uint8_t tmpCounter=(frame_data[6] & 0x0F)+1;
-        // if(tmpCounter>0x0F) tmpCounter=0;
-        // frame_data[6]= (frame_data[6] & 0xF0) | tmpCounter;   //increment counter
+
         frame_data[7] = frame_checksum(frame_data, rx_header->DLC); // update CRC
         can_forward(rx_header, frame_data);                         // transmit the modified packet
-        // can_process(); //we try to send it ASAP - I commented it since It had no success
-        // status_led_activity();
     }
-    // memcpy(&DNA_msg_data, frame_data, 8);
 
 #endif
 
@@ -102,25 +98,21 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
     telemetry_state.drive_mode =
         frame_data[1] & 0x7C; // 7C is the mask from bit 6 to 2 (we avoid bit shift to save cpu loops)
     if (chassis_state.stability_inverted) {
-        // memcpy(&DNA_msg_data, frame_data, 8);
+
         if (telemetry_state.drive_mode == 0x30) { // race
-            // DNA_msg_data[1]= (DNA_msg_data[1] & ~0x7C) | (0x08 & 0x7C); //set Dynamic mode (0x08) to enable
+
             // ESC and TC
             frame_data[1] =
                 (frame_data[1] & ~0x7C) | 0x08; // set Dynamic mode (0x08) to enable ESC and TC (msg from body
                                                 // to HAL, ORC, EPS, BSM. this disables controls)
         } else {
-            // DNA_msg_data[1] = (DNA_msg_data[1] & ~0x7C) | (0x30 & 0x7C);  //set Race mode (0x30) to disable
+
             // ESC and TC
             frame_data[1] = (frame_data[1] & ~0x7C) | 0x30; // set Race mode (0x30) to disable ESC and TC
         }
-        // uint8_t tmpCounter=(frame_data[6] & 0x0F)+1;
-        // if(tmpCounter>0x0F) tmpCounter=0;
-        // frame_data[6]= (frame_data[6] & 0xF0) | tmpCounter;   //increment counter
+
         frame_data[7] = frame_checksum(frame_data, rx_header->DLC); // update CRC
         can_forward(rx_header, frame_data);                         // transmit the modified packet
-        // can_process(); //we try to send it ASAP - I commented it since it had no success
-        // status_led_activity();
     }
 #endif
 

@@ -1,5 +1,6 @@
 #include "protocol/slcan_codec.h"
 
+/* Interpret one hexadecimal character from a host command. */
 static int hex_value(uint8_t ch) {
     if (ch >= '0' && ch <= '9')
         return ch - '0';
@@ -10,10 +11,12 @@ static int hex_value(uint8_t ch) {
     return -1;
 }
 
+/* Check that a host-supplied CAN frame has a supported identifier and length. */
 bool can_frame_valid(const CanFrame *frame) {
     return frame && frame->length <= 8 && frame->id <= (frame->extended ? 0x1fffffffU : 0x7ffU);
 }
 
+/* Read a complete host CAN command and reject malformed input. */
 bool slcan_decode(const uint8_t *text, size_t length, CanFrame *frame) {
     if (!text || !frame || length == 0)
         return false;
@@ -61,6 +64,7 @@ bool slcan_decode(const uint8_t *text, size_t length, CanFrame *frame) {
     return true;
 }
 
+/* Describe a CAN frame in the format expected by host applications. */
 size_t slcan_encode(const CanFrame *frame, uint8_t *text, size_t capacity) {
     static const char hex[] = "0123456789ABCDEF";
     if (!can_frame_valid(frame) || !text)

@@ -1,7 +1,7 @@
 /*
  * setup_menu.h
  *
- * Setup parameter contract. See setup_menu_entries.c for the table and how to
+ * Setup parameter contract. See setup_entries.c for the table and how to
  * add a new entry.
  */
 
@@ -16,7 +16,7 @@
     #define SETUP_FLASH_SLOTS 30 // minimum reserved flash slots (1..SETUP_FLASH_SLOTS)
     #define SETUP_FLASH_PARAM_BUFFER_SIZE 40
 extern uint8_t setup_dashboardPageIndex;
-extern uint8_t dashboard_setup_menu_array[SETUP_FLASH_PARAM_BUFFER_SIZE][DASHBOARD_MESSAGE_MAX_LENGTH];
+extern uint8_t dashboard_setup_screen[DASHBOARD_MESSAGE_MAX_LENGTH];
 extern uint8_t total_pages_in_setup_dashboard_menu;
 
 typedef enum {
@@ -30,7 +30,7 @@ typedef enum {
     SETUP_DISPLAY_STATUS_MARK,
 } SetupDisplayMode;
 
-typedef void (*SetupRenderFn)(uint8_t page_index);
+typedef void (*SetupRenderFn)(void);
 typedef void (*SetupActionFn)(void);
 
 // Describes one parameter persisted to flash and optionally shown in setup.
@@ -62,20 +62,17 @@ void setup_load_from_flash(void);
 // Write each table entry into params[flash_index-1].
 void setup_fill_flash_params(uint16_t *params);
 
-// Return 1 if any table entry differs from its stored flash value.
-uint8_t setup_is_dirty(void);
-
 // Return a validated value from flash or the table default for an invalid slot.
 uint16_t setup_read_flash_value(uint8_t flash_index, uint16_t stored_value);
 
-// Render one setup page into dashboard_setup_menu_array.
+// Render one setup page into dashboard_setup_screen.
 void setup_render_page(uint8_t page_index);
 
 // Move current setup page by delta and wrap inside the setup menu.
 void setup_move_page(int8_t delta);
 void setup_move_group(int8_t delta);
 
-// Execute the action for the selected setup page. Handles SAVE&EXIT too.
+// Apply the selected setting; the menu controller handles saving and returning.
 void setup_select_page(uint8_t page_index);
 
 #endif /* BACCABLE_C1 */

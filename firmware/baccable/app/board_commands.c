@@ -2,6 +2,8 @@
 #include "features/body.h"
 #include "features/menu.h"
 #if defined(BACCABLE_C2) || defined(BACCABLE_BH)
+
+/* Report this board's firmware version to the main board. */
 static void reply_version(uint8_t command) {
     uint8_t reply[UART_BUFFER_SIZE] = {C1BusID, command};
     const char *version = BUILD_VERSION;
@@ -13,6 +15,8 @@ static void reply_version(uint8_t command) {
     board_uart_send(reply, sizeof(reply));
 }
 #endif
+
+/* Apply requests from the other boards and collect their reported status. */
 void board_commands_dispatch(const uint8_t *message) {
     switch (message[0]) {
     case C1BusID: // message directed to baccable connected to C1 bus
@@ -44,7 +48,7 @@ void board_commands_dispatch(const uint8_t *message) {
                 comfort_state.has_button_press_requested = 5; // press HAS for 5 times (5 messages)
             break;
         case C1cmdLaneSingleTap: // request to C2 to execute the ESC/TC toggle
-            // status_led_error();
+
             uint8_t tmpArr2[2] = {C2BusID, C2cmdtoggleEscTc};
             board_uart_send(tmpArr2, 2);
             break;
@@ -197,7 +201,7 @@ void board_commands_dispatch(const uint8_t *message) {
 
     case C1_Bh_BusID: // message received by C1 and BH baccable.
 #if (defined(BACCABLE_C1) || defined(BACCABLE_BH))
-                      // #if defined(BACCABLE_C1)
+
         if (message[1] == C1BHcmdShowRaceScreen) {
             if (settings_state.esc_tc_customizator_enabled)
                 chassis_state.stability_inverted = 1;

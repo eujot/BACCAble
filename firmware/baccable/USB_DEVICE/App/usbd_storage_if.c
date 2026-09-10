@@ -1,4 +1,3 @@
-/* USER CODE BEGIN Header */
 /**
  ******************************************************************************
  * @file           : usbd_storage_if.c
@@ -16,24 +15,16 @@
  *
  ******************************************************************************
  */
-/* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_storage_if.h"
 #include "app/application_state.h"
 #include "storage/flash_records.h"
-/* USER CODE BEGIN INCLUDE */
-
-/* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
-
-/* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-
-/* USER CODE END PV */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
  * @brief Usb device.
@@ -50,10 +41,6 @@
  * @{
  */
 
-/* USER CODE BEGIN PRIVATE_TYPES */
-
-/* USER CODE END PRIVATE_TYPES */
-
 /**
  * @}
  */
@@ -67,10 +54,6 @@
 #define STORAGE_BLK_NBR STORAGE_SECTOR_COUNT
 #define STORAGE_BLK_SIZ 512
 
-/* USER CODE BEGIN PRIVATE_DEFINES */
-
-/* USER CODE END PRIVATE_DEFINES */
-
 /**
  * @}
  */
@@ -80,10 +63,6 @@
  * @{
  */
 
-/* USER CODE BEGIN PRIVATE_MACRO */
-
-/* USER CODE END PRIVATE_MACRO */
-
 /**
  * @}
  */
@@ -92,8 +71,6 @@
  * @brief Private variables.
  * @{
  */
-
-/* USER CODE BEGIN INQUIRY_DATA_FS */
 /** USB Mass storage Standard Inquiry Data. */
 const int8_t STORAGE_Inquirydata_FS[] = {
     /* 36 */
@@ -109,11 +86,6 @@ const int8_t STORAGE_Inquirydata_FS[] = {
     ' ',  ' ',  ' ',  ' ',  ' ',
     ' ',  '1' /* Version      : 4 Bytes */
 };
-/* USER CODE END INQUIRY_DATA_FS */
-
-/* USER CODE BEGIN PRIVATE_VARIABLES */
-
-/* USER CODE END PRIVATE_VARIABLES */
 
 /**
  * @}
@@ -125,10 +97,6 @@ const int8_t STORAGE_Inquirydata_FS[] = {
  */
 
 extern USBD_HandleTypeDef hUsbDeviceFS;
-
-/* USER CODE BEGIN EXPORTED_VARIABLES */
-
-/* USER CODE END EXPORTED_VARIABLES */
 
 /**
  * @}
@@ -147,10 +115,6 @@ static int8_t STORAGE_Read_FS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint
 static int8_t STORAGE_Write_FS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t blk_len);
 static int8_t STORAGE_GetMaxLun_FS(void);
 
-/* USER CODE BEGIN PRIVATE_FUNCTIONS_DECLARATION */
-
-/* USER CODE END PRIVATE_FUNCTIONS_DECLARATION */
-
 /**
  * @}
  */
@@ -160,11 +124,7 @@ USBD_StorageTypeDef USBD_Storage_Interface_fops_FS = {
     STORAGE_Read_FS, STORAGE_Write_FS,       STORAGE_GetMaxLun_FS, (int8_t *)STORAGE_Inquirydata_FS};
 
 /* Private functions ---------------------------------------------------------*/
-/**
- * @brief  Initializes over USB FS IP
- * @param  lun:
- * @retval USBD_OK if all operations are OK else USBD_FAIL
- */
+/* Notify the main board that a USB disk session has started on a companion board. */
 int8_t STORAGE_Init_FS(uint8_t lun) {
 // USB was plugged
 // if BH or C2, send message to C1
@@ -177,91 +137,40 @@ int8_t STORAGE_Init_FS(uint8_t lun) {
         TIMING__C2_BH_USB_CONNECT_TO_C1_NOTIFICATION_DELAY_MS; // enable sending the message thru serial line
                                                                // to C1, for a offset from now
 #endif
-
-    /* USER CODE BEGIN 2 */
     return (USBD_OK);
-    /* USER CODE END 2 */
 }
 
-/**
- * @brief  .
- * @param  lun: .
- * @param  block_num: .
- * @param  block_size: .
- * @retval USBD_OK if all operations are OK else USBD_FAIL
- */
+/* Report the size of the USB disk. */
 int8_t STORAGE_GetCapacity_FS(uint8_t lun, uint32_t *block_num, uint16_t *block_size) {
-    /* USER CODE BEGIN 3 */
     *block_num = STORAGE_BLK_NBR;
     *block_size = STORAGE_BLK_SIZ;
     return (USBD_OK);
-    /* USER CODE END 3 */
 }
 
-/**
- * @brief  .
- * @param  lun: .
- * @retval USBD_OK if all operations are OK else USBD_FAIL
- */
-int8_t STORAGE_IsReady_FS(uint8_t lun) {
-    /* USER CODE BEGIN 4 */
-    return lun == 0 && flash_storage_available() ? USBD_OK : USBD_FAIL;
-    /* USER CODE END 4 */
-}
+/* Allow disk access only when the device has the required Flash capacity. */
+int8_t STORAGE_IsReady_FS(uint8_t lun) { return lun == 0 && flash_storage_available() ? USBD_OK : USBD_FAIL; }
 
-/**
- * @brief  .
- * @param  lun: .
- * @retval USBD_OK if all operations are OK else USBD_FAIL
- */
-int8_t STORAGE_IsWriteProtected_FS(uint8_t lun) {
-    /* USER CODE BEGIN 5 */
-    return 1;
-    /* USER CODE END 5 */
-}
+/* Present the USB disk as read-only to the host. */
+int8_t STORAGE_IsWriteProtected_FS(uint8_t lun) { return 1; }
 
-/**
- * @brief  .
- * @param  lun: .
- * @retval USBD_OK if all operations are OK else USBD_FAIL
- */
+/* Read a valid range of sectors from the device USB disk. */
 int8_t STORAGE_Read_FS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t blk_len) {
     if (lun || !buf || !flash_storage_available() || !storage_sector_range(blk_addr, blk_len))
         return USBD_FAIL;
-    /* USER CODE BEGIN 6 */
 #ifdef ENABLE_USB_MASS_STORAGE
     memcpy(buf, (const void *)(USB_FLASH_START_ADDRESS + (blk_addr * STORAGE_BLK_SIZ)),
            (blk_len * STORAGE_BLK_SIZ));
 #endif
     return (USBD_OK);
-    /* USER CODE END 6 */
 }
 
-/**
- * @brief  .
- * @param  lun: .
- * @retval USBD_OK if all operations are OK else USBD_FAIL
- */
+/* Reject host writes to protect the device USB disk. */
 int8_t STORAGE_Write_FS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t blk_len) {
-    /* USER CODE BEGIN 7 */
     return (USBD_FAIL);
-    /* USER CODE END 7 */
 }
 
-/**
- * @brief  .
- * @param  None
- * @retval .
- */
-int8_t STORAGE_GetMaxLun_FS(void) {
-    /* USER CODE BEGIN 8 */
-    return (STORAGE_LUN_NBR - 1);
-    /* USER CODE END 8 */
-}
-
-/* USER CODE BEGIN PRIVATE_FUNCTIONS_IMPLEMENTATION */
-
-/* USER CODE END PRIVATE_FUNCTIONS_IMPLEMENTATION */
+/* Report the single disk exposed by this device. */
+int8_t STORAGE_GetMaxLun_FS(void) { return (STORAGE_LUN_NBR - 1); }
 
 /**
  * @}

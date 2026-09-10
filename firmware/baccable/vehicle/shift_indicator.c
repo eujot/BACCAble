@@ -1,11 +1,11 @@
 #include "vehicle/shift_indicator.h"
 
 /* ID 0x2ED: water temperature at byte 0, shift urgency at byte 6 bits 0..1. */
+/* Apply the user's shift-indicator preference to dashboard guidance. */
 void vehicle_handle_shift_indicator(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 8)
         return;
 #if defined(BACCABLE_C1)
-    telemetry_state.water_temperature = frame_data[0];
     uint32_t rpm = telemetry_state.current_rpm_speed;
     uint32_t threshold = settings_state.shift_threshold;
     if (!settings_state.shift_indicator_enabled || rpm < threshold)

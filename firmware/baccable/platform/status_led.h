@@ -27,8 +27,6 @@
 #define LED_DURATION 25
 
 void status_led_init();
-void status_led_blink_activity(uint8_t numblinks);
-void status_led_blink_error(uint8_t numblinks);
 void status_led_error(void);
 void status_led_error_off(void);
 void status_led_activity(void);

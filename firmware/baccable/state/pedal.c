@@ -3,7 +3,6 @@ PedalState pedal_state = {
     .reserved = 0,
 #if defined(BACCABLE_C1) || defined(ACT_AS_SCHIZZAFORTE_SERIAL_CONTROLLER)
     .current_schizzaforte_map = '-',
-    .pedal_map_power_adapted = 0,
     .last_queued_serial_to_schizza_forte_msg_time = TIMING__ALL___SERIAL_IGNORE_WINDOW_MS,
     .play_motor_jingle = 0,
     .jingle_array =
@@ -79,7 +78,7 @@ PedalState pedal_state = {
          // 253 ×10
          253, 253, 253, 253, 253, 253, 253, 253, 253, 253,
 
-         // Zeri finali per arrivare a 255
+         // Pad the remaining command positions with zero.
          0, 0, 0, 0,
          0, 0, 0, 0,
          0, 0, 0, 0,

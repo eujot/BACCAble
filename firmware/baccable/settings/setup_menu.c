@@ -1,7 +1,7 @@
 /*
  * setup_menu.c
  *
- * Setup menu engine. Menu entries live in setup_menu_entries.c.
+ * Setup menu engine. Menu entries live in setup_entries.c.
  */
 
 #include "settings/setup_menu.h"
@@ -14,12 +14,13 @@
 
     #define SETUP_SAVE_EXIT_PAGE 0
     #define SETUP_SAVE_EXIT_TEXT "Save and back"
-    #define SETUP_MARK_TEXT_START 3
+    #define SETUP_MARK_TEXT_START 2
 
 uint8_t setup_dashboardPageIndex = 0;
-uint8_t dashboard_setup_menu_array[SETUP_FLASH_PARAM_BUFFER_SIZE][DASHBOARD_MESSAGE_MAX_LENGTH];
+uint8_t dashboard_setup_screen[DASHBOARD_MESSAGE_MAX_LENGTH];
 uint8_t total_pages_in_setup_dashboard_menu = 0;
 
+/* Read the current value of a configurable feature. */
 static uint16_t setup_get_value(const SetupParam *param) {
     switch (param->value_type) {
     case SETUP_VALUE_UINT16:
@@ -32,6 +33,7 @@ static uint16_t setup_get_value(const SetupParam *param) {
     }
 }
 
+/* Restore a configurable feature's value using its declared type. */
 static void setup_set_value(const SetupParam *param, uint16_t value) {
     switch (param->value_type) {
     case SETUP_VALUE_UINT16:
@@ -47,8 +49,10 @@ static void setup_set_value(const SetupParam *param, uint16_t value) {
     }
 }
 
+/* Check whether a saved preference has a user-facing menu entry. */
 static uint8_t setup_param_is_visible(const SetupParam *param) { return param->menu_text != 0; }
 
+/* Count the available feature settings, including the save-and-return entry. */
 static uint8_t setup_menu_pages_count(void) {
     uint8_t count = 1; // page 0 is Save and back
     for (uint8_t i = 0; i < setup_params_count; i++)
@@ -60,6 +64,7 @@ static uint8_t setup_menu_pages_count(void) {
     return count;
 }
 
+/* Place a feature setting in its functional navigation group. */
 static uint8_t setup_group(uint8_t id) {
     switch (id) {
     case 3:
@@ -91,6 +96,8 @@ static uint8_t setup_group(uint8_t id) {
         return 4; /* Device */
     }
 }
+
+/* Find the feature setting at a visible menu position. */
 static const SetupParam *setup_find_by_page(uint8_t page_index) {
     if (!page_index)
         return NULL;
@@ -105,6 +112,8 @@ static const SetupParam *setup_find_by_page(uint8_t page_index) {
         }
     return NULL;
 }
+
+/* Jump to a different functional group of feature settings. */
 void setup_move_group(int8_t delta) {
     const SetupParam *current = setup_find_by_page(setup_dashboardPageIndex);
     uint8_t group = current ? setup_group(current->flash_index) : 255;
@@ -116,24 +125,28 @@ void setup_move_group(int8_t delta) {
     }
 }
 
+/* Prepare a clean screen for the selected setting. */
 static void setup_reset_page_text(uint8_t page) {
     const SetupParam *param = setup_find_by_page(page);
     const char *text =
         (page == SETUP_SAVE_EXIT_PAGE) ? SETUP_SAVE_EXIT_TEXT : (param ? param->menu_text : "");
     uint8_t col = (param && param->display_mode == SETUP_DISPLAY_STATUS_MARK) ? SETUP_MARK_TEXT_START : 0;
 
-    memset(dashboard_setup_menu_array[page], ' ', DASHBOARD_MESSAGE_MAX_LENGTH);
+    memset(dashboard_setup_screen, ' ', DASHBOARD_MESSAGE_MAX_LENGTH);
     while (col < DASHBOARD_MESSAGE_MAX_LENGTH && text && *text)
-        dashboard_setup_menu_array[page][col++] = (uint8_t)*text++;
+        dashboard_setup_screen[col++] = (uint8_t)*text++;
 }
 
+/* Switch an on/off feature preference. */
 static void setup_toggle_bool(const SetupParam *param) { setup_set_value(param, !setup_get_value(param)); }
 
-static void setup_render_checkbox(const SetupParam *param, uint8_t page) {
+/* Show whether the displayed feature preference is enabled. */
+static void setup_render_checkbox(const SetupParam *param) {
     if (param->display_mode == SETUP_DISPLAY_STATUS_MARK)
-        dashboard_setup_menu_array[page][0] = dashboard_state.checkbox_symbols[!!setup_get_value(param)];
+        dashboard_setup_screen[0] = dashboard_state.checkbox_symbols[!!setup_get_value(param)];
 }
 
+/* Find a setting by the permanent identity used in saved preferences. */
 const SetupParam *setup_find_by_flash_index(uint8_t flash_index) {
     for (uint8_t i = 0; i < setup_params_count; i++)
         if (setup_params[i].flash_index == flash_index)
@@ -141,6 +154,7 @@ const SetupParam *setup_find_by_flash_index(uint8_t flash_index) {
     return 0;
 }
 
+/* Determine how many saved setting positions the current feature set needs. */
 uint8_t setup_flash_slots_count(void) {
     uint8_t count = SETUP_FLASH_SLOTS;
     for (uint8_t i = 0; i < setup_params_count; i++)
@@ -149,6 +163,7 @@ uint8_t setup_flash_slots_count(void) {
     return count;
 }
 
+/* Restore a supported setting value or fall back to its default. */
 uint16_t setup_read_flash_value(uint8_t flash_index, uint16_t stored_value) {
     const SetupParam *param = setup_find_by_flash_index(flash_index);
     if (!param)
@@ -158,24 +173,20 @@ uint16_t setup_read_flash_value(uint8_t flash_index, uint16_t stored_value) {
     return stored_value;
 }
 
+/* Restore all feature preferences before vehicle operation starts. */
 void setup_load_from_flash(void) {
     setup_menu_pages_count();
     for (uint8_t i = 0; i < setup_params_count; i++)
         setup_set_value(&setup_params[i], settings_read(setup_params[i].flash_index));
 }
 
+/* Collect the current feature preferences for saving. */
 void setup_fill_flash_params(uint16_t *params) {
     for (uint8_t i = 0; i < setup_params_count; i++)
         params[setup_params[i].flash_index - 1] = setup_get_value(&setup_params[i]);
 }
 
-uint8_t setup_is_dirty(void) {
-    for (uint8_t i = 0; i < setup_params_count; i++)
-        if (setup_get_value(&setup_params[i]) != settings_read(setup_params[i].flash_index))
-            return 1;
-    return 0;
-}
-
+/* Show the selected setting and its current value. */
 void setup_render_page(uint8_t page_index) {
     if (page_index >= setup_menu_pages_count())
         return;
@@ -186,11 +197,12 @@ void setup_render_page(uint8_t page_index) {
     if (!param)
         return;
 
-    setup_render_checkbox(param, page_index);
+    setup_render_checkbox(param);
     if (param->render)
-        param->render(page_index);
+        param->render();
 }
 
+/* Select the next or previous feature setting. */
 void setup_move_page(int8_t delta) {
     uint8_t pages_count = setup_menu_pages_count();
     if (pages_count == 0)
@@ -205,16 +217,11 @@ void setup_move_page(int8_t delta) {
     setup_dashboardPageIndex = (uint8_t)page;
 }
 
+/* Apply the user's choice to the selected feature setting. */
 void setup_select_page(uint8_t page_index) {
-    if (page_index == 0) {
-        if (setup_is_dirty() && settings_save() != 0) {
-            menu_notice("Save failed: RES");
-            return;
-        }
-        menu_notice("Saved");
-        dashboard_state.dashboard_menu_indent_level = 0;
+    /* Saving and returning are handled by the menu controller. */
+    if (page_index == 0)
         return;
-    }
 
     const SetupParam *param = setup_find_by_page(page_index);
     if (!param)

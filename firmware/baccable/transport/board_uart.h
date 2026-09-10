@@ -6,7 +6,6 @@
 
 #include "platform/status_led.h"
 #include "string.h"
-// #include "platform/errors.h"
 
 #define C1BusID 0x01 // first byte sent over uart to identify destinator baccable connected to C1 Can Bus
 #define C2BusID 0x02 // first byte sent over uart to identify destinator baccable connected to C2 Can Bus
@@ -63,7 +62,7 @@
 #define C2cmdToggleHas                                                                                       \
     0x29 // second byte of the message to C2 bus, identifies the request to press HAS button for some
          // consecutive messages
-// #define C2cmdLaneLongPress				0x2A //second byte of the message to C2 bus,
+
 // identifies the notification of long press of LANE button received on BH bus
 
 #define BHcmdOdometerBlinkDisable                                                                            \
@@ -111,7 +110,7 @@ void uart_resume(UART_HandleTypeDef *huart);
 // void process_received_data();
 // void enter_standby_mode();
 // void resetOtherProcessorsSleepStatus();
-// uint8_t getOtherProcessorsSleepingStatus();
+
 uint8_t board_uart_send(const uint8_t *data, size_t length);
 
 #if (defined(BACCABLE_C1) || defined(ACT_AS_SCHIZZAFORTE_SERIAL_CONTROLLER))

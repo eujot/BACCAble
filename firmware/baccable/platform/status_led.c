@@ -1,19 +1,16 @@
-//
+
 // LED: Handles blinking of status light
-//
 
 #include "stm32f0xx_hal.h"
 #include "platform/status_led.h"
 #include "app/application_state.h"
 
-// Private variables
 static uint32_t led_blue_laston = 0;
 static uint32_t led_red_laston = 0;
 static uint32_t led_blue_lastoff = 0;
 static uint32_t led_red_lastoff = 0;
-// extern uint8_t led_light_on_bit; //declared in main.c
 
-// Initialize LED GPIOs
+/* Prepare the board's activity and fault indicators. */
 void status_led_init() {
     __HAL_RCC_GPIOA_CLK_ENABLE();
     GPIO_InitTypeDef GPIO_InitStruct;
@@ -34,18 +31,16 @@ void status_led_init() {
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     // it doesn't work anymore. we have to work on it if we need it
-    // #if defined(DISABLE_START_STOP)
-    //	GPIO_InitStruct.Pin = GPIO_PIN_14  ; //PA14 is used to disable start &stop car functionality
-    //	GPIO_InitStruct.Pull = GPIO_NOPULL; //removed GPIO_PULLUP to let it work start&stop car command
+
     // disabler 	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-    //     HAL_GPIO_WritePin(START_STOP_DISABLER, 1); //outputs High signal at PA14, used to disable
+
     //     start&stop car functionality
-    // #endif
+
     status_led_error_off();    // shut down red led
     status_led_activity_off(); // shut down blue led
 }
 
-// Turn red LED on
+/* Show a brief fault indication that remains distinguishable during heavy activity. */
 void status_led_error(void) {
     // Make sure the LED has been off for at least LED_DURATION before turning on again
     // This prevents a solid status LED on a busy canbus
@@ -55,31 +50,10 @@ void status_led_error(void) {
     }
 }
 
-// Turn red LED off
+/* Turn off the board's fault indicator. */
 void status_led_error_off(void) { HAL_GPIO_WritePin(LED_RED, !led_light_on_bit); }
 
-// Blink blue LED (blocking)
-void status_led_blink_activity(uint8_t numblinks) {
-    uint8_t i;
-    for (i = 0; i < numblinks; i++) {
-        HAL_GPIO_WritePin(LED_BLUE, led_light_on_bit);
-        HAL_Delay(100);
-        HAL_GPIO_WritePin(LED_BLUE, !led_light_on_bit);
-        HAL_Delay(100);
-    }
-}
-
-void status_led_blink_error(uint8_t numblinks) {
-    uint8_t i;
-    for (i = 0; i < numblinks; i++) {
-        HAL_GPIO_WritePin(LED_RED, led_light_on_bit);
-        HAL_Delay(100);
-        HAL_GPIO_WritePin(LED_RED, !led_light_on_bit);
-        HAL_Delay(100);
-    }
-}
-
-// Attempt to turn on status LED
+/* Show a brief communication-activity indication. */
 void status_led_activity(void) {
     // Make sure the LED has been off for at least LED_DURATION before turning on again
     // This prevents a solid status LED on a busy canbus
@@ -89,10 +63,10 @@ void status_led_activity(void) {
     }
 }
 
-// turn off status LED
+/* Turn off the board's activity indicator. */
 void status_led_activity_off(void) { HAL_GPIO_WritePin(LED_BLUE, !led_light_on_bit); }
 
-// Process time-based LED events
+/* End activity and fault flashes after their display interval. */
 void status_led_process(void) {
     // If LED has been on for long enough, turn it off
     if ((led_blue_laston > 0) && ((currentTime - led_blue_laston) > LED_DURATION)) {

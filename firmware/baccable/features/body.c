@@ -5,16 +5,20 @@
 #if defined(BACCABLE_BH)
 
 static DisplayStream screen;
+
+/* Accept new dashboard content when BACCAble display output is allowed. */
 void body_display_submit(const uint8_t *text) {
     if (!chassis_state.stability_inverted)
         display_stream_submit(&screen, text);
 }
 
+/* Restore BACCAble content after factory display activity when allowed. */
 void body_display_refresh(void) {
     if (!chassis_state.stability_inverted)
         display_stream_refresh(&screen);
 }
 
+/* Prepare body-bus features and restore saved mirror positions. */
 void body_init() {
     // let's open the can bus because we may need data
     can_set_bitrate(CAN_BITRATE_125K); // set can speed to 125kpbs
@@ -47,6 +51,7 @@ void body_init() {
     mirrors_state.right_mirror_vertical_operative_pos = (uint8_t)mirror_positions_read(9);
 }
 
+/* Update dashboard content, mirrors and enabled body-bus functions. */
 void body_process() {
     if (chassis_state.stability_inverted) {
         display_stream_reset(&screen);
@@ -142,6 +147,7 @@ void body_process() {
     }
 }
 
+/* Remember the mirror positions needed for parking and normal driving. */
 uint8_t mirror_positions_save(void) {
     uint16_t values[9] = {mirrors_state.left_park_mirror_horizontal_pos,
                           mirrors_state.left_park_mirror_vertical_pos,
@@ -155,6 +161,7 @@ uint8_t mirror_positions_save(void) {
     return flash_record_save(SETTINGS_RECORD, 0x201, values, sizeof(values)) ? 0 : 255;
 }
 
+/* Restore a saved mirror position, or report that it is unavailable. */
 uint16_t mirror_positions_read(uint8_t id) {
     if (id < 1 || id > 9)
         return 0;

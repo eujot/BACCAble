@@ -1,6 +1,8 @@
 #include "features/chassis.h"
 
 #if defined(BACCABLE_C2)
+
+/* Maintain enabled chassis features and report their state to the main board. */
 void chassis_process() {
     if (chassis_state.dyno_state_machine != 0xff) { // if state machine in progress
         if (currentTime - chassis_state.dyno_state_machine_last_update_time > 4000) { // if older than 4 sec
@@ -63,6 +65,7 @@ void chassis_process() {
     }
 }
 
+/* Request a change between normal and dyno operation. */
 void chassis_toggle_dyno() {
     if (chassis_state.dyno_state_machine == 0xff) { // there is no dyno Start sequence in progress
         chassis_state.dyno_state_machine = 0;       // state machine

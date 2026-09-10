@@ -1,18 +1,23 @@
 #include "storage/record_store.h"
 #include <string.h>
 
+/* Read a saved two-byte record field. */
 static uint16_t read16(const uint8_t *data) { return (uint16_t)data[0] | (uint16_t)data[1] << 8; }
+/* Read a saved record value. */
 static uint32_t read32(const uint8_t *data) {
     return (uint32_t)read16(data) | (uint32_t)read16(data + 2) << 16;
 }
+/* Prepare a two-byte field in a record being saved. */
 static void write16(uint8_t *data, uint16_t value) {
     data[0] = value;
     data[1] = value >> 8;
 }
+/* Prepare a record value for saving. */
 static void write32(uint8_t *data, uint32_t value) {
     write16(data, value);
     write16(data + 2, value >> 16);
 }
+/* Extend the integrity check used to reject damaged saved data. */
 static uint32_t crc_add(uint32_t crc, const uint8_t *data, size_t length) {
     for (size_t i = 0; i < length; ++i) {
         crc ^= data[i];
@@ -21,13 +26,16 @@ static uint32_t crc_add(uint32_t crc, const uint8_t *data, size_t length) {
     }
     return crc;
 }
+/* Calculate the integrity check for a complete saved record. */
 static uint32_t record_crc(const uint8_t *record, size_t length) {
     return ~crc_add(crc_add(0xffffffffU, record, 12), record + RECORD_HEADER_SIZE, length);
 }
+/* Check whether a saved record is complete, supported and undamaged. */
 static bool valid(const uint8_t *page, uint16_t type, size_t length) {
     return page && read32(page) == 0x42414343U && read16(page + 4) == type && read16(page + 6) == length &&
            read16(page + 16) == 0 && read16(page + 18) == 1 && read32(page + 12) == record_crc(page, length);
 }
+/* Choose the newest valid copy of a saved record. */
 static int latest(const RecordStorage *storage, uint16_t type, size_t length) {
     bool first = valid(storage->pages[0], type, length);
     bool second = valid(storage->pages[1], type, length);
@@ -38,6 +46,7 @@ static int latest(const RecordStorage *storage, uint16_t type, size_t length) {
     uint32_t difference = read32(storage->pages[1] + 8) - read32(storage->pages[0] + 8);
     return difference != 0 && difference < 0x80000000U ? 1 : 0;
 }
+/* Restore the newest intact saved value when its format matches. */
 bool record_load(const RecordStorage *storage, uint16_t type, void *data, size_t length) {
     if (!storage || !data || !length || length > RECORD_MAX_PAYLOAD)
         return false;
@@ -47,6 +56,7 @@ bool record_load(const RecordStorage *storage, uint16_t type, void *data, size_t
     memcpy(data, storage->pages[page] + RECORD_HEADER_SIZE, length);
     return true;
 }
+/* Save a changed value while retaining a recoverable previous copy. */
 bool record_save(const RecordStorage *storage, uint16_t type, const void *data, size_t length) {
     if (!storage || !storage->erase || !storage->program || !data || !length || length > RECORD_MAX_PAYLOAD)
         return false;

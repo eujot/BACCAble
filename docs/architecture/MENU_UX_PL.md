@@ -1,160 +1,162 @@
-# Menu i UX wyświetlacza MY23
+# MY23 display menu and extension guide
 
-Zmiany w menu zachowują katalog 46 stron benzynowych i 55 diesla. Nawigacja,
-preferencje i przesyłanie tekstu mają osobne moduły. Nowe etykiety używają ASCII,
-aby nie zależeć od obsługi polskich znaków przez licznik. Dotychczasowe skróty
-parametrów i etykiety opcji funkcji pozostają w swoich szablonach.
+The catalog contains 46 gasoline pages and 55 diesel pages. Navigation,
+preferences and text transport have separate modules. All display labels use
+English ASCII. Page labels fit within 16 characters, leaving two characters for
+editor marks on an 18-character display.
 
-## Obsługa
+## Controls
 
-Menu korzysta z przycisków tempomatu, gdy CC i ACC są wyłączone. Po ich
-wyłączeniu trzeba najpierw zwolnić przyciski. Przytrzymanie RES przez 800 ms
-otwiera menu na ostatnim ulubionym parametrze. Przycisk dystansu ma tę samą
-funkcję co RES.
+Menu controls are available when both cruise control and adaptive cruise control
+are disabled. Release the buttons after disabling them. Hold RES for 800 ms to
+open the last favorite. The distance button has the same menu function as RES.
 
-| Gest | Działanie |
+| Gesture | Result |
 | --- | --- |
-| Krótkie RES, następnie zwolnienie | Wejście lub wybór; na ekranie wartości przejście do menu głównego |
-| RES przez 800 ms | Powrót o poziom; w menu głównym zapis i zamknięcie |
-| Delikatne wychylenie w dół / w górę | Następna / poprzednia pozycja, jeden krok na naciśnięcie |
-| Mocniejsze wychylenie | Następna / poprzednia grupa parametrów, funkcji lub opcji funkcji |
+| Short RES, then release | Enter or select; from a reading, open the main menu |
+| Hold RES for 800 ms | Return one level; from the main menu, save and close |
+| Gentle down/up | Next/previous item, once per press |
+| Stronger down/up | Next/previous reading, action or setting group |
 
-W ulubionych mocniejsze wychylenie również zmienia pojedynczą pozycję.
-Przejście przez delikatne wychylenie do mocniejszego może najpierw wykonać
-pojedynczy krok, a potem skok grupy. Przytrzymanie nie uruchamia autorepeat.
-Przerwa w ramkach przycisków powyżej 300 ms wymaga ponownego zwolnienia.
-Zwolnienie RES po długim przytrzymaniu nie wykonuje dodatkowego wyboru.
+In favorites, a stronger press also moves one item. Moving through a gentle press
+into a stronger press may perform an item step before the group jump. There is no
+autorepeat. A gap longer than 300 ms in button reports requires a fresh release.
+Releasing RES after a hold does not select another item.
 
-Menu główne: **Ulubione → Parametry → Funkcje → Ustawienia → Informacje**.
-Parametry mają grupy: Wszystkie, Silnik, Temperatury, Zasilanie, DPF / AdBlue,
-Osiągi, Pozostałe. Pusta grupa wyświetla `Brak stron`, a puste ulubione
-`Brak ulubionych`; powrót działa również z pustej listy.
+Main menu: **Favorites → Readings → Functions → Settings → Information**.
+Reading groups: All readings, Engine, Temperatures, Battery, DPF / AdBlue,
+Performance, Other. Empty lists show `No pages` or `No favorites`; returning still
+works. The main menu and group list show position counters; editors use full labels.
 
-## Personalizacja
+## Readable measurements and settings
 
-1. Otwórz `Ustawienia → Wybierz ulubione`. RES dodaje lub usuwa wybraną stronę;
-   znak `+` oznacza wybraną. Limit wynosi sześć stron na profil silnika.
-2. W `Kolejnosc ulub.` wybierz pozycję i naciśnij RES. Gwiazdka oznacza tryb
-   przenoszenia. Wychylenia przesuwają pozycję, kolejne RES kończy przenoszenie.
-   Przesuwanie zatrzymuje się na krańcach listy.
-3. W `Widoczne strony` RES zmienia widoczność w zwykłym katalogu. Ukrycie strony
-   nie usuwa jej z ulubionych. Automatyczny ekran wyniku może pokazać ukrytą
-   stronę bez trwałego zmieniania tej preferencji.
-4. W `Sortowanie` RES przełącza kolejność grupową i A–Z według krótkiej nazwy
-   strony. Sortowanie dotyczy katalogu i edytorów; własna kolejność ulubionych
-   pozostaje zachowana. Mocniejsze wychylenie w edytorach zmienia grupę.
-5. Użyj `Zapisz` lub wróć długim RES. Wyjście z edytora zapisuje preferencje,
-   z opcji funkcji zapisuje również ustawienia. Zamknięcie z menu głównego
-   zapisuje oba rekordy. Zapamiętywane są ostatnie strony grup i ulubionych.
+| Page label | Example screen | Meaning |
+| --- | --- | --- |
+| Oil temp / Oil temp (ECU) | `Oil temp 100 C` | Engine oil temperature |
+| Coolant temp | `Coolant temp  90C` | Engine coolant temperature |
+| Battery voltage | `Battery 14.20 V` | Battery voltage |
+| Battery current | `Battery  -12.3 A` | Signed battery current |
+| Battery charge | `Batt charge  80%` | Reported battery state of charge |
+| Oil pressure | `Oil press  1.20bar` | Engine oil pressure |
+| DPF temp | `DPF temp  650 C` | Particulate-filter temperature |
 
-Ulubione, widoczność i ostatnie strony są oddzielne dla benzyny i diesla;
-wybór sortowania jest wspólny. Zmiana profilu czyści cache pomiarów.
-Komunikat `Blad zapisu. RES` oznacza nieudany zapis. Menu pozostaje otwarte,
-zmiany pozostają w RAM. RES ponawia zapis; po błędzie przy powrocie ponawia
-powrót, zamiast przypadkowo przełączać opcję. Przy trwałej awarii zapisu
-zamknięcie z menu głównego również pozostaje zablokowane. Rekord ustawień
-i rekord preferencji są zapisywane osobno, bez wspólnej transakcji.
+Voltage, current and state of charge remain separate readings; voltage alone is
+not presented as proof that the alternator is charging. Dual readings include
+separate units, for example `Batt 14.2V  -12.3A`. Fields also accommodate
+`-150.5 A` and negative boost pressure without removing the measurement sign.
+Temperatures and speed use whole units; a single voltage reading uses two decimal
+places and current uses one. This changes presentation rounding, not decoding.
+All 101 expanded templates, including units, are checked against 18 characters.
+Performance states `MISS` and `RUN` do not receive a seconds suffix.
 
-Funkcje zmieniające stan wymagają drugiego RES w ciągu 3 sekund. Zmiana
-pozycji lub powrót anuluje potwierdzenie. Pozostają warunki dostępności,
-postoju i trybu Dyno istniejących funkcji. `Zlecono` oznacza przyjęcie żądania,
-nie potwierdzenie wykonania przez ECU. Pozycja Immobilizer pokazuje stan;
-dotychczasowy osobny gest zmiany jego stanu pozostaje w sterowaniu kierownicy.
-Niedokończony odczyt DTC, demonstracyjne logowanie i pozostałe puste pozycje
-nie są prezentowane jako gotowe funkcje menu.
+Settings describe their state directly: `Engine: Diesel`, `Pedal: Bypass`,
+`Shift at 4500 RPM`, `Close: 2 locks`, `Open windows OFF`. A leading `+` enables
+the named boolean behavior; `-` disables it. `Auto stop block` means suppressing
+automatic Start/Stop; `Stop odo blink` means suppressing the blinking odometer.
 
-## Co wpływa na płynność
+## Personalization and actions
 
-- Zdarzenia przycisków zależą od czasu i przejść stanu, a nie od liczby
-  odebranych ramek. Nie ma opóźnień blokujących w kontrolerze menu.
-- Menu formatuje bieżący widok; listę sortuje przy jej budowaniu, nie w każdej
-  iteracji. Model i bufory mają stały rozmiar, bez alokacji sterty.
-- Renderowanie okresowe ma interwał 100 ms. Identyczny tekst jest pomijany
-  przez 500 ms, po czym wysyłany ponownie jako podtrzymanie wyświetlania.
-- UART przechowuje tylko najnowszy oczekujący ekran. Polecenia zachowują FIFO,
-  aktywny bufor transmisji nie jest nadpisywany. Ekran może wyprzedzić oczekujący
-  odczyt statusu najwyżej raz, więc ciągłe przewijanie nie blokuje statusów.
-- BH kończy wysyłanie fragmentów aktywnego tekstu przed rozpoczęciem następnego.
-  Nieudane przyjęcie ramki przez kolejkę CAN nie gubi fragmentu. Fabryczna
-  ramka tekstu nie restartuje trwającej transmisji BACCAble.
-- Parametry z natywnych ramek CAN trafiają do cache po odebraniu właściwej
-  ramki o wymaganej długości. UDS odpytuje wybraną stronę najwyżej co 500 ms
-  i dopiero po 150 ms od zmiany strony. Kasowanie błędów wstrzymuje te odczyty.
-  Odpowiedzi są powiązane z ECU, DID, profilem i aktualną stroną.
-- Pomiar bez aktualizacji przez ponad 3 s pokazuje `--`. Lokalne rekordy osiągów
-  i odczyt wolnej pamięci nie podlegają temu terminowi. Liczby mają stałą
-  szerokość i zachowują część dziesiętną; przekroczenie pola pokazuje `--`.
+1. In `Settings → Edit favorites`, RES adds/removes the selected page. `+` marks
+   a favorite. Each engine profile has a six-page limit.
+2. In `Reorder favorites`, select an item with RES; `*` marks move mode. Move it
+   with the direction controls and press RES again to finish. Movement stops at
+   the list boundaries.
+3. In `Visible pages`, RES toggles catalog visibility. Hiding a page does not
+   remove it from favorites. An automatic performance result may temporarily
+   show a hidden page without changing its saved visibility.
+4. In `Sort order`, RES switches between functional grouping and A–Z by page
+   label. Sorting affects the catalog and editors; favorites retain their custom
+   order. Stronger presses move between groups in editors.
+5. Use `Save` or return with a long RES. Leaving an editor saves preferences;
+   leaving feature options also saves settings. Closing the main menu saves both.
+   The last favorite and last pages within groups are remembered.
 
-100 ms jest okresem renderowania, nie zmierzonym czasem reakcji licznika.
-Nadal obowiązuje odstęp UART ponad 250 ms i przesyłanie tekstu po trzy znaki
-co najmniej co 50 ms: sześć fragmentów dla 18 znaków, osiem dla 24.
-Przy szybkim przewijaniu urządzenie może pomijać pośrednie oczekujące ekrany.
-Ostateczna płynność, zachowanie fabrycznych komunikatów i Race mask wymagają
-próby w samochodzie. Zmiany nie zwiększają mocy ani osiągów pojazdu.
+Favorites, visibility and remembered pages are separate for gasoline and diesel;
+sort order is shared. Switching engine profiles clears the measurement cache.
+`Save failed: RES` keeps the menu open and the changes in RAM. RES retries the
+save or pending return instead of accidentally toggling the selected option.
+Persistent failure also prevents closing through the main menu. Settings and menu
+preferences are separate saves, not a combined transaction.
 
-## Zgodność i rozszerzanie
+State-changing actions require a second RES within three seconds. Moving away or
+returning cancels confirmation. Existing availability, stationary-vehicle and dyno
+conditions still apply. `Command queued` and `requested` mean that a request was
+accepted, not that an ECU confirmed completion. Immobilizer displays its state;
+the separate existing steering-wheel gesture changes it. Unfinished DTC reading,
+demonstration logging and empty placeholders are not shown as finished menu actions.
 
-`LARGE_DISPLAY` wybiera 24 znaki; bez tej flagi jest 18. C1, C2 i BH muszą
-mieć zgodną szerokość, ponieważ wpływa ona również na długość ramki UART.
-Ustawienie `IPC_MY23_IS_INSTALLED` nie zastępuje flagi `LARGE_DISPLAY`.
-Informacje pokazują wersję C1, odpowiedzi C2/BH i ustawienie MY23 z szerokością.
-Brak odpowiedzi przez ponad 5 sekund daje `brak odpowiedzi`; starsze firmware
-bez nowej odpowiedzi statusowej również może tak się przedstawiać.
+## Responsiveness and memory
 
-Preferencje zajmują jawnie serializowany rekord 80 bajtów typu `0x104`, wersja 1,
-w istniejącym slocie widoczności. Jeśli nie ma nowego rekordu, menu importuje
-widoczność poprzedniego rekordu `0x103` według starych indeksów. Zapis zastępuje
-ten rekord nowym formatem. Ustawienia, statystyki i pozycje lusterek mają nadal
-swoje odrębne rekordy. To migracja z poprzedniej wersji tej gałęzi, a nie
-dekoder dowolnego formatu oryginalnego firmware 3.1.1.
+- Button events use elapsed time and transitions, without blocking menu delays.
+- Settings share one current-screen buffer: 18 or 24 bytes instead of 40 page
+  buffers. `void render(void)` callbacks write `dashboard_setup_screen`.
+  Integer settings avoid float formatting.
+- Lists are sorted when built. Only the current view is formatted; menu storage
+  has fixed capacity and does not allocate heap memory.
+- Periodic rendering runs every 100 ms. Identical text is suppressed for 500 ms,
+  then resent to keep the display active.
+- UART retains the latest waiting screen, preserves command FIFO and never
+  overwrites an active transfer. A screen may precede a waiting status poll only
+  once, so continuous browsing does not starve status replies.
+- BH finishes every part of the active screen before beginning another. CAN
+  queue rejection retains the current part for retry. Factory text does not
+  restart an active BACCAble screen transfer.
+- Native readings refresh only from their corresponding valid CAN frames. UDS
+  polls the selected page at most every 500 ms, after a 150 ms settling interval.
+  Fault clearing pauses polling. Replies must match ECU, DID, profile and page.
+- Readings older than three seconds show `--`. Local performance records and
+  free-memory readings do not expire. Values wider than their field also show
+  `--` instead of a truncated number.
 
-Dodawanie strony:
+The 100 ms render interval is not a measured dashboard response time. UART still
+requires a gap greater than 250 ms; display text travels in three-character parts
+at intervals of at least 50 ms: six parts for 18 characters, eight for 24. Fast
+browsing can skip intermediate waiting screens. Actual smoothness, factory-message
+interaction and Race mask behavior still require vehicle testing.
 
-1. Dodaj lub wykorzystaj `ParameterDefinition` w `diagnostics/parameter_catalog.c`.
-   Dla nowego parametru natywnego dodaj odczyt w `native_parameters.c` oraz
-   aktualizację cache po jego rzeczywistej ramce w `parameter_cache.c`.
-2. Dodaj `ParameterPage` z `id`, `group`, krótką `label`, szablonem `name`
-   i dwoma `parameter_ids`. Identyfikatory stron są trwałe: benzyna `0x01..0x40`,
-   diesel `0x81..0xc0`. Wybierz nieużywany identyfikator; nigdy nie numeruj
-   istniejących stron ponownie ani nie wykorzystuj usuniętego ID do innego celu.
-3. Zaktualizuj licznik stron profilu. Katalog/lista mieści do 60 stron na profil;
-   rozszerzenie ponad limit wymaga zmiany tablic i testów. Grupa 0 oznacza
-   widok Wszystkie; rzeczywistym stronom przypisz grupę 1–6.
-4. Nową akcję dodaj do enum i tabeli `actions` w `features/menu.c`, określ
-   dostępność, warunki wykonania, polecenie i sposób pokazywania stanu.
-   Logikę działania urządzenia umieść we właściwym module funkcji.
-5. Uruchom testy, lint i kompilację właściwych wariantów. Kontroluj rozmiar:
-   program C1 mieści się w 64 KiB, ale ma mały zapas Flash. Dodawanie tekstów
-   i funkcji wymaga każdorazowej kontroli wyniku linkera.
+## Compatibility
 
-## Weryfikacja lokalna
+`LARGE_DISPLAY` selects 24 characters; otherwise the width is 18. C1, C2 and BH
+must use matching widths because UART message length also changes.
+`IPC_MY23_IS_INSTALLED` does not replace `LARGE_DISPLAY`. Information shows C1
+version, C2/BH replies and MY23/width settings. A board silent for more than five
+seconds shows `no reply`; older firmware without status replies can do the same.
 
-Weryfikacja 2026-09-10, `VERSION=menu-ux`: sześć programów testowych przeszło
-z ASan/UBSan, cppcheck przeszedł dla C1/C2/BH/CAN. Przeszły wszystkie cztery
-kompilacje bazowe i dodatkowo C1/C2/BH dla 24 znaków. Rozszerzony wariant C1
-obejmował również benzynę, MY23 i sterownik LED.
+Menu preferences use an explicitly serialized 80-byte record, type `0x104`, version
+1, in the existing visibility slot. Without that record, the menu imports the
+previous `0x103` visibility record by historical indices. Saving replaces it with
+the new format. Settings, performance and mirrors retain their own records. This
+migration covers the previous branch format, not arbitrary original 3.1.1 data.
+Storage requires the physical Flash capacity described in [architecture](README.md).
 
-| Wariant | Flash programu: text + data | Statyczny RAM: data + bss |
-| --- | ---: | ---: |
-| C1, 18 znaków | 65 048 B | 10 668 B |
-| C1, 24 znaki + benzyna + MY23 + LED | 65 080 B | 11 108 B |
-| C2, 18 znaków | 22 216 B | 10 728 B |
-| BH, 18 znaków | 23 212 B | 10 708 B |
-| CAN | 21 428 B | 7 104 B |
+## Adding a reading or function
 
-Zapas w 64 KiB obszaru programu C1 wynosi odpowiednio 488 i 456 bajtów.
-Statyczny RAM nie uwzględnia stosu w czasie pracy. Inna wersja kompilatora,
-flagi lub tekst wersji mogą zmienić te wyniki. Tej wersji nie wgrano na
-urządzenie ani nie zweryfikowano w zdalnym CI.
+1. Add or reuse a `ParameterDefinition` in `diagnostics/parameter_catalog.c`.
+   For a new native value, add its read in `native_parameters.c` and its actual
+   incoming-frame cache update in `parameter_cache.c`.
+2. Add a `ParameterPage` with `id`, `group`, English `label`, `name` template and
+   two `parameter_ids`. Keep the label within 16 ASCII characters and the fully
+   expanded screen, including units, within 18. Choose an unused permanent page
+   ID: gasoline `0x01..0x40`, diesel `0x81..0xc0`. Do not renumber existing pages
+   or reuse a removed ID for a different reading.
+3. Update the profile page count. Catalogs support up to 60 pages per profile;
+   exceeding that requires changes to capacities and tests. Group 0 is the
+   All readings view; assign actual pages to groups 1–6.
+4. Add actions to the enum and `actions` table in `features/menu.c`. Define
+   availability, execution conditions, command and status presentation. Put the
+   device behavior in the appropriate feature module. For configurable values,
+   extend `SetupParam` and keep persisted setting slots stable.
+5. Run host tests, lint and the relevant firmware builds. Check linker sizes after
+   adding text or features: the C1 program must fit in 64 KiB.
 
-Testy wykonują kod produkcyjny z atrapami HAL i pamięci. `make -C tests test`
-uruchamia sześć programów z ASan/UBSan, w tym menu dla 18 i 24 znaków oraz
-rzeczywisty sterownik UART. Sprawdzane są gesty, utrata ramek, przepełnienie
-zegara, pełne transmisje tekstu, ponawianie HAL_BUSY, kolejność poleceń,
-sortowanie, ulubione, migracja, pusty katalog, pamięć pozycji, błąd zapisu,
-zmiana silnika, spóźniona odpowiedź UDS i wygasanie danych.
+## Validation
 
-Polecenia bazowe:
+See [cleanup validation](CLEANUP.md) for the latest build sizes and results and
+[memory optimizations](MEMORY_PL.md) for the preceding comparison. Host tests use
+production code with HAL/storage substitutes and cover gestures, lost reports,
+clock wrap, complete display transfers, retries, command ordering, sorting,
+favorites, migration, empty lists, remembered pages, save failure, profile changes,
+late UDS replies, expiry, label/template widths, negative current and setting buffers.
 
 ```sh
 make -C tests test
@@ -164,8 +166,7 @@ make -C firmware/baccable -j4 FLAVOR=C1 BUILD_DIR=build/C1-menu-large \
   VERSION=menu-ux EXTRA_CPPFLAGS="-DLARGE_DISPLAY -DIPC_MY23_IS_INSTALLED -DIS_GASOLINE -DLED_STRIP_CONTROLLER_ENABLED"
 ```
 
-Powtórz bazową kompilację i lint dla C2, BH i CAN. Dla zestawu 24-znakowego
-skompiluj również C2 i BH z `-DLARGE_DISPLAY -DIPC_MY23_IS_INSTALLED`.
-Lokalnie użyto ARM GNU Toolchain 15.2.Rel1; ustaw `TOOLCHAIN` na jego prefiks,
-jeśli nie znajduje się w PATH. Wyniki sprzętowe ani zdalnego CI dla tych zmian
-nie są zastępowane wynikami testów hosta.
+Repeat baseline builds and lint for C2/BH/CAN. A 24-character board set also needs
+C2 and BH built with `-DLARGE_DISPLAY -DIPC_MY23_IS_INSTALLED`. Set `TOOLCHAIN`
+to the ARM compiler prefix if it is outside PATH. Host results do not establish
+physical-device or remote-CI results for these changes.

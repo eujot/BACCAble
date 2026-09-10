@@ -1,7 +1,8 @@
 #include "app/powertrain.h"
 #include "features/periodic.h"
-#include "diagnostics/parameter_request.h"
 #if defined(BACCABLE_C1)
+
+/* Maintain the selected automatic engine-stop behavior. */
 void start_stop_process(void) {
     if (settings_state.smart_disable_start_stop_enabled) {
         if (comfort_state.start_and_stop_enabled) {

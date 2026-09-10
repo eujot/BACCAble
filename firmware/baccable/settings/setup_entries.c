@@ -1,5 +1,5 @@
 /*
- * setup_menu_entries.c
+ * setup_entries.c
  *
  * Single source of truth for setup menu entries.
  *
@@ -265,14 +265,14 @@ static void setup_action_close_windows(void);
 static void setup_action_open_windows(void);
 static void setup_action_has_virtual_pad(void);
 
-static void setup_render_launch_torque(uint8_t page);
-static void setup_render_shift_rpm(uint8_t page);
-static void setup_render_diesel_params(uint8_t page);
-static void setup_render_pedal_booster(uint8_t page);
-static void setup_render_pedal_power(uint8_t page);
-static void setup_render_acc_autostart(uint8_t page);
-static void setup_render_close_windows(uint8_t page);
-static void setup_render_open_windows(uint8_t page);
+static void setup_render_launch_torque(void);
+static void setup_render_shift_rpm(void);
+static void setup_render_diesel_params(void);
+static void setup_render_pedal_booster(void);
+static void setup_render_pedal_power(void);
+static void setup_render_acc_autostart(void);
+static void setup_render_close_windows(void);
+static void setup_render_open_windows(void);
 
 // Common entry patterns:
 //   SETUP_TOGGLE(SETUP_FLASH_XXX, "Menu Text", DEFAULT_XXX, variable)
@@ -282,19 +282,20 @@ static void setup_render_open_windows(uint8_t page);
 const SetupParam setup_params[] = {
     // Core setup
     SETUP_HIDDEN_TOGGLE(SETUP_FLASH_IMMOBILIZER, DEFAULT_IMMOBILIZER, security_state.immobilizer_enabled),
-    SETUP_TOGGLE_ACTION(SETUP_FLASH_START_STOP, "Start&Stop", DEFAULT_START_STOP,
+    SETUP_TOGGLE_ACTION(SETUP_FLASH_START_STOP, "Auto stop block", DEFAULT_START_STOP,
                         settings_state.smart_disable_start_stop_enabled, setup_action_start_stop),
-    SETUP_VALUE16_ACTION(SETUP_FLASH_LAUNCH_TORQUE, "LaunchTorque 100Nm", 600, DEFAULT_LAUNCH_TORQUE,
+    SETUP_VALUE16_ACTION(SETUP_FLASH_LAUNCH_TORQUE, "Launch torque", 600, DEFAULT_LAUNCH_TORQUE,
                          settings_state.launch_torque_threshold, setup_render_launch_torque,
                          setup_action_launch_torque),
-    SETUP_TOGGLE(SETUP_FLASH_LED_CONTROLLER, "Led Controller", DEFAULT_LED_CONTROLLER,
+    SETUP_TOGGLE(SETUP_FLASH_LED_CONTROLLER, "LED controller", DEFAULT_LED_CONTROLLER,
                  settings_state.led_strip_controller_enabled),
     SETUP_TOGGLE(SETUP_FLASH_SHIFT_INDICATOR, "Shift Indicator", DEFAULT_SHIFT_INDICATOR,
                  settings_state.shift_indicator_enabled),
     SETUP_VALUE16_ACTION(SETUP_FLASH_SHIFT_RPM, "Shift RPM 3000", 6000, DEFAULT_SHIFT_RPM,
                          settings_state.shift_threshold, setup_render_shift_rpm, setup_action_shift_rpm),
-    SETUP_TOGGLE(SETUP_FLASH_MY23_IPC, "My23 IPC", DEFAULT_MY23_IPC, settings_state.ipc_my23_is_installed),
-    SETUP_TOGGLE(SETUP_FLASH_REGEN_ALERT, "Regen. Alert", DEFAULT_REGEN_ALERT,
+    SETUP_TOGGLE(SETUP_FLASH_MY23_IPC, "MY23 display", DEFAULT_MY23_IPC,
+                 settings_state.ipc_my23_is_installed),
+    SETUP_TOGGLE(SETUP_FLASH_REGEN_ALERT, "DPF regen alert", DEFAULT_REGEN_ALERT,
                  settings_state.regeneration_alert_enabled),
     SETUP_TOGGLE(SETUP_FLASH_SEATBELT_ALARM, "Seatbelt Alarm", DEFAULT_SEATBELT_ALARM,
                  settings_state.seatbelt_alarm_enabled),
@@ -315,17 +316,17 @@ const SetupParam setup_params[] = {
                  settings_state.clear_faults_enabled),
     SETUP_HIDDEN_TOGGLE(SETUP_FLASH_READ_FAULTS, DEFAULT_READ_FAULTS, settings_state.read_faults_enabled),
     SETUP_HIDDEN_TOGGLE(SETUP_FLASH_REMOTE_START, DEFAULT_REMOTE_START, settings_state.remote_start_enabled),
-    SETUP_TOGGLE_RENDER_ACTION(SETUP_FLASH_DIESEL_PARAMS, "Diesel   Params", DEFAULT_DIESEL_PARAMS,
+    SETUP_TOGGLE_RENDER_ACTION(SETUP_FLASH_DIESEL_PARAMS, "Engine type", DEFAULT_DIESEL_PARAMS,
                                settings_state.is_diesel_enabled, setup_render_diesel_params,
                                setup_action_diesel_params),
 
     // Driver assistance and comfort
-    SETUP_TOGGLE_ACTION(SETUP_FLASH_ODOMETER_BLINK, "Odometer Blink", DEFAULT_ODOMETER_BLINK,
+    SETUP_TOGGLE_ACTION(SETUP_FLASH_ODOMETER_BLINK, "Stop odo blink", DEFAULT_ODOMETER_BLINK,
                         settings_state.disable_odometer_blink, setup_action_odometer_blink),
     SETUP_VALUE8_ACTION(SETUP_FLASH_PEDAL_BOOSTER, "Pedal Booster", 6, DEFAULT_PEDAL_BOOSTER,
                         settings_state.pedal_booster_enabled, setup_render_pedal_booster,
                         setup_action_pedal_booster),
-    SETUP_SIGNED_VALUE8_ACTION(SETUP_FLASH_PEDAL_POWER, "Pedal Power: 0", DEFAULT_PEDAL_POWER,
+    SETUP_SIGNED_VALUE8_ACTION(SETUP_FLASH_PEDAL_POWER, "Pedal trim", DEFAULT_PEDAL_POWER,
                                settings_state.pedal_map_power, setup_render_pedal_power,
                                setup_action_pedal_power),
     SETUP_TOGGLE_ACTION(SETUP_FLASH_PARK_MIRROR, "Park Mirror", DEFAULT_PARK_MIRROR,
@@ -335,7 +336,7 @@ const SetupParam setup_params[] = {
     SETUP_VALUE8_ACTION(SETUP_FLASH_CLOSE_WINDOWS, "Close Windows", 2, DEFAULT_CLOSE_WINDOWS,
                         settings_state.close_windows_with_door_lock, setup_render_close_windows,
                         setup_action_close_windows),
-    SETUP_VALUE8_ACTION(SETUP_FLASH_OPEN_WINDOWS, "Open  Windows", 2, DEFAULT_OPEN_WINDOWS,
+    SETUP_VALUE8_ACTION(SETUP_FLASH_OPEN_WINDOWS, "Open Windows", 2, DEFAULT_OPEN_WINDOWS,
                         settings_state.open_windows_with_door_lock, setup_render_open_windows,
                         setup_action_open_windows),
     SETUP_TOGGLE_ACTION(SETUP_FLASH_HAS_VIRTUAL_PAD, "HAS Virtual Pad", DEFAULT_HAS_VIRTUAL_PAD,
@@ -349,36 +350,43 @@ const SetupParam setup_params[] = {
 };
 const uint8_t setup_params_count = sizeof(setup_params) / sizeof(setup_params[0]);
 
-static void setup_write_text(uint8_t page, uint8_t start, const char *text) {
+/* Replace the current setting text and clear any leftover characters. */
+static void setup_write_text(uint8_t start, const char *text) {
     uint8_t col = start;
     while (col < DASHBOARD_MESSAGE_MAX_LENGTH && *text)
-        dashboard_setup_menu_array[page][col++] = (uint8_t)*text++;
+        dashboard_setup_screen[col++] = (uint8_t)*text++;
     while (col < DASHBOARD_MESSAGE_MAX_LENGTH)
-        dashboard_setup_menu_array[page][col++] = ' ';
+        dashboard_setup_screen[col++] = ' ';
 }
 
-static void setup_write_text_field(uint8_t page, uint8_t start, uint8_t width, const char *text) {
-    for (uint8_t i = 0; i < width && (start + i) < DASHBOARD_MESSAGE_MAX_LENGTH; i++)
-        dashboard_setup_menu_array[page][start + i] = text[i] ? (uint8_t)text[i] : ' ';
+/* Show an integer-valued preference using its functional label. */
+static void setup_write_number(const char *format, int value) {
+    char text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
+    snprintf_(text, sizeof(text), format, value);
+    setup_write_text(0, text);
 }
 
+/* Toggle the automatic engine-stop blocking preference. */
 static void setup_action_start_stop(void) {
     settings_state.smart_disable_start_stop_enabled = !settings_state.smart_disable_start_stop_enabled;
     comfort_state.request_to_disable_start_and_stop = 0;
 }
 
+/* Select the next launch-assist torque threshold. */
 static void setup_action_launch_torque(void) {
     settings_state.launch_torque_threshold += 25;
     if (settings_state.launch_torque_threshold > 600)
         settings_state.launch_torque_threshold = 25;
 }
 
+/* Select the next engine-speed threshold for the shift indicator. */
 static void setup_action_shift_rpm(void) {
     settings_state.shift_threshold += 250;
     if (settings_state.shift_threshold > 6000)
         settings_state.shift_threshold = 1500;
 }
 
+/* Toggle custom stability-control behavior and notify the other boards. */
 static void setup_action_esc_tc(void) {
     settings_state.esc_tc_customizator_enabled = !settings_state.esc_tc_customizator_enabled;
 
@@ -390,11 +398,13 @@ static void setup_action_esc_tc(void) {
     board_uart_send(msg, 2);
 }
 
+/* Switch the menu between gasoline and diesel readings. */
 static void setup_action_diesel_params(void) {
     settings_state.is_diesel_enabled = !settings_state.is_diesel_enabled;
     parameter_page_count = settings_state.is_diesel_enabled ? diesel_page_count : gasoline_page_count;
 }
 
+/* Toggle suppression of the dashboard's blinking odometer. */
 static void setup_action_odometer_blink(void) {
     settings_state.disable_odometer_blink = !settings_state.disable_odometer_blink;
 
@@ -404,6 +414,7 @@ static void setup_action_odometer_blink(void) {
     board_uart_send(msg, 2);
 }
 
+/* Select the next accelerator-response mode and notify the other boards. */
 static void setup_action_pedal_booster(void) {
     settings_state.pedal_booster_enabled++;
     if (settings_state.pedal_booster_enabled > 6)
@@ -415,6 +426,7 @@ static void setup_action_pedal_booster(void) {
     board_uart_send(msg, 3);
 }
 
+/* Adjust the selected pedal-response trim and request a fresh map status. */
 static void setup_action_pedal_power(void) {
     settings_state.pedal_map_power += 2;
     if (settings_state.pedal_map_power > 10)
@@ -422,6 +434,7 @@ static void setup_action_pedal_power(void) {
     pedal_state.current_schizzaforte_map = '-';
 }
 
+/* Toggle parking-mirror behavior and capture a reference position when enabling it. */
 static void setup_action_park_mirror(void) {
     settings_state.park_mirror = !settings_state.park_mirror;
 
@@ -431,12 +444,14 @@ static void setup_action_park_mirror(void) {
     board_uart_send(msg, 2);
 }
 
+/* Select how adaptive cruise resumes after a stop. */
 static void setup_action_acc_autostart(void) {
     settings_state.acc_autostart++;
     if (settings_state.acc_autostart > 2)
         settings_state.acc_autostart = 0;
 }
 
+/* Select the lock-button gesture that closes the windows. */
 static void setup_action_close_windows(void) {
     settings_state.close_windows_with_door_lock++;
     if (settings_state.close_windows_with_door_lock > 2)
@@ -445,6 +460,7 @@ static void setup_action_close_windows(void) {
     comfort_state.door_locks_requests_counter = 0;
 }
 
+/* Select the unlock-button gesture that opens the windows. */
 static void setup_action_open_windows(void) {
     settings_state.open_windows_with_door_lock++;
     if (settings_state.open_windows_with_door_lock > 2)
@@ -453,6 +469,7 @@ static void setup_action_open_windows(void) {
     comfort_state.door_unlocks_requests_counter = 0;
 }
 
+/* Toggle the virtual highway-assist button and notify the other boards. */
 static void setup_action_has_virtual_pad(void) {
     settings_state.has_function_enabled = !settings_state.has_function_enabled;
 
@@ -462,75 +479,53 @@ static void setup_action_has_virtual_pad(void) {
     board_uart_send(msg, 2);
 }
 
-static void setup_render_launch_torque(uint8_t page) {
-    char value[5];
-    format_number(value, (float)settings_state.launch_torque_threshold, 0, 4);
-
-    if (strlen(value) == 2) {
-        dashboard_setup_menu_array[page][13] = ' ';
-        dashboard_setup_menu_array[page][14] = value[0];
-        dashboard_setup_menu_array[page][15] = value[1];
-    } else {
-        dashboard_setup_menu_array[page][13] = value[0];
-        dashboard_setup_menu_array[page][14] = value[1];
-        dashboard_setup_menu_array[page][15] = value[2];
-    }
+/* Show the selected launch-assist torque threshold. */
+static void setup_render_launch_torque(void) {
+    setup_write_number("Launch %3d Nm", settings_state.launch_torque_threshold);
 }
 
-static void setup_render_shift_rpm(uint8_t page) {
-    char value[5];
-    format_number(value, (float)settings_state.shift_threshold, 0, 5);
-    dashboard_setup_menu_array[page][10] = value[0];
-    dashboard_setup_menu_array[page][11] = value[1];
-    dashboard_setup_menu_array[page][12] = value[2];
-    dashboard_setup_menu_array[page][13] = value[3];
+/* Show the selected shift-indicator engine speed. */
+static void setup_render_shift_rpm(void) {
+    setup_write_number("Shift at %4d RPM", settings_state.shift_threshold);
 }
 
-static void setup_render_diesel_params(uint8_t page) {
-    setup_write_text_field(page, 3, 8, settings_state.is_diesel_enabled ? "Diesel" : "Gasoline");
+/* Show the engine profile used by the parameter menu. */
+static void setup_render_diesel_params(void) {
+    setup_write_text(0, settings_state.is_diesel_enabled ? "Engine: Diesel" : "Engine: Gasoline");
 }
 
-static void setup_render_pedal_booster(uint8_t page) {
-    static const char *labels[] = {"ooster",  "  Auto",  "  Bypass", "  A Map",
-                                   "  N Map", "  D Map", "  R Map"};
+/* Show the selected accelerator-response mode. */
+static void setup_render_pedal_booster(void) {
+    static const char *const labels[] = {"Pedal: OFF",   "Pedal: Auto",  "Pedal: Bypass", "Pedal: A map",
+                                         "Pedal: N map", "Pedal: D map", "Pedal: R map"};
     uint8_t index = settings_state.pedal_booster_enabled;
-    if (index > 6)
-        index = 0;
-    setup_write_text(page, 10, labels[index]);
+    setup_write_text(0, labels[index <= 6 ? index : 0]);
 }
 
-static void setup_render_pedal_power(uint8_t page) {
-    char value[5];
-    format_number(value, (float)settings_state.pedal_map_power, 0, 4);
-    dashboard_setup_menu_array[page][12] = value[0];
-    dashboard_setup_menu_array[page][13] = value[1];
-    dashboard_setup_menu_array[page][14] = value[2];
-    dashboard_setup_menu_array[page][15] = value[3];
+/* Show the signed pedal-response trim. */
+static void setup_render_pedal_power(void) {
+    setup_write_number("Pedal trim %+3d", settings_state.pedal_map_power);
 }
 
-static void setup_render_acc_autostart(uint8_t page) {
-    switch (settings_state.acc_autostart) {
-    case 1:
-        dashboard_setup_menu_array[page][17] = 'R';
-        break;
-    case 2:
-        dashboard_setup_menu_array[page][17] = '+';
-        break;
-    default:
-        dashboard_setup_menu_array[page][17] = ' ';
-        break;
-    }
+/* Show how adaptive cruise is configured to resume. */
+static void setup_render_acc_autostart(void) {
+    static const char *const labels[] = {"ACC resume: OFF", "ACC resume: RES", "ACC resume: +"};
+    uint8_t index = settings_state.acc_autostart;
+    setup_write_text(0, labels[index <= 2 ? index : 0]);
 }
 
-static void setup_render_close_windows(uint8_t page) {
-    dashboard_setup_menu_array[page][17] = settings_state.close_windows_with_door_lock
-                                               ? ('0' + settings_state.close_windows_with_door_lock)
-                                               : ' ';
+/* Show the lock-button gesture required to close the windows. */
+static void setup_render_close_windows(void) {
+    static const char *const labels[] = {"Close windows OFF", "Close: 1 lock", "Close: 2 locks"};
+    uint8_t index = settings_state.close_windows_with_door_lock;
+    setup_write_text(0, labels[index <= 2 ? index : 0]);
 }
 
-static void setup_render_open_windows(uint8_t page) {
-    dashboard_setup_menu_array[page][17] =
-        settings_state.open_windows_with_door_lock ? ('0' + settings_state.open_windows_with_door_lock) : ' ';
+/* Show the unlock-button gesture required to open the windows. */
+static void setup_render_open_windows(void) {
+    static const char *const labels[] = {"Open windows OFF", "Open: 1 unlock", "Open: 2 unlocks"};
+    uint8_t index = settings_state.open_windows_with_door_lock;
+    setup_write_text(0, labels[index <= 2 ? index : 0]);
 }
 
 #endif /* BACCABLE_C1 */

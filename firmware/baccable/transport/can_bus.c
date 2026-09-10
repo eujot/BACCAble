@@ -1,27 +1,37 @@
-//
+
 // can: initializes and provides methods to interact with the CAN peripheral
-//
 
 #include "transport/can_bus.h"
 #include <string.h>
 
-// Private variables
+/* Only one CAN identifier applies to a frame. Expand the HAL header at transmission time. */
+typedef struct {
+    uint32_t id;
+    uint8_t dlc, ide, rtr, global_time;
+    uint8_t data[TXQUEUE_DATALEN];
+} QueuedFrame;
+typedef struct {
+    QueuedFrame frames[TXQUEUE_LEN];
+    uint8_t head, tail;
+} CanTxQueue;
+_Static_assert(sizeof(QueuedFrame) == 16, "CAN queue frame must remain compact and aligned");
+_Static_assert(CAN_ID_EXT <= UINT8_MAX && CAN_RTR_REMOTE <= UINT8_MAX && ENABLE <= UINT8_MAX,
+               "CAN flags must fit the queued representation");
+
 static CAN_HandleTypeDef can_handle;
 static uint32_t prescaler;
 static can_bus_state_t bus_state = OFF_BUS;
 static uint8_t can_autoretransmit = ENABLE;
 static uint32_t can_mode = CAN_MODE_NORMAL;
-static can_txbuf_t txqueue = {0};
+static CanTxQueue txqueue = {0};
 
-// Initialize CAN peripheral settings, but don't actually start the peripheral
+/* Prepare the vehicle connection without joining the bus yet. */
 void can_init(void) {
     // Initialize GPIO for CAN transceiver
     GPIO_InitTypeDef GPIO_InitStruct;
     __HAL_RCC_CAN1_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
 
-    // PB8     ------> CAN_RX
-    // PB9     ------> CAN_TX
     GPIO_InitStruct.Pin = GPIO_PIN_8 | GPIO_PIN_9;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -38,7 +48,7 @@ void can_init(void) {
     HAL_NVIC_EnableIRQ(CEC_CAN_IRQn);
 }
 
-// Start the CAN peripheral
+/* Join the vehicle bus using the selected communication settings. */
 void can_enable(void) {
     if (bus_state == OFF_BUS) {
         can_handle.Init.Prescaler = prescaler;
@@ -77,7 +87,7 @@ void can_enable(void) {
     }
 }
 
-// Disable the CAN peripheral and go off-bus
+/* Leave the vehicle bus and discard commands that are no longer relevant. */
 void can_disable(void) {
     if (bus_state == ON_BUS) {
         // Do a bxCAN reset (set RESET bit to 1)
@@ -89,7 +99,7 @@ void can_disable(void) {
     }
 }
 
-// Set the bitrate of the CAN peripheral
+/* Choose the communication speed before joining a vehicle bus. */
 void can_set_bitrate(enum can_bitrate bitrate) {
     if (bus_state == ON_BUS) {
         // cannot set bitrate while on bus
@@ -132,7 +142,7 @@ void can_set_bitrate(enum can_bitrate bitrate) {
     status_led_activity();
 }
 
-// Set CAN peripheral to silent mode
+/* Choose whether the device listens without acknowledging vehicle traffic. */
 void can_set_silent(uint8_t silent) {
     if (bus_state == ON_BUS) {
         // cannot set silent mode while on bus
@@ -147,7 +157,7 @@ void can_set_silent(uint8_t silent) {
     status_led_error();
 }
 
-// Enable/disable auto-retransmission
+/* Choose whether the controller automatically retries unsuccessful transmissions. */
 void can_set_autoretransmit(uint8_t autoretransmit) {
     if (bus_state == ON_BUS) {
         // Cannot set autoretransmission while on bus
@@ -162,11 +172,12 @@ void can_set_autoretransmit(uint8_t autoretransmit) {
     status_led_error();
 }
 
-// Send a message on the CAN bus
+/* Queue a valid vehicle message while retaining ownership of its contents. */
 uint32_t can_tx(CAN_TxHeaderTypeDef *tx_msg_header, uint8_t *tx_msg_data) {
     if (bus_state != ON_BUS || !tx_msg_header || !tx_msg_data || tx_msg_header->DLC > 8 ||
         (tx_msg_header->IDE != CAN_ID_STD && tx_msg_header->IDE != CAN_ID_EXT) ||
         (tx_msg_header->RTR != CAN_RTR_DATA && tx_msg_header->RTR != CAN_RTR_REMOTE) ||
+        (tx_msg_header->TransmitGlobalTime != DISABLE && tx_msg_header->TransmitGlobalTime != ENABLE) ||
         (tx_msg_header->IDE == CAN_ID_STD && tx_msg_header->StdId > 0x7ff) ||
         (tx_msg_header->IDE == CAN_ID_EXT && tx_msg_header->ExtId > 0x1fffffff))
         return HAL_ERROR;
@@ -176,12 +187,14 @@ uint32_t can_tx(CAN_TxHeaderTypeDef *tx_msg_header, uint8_t *tx_msg_data) {
         return HAL_ERROR;
     }
 
-    // Copy header struct into array
-    txqueue.header[txqueue.head] = *tx_msg_header;
-
-    // Copy data into array
+    QueuedFrame *frame = &txqueue.frames[txqueue.head];
+    frame->id = tx_msg_header->IDE == CAN_ID_STD ? tx_msg_header->StdId : tx_msg_header->ExtId;
+    frame->ide = tx_msg_header->IDE;
+    frame->rtr = tx_msg_header->RTR;
+    frame->dlc = tx_msg_header->DLC;
+    frame->global_time = tx_msg_header->TransmitGlobalTime;
     for (uint8_t i = 0; i < tx_msg_header->DLC; i++) {
-        txqueue.data[txqueue.head][i] = tx_msg_data[i];
+        frame->data[i] = tx_msg_data[i];
     }
 
     // Increment the head pointer
@@ -190,17 +203,21 @@ uint32_t can_tx(CAN_TxHeaderTypeDef *tx_msg_header, uint8_t *tx_msg_data) {
     return HAL_OK;
 }
 
-// Process messages in the TX output queue
+/* Send waiting vehicle messages and retain any message the controller has not accepted. */
 void can_process(void) {
     if (bus_state != ON_BUS)
         return;
     while ((txqueue.tail != txqueue.head) && (HAL_CAN_GetTxMailboxesFreeLevel(&can_handle) > 0)) {
         // Transmit can frame
+        QueuedFrame *frame = &txqueue.frames[txqueue.tail];
+        CAN_TxHeaderTypeDef header = {.StdId = frame->ide == CAN_ID_STD ? frame->id : 0,
+                                      .ExtId = frame->ide == CAN_ID_EXT ? frame->id : 0,
+                                      .IDE = frame->ide,
+                                      .RTR = frame->rtr,
+                                      .DLC = frame->dlc,
+                                      .TransmitGlobalTime = frame->global_time};
         uint32_t mailbox_txed = 0;
-        uint32_t status = HAL_CAN_AddTxMessage(&can_handle, &txqueue.header[txqueue.tail],
-                                               txqueue.data[txqueue.tail], &mailbox_txed);
-
-        // status_led_error();
+        uint32_t status = HAL_CAN_AddTxMessage(&can_handle, &header, frame->data, &mailbox_txed);
 
         // Retain the queued frame until the peripheral accepts it.
         if (status != HAL_OK) {
@@ -211,17 +228,17 @@ void can_process(void) {
     }
 }
 
-// Receive message from the CAN bus RXFIFO
+/* Receive a vehicle message and reject invalid lengths. */
 uint32_t can_rx(CAN_RxHeaderTypeDef *rx_msg_header, uint8_t *rx_msg_data) {
     if (bus_state != ON_BUS || !rx_msg_header || !rx_msg_data)
         return HAL_ERROR;
     memset(rx_msg_data, 0, 8);
     uint32_t status = HAL_CAN_GetRxMessage(&can_handle, CAN_RX_FIFO0, rx_msg_header, rx_msg_data);
-    // status_led_activity(); disabled to avoid too much lights, but you uncomment it for debug
+
     return status == HAL_OK && rx_msg_header->DLC <= 8 ? HAL_OK : HAL_ERROR;
 }
 
-// Check if a CAN message has been received and is waiting in the FIFO
+/* Check whether vehicle traffic is waiting to be processed. */
 uint8_t is_can_msg_pending(uint8_t fifo) {
     if (bus_state == OFF_BUS) {
         return 0;
@@ -229,6 +246,7 @@ uint8_t is_can_msg_pending(uint8_t fifo) {
     return (HAL_CAN_GetRxFifoFillLevel(&can_handle, fifo) > 0);
 }
 
+/* Queue a received vehicle message for forwarding with its relevant attributes preserved. */
 uint32_t can_forward(const CAN_RxHeaderTypeDef *received, uint8_t *data) {
     if (!received)
         return HAL_ERROR;
@@ -241,10 +259,10 @@ uint32_t can_forward(const CAN_RxHeaderTypeDef *received, uint8_t *data) {
     return can_tx(&header, data);
 }
 
-// Return reference to CAN handle
+/* Provide the active vehicle connection to board-support callbacks. */
 CAN_HandleTypeDef *can_gethandle(void) { return &can_handle; }
 
-// Callback for FIFO0 full
+/* Record that incoming vehicle traffic exceeded the receive capacity. */
 void HAL_CAN_RxFifo0FullCallback(CAN_HandleTypeDef *hcan) {
     (void)hcan;
     error_assert(ERR_CANRXFIFO_OVERFLOW);

@@ -3,8 +3,6 @@
 const char *FW_VERSION = _FW_VERSION;
 #if defined(UCAN_BOARD_LED_INVERSION)
 const uint8_t led_light_on_bit = 1;
-#endif
-#if defined(UCAN_BOARD_LED_INVERSION)
 #else
 const uint8_t led_light_on_bit = 0;
 #endif

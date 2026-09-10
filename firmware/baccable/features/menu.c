@@ -34,16 +34,23 @@ typedef struct {
     uint8_t group;
     const char *name;
 } ActionEntry;
-static const ActionEntry actions[] = {
-    {ACTION_EXHAUST, 0, "QV exhaust"}, {ACTION_IMMO, 0, "Immobilizer"},  {ACTION_HAS, 1, "HAS button"},
-    {ACTION_ESC, 1, "ESC/TC"},        {ACTION_DYNO, 2, "Dyno"},         {ACTION_BRAKE, 2, "Front brake"},
-    {ACTION_AWD, 2, "4WD"},           {ACTION_CLEAR, 3, "Clear faults"}, {ACTION_STATS, 3, "Reset records"}};
+static const ActionEntry actions[] = {{ACTION_EXHAUST, 0, "QV exhaust"},
+                                      {ACTION_IMMO, 0, "Immobilizer"},
+                                      {ACTION_HAS, 1, "HAS button"},
+                                      {ACTION_ESC, 1, "ESC/TC"},
+                                      {ACTION_DYNO, 2, "Dyno"},
+                                      {ACTION_BRAKE, 2, "Front brake"},
+                                      {ACTION_AWD, 2, "4WD"},
+                                      {ACTION_CLEAR, 3, "Clear faults"},
+                                      {ACTION_STATS, 3, "Reset records"}};
 static const char *const roots[] = {"Favorites", "Readings", "Functions", "Settings", "Information"};
-static const char *const settings[] = {"Feature setup",   "Edit favorites", "Visible pages",
-                                       "Reorder favorites", "Sort order",       "Save"};
+static const char *const settings[] = {"Feature setup",     "Edit favorites", "Visible pages",
+                                       "Reorder favorites", "Sort order",     "Save"};
 static char peer_versions[2][DASHBOARD_MESSAGE_MAX_LENGTH - 2];
 static uint32_t peer_updated[2];
 static uint8_t peer_seen[2];
+
+/* Remember a board's version and when it last responded. */
 void menu_peer_status(uint8_t peer, const uint8_t *version) {
     if (peer > 1)
         return;
@@ -67,11 +74,14 @@ static bool retry_back;
 static uint32_t confirm_started;
 static void build_pages(uint16_t selected);
 
+/* Move through a list and continue from the other end at its boundary. */
 static unsigned wrap(unsigned value, unsigned count, int delta) {
     if (!count)
         return 0;
     return (value + count + (delta < 0 ? count - 1 : 1)) % count;
 }
+
+/* Check whether a vehicle action is enabled by the user's preferences. */
 static bool available(MenuAction id) {
     switch (id) {
     case ACTION_CLEAR:
@@ -92,6 +102,8 @@ static bool available(MenuAction id) {
         return true;
     }
 }
+
+/* Select the next available action or action group. */
 static void function_move(int direction, bool next_group) {
     uint8_t old_group = actions[function].group;
     for (unsigned i = 0; i < sizeof(actions) / sizeof(actions[0]); ++i) {
@@ -100,6 +112,8 @@ static void function_move(int direction, bool next_group) {
             return;
     }
 }
+
+/* Request the current screen while avoiding unnecessary repeated text updates. */
 void menu_present(const char *text) {
     uint8_t message[UART_BUFFER_SIZE];
     memset(message, ' ', sizeof(message));
@@ -116,23 +130,27 @@ void menu_present(const char *text) {
     previous_valid = 1;
     previous_sent = currentTime;
 }
+
+/* Show brief feedback about a selection, action or save result. */
 void menu_notice(const char *text) {
     notice = text;
     notice_started = currentTime;
     if (dashboard_state.baccable_dashboard_menu_visible)
         menu_present(text);
 }
+
+/* Save favorites, visibility, sort order and remembered pages. */
 uint8_t menu_preferences_save(void) {
     uint8_t data[MENU_PREFS_SIZE];
     menu_preferences_encode(&preferences, data);
     return flash_record_save(VISIBILITY_RECORD, 0x104, data, sizeof(data)) ? 0 : 255;
 }
+
+/* Switch parameter catalogs and discard readings from the previous engine profile. */
 void menu_engine_changed(void) {
     engine = !!settings_state.is_diesel_enabled;
     parameter_page_count = menu_page_count(engine);
     list_count = 0;
-    for (unsigned i = 0; i < parameter_page_count; ++i)
-        parameter_page_visibility[i] = menu_page_visible(&preferences, engine, i);
     parameter_request_cancel();
     parameter_cache_reset();
     dashboard_state.dashboard_page_index = 0;
@@ -140,6 +158,8 @@ void menu_engine_changed(void) {
         view == ORDER_FAVORITES)
         build_pages(view == FAVORITES ? preferences.last_favorite[engine] : preferences.last[engine][group]);
 }
+
+/* Restore the user's menu layout or start with useful defaults. */
 void menu_init(void) {
     memset(&input, 0, sizeof(input));
     view = FAVORITES;
@@ -170,11 +190,17 @@ void menu_init(void) {
     }
     menu_engine_changed();
 }
+
+/* Check whether the user is editing favorites or page visibility. */
 static bool is_editor(void) { return view == EDIT_FAVORITES || view == EDIT_VISIBLE; }
+
+/* Check whether a visible screen currently needs vehicle readings. */
 bool menu_parameters_active(void) {
     return dashboard_state.baccable_dashboard_menu_visible && (view == VALUES || view == FAVORITES) &&
            list_count;
 }
+
+/* Fill the current screen with its latest usable measurements. */
 void menu_parameters_refresh(void) {
     if (dashboard_state.dashboard_page_index >= parameter_page_count)
         return;
@@ -182,6 +208,8 @@ void menu_parameters_refresh(void) {
     for (unsigned i = 0; i < 2; ++i)
         displayed_parameter_values[i] = parameter_cache_get(page->parameter_ids[i], currentTime);
 }
+
+/* Remember the selected reading and stop requests belonging to the previous page. */
 static void select_page(void) {
     if (!list_count) {
         parameter_request_cancel();
@@ -193,8 +221,6 @@ static void select_page(void) {
         return;
     }
     dashboard_state.dashboard_page_index = index;
-    dashboard_state.main_dashboard_page_index = 1;
-    dashboard_state.dashboard_menu_indent_level = 1;
     uint16_t id = parameter_pages[engine][index].id;
     if (view == FAVORITES)
         preferences.last_favorite[engine] = id;
@@ -205,6 +231,8 @@ static void select_page(void) {
     page_changed = currentTime;
     menu_parameters_refresh();
 }
+
+/* Prepare the visible, sorted list and restore the requested selection. */
 static void build_pages(uint16_t selected) {
     list_count = menu_page_list(&preferences, engine, group, view == FAVORITES || view == ORDER_FAVORITES,
                                 is_editor(), list);
@@ -215,10 +243,14 @@ static void build_pages(uint16_t selected) {
     if (view != ORDER_FAVORITES)
         select_page();
 }
+
+/* Open favorites or a parameter group at its remembered page. */
 static void open_pages(bool favorite) {
     view = favorite ? FAVORITES : VALUES;
     build_pages(favorite ? preferences.last_favorite[engine] : preferences.last[engine][group]);
 }
+
+/* Show an automatic result without changing the user's visibility preferences. */
 void menu_show_parameter(uint8_t index) {
     if (index >= parameter_page_count)
         return;
@@ -232,6 +264,8 @@ void menu_show_parameter(uint8_t index) {
         select_page();
     }
 }
+
+/* Confirm and request the selected vehicle action when its conditions are met. */
 static void action_run(void) {
     MenuAction id = actions[function].id;
     if (!available(id)) {
@@ -314,6 +348,8 @@ static void action_run(void) {
     }
     menu_notice(board_uart_send(command, sizeof(command)) ? "Command queued" : "Queue full: retry");
 }
+
+/* Describe the selected action's current state or requested change. */
 static const char *action_status(MenuAction id) {
     switch (id) {
     case ACTION_IMMO:
@@ -333,6 +369,8 @@ static const char *action_status(MenuAction id) {
         return "RES";
     }
 }
+
+/* Present the active menu, reading, editor or feedback message. */
 void menu_render(void) {
     if (!dashboard_state.baccable_dashboard_menu_visible)
         return;
@@ -413,6 +451,8 @@ void menu_render(void) {
     }
     menu_present(text);
 }
+
+/* Save device settings and menu preferences, reporting any failure. */
 static bool save_all(void) {
     if (settings_save() != 0 || menu_preferences_save() != 0) {
         menu_notice("Save failed: RES");
@@ -421,6 +461,8 @@ static bool save_all(void) {
     menu_notice("Saved");
     return true;
 }
+
+/* Return to the parent menu and save edits before leaving their editor. */
 static void back(void) {
     if (view == ROOT) {
         if (!save_all()) {
@@ -454,6 +496,8 @@ static void back(void) {
     }
     parameter_request_cancel();
 }
+
+/* Apply one navigation gesture to the currently visible menu. */
 void menu_event(MenuEvent event) {
     if (!event)
         return;
@@ -595,13 +639,12 @@ void menu_event(MenuEvent event) {
         case EDIT_FAVORITES:
             if (list_count &&
                 !menu_favorite_toggle(&preferences, engine, parameter_pages[engine][editor_page].id))
-                menu_notice("Limit 6 ulubionych");
+                menu_notice("Max 6 favorites");
             break;
         case EDIT_VISIBLE:
             if (list_count) {
                 bool visible = !menu_page_visible(&preferences, engine, editor_page);
                 menu_page_show(&preferences, engine, editor_page, visible);
-                parameter_page_visibility[editor_page] = visible;
             }
             break;
         case ORDER_FAVORITES:
@@ -614,6 +657,8 @@ void menu_event(MenuEvent event) {
     }
     menu_render();
 }
+
+/* Turn eligible steering-wheel button reports into menu gestures. */
 void menu_button(uint8_t button, bool allowed) {
     #ifndef HIDE_DASHBOARD_MENU
     menu_event(menu_input_update(&input, button, allowed, currentTime));
@@ -622,6 +667,8 @@ void menu_button(uint8_t button, bool allowed) {
     (void)allowed;
     #endif
 }
+
+/* Refresh the display and request readings at their intended intervals. */
 void menu_process(void) {
     if (engine != !!settings_state.is_diesel_enabled)
         menu_engine_changed();

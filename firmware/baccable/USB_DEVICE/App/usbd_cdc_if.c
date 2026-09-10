@@ -14,10 +14,13 @@ static uint16_t tx_lengths[USB_TX_SLOTS];
 static volatile uint8_t tx_head, tx_tail;
 static uint8_t tx_active;
 static volatile uint8_t rx_lost;
+#if !defined(ACT_AS_SCHIZZAFORTE_SERIAL_CONTROLLER)
 static uint8_t line[SLCAN_MTU];
+#endif
 static uint8_t line_length, discard_line;
 extern USBD_HandleTypeDef hUsbDeviceFS;
 
+/* Prepare the USB serial connection for a new session. */
 static int8_t CDC_Init_FS(void) {
     memset(&received, 0, sizeof(received));
     tx_head = tx_tail = tx_active = rx_lost = line_length = discard_line = 0;
@@ -26,11 +29,13 @@ static int8_t CDC_Init_FS(void) {
     return USBD_OK;
 }
 
+/* Discard pending replies when the USB serial session ends. */
 static int8_t CDC_DeInit_FS(void) {
     tx_head = tx_tail = tx_active = 0;
     return USBD_OK;
 }
 
+/* Report the serial settings expected by the USB host. */
 static int8_t CDC_Control_FS(uint8_t cmd, uint8_t *data, uint16_t length) {
     if (cmd == CDC_GET_LINE_CODING && length >= 7) {
         const uint8_t coding[7] = {0x00, 0xc2, 0x01, 0x00, 0, 0, 8};
@@ -39,6 +44,7 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t *data, uint16_t length) {
     return USBD_OK;
 }
 
+/* Queue incoming USB data for processing and report lost packets. */
 static int8_t CDC_Receive_FS(uint8_t *data, uint32_t *length) {
     uint8_t next = (received.head + 1) % NUM_RX_BUFS;
     if (*length > RX_BUF_SIZE || next == received.tail) {
@@ -57,6 +63,7 @@ static int8_t CDC_Receive_FS(uint8_t *data, uint32_t *length) {
 
 USBD_CDC_ItfTypeDef USBD_Interface_fops_FS = {CDC_Init_FS, CDC_DeInit_FS, CDC_Control_FS, CDC_Receive_FS};
 
+/* Send queued replies as the USB host becomes ready. */
 static void cdc_process_tx(void) {
     uint32_t irq = __get_PRIMASK();
     __disable_irq();
@@ -74,6 +81,7 @@ static void cdc_process_tx(void) {
     __set_PRIMASK(irq);
 }
 
+/* Process incoming USB commands or pedal-controller data and advance pending replies. */
 void cdc_process(void) {
     cdc_process_tx();
     uint8_t packet[RX_BUF_SIZE];
@@ -120,7 +128,7 @@ void cdc_process(void) {
     cdc_process_tx();
 }
 
-/* Copy before returning; each slot stays owned until USB reports completion. */
+/* Queue a copy of a USB reply, or report that the connection cannot accept it. */
 uint8_t CDC_Transmit_FS(uint8_t *data, uint16_t length) {
     if (!data || !length || length > TX_BUF_SIZE)
         return USBD_FAIL;
@@ -143,10 +151,12 @@ uint8_t CDC_Transmit_FS(uint8_t *data, uint16_t length) {
 }
 
 #ifdef DEBUG_MODE
+/* Send a bounded diagnostic message to the USB host. */
 uint8_t print_to_usb_(char *message) {
     size_t length = strlen(message);
     return CDC_Transmit_FS((uint8_t *)message, length < TX_BUF_SIZE ? length : TX_BUF_SIZE);
 }
+/* Format and send a bounded diagnostic message to the USB host. */
 uint8_t printf_to_usb_(const char *format, ...) {
     char text[TX_BUF_SIZE];
     va_list args;

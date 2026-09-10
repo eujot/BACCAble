@@ -1,10 +1,14 @@
 #include "features/menu_model.h"
 #include <string.h>
-const char *const menu_group_names[MENU_GROUPS] = {"All readings",    "Engine", "Temperatures", "Battery",
+const char *const menu_group_names[MENU_GROUPS] = {"All readings", "Engine",      "Temperatures", "Battery",
                                                    "DPF / AdBlue", "Performance", "Other"};
+
+/* Return the number of readings available for an engine profile. */
 uint8_t menu_page_count(uint8_t engine) {
     return engine == 0 ? gasoline_page_count : engine == 1 ? diesel_page_count : 0;
 }
+
+/* Find a catalog page by its permanent identity. */
 int menu_page_index(uint8_t engine, uint16_t id) {
     if (!id)
         return -1;
@@ -13,6 +17,8 @@ int menu_page_index(uint8_t engine, uint16_t id) {
             return (int)i;
     return -1;
 }
+
+/* Provide initial favorites and a visible parameter catalog. */
 void menu_preferences_default(MenuPreferences *prefs) {
     memset(prefs, 0, sizeof(*prefs));
     const uint16_t favorites[2][4] = {{0x04, 0x01, 0x07, 0x28}, {0x84, 0x81, 0x87, 0x88}};
@@ -21,14 +27,20 @@ void menu_preferences_default(MenuPreferences *prefs) {
         prefs->last_favorite[e] = favorites[e][0];
     }
 }
+
+/* Add a permanent page identity to the saved menu preferences. */
 static void put16(uint8_t *data, unsigned *offset, uint16_t value) {
     data[(*offset)++] = value;
     data[(*offset)++] = value >> 8;
 }
+
+/* Read a permanent page identity from saved menu preferences. */
 static uint16_t get16(const uint8_t *data, unsigned *offset) {
     uint16_t value = data[(*offset)++];
     return value | (uint16_t)data[(*offset)++] << 8;
 }
+
+/* Prepare menu preferences for saving without depending on their in-memory layout. */
 void menu_preferences_encode(const MenuPreferences *prefs, uint8_t data[MENU_PREFS_SIZE]) {
     memset(data, 0, MENU_PREFS_SIZE);
     data[0] = 1;
@@ -44,6 +56,8 @@ void menu_preferences_encode(const MenuPreferences *prefs, uint8_t data[MENU_PRE
         offset += 8;
     }
 }
+
+/* Restore supported menu preferences and discard invalid or duplicate favorites. */
 bool menu_preferences_decode(MenuPreferences *prefs, const uint8_t data[MENU_PREFS_SIZE]) {
     if (data[0] != 1 || data[1] > 1)
         return false;
@@ -68,12 +82,16 @@ bool menu_preferences_decode(MenuPreferences *prefs, const uint8_t data[MENU_PRE
     }
     return true;
 }
+
+/* Check whether a page is enabled in the ordinary parameter catalog. */
 bool menu_page_visible(const MenuPreferences *prefs, uint8_t engine, uint8_t index) {
     if (index >= menu_page_count(engine))
         return false;
     unsigned slot = (parameter_pages[engine][index].id & 0x7f) - 1;
     return slot < 64 && !(prefs->hidden[engine][slot / 8] & (1U << (slot % 8)));
 }
+
+/* Change a page's visibility without changing its favorite status. */
 void menu_page_show(MenuPreferences *prefs, uint8_t engine, uint8_t index, bool visible) {
     if (index >= menu_page_count(engine))
         return;
@@ -86,6 +104,8 @@ void menu_page_show(MenuPreferences *prefs, uint8_t engine, uint8_t index, bool 
     else
         prefs->hidden[engine][slot / 8] |= mask;
 }
+
+/* Build the requested parameter or favorite list in the chosen order. */
 unsigned menu_page_list(const MenuPreferences *prefs, uint8_t engine, uint8_t group, bool favorites,
                         bool include_hidden, uint8_t list[60]) {
     unsigned count = 0;
@@ -121,6 +141,8 @@ unsigned menu_page_list(const MenuPreferences *prefs, uint8_t engine, uint8_t gr
     }
     return count;
 }
+
+/* Add or remove a favorite while respecting the six-page limit. */
 bool menu_favorite_toggle(MenuPreferences *prefs, uint8_t engine, uint16_t id) {
     if (menu_page_index(engine, id) < 0)
         return false;
@@ -138,6 +160,8 @@ bool menu_favorite_toggle(MenuPreferences *prefs, uint8_t engine, uint16_t id) {
     }
     return false;
 }
+
+/* Move a favorite one position within the user's custom order. */
 void menu_favorite_move(MenuPreferences *prefs, uint8_t engine, uint16_t id, int direction) {
     if (engine > 1)
         return;

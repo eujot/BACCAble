@@ -2,7 +2,7 @@
 #include "stm32f0xx_hal.h"
 #include "app/main.h"
 #include "diagnostics/parameter_cache.h"
-// #include "app/application_state.h"
+
 // extern void Error_Handler(void);
 
 extern void board_commands_dispatch(const uint8_t *message);
@@ -51,10 +51,7 @@ SendQueue *tx_queue_uart1 = &queue_instance_uart1;
 
 static uint8_t frame_synchronized = 0;
 
-// weCanSendAMessageReply identifies last time a message was received by BH and C2 baccable (used by BH and C2
-// baccable) requestToSendOneFrame is Set to 1 to send one frame on dashboard uartTxMsg array contains the
-// serial message to send clearFaultsRequest, if enabled, sends  messages to clear faults
-
+/* Prepare communication with auxiliary boards and the pedal controller. */
 void uart_init() {
 
     __HAL_RCC_GPIOA_CLK_ENABLE(); // enable clock for Uart2
@@ -73,17 +70,15 @@ void uart_init() {
 
     // Configure PB6 as Half-Duplex TX/RX (to schizzaforte)
     GPIO_InitStruct.Pin = GPIO_PIN_6;
-    // GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    // GPIO_InitStruct.Pull = GPIO_NOPULL;
+
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
     GPIO_InitStruct.Alternate = GPIO_AF0_USART1;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-    // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
 
 #endif
 
     HAL_Delay(4); // let's wait that electric signal on serial line get stabilized.
-    // HAL_Delay(100);status_led_error();
+
     __HAL_RCC_USART2_CLK_ENABLE(); // enable clock for usart2
 
     // Configure USART2 in Half-Duplex mode
@@ -120,7 +115,6 @@ void uart_init() {
     huart1.Init.OverSampling = UART_OVERSAMPLING_16;
     huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
 
-    // volatile uint32_t tmp = huart1.Instance->CR1; //fake reading, just to let uart1 be prepared
     //(void)tmp;
 
     if (HAL_HalfDuplex_Init(&huart1) != HAL_OK)
@@ -136,7 +130,7 @@ void uart_init() {
 #endif
 }
 
-// interrupt called when message is received
+/* Collect received board messages and pedal-controller responses for normal processing. */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 #if defined(BACCABLE_C1)
     if (huart->Instance == USART1) { // message from schizzaForte
@@ -171,23 +165,22 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
                 }
 
                 HAL_UART_Receive_IT(&huart2, &board_rx_buffer[0],
-                                    UART_BUFFER_SIZE); // receive next frame  //commented for test
+                                    UART_BUFFER_SIZE); // receive next frame
             } else { // otherwise we were not sync, therefore we need to receive the remaining part of the
                      // message
                 frame_synchronized = 1;
                 HAL_UART_Receive_IT(&huart2, &board_rx_buffer[1],
-                                    UART_BUFFER_SIZE -
-                                        1); // receive remaining part of the frame  //commented for test
+                                    UART_BUFFER_SIZE - 1); // receive remaining part of the frame
             }
         } else {                    // we did not receive the begin of the message. discard it
             frame_synchronized = 0; // we lost sync
-            // status_led_activity();
-            HAL_UART_Receive_IT(&huart2, &board_rx_buffer[0], 1); // receive one char  //commented for test
+
+            HAL_UART_Receive_IT(&huart2, &board_rx_buffer[0], 1); // receive one char
         }
     }
 }
 
-// interrupt called when message send is complete
+/* Release a completed transmission and resume listening for replies. */
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 
     if (huart->Instance == USART2) {
@@ -199,7 +192,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 #if defined(BACCABLE_C1)
     if (huart->Instance == USART1) {
         pedal_tx_active = 0;
-        // status_led_activity(); //successfully sent
+
         CLEAR_BIT(huart1.Instance->CR1, USART_CR1_TE);        // disable TX
         SET_BIT(huart1.Instance->CR1, USART_CR1_RE);          // enable RX
         HAL_UART_Receive_IT(&huart1, &pedal_rx_buffer[0], 1); // restart RX
@@ -207,7 +200,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 #endif
 }
 
-// pause uart
+/* Suspend communication while the board cannot safely receive or transmit. */
 void uart_pause(UART_HandleTypeDef *huart) {
     // Abort interrupt-driven TX before releasing its buffer or resetting HAL state.
     uint32_t irq = __get_PRIMASK();
@@ -227,18 +220,14 @@ void uart_pause(UART_HandleTypeDef *huart) {
 
     __HAL_UART_FLUSH_DRREGISTER(huart); // Clear RXNE by flushing the data register
     __set_PRIMASK(irq);
-
-    //__HAL_UART_DISABLE(huart);
 }
 
-// wake up serial line after pause
+/* Resume communication and wait for a fresh message boundary. */
 void uart_resume(UART_HandleTypeDef *huart) {
     frame_synchronized = 0; // sync lost
     // Clear RXNE by flushing the data register
     __HAL_UART_CLEAR_FLAG(huart, UART_CLEAR_FEF | UART_CLEAR_NEF | UART_CLEAR_OREF | UART_CLEAR_PEF);
     __HAL_UART_FLUSH_DRREGISTER(huart);
-
-    //__HAL_UART_ENABLE(huart);
 
     // Reset HAL internal state
     huart->ErrorCode = HAL_UART_ERROR_NONE;
@@ -260,6 +249,7 @@ void uart_resume(UART_HandleTypeDef *huart) {
     }
 }
 
+/* Recover communication after an error when the device is allowed to listen. */
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
 
     if ((currentTime - runtime_state.last_uart_error_callback) > 1000)
@@ -271,6 +261,7 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
         uart_resume(huart);
 }
 
+/* Keep a complete outgoing command until it can be transmitted. */
 static uint8_t queue_send(SendQueue *queue, const uint8_t *data, size_t length, size_t frame_length) {
     if (!data || !length || length > frame_length) {
         status_led_error();
@@ -292,6 +283,7 @@ static uint8_t queue_send(SendQueue *queue, const uint8_t *data, size_t length, 
 }
 
 #if !defined(ACT_AS_CANABLE)
+/* Send the next eligible command or latest screen without overwriting an active transmission. */
 static uint8_t queue_start(SendQueue *queue, UART_HandleTypeDef *uart, uint8_t *active_buffer, size_t length,
                            volatile uint8_t *active) {
     uint32_t irq = __get_PRIMASK();
@@ -337,6 +329,7 @@ static uint8_t queue_start(SendQueue *queue, UART_HandleTypeDef *uart, uint8_t *
 
 #endif
 
+/* Queue a board command or replace an older waiting screen update. */
 uint8_t board_uart_send(const uint8_t *data, size_t length) {
 #if defined(BACCABLE_C1)
     if (data && length && length <= UART_BUFFER_SIZE && data[0] == BhBusIDparamString) {
@@ -353,9 +346,11 @@ uint8_t board_uart_send(const uint8_t *data, size_t length) {
 }
 
 #if defined(BACCABLE_C1)
+/* Queue a request for the pedal controller. */
 void pedal_uart_send(const uint8_t *data, size_t length) {
     queue_send(tx_queue_uart1, data, length, UART1_BUFFER_SIZE);
 }
+/* Apply received pedal status and send the next request when a reply can be expected. */
 void pedal_uart_process(void) {
     uint32_t irq = __get_PRIMASK();
     __disable_irq();
@@ -402,6 +397,7 @@ void pedal_uart_process(void) {
 }
 #endif
 
+/* Process board responses, poll their status and send eligible outgoing messages. */
 void board_uart_process(void) {
     for (unsigned budget = 0; budget < UART_RX_SLOTS && rx_tail != rx_head; ++budget) {
         board_commands_dispatch(rx_frames[rx_tail]);

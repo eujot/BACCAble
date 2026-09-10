@@ -1,7 +1,8 @@
 #include "app/powertrain.h"
 #include "features/periodic.h"
-#include "diagnostics/parameter_request.h"
 #if defined(BACCABLE_C1)
+
+/* Apply the configured immobilizer behavior while its vehicle conditions hold. */
 void immobilizer_process(void) {
     if (security_state.immobilizer_enabled) {
         // the following it is used only by IMMOBILIZER functionality

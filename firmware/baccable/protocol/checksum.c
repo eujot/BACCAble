@@ -1,4 +1,5 @@
 #include "platform/system.h"
+/* Provide the integrity check expected by supported vehicle messages. */
 uint8_t frame_checksum(uint8_t *data, uint8_t arraySize) {
     uint8_t crc = 0xFF;
     if (arraySize > 1) {
@@ -10,21 +11,7 @@ uint8_t frame_checksum(uint8_t *data, uint8_t arraySize) {
                 crc = (crc & 0x80) ? (crc << 1) ^ 0x1D : crc << 1;
             }
         }
-        return (crc ^ 0xFF); // return calculated checksum
+        return (crc ^ 0xFF);
     }
     return 0; // nothing to calculate
-}
-
-void system_hex32(char *out, uint32_t val) {
-    char *p = out + 8;
-    *p-- = 0;
-    while (p >= out) {
-        uint8_t nybble = val & 0x0F;
-        if (nybble < 10)
-            *p = '0' + nybble;
-        else
-            *p = 'A' + nybble - 10;
-        val >>= 4;
-        p--;
-    }
 }

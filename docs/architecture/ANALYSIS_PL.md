@@ -1,48 +1,47 @@
-# Analiza i zalozenia nowej architektury
+# Original architecture analysis
 
-Punkt odniesienia: `6179ada`, 2026-09-09. Zrodla: README, instrukcja EN,
-komentarze i tablice protokolow w kodzie oraz trzy workflow GitHub Actions.
-Poprzednie materialy `docs/refactor` i `REFACTOR_PLAN_PL.md` nie sa podstawa tej pracy.
+Historical baseline: `6179ada`, 2026-09-09. Sources were the README, English
+manual, source comments and protocol tables, and the three GitHub Actions workflows.
+The older `docs/refactor` material and `REFACTOR_PLAN_PL.md` were not this plan's basis.
+See [architecture](README.md) and [cleanup validation](CLEANUP.md) for the current state.
 
-## Zakres zachowania
+## Intended behavior to preserve
 
-C1: menu, parametry benzyna/diesel, statystyki, immobilizer, start/stop, LED,
-shift, ACC/HAS, szyby, wydech, pedal booster, regeneracja, routing diagnostyczny.
-C2: ESC/TC, dyno, sterowanie hamulcami, komunikacja z C1.
-BH: wyswietlacz, chime, lusterka, maska Race, odometer, dysk USB.
-CANable: SLCAN z USB CDC, wszystkie opisane predkosci i ramki RTR.
-Funkcje opisane w instrukcji jako niedokonczone (np. odczyt DTC) nie uzyskuja
-wymyslonego protokolu. Dane z reverse engineering pozostaja przy dekoderach.
+C1: menu, gasoline/diesel readings, performance records, immobilizer, Start/Stop,
+LEDs, shift indicator, ACC/HAS, windows, exhaust, pedal booster, regeneration alerts
+and diagnostic routing. C2: ESC/TC, dyno, brake control and C1 communication.
+BH: display, chimes, mirrors, Race mask, odometer and USB disk.
+CANable: USB CDC SLCAN, documented bitrates and RTR frames.
+Unfinished features such as DTC reading were not assigned invented protocols.
 
-## Ustalenia
+## Findings and intended repairs
 
-| Obszar | Problem potwierdzony w zrodle | Kierunek naprawy |
+| Area | Confirmed source issue | Repair direction |
 | --- | --- | --- |
-| CAN | Otwarcie nadpisuje silent; DLC bez limitu; utrata przy HAL_BUSY; rzutowanie naglowka RX na TX | Jawna walidacja, kopiowanie pol, kolejki z kontrola wyniku |
-| USB | Odczyt niepelnego SLCAN, bledny RTR, blokujacy TX, dostep przed konfiguracja USB, przepelnienie linii | Parser niezalezny od HAL, nieblokujace kolejki, kontrola stanu USB |
-| UART | Logika pojazdu i FatFs w ISR, zwalnianie aktywnego bufora TX, bezwarunkowe wlaczanie IRQ | ISR tylko odbiera, glowna petla przetwarza, osobny aktywny bufor |
-| UDS | Akceptacja dowolnej odpowiedzi tego samego ECU; unsigned offset dla ujemnych wartosci | Walidacja PCI, SID, DID, dlugosci i podpisanej arytmetyki |
-| Katalog | Id odpowiedzi `0xDA18F110` poza zakresem CAN; przecinek zamiast kropki w skali `0.001` | Poprawione dane i test rzeczywistego katalogu dla obu silnikow |
-| Menu | Underflow uint8 przy przewijaniu wstecz, niezabezpieczony formatter | Ograniczone iteracje i dlugosci |
-| Flash | Zapis niezainicjalizowanych slow statystyk i widocznosci; brak integralnosci | Wersjonowane rekordy, CRC, dwie strony i commit na koncu |
-| Dysk | 64 KiB USB obejmuje ustawienia BH; malloc i brak granic; bledne typy ioctl | Oddzielny region, statyczny bufor strony, sprawdzanie zakresu |
-| Race | Stale dane syntetycznej ramki 0x384, nadmiar transmisji i niespojny CRC | Reakcja na aktualne ramki, priorytet przetwarzania RX; wymagany test IPC |
-| Build | Brak zaleznosci naglowkow i izolacji wariantow; clean zachowuje biblioteki | Oddzielne katalogi, pliki .d, wspolne polecenia lokalnie i w CI |
+| CAN | Opening overwrote silent mode; unchecked DLC; loss on HAL_BUSY; RX-to-TX header cast | Validation, explicit field copies and checked queues |
+| USB | Partial SLCAN parsing, incorrect RTR, blocking TX, access before configuration, line overflow | Independent parser, nonblocking queues, USB-state checks |
+| UART | Vehicle logic and FatFs in interrupts; active TX buffer released; unconditional IRQ enable | Receive-only ISR, main-loop processing, owned active buffer |
+| UDS | Unrelated replies from the same ECU accepted; unsigned negative offsets | Validate PCI/SID/DID/length and signed arithmetic |
+| Catalog | Invalid CAN reply ID `0xDA18F110`; comma instead of decimal point in scale | Correct data and test both real catalogs |
+| Menu | Backward navigation underflow and unbounded formatting | Bounded iteration and output |
+| Flash | Uninitialized statistics/visibility words and no integrity check | Versioned dual-page records, CRC, final commit marker |
+| Disk | USB disk overlapped BH settings; malloc, missing bounds and wrong ioctl types | Separate region, static page buffer, range checks |
+| Race | Stale synthetic `0x384`, excess transmissions and inconsistent checksum | React to current reports, prioritize RX; validate with physical IPC |
+| Build | Missing header dependencies/variant isolation; incomplete cleaning | Separate outputs, dependency files and shared local/CI commands |
 
-## Plan wykonania
+## Implementation sequence
 
-1. Oddzielic aplikacje, funkcje pojazdu, protokoly, transport i platforme STM32.
-2. Zastapic transport i parsery prostymi implementacjami z ograniczonymi buforami.
-3. Wydzielic funkcje z monolitow, nadac nazwy domenowe i jawnie przekazywac ramki.
-4. Uporzadkowac zapis ustawien, statystyk, widocznosci i lusterek oraz geometrie dysku.
-5. Dodac testy hosta z sanitizerami i sprawdzac cztery warianty cppcheck/ARM GCC
-   wedlug workflow. Zapisac wynik, rozmiary i ograniczenia weryfikacji.
+1. Separate application, vehicle features, protocols, transport and STM32 support.
+2. Replace transport/parser paths with bounded implementations.
+3. Split monolithic features, name their responsibilities and pass frames explicitly.
+4. Define persistence and disk geometry for settings, records, visibility and mirrors.
+5. Add sanitizer host tests and verify four variants with cppcheck and ARM GCC;
+   record sizes and verification limits.
 
-## Granice weryfikacji
+## Original verification limits
 
-Repo nie zawiera nagran CAN, symulatora ECU ani dostepu do plytek. Kompilacja
-i testy hosta nie potwierdzaja timingow fizycznego CAN, zgodnosci IPC ani zachowania
-po zaniku zasilania na rzeczywistym STM32. Migotanie Race opisane w instrukcji
-wymaga testu z rzeczywistym IPC: nadawanie obok fabrycznego ECU nie gwarantuje
-zastapienia jego ramki. Nie wolno deklarowac usuniecia tego objawu tylko na
-podstawie poprawnego builda.
+The repository did not provide vehicle CAN recordings or an ECU simulator.
+Builds and host tests cannot confirm physical CAN timing, IPC compatibility or
+power-loss behavior on STM32. Race-mask flicker requires real IPC/ECU captures:
+transmitting alongside an ECU does not guarantee replacement of its message.
+A successful build alone does not establish that the symptom is fixed.

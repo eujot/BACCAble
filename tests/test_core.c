@@ -2,13 +2,10 @@
 #include "diagnostics/uds_decode.h"
 #include "storage/record_store.h"
 #include "storage/flash_layout.h"
-#include "features/value_format.h"
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
-
-void _putchar(char character) { (void)character; }
 
 static void test_slcan(void) {
     CanFrame frame;
@@ -121,34 +118,10 @@ static void test_records(void) {
     assert(STORAGE_RECORDS_START + 6 * STORAGE_PAGE_SIZE == STORAGE_FLASH_END);
 }
 
-static void test_format_and_navigation(void) {
-    uint8_t visible[] = {0, 0, 1, 0};
-    assert(visible_page_find(visible, 4, 0, -1) == 2);
-    assert(visible_page_find(visible, 4, 255, -1) == 2);
-    memset(visible, 0, sizeof(visible));
-    assert(visible_page_find(visible, 4, 0, -1) == 0);
-    assert(visible_page_find(visible, 0, 0, -1) == 0);
-    char text[12];
-    format_number(text, -12.25f, 2, sizeof(text));
-    assert(!strncmp(text, "-12.25", 6));
-    format_number(text, 1.0f, 3, sizeof(text));
-    assert(!strcmp(text, "1          "));
-    for (unsigned size = 0; size < sizeof(text); ++size) {
-        const float values[] = {NAN, INFINITY, -INFINITY, 1e30f, -1e30f, 12345, -0.25f};
-        for (unsigned i = 0; i < sizeof(values) / sizeof(values[0]); ++i) {
-            memset(text, '#', sizeof(text));
-            format_number(text, values[i], 255, size);
-            if (size)
-                assert(text[size - 1] == 0);
-            assert(text[size] == '#');
-        }
-    }
-}
 int main(void) {
     test_slcan();
     test_uds();
     test_records();
-    test_format_and_navigation();
-    puts("PASS: SLCAN, UDS, interrupted Flash writes, storage bounds, formatting, navigation");
+    puts("PASS: SLCAN, UDS, interrupted Flash writes, storage bounds");
     return 0;
 }

@@ -1,6 +1,7 @@
 #include "transport/can_bus.h"
 #include "usbd_cdc_if.h"
 #include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -10,6 +11,7 @@ static uint32_t start_result, tx_result, init_result, filter_result, free_mailbo
 static unsigned sent_count, requested_fifo;
 static CAN_TxHeaderTypeDef sent_header;
 static uint8_t sent_data[8];
+static bool single_mailbox;
 void HAL_GPIO_Init(void *port, GPIO_InitTypeDef *config) {
     (void)port;
     (void)config;
@@ -46,6 +48,8 @@ uint32_t HAL_CAN_AddTxMessage(CAN_HandleTypeDef *can, CAN_TxHeaderTypeDef *heade
     sent_header = *header;
     memcpy(sent_data, data, header->DLC);
     ++sent_count;
+    if (single_mailbox)
+        --free_mailboxes;
     return HAL_OK;
 }
 uint32_t HAL_CAN_GetRxMessage(CAN_HandleTypeDef *can, uint32_t fifo, CAN_RxHeaderTypeDef *header,
@@ -95,6 +99,9 @@ static void test_can(void) {
     header.StdId = 0x800;
     assert(can_tx(&header, data) == HAL_ERROR);
     header.StdId = 0x123;
+    header.TransmitGlobalTime = 2;
+    assert(can_tx(&header, data) == HAL_ERROR);
+    header.TransmitGlobalTime = DISABLE;
     for (unsigned i = 0; i < TXQUEUE_LEN - 1; ++i)
         assert(can_tx(&header, data) == HAL_OK);
     assert(can_tx(&header, data) == HAL_ERROR);
@@ -123,6 +130,47 @@ static void test_can(void) {
         assert(can_tx(&header, data) == HAL_ERROR);
         *failures[i] = HAL_OK;
     }
+}
+
+static void test_can_queue_roundtrip(void) {
+    can_enable();
+    single_mailbox = true;
+    /* Several full passes cross the ring boundary with different frame types and lengths. */
+    for (unsigned pass = 0; pass < 3; ++pass) {
+        unsigned before = sent_count;
+        for (unsigned i = 0; i < TXQUEUE_LEN - 1; ++i) {
+            CAN_TxHeaderTypeDef header = {.StdId = 0x7ff - i,
+                                          .ExtId = 0x1fffffff - i,
+                                          .IDE = i % 2 ? CAN_ID_EXT : CAN_ID_STD,
+                                          .RTR = i & 2 ? CAN_RTR_REMOTE : CAN_RTR_DATA,
+                                          .DLC = i % 9,
+                                          .TransmitGlobalTime = i & 4 ? ENABLE : DISABLE};
+            uint8_t data[8];
+            for (unsigned j = 0; j < sizeof(data); ++j)
+                data[j] = i ^ j ^ pass;
+            assert(can_tx(&header, data) == HAL_OK);
+            memset(data, 0xff, sizeof(data)); /* The queue owns a copy. */
+        }
+        free_mailboxes = 1;
+        tx_result = pass % 2 ? HAL_ERROR : HAL_BUSY;
+        can_process();
+        assert(sent_count == before);
+        tx_result = HAL_OK;
+        for (unsigned i = 0; i < TXQUEUE_LEN - 1; ++i) {
+            free_mailboxes = 1;
+            can_process();
+            assert(sent_count == before + i + 1);
+            assert(sent_header.DLC == i % 9);
+            assert(sent_header.IDE == (i % 2 ? CAN_ID_EXT : CAN_ID_STD));
+            assert((i % 2 ? sent_header.ExtId : sent_header.StdId) == (i % 2 ? 0x1fffffff : 0x7ff) - i);
+            assert(sent_header.RTR == (i & 2 ? CAN_RTR_REMOTE : CAN_RTR_DATA));
+            assert(sent_header.TransmitGlobalTime == (i & 4 ? ENABLE : DISABLE));
+            for (unsigned j = 0; j < sent_header.DLC; ++j)
+                assert(sent_data[j] == (i ^ j ^ pass));
+        }
+    }
+    can_disable();
+    single_mailbox = false;
 }
 
 USBD_HandleTypeDef hUsbDeviceFS;
@@ -209,6 +257,7 @@ static void test_usb(void) {
 }
 int main(void) {
     test_can();
+    test_can_queue_roundtrip();
     test_usb();
     puts("PASS: CAN validation/retry/silent mode, USB TX ownership/RX overflow/IRQ state");
     return 0;

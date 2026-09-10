@@ -1,6 +1,7 @@
 #include "vehicle/standard_frames.h"
 #include "app/powertrain.h"
 /* CAN ID 0x000005A6. */
+/* Track mirror positions and advance requested parking-mirror movement. */
 void vehicle_handle_mirror_position(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 5)
         return;
@@ -69,6 +70,7 @@ void vehicle_handle_mirror_position(const CAN_RxHeaderTypeDef *rx_header, uint8_
 }
 
 /* CAN ID 0x000005A8. */
+/* Track transmission mode for parking and driving features. */
 void vehicle_handle_transmission_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 8)
         return;
@@ -85,7 +87,7 @@ void vehicle_handle_transmission_mode(const CAN_RxHeaderTypeDef *rx_header, uint
             frame_data[6] = (frame_data[6] & 0xF0) | tmpCounter;        // increment counter
             frame_data[7] = frame_checksum(frame_data, rx_header->DLC); // update CRC
             can_forward(rx_header, frame_data);                         // transmit the modified packet
-            // can_process(); //we try to send it ASAP - Commented since it is not solving the delay problem
+
             // as expected
         }
     }

@@ -1,7 +1,8 @@
 #include "app/powertrain.h"
 #include "features/periodic.h"
-#include "diagnostics/parameter_request.h"
 #if defined(BACCABLE_C1)
+
+/* Maintain the requested seatbelt-alarm preference and its reported state. */
 void seatbelt_process(void) {
     if (((diagnostics_state.seatbelt_alarm_disabled == 0xfe) ||
          (diagnostics_state.seatbelt_alarm_disabled == 0x10) ||
@@ -9,8 +10,8 @@ void seatbelt_process(void) {
          (diagnostics_state.seatbelt_alarm_disabled == 0x11) ||
          (diagnostics_state.seatbelt_alarm_disabled == 0x21)) &&
         (currentTime - diagnostics_state.seatbelt_alarm_status_request_time >
-         10000)) {                                        // if operations in progress but timeout was reached
-        diagnostics_state.seatbelt_alarm_disabled = 0xff; // return to unknown status
+         10000)) { // if operations in progress but timeout was reached
+        diagnostics_state.seatbelt_alarm_disabled = 0xff;
     }
 
     if (((diagnostics_state.seatbelt_alarm_disabled == 1) ||
@@ -31,7 +32,6 @@ void seatbelt_process(void) {
             diagnostics_state.seatbelt_alarm_disabled =
                 0x20; // request to enable SeatBelt alarm in progress(send write param)
             diagnostics_state.seatbelt_alarm_status_request_time = currentTime;
-            diagnostics_state.last_sent_uds_parameter_request_time = currentTime;
         }
     }
 
@@ -53,7 +53,6 @@ void seatbelt_process(void) {
             diagnostics_state.seatbelt_alarm_disabled =
                 0x10; // request to disable SeatBelt alarm in progress(send write param)
             diagnostics_state.seatbelt_alarm_status_request_time = currentTime;
-            diagnostics_state.last_sent_uds_parameter_request_time = currentTime;
         }
     }
 }

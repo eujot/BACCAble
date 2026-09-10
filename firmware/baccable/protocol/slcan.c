@@ -4,6 +4,7 @@
 
 extern const char *FW_VERSION;
 
+/* Prepare a received CAN frame for a connected host application. */
 int8_t slcan_parse_frame(uint8_t *text, CAN_RxHeaderTypeDef *header, uint8_t *data) {
     if (header->DLC > 8)
         return 0;
@@ -15,6 +16,7 @@ int8_t slcan_parse_frame(uint8_t *text, CAN_RxHeaderTypeDef *header, uint8_t *da
     return (int8_t)slcan_encode(&frame, text, SLCAN_MTU);
 }
 
+/* Apply a supported host command to the CAN adapter. */
 int8_t slcan_parse_str(uint8_t *text, uint8_t length) {
     if (!text || !length)
         return -1;

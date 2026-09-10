@@ -1,15 +1,8 @@
 #include "vehicle/standard_frames.h"
 #include "features/menu.h"
 #include "app/powertrain.h"
-/* CAN ID 0x000000FA. */
-void vehicle_handle_brake_pedal(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
-
-#if defined(BACCABLE_C2)
-    // break pedal position byte0 bit 3 and 2 (10=pressed, 01=released)
-#endif
-}
-
 /* CAN ID 0x000000FB. */
+/* Update engine torque and the driving features that depend on it. */
 void vehicle_handle_engine_torque(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 4)
         return;
@@ -39,6 +32,7 @@ void vehicle_handle_engine_torque(const CAN_RxHeaderTypeDef *rx_header, uint8_t 
 }
 
 /* CAN ID 0x00000101. */
+/* Update speed, acceleration timing and stop-dependent feature conditions. */
 void vehicle_handle_vehicle_speed(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 3)
         return;
@@ -108,64 +102,21 @@ void vehicle_handle_vehicle_speed(const CAN_RxHeaderTypeDef *rx_header, uint8_t 
 #endif
 }
 
-/* CAN ID 0x000001F0. */
-void vehicle_handle_clutch(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
-
-    // clutch interlock is on byte 0 bit 7
-    // clutch upstop is on byte0 bit 6
-    // actual pedal position is on byte0 from bit 4 to 0 and byte 1 from bit7 to 5
-    // analog cluch is on byte 1 from bit 4 to 0 and byte 2 from bit 7 to 5.
-}
-
-/* CAN ID 0x0000001F7. */
-void vehicle_handle_transmission_temperature(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
-    if (rx_header->DLC < 4)
-        return;
-
-#if defined(BACCABLE_C1)
-    if (rx_header->DLC >= 4) {
-        telemetry_state.transmission_temperature =
-            ((frame_data[2] & 0b00000001) << 5 | ((frame_data[3] >> 3) & 0b00011111));
-        // status_led_activity();
-    }
-#endif
-    // transmission temperature is on byte 2 bit 0 and byte 3 from bit 7 to bit 3
-}
-
-/* CAN ID 0x000001FC. */
-void vehicle_handle_suspension(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
-    // received on C2 can bus
-    // Rear Diff. Warning La. is on byte0 bit7
-    // Rear Diff, Control Status is on byte0 bit6
-    // Active Dumping Control Status (the suspensions) is on byte0 from bit 5 to 4 (0x0=Mid, 0x1=Soft,
-    // 0x2=Firm [only on QV]) Rd. Asp. Ind. is on byte 0 from bit3 to 0 and byte 1 from bit 7 to 4 Active
-    // Dumping Control Fail status is on byte 1 bit3 Aero. Fail Status is on byte 1 bit2 Front Aero. status is
-    // on byte 1 bit1 to bit0 CDCM warning lamp is on byte 2 bit5
-}
-
 /* CAN ID 0x000002EF. */
+/* Update the engaged gear and its optional LED indication. */
 void vehicle_handle_gear(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 1)
         return;
-    // se e' il messaggio che contiene la marcia (id 2ef) e se é lungo 8 byte
+    // Use the reported gear for the current LED color.
 #if defined(BACCABLE_C1)
     telemetry_state.current_gear = frame_data[0] & ~0xF;
 
     if (settings_state.led_strip_controller_enabled == 1) {
-        display_state.scaled_color_set = gear_color(
-            telemetry_state.current_gear); // prima di tutto azzeriamo i primi 4 bit meno significativi, poi
-                                           // scala il dato con la funzione gear_color, per prepararlo per
-                                           // l'invio alla classe vumeter
+        display_state.scaled_color_set =
+            gear_color(telemetry_state.current_gear); // Select the color associated with the reported gear.
+
         led_strip_update(display_state.scaled_volume, display_state.scaled_color_set);
     }
-
-    // if(function_regeneration_alert_enabled){
-    //	if((frame_data[1] >>7)==1 && regenerationInProgress==0){ //if regeneration has just begun,
-    //		uint8_t tmpArr3[1]={BhBusChimeRequest}; //play sound
-    //		board_uart_send(tmpArr3, 1);
-    //	}
-    // }
-    // regenerationInProgress=frame_data[1] >>7; //DPF Regeneration mode is on byte 1 bit 7.
 
 #endif
 
@@ -173,11 +124,12 @@ void vehicle_handle_gear(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_da
     // gear, 0x8 to 0xA=gear 7 to 9, 0xF=SNA) suggested gear status is on byte 0 from bit 3 to 0 DPF
     // Regeneration mode is on byte 1 bit 7. SAM info is on byte 1 from bit 3 to 0 stop start fault status is
     // on byte 2 bit 7
-    //..
+
     // boost pressure indication is on byte 3 bit from 6 to 0 and byte 4  bit 7
 }
 
 /* CAN ID 0x000003E8. */
+/* Track body-side gear information used by parking features. */
 void vehicle_handle_body_gear(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 4)
         return;
@@ -190,18 +142,19 @@ void vehicle_handle_body_gear(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fra
 }
 
 /* CAN ID 0x00000412. */
+/* Update accelerator activity and the optional LED display. */
 void vehicle_handle_accelerator(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 4)
         return;
-    // se e' il messaggio che contiene la pressione dell'acceleratore (id 412), se é lungo 5 byte, se il
-    // valore é >51 (sfrutto le info ottenute sniffando)
+    // Convert accelerator position to the LED intensity level.
+
 #if defined(BACCABLE_C1)
     if (settings_state.led_strip_controller_enabled == 1) {
         if ((rx_header->DLC == 5) && (frame_data[3] >= 51)) {
             comfort_state.time_since_last_received_accelerator_message = currentTime;
             display_state.leds_strip_is_on = 1;
-            display_state.scaled_volume = accelerator_percent(
-                frame_data[3]); // prendi il dato e scalalo, per prepararlo per l'invio alla classe vumeter
+            display_state.scaled_volume =
+                accelerator_percent(frame_data[3]); // Scale accelerator position for the LED display.
             led_strip_update(display_state.scaled_volume, display_state.scaled_color_set);
         }
     }
@@ -209,6 +162,7 @@ void vehicle_handle_accelerator(const CAN_RxHeaderTypeDef *rx_header, uint8_t *f
 }
 
 /* CAN ID 0x0000041A. */
+/* Update battery charge and current measurements. */
 void vehicle_handle_battery(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 6)
         return;
@@ -224,17 +178,8 @@ void vehicle_handle_battery(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame
     // battery current (A) is on byte 4 and in byte 5 from bit 7 to bit 4
 }
 
-/* CAN ID 0x00000420. */
-void vehicle_handle_battery_aux(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
-
-#if defined(BACCABLE_C1)
-    if (rx_header->DLC >= 6) {
-        // batteryStateOfCharge=frame_data[0];
-    }
-#endif
-}
-
 /* CAN ID 0x000004B2. */
+/* Update oil pressure and temperature measurements. */
 void vehicle_handle_oil(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 4)
         return;
@@ -257,14 +202,8 @@ void vehicle_handle_oil(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_dat
     // engine oil temperature warning light is on byte 3 bit 5.
 }
 
-/* CAN ID 0x000004B4. */
-void vehicle_handle_chassis_aux(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
-
-#if defined(BACCABLE_C2)
-#endif
-}
-
 /* CAN ID 0x000005AE. */
+/* Track particulate-filter regeneration and provide enabled alerts. */
 void vehicle_handle_regeneration(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 6)
         return;
@@ -279,10 +218,7 @@ void vehicle_handle_regeneration(const CAN_RxHeaderTypeDef *rx_header, uint8_t *
                 if ((frame_data[4] & 0x04) == 0) {          // if the message needs to be changed
     #ifdef DPF_REGEN_VISUAL_ALERT
                     // change message and send it again
-                    // memcpy(STATUS_ECM_msg_data, frame_data, rx_header->DLC); //copy message
-                    // STATUS_ECM_msg_data[4] |= 0x04; //DPF Dirty (bit 2) set to ON
-                    // STATUS_ECM_msg_header.DLC=rx_header->DLC;
-                    // can_tx(&STATUS_ECM_msg_header, STATUS_ECM_msg_data); //send msg
+
                     frame_data[4] |= 0x04;              // DPF Dirty (bit 2) set to ON
                     can_forward(rx_header, frame_data); // send msg
     #endif
@@ -313,13 +249,4 @@ void vehicle_handle_regeneration(const CAN_RxHeaderTypeDef *rx_header, uint8_t *
         }
     }
 #endif
-}
-
-/* CAN ID 0x0000073A. */
-void vehicle_handle_clock(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
-
-    // contains current date from byte 0 to 7.
-    // Hex values are used as characters in example 0x21 0x02 0x26 0x01 0x20 0x 25 represents
-    // the date h21 minutes 02 day 26 month 01 year 2025.
-    // last two bytes of the message are 00 00.
 }

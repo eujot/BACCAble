@@ -2,6 +2,7 @@
 #ifdef ENABLE_USB_MASS_STORAGE
 static FATFS fs;
 #endif
+/* Write the legacy demonstration file; this is not a vehicle-traffic recorder. */
 void filesystem_save_log(void) {
 #ifdef ENABLE_USB_MASS_STORAGE
 
@@ -24,6 +25,7 @@ void filesystem_save_log(void) {
 #endif
 }
 
+/* Prepare an unformatted device disk and identify the board's firmware. */
 void filesystem_init(void) {
 
 #ifdef ENABLE_USB_MASS_STORAGE
@@ -35,7 +37,7 @@ void filesystem_init(void) {
 
     res = f_mount(&fs, "", 1);
     if (res == FR_NO_FILESYSTEM) {
-        // status_led_activity();
+
         MKFS_PARM opt = {.fmt = FM_FAT | FM_SFD, .n_fat = 1, .align = 0, .n_root = 32, .au_size = FF_MIN_SS};
         res = f_mkfs("", &opt, work, FF_MIN_SS);
         if (res == FR_OK) {

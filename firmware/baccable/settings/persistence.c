@@ -6,6 +6,7 @@ static uint16_t saved_settings[SETUP_FLASH_PARAM_BUFFER_SIZE];
 static uint16_t best_times[2];
 static uint8_t settings_loaded, times_loaded;
 
+/* Load saved feature preferences once for subsequent lookups. */
 static void load_settings(void) {
     if (settings_loaded)
         return;
@@ -13,6 +14,8 @@ static void load_settings(void) {
     flash_record_load(SETTINGS_RECORD, 0x101, saved_settings, sizeof(saved_settings));
     settings_loaded = 1;
 }
+
+/* Load saved performance records once for subsequent lookups. */
 static void load_times(void) {
     if (times_loaded)
         return;
@@ -20,12 +23,16 @@ static void load_times(void) {
     flash_record_load(STATISTICS_RECORD, 0x102, best_times, sizeof(best_times));
     times_loaded = 1;
 }
+
+/* Return a saved feature preference or its unavailable marker. */
 uint16_t settings_read(uint8_t id) {
     if (!id || id > SETUP_FLASH_PARAM_BUFFER_SIZE)
         return 0;
     load_settings();
     return setup_read_flash_value(id, saved_settings[id - 1]);
 }
+
+/* Store the current feature preferences for the next startup. */
 uint8_t settings_save(void) {
     uint16_t values[SETUP_FLASH_PARAM_BUFFER_SIZE] = {0};
     if (setup_flash_slots_count() > SETUP_FLASH_PARAM_BUFFER_SIZE)
@@ -37,12 +44,16 @@ uint8_t settings_save(void) {
     settings_loaded = 1;
     return 0;
 }
+
+/* Return the best saved acceleration time for the requested interval. */
 float statistics_read_best(uint8_t id) {
     if (id < 1 || id > 2)
         return 65.535f;
     load_times();
     return best_times[id - 1] / 1000.0f;
 }
+
+/* Clear saved acceleration records and report whether the save succeeded. */
 uint8_t statistics_reset(void) {
     uint16_t empty[2] = {UINT16_MAX, UINT16_MAX};
     if (!flash_record_save(STATISTICS_RECORD, 0x102, empty, sizeof(empty)))
@@ -51,6 +62,8 @@ uint8_t statistics_reset(void) {
     times_loaded = 1;
     return 0;
 }
+
+/* Save improved acceleration records without replacing a better result. */
 uint8_t statistics_save_best(void) {
     load_times();
     uint16_t next[2] = {best_times[0], best_times[1]};
@@ -73,6 +86,4 @@ uint8_t statistics_save_best(void) {
     memcpy(best_times, next, sizeof(next));
     return 0;
 }
-uint8_t visibility_save(void) { return menu_preferences_save(); }
-void visibility_load(void) { menu_init(); }
 #endif
