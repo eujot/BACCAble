@@ -5,6 +5,7 @@ Start with the [build instructions](../../firmware/baccable/MAKEFILE.md),
 The [original analysis](ANALYSIS_PL.md), [initial validation](VALIDATION_PL.md),
 and [memory optimization report](MEMORY_PL.md) document earlier stages.
 Historical `_PL` filenames remain valid for existing links; these guides are in English.
+For gaucho/netzmark updates, follow the [upstream porting guide](UPSTREAM_PORTING.md).
 
 ## Responsibilities
 
@@ -63,15 +64,19 @@ Host tests execute production components with hardware substitutes.
 
 ## Persistent data and compatibility
 
-The program occupies the first 64 KiB of Flash. The USB disk uses the next 52 KiB
-(`0x08010000..0x0801cfff`); records use the final 12 KiB
+C1 now allocates 96 KiB for the program and 20 KiB for its optional disk
+(`0x08018000..0x0801cfff`). Other flavors allocate 64 KiB for the program and
+52 KiB for the disk (`0x08010000..0x0801cfff`). See the
+[upstream integration report](UPSTREAM_SYNC.md) for measured image sizes and
+new diagnostics. Records use the final 12 KiB
 (`0x0801d000..0x0801ffff`). Each record has two 2048-byte pages, CRC32, generation,
 type and version. The commit marker is written last. Unchanged data does not
 cause an erase. Settings, performance records, menu preferences and BH mirror
 positions have distinct record types.
 
-Persistence and MSC require **128 KiB of physically reported Flash**. On a real
-64 KiB MCU, storage access is rejected and preferences operate in RAM. The initial
+C1 firmware, persistence and MSC require **128 KiB of physically reported Flash**.
+The new C1 image cannot execute on a 64 KiB MCU. Other flavors still reject
+storage access on such parts and use preferences in RAM. The initial
 architecture migration changed the original firmware's disk geometry and saved
 settings: preserve needed files and settings before upgrading, then restore
 preferences and mirror calibration. Update the complete board set. The later menu

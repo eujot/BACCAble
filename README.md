@@ -124,12 +124,17 @@ See the [architecture and extension guide](docs/architecture/README.md),
 [final cleanup and validation](docs/architecture/CLEANUP.md).
 The [menu UX guide](docs/architecture/MENU_UX_PL.md) describes navigation,
 favorites, sorting, display transport and the new preference format.
+The [upstream integration report](docs/architecture/UPSTREAM_SYNC.md) lists added
+functions, source revisions and the new C1 Flash requirement. See also the
+[USB diagnostics guide](docs/architecture/USB_DIAGNOSTICS.md).
+For future gaucho/netzmark updates, follow the
+[upstream porting guide](docs/architecture/UPSTREAM_PORTING.md).
 
 Parameter definitions and dashboard pages are in
 [parameter_catalog.c](firmware/baccable/diagnostics/parameter_catalog.c).
 `ParameterDefinition` describes the request, response ID, byte offset/length,
 signed raw offset, scale, unit and decimal places. `ParameterPage` associates
-two parameter IDs with a stable page ID, group, short label and display template.
+up to four parameter IDs with a stable page ID, group, short label and display template.
 Never renumber existing page IDs. Update the gasoline/diesel page
 counts when extending the page tables.
 
