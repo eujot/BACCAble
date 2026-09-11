@@ -1,6 +1,6 @@
 # MY23 display menu and extension guide
 
-The catalog contains 46 gasoline pages and 55 diesel pages. Navigation,
+The catalog contains 64 gasoline pages and 60 diesel pages. Navigation,
 preferences and text transport have separate modules. All display labels use
 English ASCII. Page labels fit within 16 characters, leaving two characters for
 editor marks on an 18-character display.
@@ -46,7 +46,7 @@ separate units, for example `Batt 14.2V  -12.3A`. Fields also accommodate
 `-150.5 A` and negative boost pressure without removing the measurement sign.
 Temperatures and speed use whole units; a single voltage reading uses two decimal
 places and current uses one. This changes presentation rounding, not decoding.
-All 101 expanded templates, including units, are checked against 18 characters.
+All 124 page templates, including units, are checked in both 18- and 24-character builds.
 Performance states `MISS` and `RUN` do not receive a seconds suffix.
 
 Settings describe their state directly: `Engine: Diesel`, `Pedal: Bypass`,
@@ -78,12 +78,19 @@ save or pending return instead of accidentally toggling the selected option.
 Persistent failure also prevents closing through the main menu. Settings and menu
 preferences are separate saves, not a combined transaction.
 
-State-changing actions require a second RES within three seconds. Moving away or
-returning cancels confirmation. Existing availability, stationary-vehicle and dyno
+Vehicle-control actions require a second RES within three seconds. Moving away
+or returning cancels confirmation. Reading BCM faults and toggling maximum hold
+do not require that confirmation. Existing availability, stationary-vehicle and dyno
 conditions still apply. `Command queued` and `requested` mean that a request was
 accepted, not that an ECU confirmed completion. Immobilizer displays its state;
-the separate existing steering-wheel gesture changes it. Unfinished DTC reading,
-demonstration logging and empty placeholders are not shown as finished menu actions.
+the separate existing steering-wheel gesture changes it. `Read BCM faults` opens
+a result browser after the option is enabled in Feature setup. It reads BCM codes,
+not faults from every ECU. USB capture, ELM diagnostics and the temporary IBS
+action are described in [USB diagnostics](USB_DIAGNOSTICS.md).
+
+`Maximum hold` retains numerical maxima until a page/profile change or toggle;
+status values remain live. `Rotate readings` advances through the selected list
+every five seconds. Dedicated single-value pages remain available for clearer labels.
 
 ## Responsiveness and memory
 
@@ -102,8 +109,9 @@ demonstration logging and empty placeholders are not shown as finished menu acti
   queue rejection retains the current part for retry. Factory text does not
   restart an active BACCAble screen transfer.
 - Native readings refresh only from their corresponding valid CAN frames. UDS
-  polls the selected page at most every 500 ms, after a 150 ms settling interval.
-  Fault clearing pauses polling. Replies must match ECU, DID, profile and page.
+  issues at most one request every 500 ms, after a 150 ms page-settling interval,
+  cycling through up to four page values. Fault clearing pauses polling; the fault
+  browser uses a separate transaction. Replies must match ECU, DID, profile and page.
 - Readings older than three seconds show `--`. Local performance records and
   free-memory readings do not expire. Values wider than their field also show
   `--` instead of a truncated number.
@@ -134,25 +142,27 @@ Storage requires the physical Flash capacity described in [architecture](README.
 1. Add or reuse a `ParameterDefinition` in `diagnostics/parameter_catalog.c`.
    For a new native value, add its read in `native_parameters.c` and its actual
    incoming-frame cache update in `parameter_cache.c`.
-2. Add a `ParameterPage` with `id`, `group`, English `label`, `name` template and
-   two `parameter_ids`. Keep the label within 16 ASCII characters and the fully
-   expanded screen, including units, within 18. Choose an unused permanent page
-   ID: gasoline `0x01..0x40`, diesel `0x81..0xc0`. Do not renumber existing pages
-   or reuse a removed ID for a different reading.
-3. Update the profile page count. Catalogs support up to 60 pages per profile;
-   exceeding that requires changes to capacities and tests. Group 0 is the
-   All readings view; assign actual pages to groups 1–6.
+2. Add a `ParameterPage` with `id`, `group`, English `label`, `name` template,
+   `parameter_ids` and `element_count` (1–4; zero keeps the legacy count of two).
+   Labels fit 16 ASCII characters; expanded templates fit the selected 18/24 width.
+   Preserve existing page IDs and table order. IDs currently fit gasoline
+   `0x01..0x40` and diesel `0x81..0xc0`; never reuse an ID for a different reading.
+3. Check capacity before appending: the gasoline catalog fills all 64 slots;
+   diesel uses 60. A 65th page requires catalog/list expansion, a new visibility
+   representation and saved-preference migration. Update counts and tests together.
+   Group 0 is All readings; assign pages to groups 1–6.
 4. Add actions to the enum and `actions` table in `features/menu.c`. Define
    availability, execution conditions, command and status presentation. Put the
    device behavior in the appropriate feature module. For configurable values,
    extend `SetupParam` and keep persisted setting slots stable.
 5. Run host tests, lint and the relevant firmware builds. Check linker sizes after
-   adding text or features: the C1 program must fit in 64 KiB.
+   adding text or features: C1 has a 96 KiB program allocation and needs physical
+   128 KiB Flash. Other flavors retain 64 KiB program allocations.
 
 ## Validation
 
-See [cleanup validation](CLEANUP.md) for the latest build sizes and results and
-[memory optimizations](MEMORY_PL.md) for the preceding comparison. Host tests use
+See the [integration report](UPSTREAM_SYNC.md) and
+[dated build measurements](UPSTREAM_BUILD_SIZES.md) for validation scope and sizes. Host tests use
 production code with HAL/storage substitutes and cover gestures, lost reports,
 clock wrap, complete display transfers, retries, command ordering, sorting,
 favorites, migration, empty lists, remembered pages, save failure, profile changes,
@@ -161,12 +171,12 @@ late UDS replies, expiry, label/template widths, negative current and setting bu
 ```sh
 make -C tests test
 make -C firmware/baccable FLAVOR=C1 lint
-make -C firmware/baccable -j4 FLAVOR=C1 VERSION=menu-ux
+make -C firmware/baccable -j4 FLAVOR=C1 VERSION=local-test
 make -C firmware/baccable -j4 FLAVOR=C1 BUILD_DIR=build/C1-menu-large \
-  VERSION=menu-ux EXTRA_CPPFLAGS="-DLARGE_DISPLAY -DIPC_MY23_IS_INSTALLED -DIS_GASOLINE -DLED_STRIP_CONTROLLER_ENABLED"
+  VERSION=local-test EXTRA_CPPFLAGS="-DLARGE_DISPLAY -DIPC_MY23_IS_INSTALLED -DIS_GASOLINE -DLED_STRIP_CONTROLLER_ENABLED"
 ```
 
 Repeat baseline builds and lint for C2/BH/CAN. A 24-character board set also needs
-C2 and BH built with `-DLARGE_DISPLAY -DIPC_MY23_IS_INSTALLED`. Set `TOOLCHAIN`
+C2 and BH built with `-DLARGE_DISPLAY`; the MY23 option is handled on C1. Set `TOOLCHAIN`
 to the ARM compiler prefix if it is outside PATH. Host results do not establish
 physical-device or remote-CI results for these changes.

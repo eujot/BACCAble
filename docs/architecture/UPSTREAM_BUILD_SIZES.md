@@ -1,7 +1,8 @@
 # Upstream integration build sizes
 
 Measured locally on 2026-09-11 with ARM GCC 15.2.Rel1, `-Os`, LTO and
-`VERSION=upstream-sync`. Values are bytes. `text + data` measures the linked Flash
+`VERSION=upstream-sync`, for the firmware integrated in `b29102a`. These are
+a dated baseline, not measurements of every later commit. Values are bytes. `text + data` measures the linked Flash
 image; `data + bss` includes the linker's 512-byte heap and 1024-byte minimum stack
 reservation. It is not a measured runtime stack high-water mark. The binary size
 can include alignment padding. ELF debug information is not flashed.

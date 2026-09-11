@@ -6,7 +6,9 @@ For subsequent integrations, follow [the upstream porting guide](UPSTREAM_PORTIN
 
 ## Baseline and source history
 
-The local integration base is `94552903ca3276e95a4797ccb0ed1186a8979c63`.
+The local integration base is `94552903ca3276e95a4797ccb0ed1186a8979c63`;
+the port is recorded in local commit `b29102a`. The source heads below describe
+that completed comparison, not a claim that upstream has no newer commits.
 Source heads were fetched and checked again on **2026-09-11**:
 
 | Source | Reviewed revision | Commit date |

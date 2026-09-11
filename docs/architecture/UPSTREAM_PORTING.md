@@ -64,7 +64,7 @@ upstream attribution and add short English comments describing functional purpos
 - **Menu:** retain favorites, sorting, visibility, input gestures, live status
   values and stale-value handling. Test English labels and rendered values at
   both 18 and 24 characters; do not copy upstream display indices or templates
-  without adapting them. See [the menu guide](MENU_UX_PL.md).
+  without adapting them. See [the menu guide](MENU_UX.md).
 - **Communication:** validate CAN ID/type/DLC and diagnostic ECU/DID/sequence.
   Retain owned buffers, bounded work, retries on busy queues and timeout cleanup.
   Keep interrupt handlers limited to collection/completion; no feature logic or

@@ -1,11 +1,11 @@
 # BACCAble firmware architecture
 
 Start with the [build instructions](../../firmware/baccable/MAKEFILE.md),
-[menu and extension guide](MENU_UX_PL.md), and [cleanup validation](CLEANUP.md).
-The [original analysis](ANALYSIS_PL.md), [initial validation](VALIDATION_PL.md),
-and [memory optimization report](MEMORY_PL.md) document earlier stages.
-Historical `_PL` filenames remain valid for existing links; these guides are in English.
+[menu and extension guide](MENU_UX.md), and [development constraints](DEVELOPMENT.md).
+The [integration report](UPSTREAM_SYNC.md) records source revisions and validation;
+[build measurements](UPSTREAM_BUILD_SIZES.md) identify their date and configuration.
 For gaucho/netzmark updates, follow the [upstream porting guide](UPSTREAM_PORTING.md).
+For installing images, use the [flashing guide](../FLASHING.md).
 
 ## Responsibilities
 
@@ -16,9 +16,9 @@ with one event loop and statically allocated state.
 | --- | --- |
 | `app` | Startup, loop scheduling, build configuration and inter-board commands |
 | `transport` | CAN/UART queues and communication, without vehicle feature decoding |
-| `protocol` | SLCAN parsing/encoding and vehicle-frame checksums |
+| `protocol` | SLCAN, ELM command/transaction handling and vehicle-frame checksums |
 | `vehicle` | CAN-ID dispatch and vehicle reports grouped by function |
-| `diagnostics` | Parameter catalog, local readings, UDS reply validation and cache |
+| `diagnostics` | Parameter catalog, local readings, UDS cache/validation and BCM fault reading |
 | `features` | Periodic vehicle behavior, display rendering and menu navigation |
 | `settings` | Feature definitions, preference changes and serialization |
 | `state` | Named runtime state for telemetry, chassis, comfort, mirrors and other domains |
@@ -35,6 +35,10 @@ batch of CAN traffic, received UART messages, periodic features, USB, outgoing C
 and status LEDs. Frame handlers receive a header and payload and check the required
 length before accessing data. [Inactive signal notes](REFERENCE_SIGNALS.md) are
 kept outside executable code.
+
+ELM mode reserves the vehicle buses and suspends normal feature processing.
+Binary USB capture keeps normal features running. See [USB diagnostics](USB_DIAGNOSTICS.md)
+for lifecycle, timeouts and shared-pin behavior.
 
 CAN TX copies each message and retains it when HAL is busy. Forwarding explicitly
 converts the different RX and TX header types. UART interrupts collect messages;
@@ -53,12 +57,13 @@ Host tests execute production components with hardware substitutes.
   `frame_handlers.h`, and register its CAN ID in the dispatcher.
 - Add periodic behavior in `features` and call it from `powertrain_process`,
   `chassis_process` or `body_process` as appropriate.
-- Follow the [menu guide](MENU_UX_PL.md) when adding readings or actions. Keep
+- Follow the [menu guide](MENU_UX.md) when adding readings or actions. Keep
   existing page IDs and saved setting slots stable.
 - A parameter uses `(raw + raw_offset) * scale + scaled_offset`; `raw_offset`
   is signed. UDS accepts single-frame `0x62` replies for the current ECU, DID
-  and page. Multi-frame ISO-TP needs a transport implementation and capture-based
-  tests before such parameters can be added.
+  and page. The menu parameter reader supports single-frame values; the separate
+  BCM fault reader and ELM interpreter implement multipart replies. A multipart
+  menu parameter needs explicit integration and tests, not just a catalog entry.
 - Add settings through `SetupParam`, `SettingsState`, defaults and persistence.
   Changing a saved-record layout requires a new format identity and migration.
 
@@ -94,7 +99,8 @@ configuration reference; regenerating it does not recreate this architecture.
 Use an external-Makefile project in an IDE. The root `.clang-format` defines the
 application style; do not reformat vendor libraries.
 
-Keep function comments to one or two English sentences describing their purpose.
+Write project documentation and user-facing text in English. Keep function
+comments to one or two English sentences describing their purpose.
 Document protocol details and ownership constraints where they affect correctness.
 Keep unused research outside executable functions, and check callbacks, build
 flags and startup vectors before removing apparently unreferenced symbols.
