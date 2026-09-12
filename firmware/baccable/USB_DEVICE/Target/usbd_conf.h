@@ -67,14 +67,23 @@ extern "C" {
 /*---------- -----------*/
 #define USBD_MAX_NUM_CONFIGURATION 1
 /*---------- -----------*/
+#if defined(FREEZE_DIAGNOSTICS)
+#define USBD_MAX_STR_DESC_SIZ 256
+#else
 #define USBD_MAX_STR_DESC_SIZ 512
+#endif
 /*---------- -----------*/
 #define USBD_DEBUG_LEVEL 0
 /*---------- -----------*/
 #define USBD_SELF_POWERED 1
 /*---------- -----------*/
 #ifdef ENABLE_USB_MASS_STORAGE
-    #define MSC_MEDIA_PACKET 2048
+    #if defined(FREEZE_DIAGNOSTICS)
+        /* One disk sector keeps the diagnostic C1 image within its RAM budget. */
+        #define MSC_MEDIA_PACKET 512
+    #else
+        #define MSC_MEDIA_PACKET 2048
+    #endif
 #else
     #define MAX_STATIC_ALLOC_SIZE 512
 #endif

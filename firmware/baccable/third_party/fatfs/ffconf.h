@@ -15,7 +15,11 @@
 /  and optional writing functions as well. */
 
 
-#define FF_FS_MINIMIZE	3
+#ifdef FREEZE_DIAGNOSTICS
+#define FF_FS_MINIMIZE 2
+#else
+#define FF_FS_MINIMIZE 3
+#endif
 /* This option defines minimization level to remove some basic API functions.
 /
 /   0: Basic functions are fully enabled.
@@ -236,7 +240,11 @@
 / System Configurations
 /---------------------------------------------------------------------------*/
 
-#define FF_FS_TINY		0
+#ifdef FREEZE_DIAGNOSTICS
+#define FF_FS_TINY 1
+#else
+#define FF_FS_TINY 0
+#endif
 /* This option switches tiny buffer configuration. (0:Normal or 1:Tiny)
 /  At the tiny configuration, size of file object (FIL) is reduced FF_MAX_SS bytes.
 /  Instead of private sector buffer eliminated from the file object, common sector

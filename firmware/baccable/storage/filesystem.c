@@ -1,6 +1,7 @@
 #include "platform/system.h"
 #ifdef ENABLE_USB_MASS_STORAGE
-static FATFS fs;
+FATFS diagnostic_filesystem;
+#define fs diagnostic_filesystem
 #endif
 /* Write the legacy demonstration file; this is not a vehicle-traffic recorder. */
 void filesystem_save_log(void) {

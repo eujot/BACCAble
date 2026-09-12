@@ -19,6 +19,8 @@ static uint8_t screen_pending;
 static uint8_t screen_overtook_poll;
 #endif
 static volatile uint8_t board_tx_active, pedal_tx_active;
+static uint32_t board_tx_started;
+uint32_t board_uart_timeouts;
 static volatile uint8_t pedal_response, pedal_response_pending;
 #define QUEUE_SIZE 10 // max queue size
 
@@ -355,6 +357,8 @@ static uint8_t queue_start(SendQueue *queue, UART_HandleTypeDef *uart, uint8_t *
             memcpy(active_buffer, queue->tx_buffer[queue->head], length);
         if (HAL_UART_Transmit_IT(uart, active_buffer, length) == HAL_OK) {
             *active = 1;
+            if (uart == &huart2)
+                board_tx_started = currentTime;
     #if defined(BACCABLE_C1)
             /* At most one display may overtake a queued poll, even during continuous scrolling. */
             if (queue == tx_queue)
@@ -446,6 +450,14 @@ void pedal_uart_process(void) {
 
 /* Process board responses, poll their status and send eligible outgoing messages. */
 void board_uart_process(void) {
+    /* A lost completion must not block all subsequent screens and board commands.
+     * Do not replay an uncertain command: it may already have reached its destination. */
+    if (board_tx_active && currentTime - board_tx_started >= 1000) {
+        uart_pause(&huart2);
+        uart_resume(&huart2);
+        ++board_uart_timeouts;
+        status_led_error();
+    }
     for (unsigned budget = 0; budget < UART_RX_SLOTS && rx_tail != rx_head; ++budget) {
         board_commands_dispatch(rx_frames[rx_tail]);
         __DMB();

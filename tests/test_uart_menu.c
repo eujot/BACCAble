@@ -118,6 +118,23 @@ int main(void) {
     board_uart_process();
     assert(active[0] == BhBusIDparamString && active[1] == 'G');
     finish();
+    /* A missing completion cannot block the latest screen indefinitely. */
+    extern uint32_t board_uart_timeouts;
+    display('H');
+    board_uart_process();
+    display('I');
+    before = transmissions;
+    now += 999;
+    board_uart_process();
+    assert(transmissions == before && board_uart_timeouts == 0);
+    now += 1;
+    board_uart_process();
+    assert(board_uart_timeouts == 1 && transmissions == before);
+    now += 251;
+    runtime_state.all_processors_wakeup_time = now;
+    board_uart_process();
+    assert(transmissions == before + 1 && active[1] == 'I');
+    finish();
     for (unsigned i = 0; i < 10; ++i)
         assert(board_uart_send(command, sizeof(command)));
     assert(!board_uart_send(command, sizeof(command)));

@@ -116,5 +116,13 @@
     #define ENABLE_USB_MASS_STORAGE
 #endif
 
+/* Diagnostic images expose per-board logs over USB; C1 USB takes the LED-strip pins. */
+#if defined(FREEZE_DIAGNOSTICS) && !defined(ACT_AS_CANABLE)
+    /* Reserve C1 RAM for the log disk instead of the ELM interpreter. */
+    #undef ACT_AS_ELM327
+    #ifndef ENABLE_USB_MASS_STORAGE
+        #define ENABLE_USB_MASS_STORAGE
+    #endif
+#endif
 #include "storage/flash_layout.h"
 #endif

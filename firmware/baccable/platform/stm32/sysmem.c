@@ -22,12 +22,20 @@
 
 /* Includes */
 #include <errno.h>
+#include "features/freeze_log.h"
 #include <stdint.h>
 
 /**
  * Pointer to the current high watermark of the heap usage
  */
 static uint8_t *__sbrk_heap_end = NULL;
+#if defined(FREEZE_DIAGNOSTICS) && !defined(ACT_AS_CANABLE)
+/* Report allocated heap extent so diagnostic stack gaps include heap growth. */
+uint32_t freeze_heap_boundary(void) {
+    extern uint8_t _end;
+    return (uint32_t)(__sbrk_heap_end ? __sbrk_heap_end : &_end);
+}
+#endif
 
 /**
  * @brief _sbrk() allocates memory to the newlib heap and is used by malloc
@@ -65,6 +73,9 @@ void *_sbrk(ptrdiff_t incr) {
 
     /* Protect heap from growing into the reserved MSP stack */
     if (__sbrk_heap_end + incr > max_heap) {
+#if defined(FREEZE_DIAGNOSTICS) && !defined(ACT_AS_CANABLE)
+        ++freeze_alloc_failures;
+#endif
         errno = ENOMEM;
         return (void *)-1;
     }

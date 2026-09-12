@@ -18,6 +18,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_storage_if.h"
+#include "features/freeze_log.h"
 #include "app/application_state.h"
 #include "storage/flash_records.h"
 
@@ -148,14 +149,21 @@ int8_t STORAGE_GetCapacity_FS(uint8_t lun, uint32_t *block_num, uint16_t *block_
 }
 
 /* Allow disk access only when the device has the required Flash capacity. */
-int8_t STORAGE_IsReady_FS(uint8_t lun) { return lun == 0 && flash_storage_available() ? USBD_OK : USBD_FAIL; }
+int8_t STORAGE_IsReady_FS(uint8_t lun) {
+#if defined(FREEZE_DIAGNOSTICS) && !defined(ACT_AS_CANABLE)
+    if (freeze_disk_busy)
+        return USBD_FAIL;
+#endif
+    return lun == 0 && flash_storage_available() ? USBD_OK : USBD_FAIL;
+}
 
 /* Present the USB disk as read-only to the host. */
 int8_t STORAGE_IsWriteProtected_FS(uint8_t lun) { return 1; }
 
 /* Read a valid range of sectors from the device USB disk. */
 int8_t STORAGE_Read_FS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t blk_len) {
-    if (lun || !buf || !flash_storage_available() || !storage_sector_range(blk_addr, blk_len))
+    if (STORAGE_IsReady_FS(lun) != USBD_OK || !buf || !flash_storage_available() ||
+        !storage_sector_range(blk_addr, blk_len))
         return USBD_FAIL;
 #ifdef ENABLE_USB_MASS_STORAGE
     memcpy(buf, (const void *)(USB_FLASH_START_ADDRESS + (blk_addr * STORAGE_BLK_SIZ)),

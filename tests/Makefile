@@ -17,6 +17,7 @@ test: build/test_core build/test_transport build/test_catalog build/test_menu bu
 	./build/test_upstream
 	./build/test_parking_c2
 	./build/test_parking_bh
+	python3 test_freeze_log.py
 
 build/test_catalog: test_catalog.c $(FIRMWARE)/diagnostics/parameter_catalog.c $(HEADERS) Makefile
 	@mkdir -p build

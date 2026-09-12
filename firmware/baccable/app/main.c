@@ -1,4 +1,5 @@
 #include "app/main.h"
+#include "features/freeze_log.h"
 #include "stm32f0xx_it.h"
 #include "diagnostics/parameter_cache.h"
 #include "features/parking.h"
@@ -16,7 +17,7 @@ static void application_init(void) {
     powertrain_init();
 #endif
     uart_init();
-#if defined(BACCABLE_BH) || defined(BACCABLE_C2)
+#if defined(BACCABLE_BH) || defined(BACCABLE_C2) || defined(FREEZE_DIAGNOSTICS)
     filesystem_init();
 #endif
 #if defined(ACT_AS_CANABLE) || defined(DEBUG_MODE) || defined(ENABLE_USB_MASS_STORAGE) ||                    \
@@ -50,9 +51,7 @@ static void receive_can_frames(void) {
         uint8_t data[8] = {0};
         if (can_rx(&header, data) != HAL_OK)
             continue;
-#if defined(BACCABLE_C1)
         runtime_state.last_received_can_msg_time = currentTime;
-#endif
 #if defined(ACT_AS_CANABLE)
         uint8_t text[SLCAN_MTU];
         int8_t length = slcan_parse_frame(text, &header, data);
@@ -108,9 +107,11 @@ static void clear_faults_process(void) {
 
 /* Keep vehicle communication, user controls and enabled features running. */
 int main(void) {
+    freeze_log_boot();
     application_init();
     for (;;) {
         uint32_t started = currentTime;
+        freeze_log_process();
         board_uart_process();
 #if !defined(ACT_AS_CANABLE)
         usb_modes_process();

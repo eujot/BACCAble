@@ -107,3 +107,5 @@ flags and startup vectors before removing apparently unreferenced symbols.
 
 CI runs ASan/UBSan host tests, cppcheck and ARM GCC for C1/C2/BH/CAN. Stable and beta
 releases share validation before publication. DEBUG_MODE excludes the CAN variant.
+
+For intermittent display freezes, see the [diagnostic build and log collection guide](FREEZE_DIAGNOSTICS.md).
