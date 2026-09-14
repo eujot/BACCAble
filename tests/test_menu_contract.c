@@ -220,7 +220,7 @@ static void test_unnumbered_filtered_editors(void) {
 
 /* Fault workflows and long peer versions retain their content immediately. */
 static void test_workflow_and_immediate_versions(void) {
-    open_test_action("BCM faults");
+    open_test_action("Read BCM faults");
     menu_event(MENU_SELECT);
     assert(fault_reader_busy() && !strncmp(screen, "Reading", 7));
     fault_reader_cancel();
@@ -229,7 +229,7 @@ static void test_workflow_and_immediate_versions(void) {
     assert(!fault_reader_busy() && strstr(screen, "Clear active"));
     diagnostics_state.clear_faults_request = 0;
     menu_event(MENU_BACK);
-    assert(!fault_reader_busy() && strstr(screen, "BCM faults"));
+    assert(!fault_reader_busy() && strstr(screen, "Read BCM faults"));
     expect_no_position();
     menu_event(MENU_BACK);
     expect_no_position();
