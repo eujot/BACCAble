@@ -23,7 +23,9 @@ static void open_test_action(const char *label) {
     menu_event(MENU_NEXT);
     menu_event(MENU_NEXT);
     menu_event(MENU_SELECT);
-    const char *search = !strcmp(label, "Brake req") ? "Brake" : label;
+    const char *search = !strcmp(label, "IBS SOC override") ? "IBS SOC"
+                         : !strcmp(label, "Brake req") ? "Brake"
+                         : label;
     for (unsigned i = 0; i < 20 && !strstr(screen, search); ++i)
         menu_event(MENU_NEXT);
     assert(strstr(screen, search));

@@ -903,8 +903,8 @@ static void test_action_availability(void) {
         &settings_state.esc_tc_customizator_enabled, &settings_state.qv_exhaust_flap_function_enabled,
         &settings_state.has_function_enabled,        &settings_state.front_brake_forcer_master,
         &settings_state.read_faults_enabled,         &settings_state.clear_faults_enabled};
-    const char *names[] = {"Toggle Dyno mode", "AWD off request", "Toggle ESC/TC",   "QV exhaust req",
-                           "Press HAS button", "Brake override",  "Read BCM faults", "Clear BCM DTCs"};
+    const char *names[] = {"Dyno:",          "AWD off request", "Toggle ESC/TC",   "QV exhaust req",
+                           "Press HAS button", "Brake req",       "Read BCM faults", "Clear BCM DTCs"};
     for (unsigned i = 0; i < 8; ++i)
         *gates[i] = 0;
     fresh_menu();
