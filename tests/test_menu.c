@@ -903,8 +903,8 @@ static void test_action_availability(void) {
         &settings_state.esc_tc_customizator_enabled, &settings_state.qv_exhaust_flap_function_enabled,
         &settings_state.has_function_enabled,        &settings_state.front_brake_forcer_master,
         &settings_state.read_faults_enabled,         &settings_state.clear_faults_enabled};
-    const char *names[] = {"Dyno",       "AWD",          "ESC/TC",          "QV exhaust",
-                           "HAS button", "Brake", "BCM faults", "BCM DTCs"};
+    const char *names[] = {"Toggle Dyno mode", "AWD off request", "Toggle ESC/TC",   "QV exhaust req",
+                           "Press HAS button", "Brake override",  "Read BCM faults", "Clear BCM DTCs"};
     for (unsigned i = 0; i < 8; ++i)
         *gates[i] = 0;
     fresh_menu();
@@ -990,7 +990,11 @@ static void test_action_request_labels(void) {
     assert(strstr(screen, "> Clear BCM DTCs"));
     diagnostics_state.clear_faults_request = 255;
     menu_render();
-    assert(strstr(screen, "Clear DTCs: WAIT"));
+#ifdef LARGE_DISPLAY
+    assert(!strncmp(screen, "Clear BCM DTCs: WAIT", strlen("Clear BCM DTCs: WAIT")));
+#else
+    assert(!strncmp(screen, "Clear BCM DT: WAIT", strlen("Clear BCM DT: WAIT")));
+#endif
     diagnostics_state.clear_faults_request = 0;
     menu_render();
     assert(strstr(screen, "> Clear BCM DTCs"));

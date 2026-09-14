@@ -23,7 +23,7 @@ static void open_test_action(const char *label) {
     menu_event(MENU_NEXT);
     menu_event(MENU_NEXT);
     menu_event(MENU_SELECT);
-    const char *search = !strcmp(label, "IBS override") ? "IBS" : !strcmp(label, "Brake req") ? "Brake" : label;
+    const char *search = !strcmp(label, "Brake req") ? "Brake" : label;
     for (unsigned i = 0; i < 20 && !strstr(screen, search); ++i)
         menu_event(MENU_NEXT);
     assert(strstr(screen, search));
@@ -87,7 +87,7 @@ static void test_pending_action_feedback(void) {
     menu_render();
     assert(strstr(screen, "Queue full"));
 
-    open_test_action("HAS button");
+    open_test_action("Press HAS button");
     menu_event(MENU_SELECT);
     menu_event(MENU_SELECT);
     now += 1300;
@@ -99,7 +99,7 @@ static void test_pending_action_feedback(void) {
 }
 
 static void test_conditional_actions(void) {
-    open_test_action("IBS override");
+    open_test_action("IBS SOC override");
     ibs_override_enable(false);
     telemetry_state.current_rpm_speed = 400;
     menu_render();
@@ -125,8 +125,8 @@ static void test_conditional_actions(void) {
     unsigned before = commands;
     menu_event(MENU_SELECT);
     assert(chassis_state.launch_assist_enabled && commands == before);
-    menu_event(MENU_NEXT); /* The explicitly named Release launch action. */
-    assert(strstr(screen, "End launch"));
+    menu_event(MENU_NEXT); /* The explicitly named launch-disable action. */
+    assert(strstr(screen, "Disable launch"));
     menu_event(MENU_SELECT);
     menu_event(MENU_SELECT);
     assert(!chassis_state.launch_assist_enabled && chassis_state.front_brake_forced);
@@ -142,7 +142,7 @@ static void test_conditional_actions(void) {
 }
 
 static void test_fault_action_exclusion(void) {
-    open_test_action("BCM faults");
+    open_test_action("Read BCM faults");
     diagnostics_state.clear_faults_request = 1;
     menu_render();
     assert(strstr(screen, "Clear active"));
@@ -247,7 +247,7 @@ static void test_steering_menu_ownership(void) {
 }
 
 static void test_request_cancel_and_failure(void) {
-    open_test_action("4WD");
+    open_test_action("AWD off request");
     menu_event(MENU_SELECT);
     menu_event(MENU_SELECT);
     assert(chassis_state.awd_sequence == 4);
