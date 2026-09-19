@@ -25,9 +25,8 @@ flashing. The commands below describe runtime USB, not the STM32 DFU bootloader.
 
 Leave Features to persist committed changes automatically. New settings are initially off;
 existing saved settings take priority over compiled defaults. Despite its current
-`Clear BCM DTCs` label, clearing still requests the existing multi-controller
-sweep; only the reader is restricted to BCM. The [action plan](../ACTION_PLAN.md)
-tracks this wording defect. The historical FREEZE.LOG branch is obsolete while
+`Clear DTCs` label, clearing still requests the existing multi-controller sweep;
+only the reader is restricted to BCM. The historical FREEZE.LOG branch is obsolete while
 the current software remains stable.
 
 ## ELM-compatible USB diagnostics

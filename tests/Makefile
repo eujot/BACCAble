@@ -6,7 +6,7 @@ HEADERS := test_idle_latin1.c test_menu_contract.c test_report.h test_setup_ui.c
 SOURCES := test_core.c $(FIRMWARE)/protocol/slcan_codec.c $(FIRMWARE)/diagnostics/uds_decode.c \
  $(FIRMWARE)/storage/record_store.c
 
-test: build/test_core build/test_transport build/test_catalog build/test_menu build/test_menu_large build/test_uart_menu build/test_input_repeat build/test_engine_status
+test: build/test_core build/test_transport build/test_catalog build/test_menu build/test_menu_large build/test_uart_menu build/test_input_repeat build/test_engine_status build/test_exhaust
 	./build/test_core
 	./build/test_transport
 	./build/test_catalog
@@ -18,6 +18,7 @@ test: build/test_core build/test_transport build/test_catalog build/test_menu bu
 	./build/test_menu_diagnostics
 	./build/test_input_repeat
 	./build/test_engine_status
+	./build/test_exhaust
 	./build/test_upstream
 	./build/test_parking_c2
 	./build/test_parking_bh
@@ -45,6 +46,11 @@ build/test_engine_status: test_engine_status.c $(FIRMWARE)/vehicle/engine_status
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC2_FLAVOR=1 test_engine_status.c \
 		$(FIRMWARE)/vehicle/engine_status.c -o $@
+
+build/test_exhaust: test_exhaust.c $(FIRMWARE)/features/exhaust.c $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC1_FLAVOR=1 test_exhaust.c \
+		$(FIRMWARE)/features/exhaust.c -lm -o $@
 
 MENU_SOURCES := test_menu.c $(addprefix $(FIRMWARE)/, features/menu.c features/menu_model.c \
  features/menu_input.c features/ui_entry.c features/menu_diagnostics.c features/display_stream.c features/ibs_override.c features/board_sync.c features/dashboard.c features/dashboard_format.c \

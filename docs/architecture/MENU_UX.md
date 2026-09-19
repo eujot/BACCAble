@@ -156,10 +156,9 @@ accepted, not that an ECU confirmed completion. Immobilizer displays its state i
 the separate existing steering-wheel gesture changes it only outside the menu;
 a long menu direction hold cannot trigger that gesture. `Read BCM faults` opens
 a result browser after the option is enabled in Features. It reads BCM codes,
-not faults from every ECU. In contrast, the action currently labelled
-`Clear BCM DTCs` still runs the existing multi-controller clear sequence; the
-label does not restrict it to BCM. Correcting that wording is tracked in P1-05
-of the action plan. USB capture, ELM diagnostics and the temporary IBS
+not faults from every ECU. The `Clear DTCs` action runs the existing
+multi-controller clear sequence; its wording does not claim BCM-only scope.
+USB capture, ELM diagnostics and the temporary IBS
 action are described in [USB diagnostics](USB_DIAGNOSTICS.md).
 
 `Peak hold` retains numerical maxima until a page/profile change or toggle;

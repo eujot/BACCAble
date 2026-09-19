@@ -304,7 +304,7 @@ const SetupParam setup_params[] = {
                  settings_state.front_brake_forcer_master),
     SETUP_TOGGLE(SETUP_FLASH_4WD_DISABLER, "AWD disable", DEFAULT_4WD_DISABLER,
                  settings_state.awd_disabler_enabled),
-    SETUP_TOGGLE(SETUP_FLASH_CLEAR_FAULTS, "BCM DTC clear", DEFAULT_CLEAR_FAULTS,
+    SETUP_TOGGLE(SETUP_FLASH_CLEAR_FAULTS, "DTC clear", DEFAULT_CLEAR_FAULTS,
                  settings_state.clear_faults_enabled),
     SETUP_TOGGLE(SETUP_FLASH_READ_FAULTS, "BCM fault read", DEFAULT_READ_FAULTS,
                  settings_state.read_faults_enabled),

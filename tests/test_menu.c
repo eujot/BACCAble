@@ -904,7 +904,7 @@ static void test_action_availability(void) {
         &settings_state.has_function_enabled,        &settings_state.front_brake_forcer_master,
         &settings_state.read_faults_enabled,         &settings_state.clear_faults_enabled};
     const char *names[] = {"Dyno:",          "AWD off request", "Toggle ESC/TC",   "QV exhaust req",
-                           "Press HAS button", "Brake req",       "Read BCM faults", "Clear BCM DTCs"};
+                           "Press HAS button", "Brake req",       "Read BCM faults", "Clear DTCs"};
     for (unsigned i = 0; i < 8; ++i)
         *gates[i] = 0;
     fresh_menu();
@@ -985,19 +985,19 @@ static void test_action_request_labels(void) {
     menu_render();
     assert(strstr(screen, "> AWD off request"));
     settings_state.clear_faults_enabled = 1;
-    for (unsigned i = 0; i < 16 && !strstr(screen, "Clear BCM DTCs"); ++i)
+    for (unsigned i = 0; i < 16 && !strstr(screen, "Clear DTCs"); ++i)
         menu_event(MENU_NEXT);
-    assert(strstr(screen, "> Clear BCM DTCs"));
+    assert(strstr(screen, "> Clear DTCs"));
     diagnostics_state.clear_faults_request = 255;
     menu_render();
 #ifdef LARGE_DISPLAY
-    assert(!strncmp(screen, "Clear BCM DTCs: WAIT", strlen("Clear BCM DTCs: WAIT")));
+    assert(!strncmp(screen, "Clear DTCs: WAIT", strlen("Clear DTCs: WAIT")));
 #else
-    assert(!strncmp(screen, "Clear BCM DT: WAIT", strlen("Clear BCM DT: WAIT")));
+    assert(!strncmp(screen, "Clear DTCs: WAIT", strlen("Clear DTCs: WAIT")));
 #endif
     diagnostics_state.clear_faults_request = 0;
     menu_render();
-    assert(strstr(screen, "> Clear BCM DTCs"));
+    assert(strstr(screen, "> Clear DTCs"));
     settings_state.clear_faults_enabled = 0;
     settings_state.awd_disabler_enabled = 0;
     settings_state.qv_exhaust_flap_function_enabled = 0;
