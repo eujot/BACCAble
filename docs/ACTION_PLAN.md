@@ -228,7 +228,7 @@ not close this task. Required checks, each with observed result and evidence:
 
 | ID / status | Work and completion boundary |
 | --- | --- |
-| P2-01 INSTRUMENTED | `MenuInput` now counts reports, gaps over 300 ms and the maximum gap without changing the guard or gesture behavior. Host boundary tests cover the metrics. Capture these counters and end-to-end input/display timing on hardware before changing the timeout or adding a queue. |
+| P2-01 DIAGNOSTIC MENU | `Information` now exposes `Reports`, `Gaps`, `Max gap` and `Input age` from `MenuInput`. The counters do not change the 300 ms guard or gesture behavior. Read them after a hardware session and record them with end-to-end input/display timing before changing the timeout or adding a queue. |
 | P2-02 HARDWARE | Compare current 50 ms display pacing with a separate 30 ms candidate, measuring latency, CAN load, fragment fairness, retries and factory text. The old <150–250 ms UX targets are aspirations, not achieved guarantees. Keep 50 ms if evidence does not justify a change. |
 | P2-03 HARDWARE | Investigate explicit ROOT/BACK display release separately from idle. `0x11` in comments is not a verified ownership-handoff command. Require capture/IPC evidence before replacing blank transmission; retain busy-clear retry and cancellation on reopen. |
 | P2-04 DEFERRED | Add authoritative outcome reporting one vehicle action at a time when a real ECU/peer acknowledgement is identified. Preserve request/pending/unknown distinctions; no invented success. |

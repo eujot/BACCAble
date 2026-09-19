@@ -37,7 +37,7 @@ capture reference. `Request sent` or UART queue acceptance is not physical ACK.
 
 | Area | Procedure and evidence to record | Result / evidence |
 | --- | --- | --- |
-| Menu/input | Short and held RES are exclusive; rapid NEXT/PREV and repeat work; no stale input after a report gap; 18/24-character text and glyphs are readable. |  |
+| Menu/input | Short and held RES are exclusive; rapid NEXT/PREV and repeat work; no stale input after a report gap; 18/24-character text and glyphs are readable. In `Information`, record `Reports`, `Gaps`, `Max gap` and `Input age` before and after the session. |  |
 | Idle/save | Idle returns to visible Favorites; unaccepted edits/capture cancel; committed values survive restart; failed save exit retries without losing destination. |  |
 | Display | Measure first visible response and full completion during rapid pages, factory text, radio/RDS handover and Race mask. Record IPC capture and timings. |  |
 | Dyno/brake | Enable Dyno, stop engine, restart, and verify C1/C2 agree. Exercise brake guard and record observed vehicle behavior. |  |
