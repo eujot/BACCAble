@@ -692,8 +692,11 @@ void menu_render(void) {
         else if (info == 7)
             snprintf_(text, sizeof(text), "Max gap:%lums", (unsigned long)input.max_gap_ms);
         else if (info == 8)
-            snprintf_(text, sizeof(text), "Input age:%lums",
-                      (unsigned long)(input.reports_seen ? currentTime - input.last_seen : 0));
+            if (input.reports_seen)
+                snprintf_(text, sizeof(text), "Input age:%lums",
+                          (unsigned long)(currentTime - input.last_seen));
+            else
+                snprintf_(text, sizeof(text), "Input age:--");
         else if (info == 0)
             ui_render_value(text, sizeof(text), "FW",
                             !strncmp(FW_VERSION, "BACCABLE ", 9) ? FW_VERSION + 9 : FW_VERSION);
