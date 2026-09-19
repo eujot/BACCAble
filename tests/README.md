@@ -1,5 +1,9 @@
 # Host regression tests
 
+For this Mac's tool paths, dependencies, test commands and local HTML report
+generation, see the [build guide](../firmware/baccable/MAKEFILE.md#run-tests-locally).
+Known source compilation blockers are recorded in [ACTION_PLAN.md](../docs/ACTION_PLAN.md).
+
 Run `make -C tests -j2 test`. Assertions and ASan/UBSan failures stop the test run
 and fail CI. The cases run in their existing order, once per executable.
 

@@ -1,5 +1,8 @@
 # MY23 display menu and extension guide
 
+This guide describes the merged firmware at `0a72dcd` (v5-beta-9). The
+[action plan](../ACTION_PLAN.md) tracks local changes and unfinished work.
+
 The catalog contains 64 gasoline pages and 60 diesel pages. Navigation,
 preferences and text transport have separate modules. All display labels use
 English with selected raw Latin-1 glyphs. Page labels fit within 16 characters, leaving two characters for
@@ -9,10 +12,11 @@ editor marks on an 18-character display.
 
 Features cycles `Engine: 2.0 I4`, `Engine: 2.9 V6`, `Engine: 2.2 D`.
 Existing gasoline settings default to I4; V6 owners should select V6 once.
-`Advanced pages` reveals technical and secondary layouts. Favorites retain saved
+`Advanced` reveals technical and secondary layouts. Favorites retain saved
 IDs and can include advanced pages, but incompatible engine pages are temporarily
-filtered. Setup `Allow ...` switches permit access to Actions; they do not execute
-those actions. Immobilizer status is in Information.
+filtered. Feature switches such as `Dyno action`, `AWD disable` and `BCM fault read`
+permit access to Actions; they do not execute those actions. Immobilizer status
+is in Information.
 See the [full catalog audit](CATALOG_AUDIT.md) for classification and migration.
 
 ## Controls
@@ -51,15 +55,16 @@ fragment interval are unchanged.
 conditional action, capture, exclusive mode, submenu and status. Setup descriptors
 carry the type and numeric bounds; action descriptors carry the interaction type.
 Equivalent types use `ui_render_*` helpers. Vehicle modules retain command and
-sequence logic. [Complete entry audit](UNIFIED_UI_AUDIT.md) lists every setup slot,
-action, view and side effect.
+sequence logic. `settings/setup_entries.c` defines every setup slot, type and
+callback; `features/menu.c` defines actions and their conditions. The global view
+contract is listed below.
 
 | Representation | Meaning |
 | --- | --- |
 | `Ø Auto rotate` / `O Auto rotate` | True editable toggle; SELECT flips the preference |
 | `Engine: 2.0 I4` | Named enum; SELECT cycles |
 | `* Shift RPM: 3500` | Numeric draft; directions edit, SELECT accepts, BACK cancels |
-| `1/8 > BCM faults` | Action/workflow; SELECT enters or requests it |
+| `> Read BCM faults` | Action/workflow; SELECT enters or requests it |
 | `! Start engine` | Known unmet condition or failure |
 | `? BH no reply` | Unknown/stale status |
 | `< Back` | Exit a submenu |
@@ -76,7 +81,8 @@ Temperature formatting reuses an existing unit gap for °C or adds a degree byte
 only if all original values/units fit. Dense pages may retain C. Numeric editors
 add «/» only when the complete existing label/value still fits; narrow editors
 keep their previous format. The verified · and ± are reserved for meaningful
-future uses, not added as decoration. See [idle and glyph delivery](IDLE_AND_GLYPHS.md).
+future uses, not added as decoration. Hardware provenance and remaining checks
+are recorded in the [action plan](../ACTION_PLAN.md).
 
 `4WD req: OFF WAIT` and `QV req: OPEN WAIT`/`AUTO WAIT` mean an unresolved request,
 not measured drivetrain or valve state. 4WD repeats until explicitly cancelled;
@@ -148,9 +154,12 @@ do not require that confirmation. Existing availability, stationary-vehicle and 
 conditions still apply. `Request queued` and WAIT mean that a request was
 accepted, not that an ECU confirmed completion. Immobilizer displays its state in Information;
 the separate existing steering-wheel gesture changes it only outside the menu;
-a long menu direction hold cannot trigger that gesture. `BCM faults` opens
+a long menu direction hold cannot trigger that gesture. `Read BCM faults` opens
 a result browser after the option is enabled in Features. It reads BCM codes,
-not faults from every ECU. USB capture, ELM diagnostics and the temporary IBS
+not faults from every ECU. In contrast, the action currently labelled
+`Clear BCM DTCs` still runs the existing multi-controller clear sequence; the
+label does not restrict it to BCM. Correcting that wording is tracked in P1-05
+of the action plan. USB capture, ELM diagnostics and the temporary IBS
 action are described in [USB diagnostics](USB_DIAGNOSTICS.md).
 
 `Peak hold` retains numerical maxima until a page/profile change or toggle;
@@ -311,7 +320,7 @@ mode: USB activation otherwise disables that experiment. Modes apply after succe
 
 Front brake activation explicitly confirms `Brake+launch? RES`, because the
 existing C2 reply arms Launch Assist. While launch is active, Front brake refuses
-to silently disable it; use the separately named End launch action first.
+to silently disable it; use the separately named `Disable launch` action first.
 Known RPM, speed, Dyno and read/clear conflicts are shown before SELECT and checked
 again on execution. Dyno confirmation names its ESC reset dependency. Permissions
 for active Dyno/brake/4WD/QV/custom ESC cannot be disabled until their operation is
@@ -357,5 +366,5 @@ returns to that list; BACK again returns to Features. The explicitly labelled
 `< Back` row is the sole SELECT-as-return entry. Physical BACK while the menu is
 closed still opens Favorites; the physical button protocol is unchanged.
 
-[Delivery and acceptance audit](../MENU_UX_CONSISTENCY_DELIVERY.md) records the
-requirements, preserved behavior and hardware validation still needed.
+The [action plan](../ACTION_PLAN.md) records completed requirements, superseded
+decisions and the remaining hardware validation.

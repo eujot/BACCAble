@@ -1,5 +1,8 @@
 ## BACCAble 
 
+For current work, priorities and integration status, start with the
+[action plan and agent handoff](docs/ACTION_PLAN.md).
+
 Direct contact: https://t.me/gaucholivido
 
 Telegram group for BACCABLE: https://t.me/baccable 

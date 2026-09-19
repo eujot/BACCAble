@@ -6,7 +6,7 @@ proof that every ECU supports every inherited diagnostic request.
 
 ## Profile and compatibility
 
-`Settings > Feature setup > Engine profile` cycles **2.0 I4**, **2.9 V6**, **2.2 D**.
+`Settings > Features > Engine` cycles **2.0 I4**, **2.9 V6**, **2.2 D**.
 The legacy fuel selector stays in settings slot 16; slot 36 adds gasoline V6
 capability, and slot 37 adds Advanced pages. Unused zero-filled, erased or invalid
 new slots default to zero. Existing diesel remains diesel; existing gasoline
@@ -25,11 +25,12 @@ slots when saving; gasoline/diesel remains backward compatible.
 
 ## Menu roles
 
-`Functions` becomes **Actions**. Setup switches say `Allow ...`: they permit an
-action; Actions executes it. Master-enable fields, confirmations and commands are
-unchanged. The old Immobilizer action only displayed a generic status message.
-Its actual `+`/`-` state moves to the fifth Information page. Its separate existing
-control gesture and persisted setting remain unchanged.
+The root section is **Actions**. Feature switches permit an action; Actions
+executes it. Current labels include `Dyno action`, `ESC/TC control`, `AWD disable`
+and `BCM fault read` following PR #21. Master-enable fields, confirmations and
+commands retain their original meaning. The old Immobilizer action only displayed
+a generic status message; its ON/OFF state is now in the fifth Information page.
+Its separate control gesture and persisted setting remain unchanged.
 
 ## Duplicates and redundancy
 

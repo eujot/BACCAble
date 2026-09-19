@@ -1,5 +1,9 @@
 # Upstream feature integration
 
+Historical integration report for PR #3 (`3c5b49a`). For current release status
+and the newer, unported gaucho changes, read the [action plan](../ACTION_PLAN.md).
+The reviewed source baseline below has not been advanced by this documentation audit.
+
 This integration extends the modular v5-beta firmware. It does not replace the
 architecture with either upstream's monolithic application.
 For subsequent integrations, follow [the upstream porting guide](UPSTREAM_PORTING.md).
