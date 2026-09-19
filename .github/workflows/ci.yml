@@ -52,6 +52,8 @@ jobs:
           fi
       - name: Release script regression tests
         run: python3 .github/scripts/test-ci.py
+      - name: Menu label regression test
+        run: python3 tests/test_menu_labels.py
       - id: host_tests
         name: Host regression tests with ASan and UBSan
         run: |

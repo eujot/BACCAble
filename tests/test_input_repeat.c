@@ -70,6 +70,18 @@ static void stale_stream_and_rearming(void) {
     assert(menu_input_update(&input, 0x18, true, 1000) == MENU_NEXT);
     assert(held(&input, 1250) == MENU_NONE);
     assert(held(&input, 1500) == MENU_NEXT);
+    assert(input.reports_seen == 9);
+    assert(input.stream_gaps == 1 && input.max_gap_ms == 301);
+}
+
+static void stream_gap_metrics_do_not_change_input_policy(void) {
+    MenuInput input = {0};
+    assert(menu_input_update(&input, 0x10, true, 100) == MENU_NONE);
+    assert(menu_input_update(&input, 0x18, true, 400) == MENU_NEXT);
+    assert(input.stream_gaps == 0); /* Exactly 300 ms remains tolerated. */
+    assert(menu_input_update(&input, 0x18, true, 701) == MENU_NONE);
+    assert(input.stream_gaps == 1 && input.max_gap_ms == 301);
+    assert(!input.armed); /* The existing lost-release protection is unchanged. */
 }
 
 static void disabled_repeat_and_input(void) {
@@ -102,6 +114,7 @@ int main(void) {
         HOST_TEST(timer_wrap),
         HOST_TEST(release_and_direction_change_reset_delay),
         HOST_TEST(stale_stream_and_rearming),
+        HOST_TEST(stream_gap_metrics_do_not_change_input_policy),
         HOST_TEST(disabled_repeat_and_input),
         HOST_TEST(other_buttons_never_repeat),
     };

@@ -13,6 +13,15 @@ MenuEvent menu_input_update(MenuInput *input, uint8_t button, bool allowed, uint
         memset(input, 0, sizeof(*input));
         return MENU_NONE;
     }
+    if (input->reports_seen) {
+        uint32_t gap = now - input->last_seen;
+        if (gap > INPUT_STREAM_TIMEOUT_MS) {
+            ++input->stream_gaps;
+            if (gap > input->max_gap_ms)
+                input->max_gap_ms = gap;
+        }
+    }
+    ++input->reports_seen;
     if (input->armed && now - input->last_seen > INPUT_STREAM_TIMEOUT_MS) {
         input->armed = false; /* A lost release must never become an action. */
         input->button = 0;

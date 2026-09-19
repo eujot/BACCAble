@@ -13,6 +13,7 @@ typedef enum {
 } MenuEvent;
 typedef struct {
     uint32_t started, last_seen, repeated_at;
+    uint32_t reports_seen, stream_gaps, max_gap_ms;
     uint8_t button;
     bool armed, consumed, repeating;
 } MenuInput;
