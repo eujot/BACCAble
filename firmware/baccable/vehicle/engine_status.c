@@ -1,5 +1,9 @@
 #include "vehicle/engine_status.h"
 
+#if defined(BACCABLE_C2)
+static uint8_t dyno_off_notification_pending;
+#endif
+
 /* Track engine operation and update features that depend on startup or shutdown. */
 void vehicle_handle_engine_status(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 2)
@@ -16,8 +20,15 @@ void vehicle_handle_engine_status(const CAN_RxHeaderTypeDef *rx_header, uint8_t 
     if (telemetry_state.current_rpm_speed < 400) {
         if (chassis_state.stability_inverted != 0)
             chassis_state.stability_inverted = 0;
-        if (chassis_state.dyno_mode_enabled != 0)
+        if (chassis_state.dyno_mode_enabled != 0) {
             chassis_state.dyno_mode_enabled = 0;
+            dyno_off_notification_pending = 1;
+        }
+        if (dyno_off_notification_pending) {
+            const uint8_t notification[2] = {C1BusID, C1cmdDynoNotActive};
+            if (board_uart_send(notification, sizeof(notification)))
+                dyno_off_notification_pending = 0;
+        }
         if (chassis_state.front_brake_forced != 0)
             chassis_state.front_brake_forced = 255;
     }
