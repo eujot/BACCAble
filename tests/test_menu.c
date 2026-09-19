@@ -608,6 +608,27 @@ static void test_navigation_context(void) {
     }
 }
 
+/* Input diagnostics expose the same counters used by the P2-01 host tests. */
+static void test_input_diagnostics(void) {
+    fresh_menu();
+    menu_button(0x10, true);
+    now += 301;
+    menu_button(0x10, true);
+    menu_event(MENU_BACK);
+    for (unsigned i = 0; i < 4; ++i)
+        menu_event(MENU_NEXT);
+    menu_event(MENU_SELECT);
+    for (unsigned i = 0; i < 5; ++i)
+        menu_event(MENU_NEXT);
+    assert(strstr(screen, "Reports:2"));
+    menu_event(MENU_NEXT);
+    assert(strstr(screen, "Gaps:1"));
+    menu_event(MENU_NEXT);
+    assert(strstr(screen, "Max gap:301ms"));
+    menu_event(MENU_NEXT);
+    assert(strstr(screen, "Input age:0ms"));
+}
+
 /* Held directions repeat in lists, never in Actions or while moving a favorite. */
 static void test_repeat_views(void) {
     fresh_menu();
@@ -1107,6 +1128,7 @@ int main(void) {
         HOST_TEST(test_hidden_diagnostics),
 #endif
         HOST_TEST(test_input),
+        HOST_TEST(test_input_diagnostics),
         HOST_TEST(test_display),
         HOST_TEST(test_preferences),
         HOST_TEST(test_present_retry),

@@ -6,7 +6,7 @@ HEADERS := test_idle_latin1.c test_menu_contract.c test_report.h test_setup_ui.c
 SOURCES := test_core.c $(FIRMWARE)/protocol/slcan_codec.c $(FIRMWARE)/diagnostics/uds_decode.c \
  $(FIRMWARE)/storage/record_store.c
 
-test: build/test_core build/test_transport build/test_catalog build/test_menu build/test_menu_large build/test_uart_menu build/test_input_repeat build/test_engine_status build/test_exhaust
+test: build/test_core build/test_transport build/test_catalog build/test_menu build/test_menu_large build/test_uart_menu build/test_input_repeat build/test_engine_status build/test_exhaust labels
 	./build/test_core
 	./build/test_transport
 	./build/test_catalog
@@ -36,7 +36,10 @@ build/test_core: $(SOURCES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(SOURCES) -lm -o $@
 
-.PHONY: test
+.PHONY: test labels
+
+labels:
+	python3 test_menu_labels.py
 
 build/test_input_repeat: test_input_repeat.c $(FIRMWARE)/features/menu_input.c $(HEADERS) Makefile
 	@mkdir -p build

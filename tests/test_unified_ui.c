@@ -279,7 +279,7 @@ static void test_hidden_diagnostics(void) {
     menu_event(MENU_BACK);
     for (unsigned i = 0; i < 4; ++i) menu_event(MENU_NEXT);
     menu_event(MENU_SELECT);
-    for (unsigned i = 0; i < 5; ++i) menu_event(MENU_NEXT);
+    for (unsigned i = 0; i < 9; ++i) menu_event(MENU_NEXT);
     assert(strstr(screen, "IPC diag"));
     menu_event(MENU_SELECT);
     assert(!strncmp(screen, "20-27 ", 6));

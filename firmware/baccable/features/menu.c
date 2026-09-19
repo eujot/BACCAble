@@ -70,9 +70,9 @@ typedef struct {
 static ActionRequest requests[ACTION_COUNT];
 #define ACTION_TIMEOUT_MS 10000U
 #ifdef MENU_DIAGNOSTICS
-#define INFO_PAGES 6U
+#define INFO_PAGES 10U
 #else
-#define INFO_PAGES 5U
+#define INFO_PAGES 9U
 #endif
 static const char *const roots[] = {"Favorites", "Readings", "Actions", "Settings", "Information"};
 static const char *const settings[] = {"Features",   "Favorites", "Shown pages",
@@ -680,12 +680,24 @@ void menu_render(void) {
 #endif
     case INFO:
 #ifdef MENU_DIAGNOSTICS
-        if (info == 5) {
+        if (info == 9) {
             ui_render_action(text, sizeof(text), "IPC diag");
             break;
         }
 #endif
-        if (info == 0)
+        if (info == 5)
+            snprintf_(text, sizeof(text), "Reports:%lu", (unsigned long)input.reports_seen);
+        else if (info == 6)
+            snprintf_(text, sizeof(text), "Gaps:%lu", (unsigned long)input.stream_gaps);
+        else if (info == 7)
+            snprintf_(text, sizeof(text), "Max gap:%lums", (unsigned long)input.max_gap_ms);
+        else if (info == 8)
+            if (input.reports_seen)
+                snprintf_(text, sizeof(text), "Input age:%lums",
+                          (unsigned long)(currentTime - input.last_seen));
+            else
+                snprintf_(text, sizeof(text), "Input age:--");
+        else if (info == 0)
             ui_render_value(text, sizeof(text), "FW",
                             !strncmp(FW_VERSION, "BACCABLE ", 9) ? FW_VERSION + 9 : FW_VERSION);
         else if (info == 4)
@@ -955,7 +967,7 @@ void menu_event(MenuEvent event) {
             break;
         case INFO:
 #ifdef MENU_DIAGNOSTICS
-            if (info == 5) {
+            if (info == 9) {
                 view = DIAGNOSTICS;
                 break;
             }

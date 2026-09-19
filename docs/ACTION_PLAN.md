@@ -206,12 +206,12 @@ multi-controller target set. Confirmation, read/clear exclusion and request
 semantics are unchanged. BCM-only clearing remains a separate behavior change
 requiring protocol evidence; queue acceptance is not ECU confirmation.
 
-### P1-06 — Record installation and hardware acceptance — HARDWARE
+### P1-06 — Record installation and hardware acceptance — HARDWARE / PROCEDURE READY
 
-Can begin with inventory; testing changed behavior depends on its integrated
-candidate. Record the actual release/commit on C1, C2 and BH, board/IPC revision,
+The acceptance worksheet is [HARDWARE_ACCEPTANCE.md](HARDWARE_ACCEPTANCE.md).
+Testing changed behavior depends on its integrated candidate. Record the actual release/commit on C1, C2 and BH, board/IPC revision,
 engine profile, display width, build flags, capacity evidence and test conditions.
-Use [FLASHING.md](FLASHING.md) for a matching set; firmware publication alone does
+Use the worksheet and [FLASHING.md](FLASHING.md) for a matching set; firmware publication alone does
 not close this task. Required checks, each with observed result and evidence:
 
 | Check | Acceptance evidence still missing |
@@ -228,11 +228,11 @@ not close this task. Required checks, each with observed result and evidence:
 
 | ID / status | Work and completion boundary |
 | --- | --- |
-| P2-01 OPEN | Measure input-report gaps and lost clicks end to end. The 300 ms stream guard remains intentional. Separate real lost events from screens coalesced during transport; add a queue or adjust timeout only if captures justify it. Preserve lost-release disarming, wrap/boundary tests and SELECT/BACK exclusivity. |
+| P2-01 DIAGNOSTIC MENU | `Information` now exposes `Reports`, `Gaps`, `Max gap` and `Input age` from `MenuInput`. The counters do not change the 300 ms guard or gesture behavior. Read them after a hardware session and record them with end-to-end input/display timing before changing the timeout or adding a queue. |
 | P2-02 HARDWARE | Compare current 50 ms display pacing with a separate 30 ms candidate, measuring latency, CAN load, fragment fairness, retries and factory text. The old <150–250 ms UX targets are aspirations, not achieved guarantees. Keep 50 ms if evidence does not justify a change. |
 | P2-03 HARDWARE | Investigate explicit ROOT/BACK display release separately from idle. `0x11` in comments is not a verified ownership-handoff command. Require capture/IPC evidence before replacing blank transmission; retain busy-clear retry and cancellation on reopen. |
 | P2-04 DEFERRED | Add authoritative outcome reporting one vehicle action at a time when a real ECU/peer acknowledgement is identified. Preserve request/pending/unknown distinctions; no invented success. |
-| P2-05 OPEN | Connect `tests/test_menu_labels.py` to a standard test/CI entry point, or replace its unique checks with equivalent production-render tests. It exists in beta-9 but is not invoked by current `tests/Makefile` or CI. Verify the intended check actually runs and fails for a meaningful regression. |
+| P2-05 COMPLETE LOCALLY | `tests/test_menu_labels.py` runs through the standard `tests/Makefile` test target and has an explicit CI step. Its source-label checks remain separate from production-render tests. |
 | P2-06 OPEN | Prepare release notes for beta-9 (currently empty) covering PR #21 and the unchanged request/clear semantics. Publish notes only within a task authorizing GitHub writes. Future releases should identify included reliability work and outstanding hardware checks. |
 
 ### P3 — Optional, not scheduled
@@ -277,7 +277,7 @@ for in [UPSTREAM_SYNC.md](architecture/UPSTREAM_SYNC.md).
 
 | Source | Integrated/reviewed baseline | Verified current state on 2026-09-19 |
 | --- | --- | --- |
-| gaucho master | `02b2fd8b7f16d0e399077df4dd7026090564ecbd` | `ea24a49e9c479f62721cf1fb9a7a61f62a7d2d06`, one newer commit: Dyno engine-off notification is implemented locally as P1-02; PDC Reverse restore remains absent and is tracked as P1-03. |
+| gaucho master | `02b2fd8b7f16d0e399077df4dd7026090564ecbd` | `ea24a49e9c479f62721cf1fb9a7a61f62a7d2d06`, one newer commit: Dyno engine-off notification and PDC Reverse restore are integrated locally as P1-02/P1-03; remaining upstream differences are tracked separately. |
 | netzmark master | `a3ca08246d2818d39a00848587f8ec5f61fa986c` | Same SHA; no newer master change at audit time. |
 | netzmark stable-master-3.0.14+ | `5854eda3261cc004d507b100a5627f222d83eef1` as recorded by the original integration | Historical separately reviewed stable revision; this audit did not establish a new stable baseline. |
 

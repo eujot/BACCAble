@@ -56,7 +56,7 @@ static void test_navigation_contract(void) {
                 menu_event(MENU_NEXT);
             }
         } else if (section == 4) {
-            for (unsigned i = 0; i < 5; ++i) {
+            for (unsigned i = 0; i < 9; ++i) {
                 memcpy(original, screen, sizeof(screen));
                 menu_event(MENU_SELECT);
                 assert(!strcmp(original, screen));
