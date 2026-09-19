@@ -37,7 +37,10 @@ jobs:
         run: |
           build=true
           base="$BASE"
-          if [[ -z "$RELEASE_VERSION" && "$EVENT" == pull_request ]] && git cat-file -e "$base^{commit}" 2>/dev/null; then
+          if [[ -z "$RELEASE_VERSION" && "$EVENT" == push ]]; then
+            base="${{ github.event.before }}"
+          fi
+          if [[ -z "$RELEASE_VERSION" && ( "$EVENT" == pull_request || "$EVENT" == push ) ]] && git cat-file -e "$base^{commit}" 2>/dev/null; then
             git diff --name-only -z "$base" HEAD > /tmp/changed-paths
             if python3 -c 'from pathlib import Path; names=Path("/tmp/changed-paths").read_bytes().split(b"\0"); exit(any(n and not n.endswith(b".md") for n in names))'; then
               build=false
