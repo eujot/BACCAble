@@ -145,7 +145,7 @@ must be observed and recorded before reopening this task. If reopened, port and
 extend the branch tests and collect board-specific evidence; old branch success is
 not current-master validation.
 
-### P1-02 — Port the missing Dyno engine-off notification — OPEN
+### P1-02 — Port the missing Dyno engine-off notification — COMPLETE LOCALLY
 
 New gaucho change [ea24a49](https://github.com/gaucho1978/BACCAble/commit/ea24a49e9c479f62721cf1fb9a7a61f62a7d2d06),
 2026-09-13. Local `vehicle/engine_status.c` clears C2's Dyno state below 400 RPM
@@ -156,8 +156,13 @@ for the brake workflow after restart.
 Port the behavior into these modules, retaining the existing command and guarding
 queue rejection/retry. Test Dyno on → engine off → restart, C1 state, brake guard,
 no spurious repeated commands and a full UART queue. Recheck pending UI state.
-Acceptance: both boards agree after shutdown/restart; relevant host tests and
-C1/C2 builds pass; vehicle verification is recorded separately.
+Completed locally on 2026-09-19: C2 queues `C1cmdDynoNotActive` when engine status
+drops below 400 RPM and retries until the board UART accepts it, without repeating
+notifications after delivery. Added `tests/test_engine_status.c` covering state
+clear, full-queue retry, no notification spam and no change while the engine runs.
+The full host suite, cppcheck and C1/C2/BH/CAN lint/builds pass with Arm GNU
+Toolchain 15.2.Rel1. Vehicle verification remains separate and is still required
+before treating this as hardware-accepted behavior.
 
 ### P1-03 — Restore owned PDC mute when entering Reverse — OPEN
 
@@ -268,7 +273,7 @@ for in [UPSTREAM_SYNC.md](architecture/UPSTREAM_SYNC.md).
 
 | Source | Integrated/reviewed baseline | Verified current state on 2026-09-19 |
 | --- | --- | --- |
-| gaucho master | `02b2fd8b7f16d0e399077df4dd7026090564ecbd` | `ea24a49e9c479f62721cf1fb9a7a61f62a7d2d06`, one newer commit: Dyno engine-off notification and PDC Reverse restore, both absent locally; P1-02/P1-03. |
+| gaucho master | `02b2fd8b7f16d0e399077df4dd7026090564ecbd` | `ea24a49e9c479f62721cf1fb9a7a61f62a7d2d06`, one newer commit: Dyno engine-off notification is implemented locally as P1-02; PDC Reverse restore remains absent and is tracked as P1-03. |
 | netzmark master | `a3ca08246d2818d39a00848587f8ec5f61fa986c` | Same SHA; no newer master change at audit time. |
 | netzmark stable-master-3.0.14+ | `5854eda3261cc004d507b100a5627f222d83eef1` as recorded by the original integration | Historical separately reviewed stable revision; this audit did not establish a new stable baseline. |
 
