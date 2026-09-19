@@ -273,7 +273,7 @@ for in [UPSTREAM_SYNC.md](architecture/UPSTREAM_SYNC.md).
 
 | Source | Integrated/reviewed baseline | Verified current state on 2026-09-19 |
 | --- | --- | --- |
-| gaucho master | `02b2fd8b7f16d0e399077df4dd7026090564ecbd` | `ea24a49e9c479f62721cf1fb9a7a61f62a7d2d06`, one newer commit: Dyno engine-off notification and PDC Reverse restore, both absent locally; P1-02/P1-03. |
+| gaucho master | `02b2fd8b7f16d0e399077df4dd7026090564ecbd` | `ea24a49e9c479f62721cf1fb9a7a61f62a7d2d06`, one newer commit: Dyno engine-off notification is implemented locally as P1-02; PDC Reverse restore remains absent and is tracked as P1-03. |
 | netzmark master | `a3ca08246d2818d39a00848587f8ec5f61fa986c` | Same SHA; no newer master change at audit time. |
 | netzmark stable-master-3.0.14+ | `5854eda3261cc004d507b100a5627f222d83eef1` as recorded by the original integration | Historical separately reviewed stable revision; this audit did not establish a new stable baseline. |
 
