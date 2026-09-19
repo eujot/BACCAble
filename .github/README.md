@@ -57,15 +57,11 @@ recovery. Do not automatically delete or move a numbered version to recover.
 
 ## Deliberately deferred
 
-Artifact attestations are useful for this public repository, but are not enabled
-in this patch. They need `id-token: write` and `attestations: write` in the trusted
-release path and validation on GitHub. Checksums detect corruption; they are not
-signed provenance. The pinned ARM installer still downloads its versioned vendor
-archive; archive-digest locking and reproducible runner images are separate work.
-
-No binary cache, historical size comparison, or firmware behavior-diff framework
-is introduced. Existing host regression tests are retained. Add small captured
-traffic fixtures there when a real behavioral regression is found.
+Future work is tracked only in the [action plan](../docs/ACTION_PLAN.md), including
+label-test integration, artifact attestations, archive-digest locking and optional
+build/size tooling. Checksums detect corruption; they are not signed provenance.
+Attestations are currently absent and would need trusted-release permissions
+(`id-token: write`, `attestations: write`) and validation on GitHub.
 
 Local validation: `python3 .github/scripts/test-ci.py`,
 `bash -n .github/scripts/release-tag.sh`, `actionlint`, and

@@ -1,5 +1,8 @@
 # BACCAble firmware architecture
 
+Start new work from the [action plan](../ACTION_PLAN.md), which records the
+verified baseline, priorities and outstanding validation.
+
 Start with the [build instructions](../../firmware/baccable/MAKEFILE.md),
 [menu and extension guide](MENU_UX.md), and [development constraints](DEVELOPMENT.md).
 The [integration report](UPSTREAM_SYNC.md) records source revisions and validation;

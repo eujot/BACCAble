@@ -1,7 +1,8 @@
 # Development constraints and lessons
 
-These are constraints from the implemented firmware, checked against `b29102a`.
-They replace the obsolete refactor plan and intermediate reports. Use the
+These constraints originated with the modular/upstream integration and remain
+applicable to the current firmware. See the [action plan](../ACTION_PLAN.md) for
+the audited revision, unresolved defects and local build blockers. Use the
 [architecture](README.md), [menu guide](MENU_UX.md) and
 [upstream porting guide](UPSTREAM_PORTING.md) when changing the relevant area.
 
