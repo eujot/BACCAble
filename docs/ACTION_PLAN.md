@@ -233,7 +233,7 @@ not close this task. Required checks, each with observed result and evidence:
 | P2-03 HARDWARE | Investigate explicit ROOT/BACK display release separately from idle. `0x11` in comments is not a verified ownership-handoff command. Require capture/IPC evidence before replacing blank transmission; retain busy-clear retry and cancellation on reopen. |
 | P2-04 DEFERRED | Add authoritative outcome reporting one vehicle action at a time when a real ECU/peer acknowledgement is identified. Preserve request/pending/unknown distinctions; no invented success. |
 | P2-05 COMPLETE LOCALLY | `tests/test_menu_labels.py` runs through the standard `tests/Makefile` test target and has an explicit CI step. Its source-label checks remain separate from production-render tests. |
-| P2-06 OPEN | Prepare release notes for beta-9 (currently empty) covering PR #21 and the unchanged request/clear semantics. Publish notes only within a task authorizing GitHub writes. Future releases should identify included reliability work and outstanding hardware checks. |
+| P2-06 COMPLETE | Added notes to `v5-beta-9` for PR #21 and published `v5-beta-10` from master with notes covering PRs #22–#26, validation status and the outstanding hardware acceptance boundary. Future releases should identify included reliability work and outstanding hardware checks. |
 
 ### P3 — Optional, not scheduled
 
