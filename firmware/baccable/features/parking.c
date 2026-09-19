@@ -98,7 +98,18 @@ void parking_process(void) {
         currentTime - parking_state.brake_seen > 1000)
         return;
     if (parking_state.reverse) {
-        parking_state.pdc_owned = false;
+        /* The vehicle usually restores PDC in Reverse, but verify its actual state. */
+        if (parking_state.pdc_owned && parking_state.pdc_disabled) {
+            command[1] = 0x20;
+            if (parking_send(0x5b0, command, 8)) {
+                parking_state.pdc_owned = false;
+                parking_state.pulse = 1;
+                parking_state.pulse_at = currentTime;
+            }
+        } else if (parking_state.pdc_owned) {
+            /* The vehicle restored PDC, so BACCAble no longer owns the mute. */
+            parking_state.pdc_owned = false;
+        }
         return;
     }
     bool disable = parking_state.sensor_mute && parking_state.pressure > 0x10 && parking_state.beeping &&

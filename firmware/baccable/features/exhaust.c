@@ -4,18 +4,15 @@
 
 /* Apply the requested exhaust-valve behavior through the supported controllers. */
 void exhaust_process(void) {
+    /* Always release a started radio-control pulse, even if the preference is disabled later. */
+    if (comfort_state.exhaust_valve_mosfet_command_time &&
+        currentTime - comfort_state.exhaust_valve_mosfet_command_time > 1000) {
+        HAL_GPIO_WritePin(Q10mosfet, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(Q11mosfet, GPIO_PIN_RESET);
+        comfort_state.exhaust_valve_mosfet_command_time = 0;
+    }
+
     if (settings_state.qv_exhaust_flap_function_enabled) {
-
-        // Timeout management for chinese valves radiocontrol
-        if (comfort_state.exhaust_valve_mosfet_command_time) {
-            if (currentTime - comfort_state.exhaust_valve_mosfet_command_time >
-                1000) {                                       // if timeout has passed
-                HAL_GPIO_WritePin(Q10mosfet, GPIO_PIN_RESET); // open the transistor (release the button)
-                HAL_GPIO_WritePin(Q11mosfet, GPIO_PIN_RESET); // open the transistor (release the button)
-                comfort_state.exhaust_valve_mosfet_command_time = 0;
-            }
-        }
-
         // if a request to press the button on the radiocontrol was made
         if (comfort_state.chinese_exhaust_valve_request) {
             HAL_GPIO_WritePin(Q10mosfet_Port,

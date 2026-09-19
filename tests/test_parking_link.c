@@ -94,12 +94,51 @@ static void test_parking(void) {
     parking_set_options(true, false);
     parking_process();
     assert(sends == previous);
+
+    /* Reverse normally restores PDC; if the actual status remains disabled,
+       restore it once because BACCAble still owns the mute. */
+    memset(&parking_state, 0, sizeof(parking_state));
+    parking_set_options(true, false);
+    now = 100;
+    data[3] = 0;
+    observe(0xfc, data, 4);
+    data[4] = 0x20;
+    observe(0x1f5, data, 5);
+    data[0] = 0x40;
+    observe(0x3e7, data, 6);
+    data[3] = 0x40;
+    observe(0x54a, data, 4);
+    data[3] = 0x04; /* Reverse. */
+    observe(0xfc, data, 4);
+    parking_state.pdc_owned = true;
+    unsigned reverse_before = sends;
+    result = HAL_BUSY;
+    parking_process();
+    assert(sends == reverse_before && parking_state.pdc_owned);
+    result = HAL_OK;
+    parking_process();
+    assert(sends == reverse_before + 1 && !parking_state.pdc_owned && parking_state.pulse);
+    now += 50;
+    parking_process();
+    assert(!parking_state.pulse);
+    unsigned reverse_after = sends;
+
+    /* A manual mute is never restored by BACCAble. */
+    memset(&parking_state, 0, sizeof(parking_state));
+    now = 100;
+    observe(0xfc, data, 4);
+    observe(0x1f5, data, 5);
+    observe(0x3e7, data, 6);
+    observe(0x54a, data, 4);
+    parking_process();
+    assert(sends == reverse_after);
+
     /* An old gear/brake report cannot trigger a fresh button press. */
     now += 4000;
     data[3] = 0;
     observe(0x54a, data, 4);
     parking_process();
-    assert(sends == previous);
+    assert(sends == reverse_after);
 }
 #else
 static void gear(uint8_t gear_value) {

@@ -164,20 +164,21 @@ The full host suite, cppcheck and C1/C2/BH/CAN lint/builds pass with Arm GNU
 Toolchain 15.2.Rel1. Vehicle verification remains separate and is still required
 before treating this as hardware-accepted behavior.
 
-### P1-03 — Restore owned PDC mute when entering Reverse — OPEN
+### P1-03 — Restore owned PDC mute when entering Reverse — COMPLETE LOCALLY
 
 Same gaucho commit. `features/parking.c` currently clears `pdc_owned` and returns
 on Reverse, assuming the car has re-enabled sensors. Upstream reports that this
 does not always happen. Adapt the restore using fresh actual PDC status and only
 BACCAble-owned mute. Preserve manual choices, command retries and button release.
 
-Acceptance: extend `tests/test_parking_link.c` for Reverse with sensors still
-disabled, already enabled, stale reports, manual disable and rejected sends.
-Do not clear ownership before the required restore is accounted for. Run C2 tests
-and build, then confirm actual sensor/LED behavior in hardware. Do not blindly
-copy the monolithic upstream handler.
+Completed locally on 2026-09-19: when Reverse is selected, C2 checks the actual
+PDC-disabled status before restoring a mute owned by BACCAble. A full CAN queue
+retains ownership for retry; an already-restored PDC or manual mute causes no
+BACCAble command. `tests/test_parking_link.c` covers disabled/enabled status,
+manual ownership and rejected sends. C2/BH parking tests and all firmware builds
+pass. Actual sensor/LED behavior still requires hardware verification.
 
-### P1-04 — Ensure exhaust remote pulses always finish — OPEN
+### P1-04 — Ensure exhaust remote pulses always finish — COMPLETE LOCALLY
 
 An early session identified this and current source still has the condition:
 `features/exhaust.c` releases Q10/Q11 only inside
@@ -186,21 +187,24 @@ not every outstanding remote MOSFET pulse. Check disable, engine-stop, sleep and
 diagnostic transitions while a pulse is active. A requested GPIO state is not
 measured valve position.
 
-Acceptance: a started pulse has bounded release even if its enabling preference
-changes; stale requests do not execute on re-enable. Add focused GPIO/time
-regressions, retain existing valve semantics and verify the physical output.
+Completed locally on 2026-09-19: timeout release now runs independently of the QV
+preference, while new requests remain blocked when the preference is disabled.
+Added `tests/test_exhaust.c` for pulse timeout and disabled-feature behavior.
+The full host suite, cppcheck and all four firmware builds pass. Physical GPIO
+behavior remains a hardware verification item.
 
-### P1-05 — Correct the scope implied by the DTC clear label — OPEN
+### P1-05 — Correct the scope implied by the DTC clear label — COMPLETE LOCALLY
 
-PR #21 labels the action `Clear BCM DTCs` and permission `BCM DTC clear`, but
+PR #21 labelled the action `Clear BCM DTCs` and permission `BCM DTC clear`, but
 `app/main.c::clear_faults_process` still broadcasts `AllResetFaults` and sweeps ECU
 addresses. Only the **reader** is BCM-specific. This was a label-only change and
 did not narrow clearing to BCM.
 
-Acceptance: choose accurate bounded wording for the existing clear operation,
-update render expectations/docs, preserve confirmation and read/clear exclusion.
-If BCM-only clearing is desired, treat it as an explicit behavior change with
-protocol evidence. Do not infer a successfully cleared ECU from queue acceptance.
+Completed locally on 2026-09-19: renamed the permission to `DTC clear` and the
+action to `Clear DTCs`, documenting that the existing operation still sweeps its
+multi-controller target set. Confirmation, read/clear exclusion and request
+semantics are unchanged. BCM-only clearing remains a separate behavior change
+requiring protocol evidence; queue acceptance is not ECU confirmation.
 
 ### P1-06 — Record installation and hardware acceptance — HARDWARE
 

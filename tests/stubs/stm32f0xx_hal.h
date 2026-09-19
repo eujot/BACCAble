@@ -29,6 +29,11 @@ typedef uint32_t HAL_StatusTypeDef;
 #define GPIO_PIN_12 4096
 void HAL_GPIO_DeInit(void *, uint32_t);
 #define GPIO_PIN_8 256
+#define GPIO_PIN_7 128
+#define GPIO_PIN_RESET 0
+#define GPIO_PIN_SET 1
+typedef uint32_t GPIO_PinState;
+void HAL_GPIO_WritePin(void *, uint16_t, GPIO_PinState);
 #define GPIO_PIN_9 512
 #define GPIO_MODE_AF_PP 0
 #define GPIO_NOPULL 0
