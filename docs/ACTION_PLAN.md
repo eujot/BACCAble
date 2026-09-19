@@ -145,7 +145,7 @@ must be observed and recorded before reopening this task. If reopened, port and
 extend the branch tests and collect board-specific evidence; old branch success is
 not current-master validation.
 
-### P1-02 — Port the missing Dyno engine-off notification — OPEN
+### P1-02 — Port the missing Dyno engine-off notification — COMPLETE LOCALLY
 
 New gaucho change [ea24a49](https://github.com/gaucho1978/BACCAble/commit/ea24a49e9c479f62721cf1fb9a7a61f62a7d2d06),
 2026-09-13. Local `vehicle/engine_status.c` clears C2's Dyno state below 400 RPM
@@ -156,8 +156,13 @@ for the brake workflow after restart.
 Port the behavior into these modules, retaining the existing command and guarding
 queue rejection/retry. Test Dyno on → engine off → restart, C1 state, brake guard,
 no spurious repeated commands and a full UART queue. Recheck pending UI state.
-Acceptance: both boards agree after shutdown/restart; relevant host tests and
-C1/C2 builds pass; vehicle verification is recorded separately.
+Completed locally on 2026-09-19: C2 queues `C1cmdDynoNotActive` when engine status
+drops below 400 RPM and retries until the board UART accepts it, without repeating
+notifications after delivery. Added `tests/test_engine_status.c` covering state
+clear, full-queue retry, no notification spam and no change while the engine runs.
+The full host suite, cppcheck and C1/C2/BH/CAN lint/builds pass with Arm GNU
+Toolchain 15.2.Rel1. Vehicle verification remains separate and is still required
+before treating this as hardware-accepted behavior.
 
 ### P1-03 — Restore owned PDC mute when entering Reverse — OPEN
 

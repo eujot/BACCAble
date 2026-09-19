@@ -90,9 +90,10 @@ python3 tests/test_menu_labels.py
 python3 .github/scripts/test-ci.py
 ```
 
-`make test` builds and runs 13 native executables: core, transport, both catalog
+`make test` builds and runs 14 native executables: core, transport, both catalog
 widths, both menu widths, menu with hidden diagnostics, UART/menu, standalone menu
-diagnostics, input repeat, upstream diagnostics, C2 parking and BH parking.
+diagnostics, input repeat, C2 engine status, upstream diagnostics, C2 parking and
+BH parking.
 `test_setup_ui.c`, `test_unified_ui.c`, `test_menu_contract.c` and
 `test_idle_latin1.c` are included by the menu suite, not separate executables.
 Outputs are under `tests/build`. A compiler/assertion/sanitizer error is a failure;
