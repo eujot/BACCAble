@@ -11,11 +11,11 @@ flashing. The commands below describe runtime USB, not the STM32 DFU bootloader.
 - `Actions` → `Peak hold`: toggle between live values and numerical maxima.
   Changing the selected page starts a new interval. An unavailable or stale signal
   displays `--` rather than an old maximum.
-- `Settings` → `Features` → `BCM fault read`: enable, then leave Features. Open
+- `Settings` → `Features` → `BCM fault reader`: enable, then leave Features. Open
   `Actions` → `Read BCM faults`; browse results with previous/next, press RES to
   retry, or go Back to leave. A `+` after the result count means the BCM returned
   more than the displayed limit of 20 codes. Reading does not clear faults.
-- `PDC mute` and `Reverse mute` are independent options in Features.
+- `Auto PDC mute` and `Mute audio in R` are independent options in Features.
   They require valid current vehicle messages before acting.
 - `Actions` → `IBS SOC override` is experimental and requires action confirmation
   and a running engine. It substitutes 75% in a short burst of otherwise copied

@@ -98,8 +98,8 @@ static void test_latin1_vocabulary(void) {
     assert((uint8_t)text[0] == 0xd7);
     ui_render_unavailable(text, sizeof(text), "Start engine");
     assert(text[0] == '!');
-    ui_render_pending(text, sizeof(text), "4WD req", "OFF");
-    assert(!strcmp(text, "4WD req: OFF WAIT"));
+    ui_render_pending(text, sizeof(text), "AWD req", "OFF");
+    assert(!strcmp(text, "AWD req: OFF WAIT"));
 }
 
 /* Degree insertion never consumes a value/unit cell, including dense and malformed templates. */

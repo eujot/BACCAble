@@ -275,7 +275,7 @@ static void setup_render_open_windows(void);
 const SetupParam setup_params[] = {
     // Core setup
     SETUP_HIDDEN_TOGGLE(SETUP_FLASH_IMMOBILIZER, DEFAULT_IMMOBILIZER, security_state.immobilizer_enabled),
-    SETUP_TOGGLE_ACTION(SETUP_FLASH_START_STOP, "Stop block", DEFAULT_START_STOP,
+    SETUP_TOGGLE_ACTION(SETUP_FLASH_START_STOP, "Block Start/Stop", DEFAULT_START_STOP,
                         settings_state.smart_disable_start_stop_enabled, setup_action_start_stop),
     SETUP_NUMBER(SETUP_FLASH_LAUNCH_TORQUE, "Launch Nm", 600, DEFAULT_LAUNCH_TORQUE,
                  SETUP_VALUE_UINT16, settings_state.launch_torque_threshold, setup_render_launch_torque, 25, 25, 0),
@@ -287,26 +287,26 @@ const SetupParam setup_params[] = {
                  SETUP_VALUE_UINT16, settings_state.shift_threshold, setup_render_shift_rpm, 1500, 250, 0),
     SETUP_TOGGLE(SETUP_FLASH_MY23_IPC, "MY23 display", DEFAULT_MY23_IPC,
                  settings_state.ipc_my23_is_installed),
-    SETUP_TOGGLE(SETUP_FLASH_REGEN_ALERT, "DPF alert", DEFAULT_REGEN_ALERT,
+    SETUP_TOGGLE(SETUP_FLASH_REGEN_ALERT, "DPF regen alert", DEFAULT_REGEN_ALERT,
                  settings_state.regeneration_alert_enabled),
-    SETUP_TOGGLE(SETUP_FLASH_SEATBELT_ALARM, "Belt alarm", DEFAULT_SEATBELT_ALARM,
+    SETUP_TOGGLE(SETUP_FLASH_SEATBELT_ALARM, "Seatbelt alarm", DEFAULT_SEATBELT_ALARM,
                  settings_state.seatbelt_alarm_enabled),
 
     // Diagnostics and messages
-    SETUP_TOGGLE(SETUP_FLASH_ROUTE_MESSAGES, "Route msgs", DEFAULT_ROUTE_MESSAGES,
+    SETUP_TOGGLE(SETUP_FLASH_ROUTE_MESSAGES, "CAN routing", DEFAULT_ROUTE_MESSAGES,
                  settings_state.route_msg_enabled),
     SETUP_TOGGLE_ACTION(SETUP_FLASH_ESC_TC_CUSTOMIZER, "ESC/TC control", DEFAULT_ESC_TC_CUSTOMIZER,
                         settings_state.esc_tc_customizator_enabled, setup_action_esc_tc),
     SETUP_TOGGLE(SETUP_FLASH_DYNO, "Dyno action", DEFAULT_DYNO, settings_state.dyno_mode_master_enabled),
-    SETUP_TOGGLE(SETUP_FLASH_ACC_VIRTUAL_PAD, "ACC pad", DEFAULT_ACC_VIRTUAL_PAD,
+    SETUP_TOGGLE(SETUP_FLASH_ACC_VIRTUAL_PAD, "Virtual ACC", DEFAULT_ACC_VIRTUAL_PAD,
                  settings_state.acc_virtual_pad_enabled),
     SETUP_TOGGLE(SETUP_FLASH_BRAKES_OVERRIDE, "Brake action", DEFAULT_BRAKES_OVERRIDE,
                  settings_state.front_brake_forcer_master),
-    SETUP_TOGGLE(SETUP_FLASH_4WD_DISABLER, "AWD disable", DEFAULT_4WD_DISABLER,
+    SETUP_TOGGLE(SETUP_FLASH_4WD_DISABLER, "AWD off action", DEFAULT_4WD_DISABLER,
                  settings_state.awd_disabler_enabled),
-    SETUP_TOGGLE(SETUP_FLASH_CLEAR_FAULTS, "DTC clear", DEFAULT_CLEAR_FAULTS,
+    SETUP_TOGGLE(SETUP_FLASH_CLEAR_FAULTS, "DTC clear action", DEFAULT_CLEAR_FAULTS,
                  settings_state.clear_faults_enabled),
-    SETUP_TOGGLE(SETUP_FLASH_READ_FAULTS, "BCM fault read", DEFAULT_READ_FAULTS,
+    SETUP_TOGGLE(SETUP_FLASH_READ_FAULTS, "BCM fault reader", DEFAULT_READ_FAULTS,
                  settings_state.read_faults_enabled),
     SETUP_HIDDEN_TOGGLE(SETUP_FLASH_REMOTE_START, DEFAULT_REMOTE_START, settings_state.remote_start_enabled),
     SETUP_TOGGLE_RENDER_ACTION(SETUP_FLASH_DIESEL_PARAMS, "Engine profile", DEFAULT_DIESEL_PARAMS,
@@ -326,10 +326,10 @@ const SetupParam setup_params[] = {
      &settings_state.park_mirror, "Park mirror", 0, UI_ENTRY_SUBMENU, 0, 0, 0, 0},
     SETUP_VALUE8_ACTION(SETUP_FLASH_ACC_AUTOSTART, "ACC resume", 2, DEFAULT_ACC_AUTOSTART,
                         settings_state.acc_autostart, setup_render_acc_autostart, setup_action_acc_autostart),
-    SETUP_VALUE8_ACTION(SETUP_FLASH_CLOSE_WINDOWS, "Close", 2, DEFAULT_CLOSE_WINDOWS,
+    SETUP_VALUE8_ACTION(SETUP_FLASH_CLOSE_WINDOWS, "Close windows", 2, DEFAULT_CLOSE_WINDOWS,
                         settings_state.close_windows_with_door_lock, setup_render_close_windows,
                         setup_action_close_windows),
-    SETUP_VALUE8_ACTION(SETUP_FLASH_OPEN_WINDOWS, "Open", 2, DEFAULT_OPEN_WINDOWS,
+    SETUP_VALUE8_ACTION(SETUP_FLASH_OPEN_WINDOWS, "Open windows", 2, DEFAULT_OPEN_WINDOWS,
                         settings_state.open_windows_with_door_lock, setup_render_open_windows,
                         setup_action_open_windows),
     SETUP_TOGGLE_ACTION(SETUP_FLASH_HAS_VIRTUAL_PAD, "Virtual HAS", DEFAULT_HAS_VIRTUAL_PAD,
@@ -338,15 +338,15 @@ const SetupParam setup_params[] = {
                  settings_state.qv_exhaust_flap_function_enabled),
     SETUP_HIDDEN_TOGGLE(SETUP_FLASH_EUJOT, DEFAULT_EUJOT, settings_state.eujot_enabled),
 
-    SETUP_TOGGLE(SETUP_FLASH_PDC_MUTE, "PDC mute", 0, settings_state.parking_sensor_mute),
-    SETUP_TOGGLE(SETUP_FLASH_REVERSE_AUDIO, "Reverse mute", 0, settings_state.reverse_audio_mute),
+    SETUP_TOGGLE(SETUP_FLASH_PDC_MUTE, "Auto PDC mute", 0, settings_state.parking_sensor_mute),
+    SETUP_TOGGLE(SETUP_FLASH_REVERSE_AUDIO, "Mute audio in R", 0, settings_state.reverse_audio_mute),
     SETUP_TOGGLE(SETUP_FLASH_ROTATE, "Auto rotate", 0, settings_state.rotate_readings),
 
     {34, 1, 0, SETUP_VALUE_UINT8, &settings_state.usb_sniffer,
      "USB mode", setup_render_usb_mode, UI_ENTRY_EXCLUSIVE_MODE, 0, 0, 0, setup_action_usb_mode},
     SETUP_HIDDEN_TOGGLE(35, 0, settings_state.usb_elm327),
 
-    SETUP_TOGGLE(37, "Advanced", 0, settings_state.advanced_pages),
+    SETUP_TOGGLE(37, "Advanced pages", 0, settings_state.advanced_pages),
     SETUP_HIDDEN_TOGGLE(36, 0, settings_state.gasoline_v6),
 
     // Hidden persisted values
@@ -539,16 +539,24 @@ static void setup_render_acc_autostart(void) {
 
 /* Show the lock-button gesture required to close the windows. */
 static void setup_render_close_windows(void) {
-    static const char *const labels[] = {"OFF", "1 lock", "2 locks"};
+#ifdef LARGE_DISPLAY
+    static const char *const labels[] = {"Close windows: OFF", "Close windows: 1 lock", "Close windows: 2 locks"};
+#else
+    static const char *const labels[] = {"Close win: OFF", "Close win:1 lock", "Close win:2 locks"};
+#endif
     uint8_t index = settings_state.close_windows_with_door_lock;
-    setup_write_value("Close", labels[index <= 2 ? index : 0]);
+    setup_write_text(0, labels[index <= 2 ? index : 0]);
 }
 
 /* Show the unlock-button gesture required to open the windows. */
 static void setup_render_open_windows(void) {
-    static const char *const labels[] = {"OFF", "1 unlock", "2 unlocks"};
+#ifdef LARGE_DISPLAY
+    static const char *const labels[] = {"Open windows: OFF", "Open windows: 1 unlock", "Open windows: 2 unlocks"};
+#else
+    static const char *const labels[] = {"Open win: OFF", "Open win:1 unlock", "Open win:2 unlocks"};
+#endif
     uint8_t index = settings_state.open_windows_with_door_lock;
-    setup_write_value("Open", labels[index <= 2 ? index : 0]);
+    setup_write_text(0, labels[index <= 2 ? index : 0]);
 }
 
 #endif /* BACCABLE_C1 */

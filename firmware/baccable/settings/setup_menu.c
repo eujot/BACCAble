@@ -83,7 +83,7 @@ static void setup_park_select(void) {
 /* Keep enable, capture confirmation and queue feedback visually distinct. */
 static void setup_park_render(char *text, size_t size) {
     if (park_capture == 1)
-        ui_render_action(text, size, "Adjust; SELECT");
+        ui_render_action(text, size, "Adjust; RES=save");
     else if (park_capture == 2)
         ui_render_value(text, size, "Store", "queued");
     else if (park_capture == 3)
@@ -91,7 +91,7 @@ static void setup_park_render(char *text, size_t size) {
     else if (park_entries[park_page].type == UI_ENTRY_TOGGLE)
         ui_render_checkbox(text, size, park_entries[park_page].label, settings_state.park_mirror);
     else if (park_entries[park_page].type == UI_ENTRY_CAPTURE && !settings_state.park_mirror)
-        ui_render_unavailable(text, size, "Enable first");
+        ui_render_unavailable(text, size, "Enable mirror");
     else if (park_entries[park_page].type == UI_ENTRY_CAPTURE)
         ui_render_action(text, size, park_entries[park_page].label);
     else
@@ -281,13 +281,13 @@ static const char *setup_unavailable(const SetupParam *param) {
                    ? "Stop Dyno" : NULL;
     case 10:
         return settings_state.front_brake_forcer_master && chassis_state.front_brake_forced
-                   ? "Release brk" : NULL;
+                   ? "Release brake" : NULL;
     case 11:
-        return settings_state.awd_disabler_enabled && chassis_state.awd_sequence ? "Cancel 4WD" : NULL;
+        return settings_state.awd_disabler_enabled && chassis_state.awd_sequence ? "Stop AWD request" : NULL;
     case 13:
-        return settings_state.clear_faults_enabled && diagnostics_state.clear_faults_request ? "Clear active" : NULL;
+        return settings_state.clear_faults_enabled && diagnostics_state.clear_faults_request ? "DTC clear active" : NULL;
     case 15:
-        return settings_state.read_faults_enabled && fault_reader_busy() ? "Read active" : NULL;
+        return settings_state.read_faults_enabled && fault_reader_busy() ? "BCM read active" : NULL;
     case 34:
         return ibs_override_enabled() ? "Stop IBS" : NULL;
     case 14:
@@ -295,7 +295,7 @@ static const char *setup_unavailable(const SetupParam *param) {
                    ? "Reset ESC" : NULL;
     case 28:
         return settings_state.qv_exhaust_flap_function_enabled && comfort_state.force_q_vexhaust_valve_opened
-                   ? "Release QV" : NULL;
+                   ? "Set QV to AUTO" : NULL;
     default: return NULL;
     }
 }
