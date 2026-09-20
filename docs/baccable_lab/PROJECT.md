@@ -10,6 +10,23 @@
 
 **Project directory:** `baccable_lab/`
 
+## Current implementation status (2026-09-20)
+
+- **Milestone 0 — complete.** The checkout, firmware capture format, USB
+  assumptions and development setup were verified. The host project skeleton
+  and one-command setup are present in `baccable_lab/`.
+- **Milestone 1 — software ready for hardware acceptance.** The recorder,
+  binary parser, raw stream preservation, SQLite session store, loss markers,
+  common host timeline, keyboard markers, session inspection and CSV export are
+  implemented and covered by host tests.
+- **Hardware acceptance — pending.** The three BACCAble ports must still be
+  connected to the actual Mac and vehicle for a meaningful stationary capture.
+  This is the next action after the PR is merged. Do not mark Milestone 1
+  complete until that run passes the checklist in section 14.5 and
+  `baccable_lab/docs/CAPTURE.md`.
+- **Later milestones — blocked.** OBD, replay UI, voice, video and analysis
+  work must wait until hardware capture acceptance passes.
+
 ---
 
 # 1. Project intent
@@ -902,7 +919,7 @@ Important rules:
 
 ---
 
-# 14. Milestone 1 — minimum useful product
+# 14. Milestone 1 — minimum useful product (software ready; hardware acceptance pending)
 
 This milestone has absolute priority. Do not begin Bluetooth, AI, voice, or signal discovery until it works reliably.
 
@@ -2158,7 +2175,7 @@ Minimum capture acceptance:
 
 # 37. Development milestones
 
-## Milestone 0 — reconnaissance, one short coding pass
+## Milestone 0 — reconnaissance, one short coding pass — COMPLETE
 
 Before implementation:
 
@@ -2173,7 +2190,7 @@ Before implementation:
 
 Do not modify BACCAble firmware during this milestone.
 
-## Milestone 1 — three-bus CAN recorder + manual tags
+## Milestone 1 — three-bus CAN recorder + manual tags — SOFTWARE READY; ACCEPTANCE PENDING
 
 **This is the first real product. Ship it as soon as possible.**
 

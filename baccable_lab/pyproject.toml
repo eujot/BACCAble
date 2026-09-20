@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "baccable-lab"
+version = "0.1.0"
+description = "Lossless multi-bus BACCAble capture and event recorder"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+hardware = ["pyserial>=3.5"]
+test = ["pytest>=8"]
+
+[project.scripts]
+baccable = "baccable_lab.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
