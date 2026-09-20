@@ -23,7 +23,7 @@ static void open_test_action(const char *label) {
     menu_event(MENU_NEXT);
     menu_event(MENU_NEXT);
     menu_event(MENU_SELECT);
-    const char *search = !strcmp(label, "IBS SOC override") ? "IBS SOC"
+    const char *search = !strcmp(label, "IBS SOC override") ? "IBS override"
                          : !strcmp(label, "Brake req") ? "Brake"
                          : label;
     for (unsigned i = 0; i < 20 && !strstr(screen, search); ++i)
@@ -46,8 +46,8 @@ static void test_shared_renderers(void) {
         assert(!strcmp(text, size == 19 ? "* Shift RPM: 3500" : "* Shift RPM: " "\xAB" " 3500 " "\xBB"));
         ui_render_action(text, size, "Read faults");
         assert(!strcmp(text, "> Read faults"));
-        ui_render_pending(text, size, "4WD req", "OFF");
-        assert(!strcmp(text, "4WD req: OFF WAIT"));
+        ui_render_pending(text, size, "AWD req", "OFF");
+        assert(!strcmp(text, "AWD req: OFF WAIT"));
         ui_render_unavailable(text, size, "Start engine");
         assert(!strcmp(text, "! Start engine"));
     }
@@ -69,7 +69,7 @@ static void test_pending_action_feedback(void) {
     assert(last_command == C2cmdtoggleDyno && commands == before + 1);
     now += 1300;
     menu_render();
-    assert(strstr(screen, "ON WAIT"));
+    assert(strstr(screen, "Dyno: ON WAIT"));
     chassis_state.dyno_mode_enabled_on_master = 1;
     menu_action_reply(C1cmdDynoActive);
     menu_render();
@@ -97,7 +97,7 @@ static void test_pending_action_feedback(void) {
     assert(strstr(screen, "WAIT"));
     comfort_state.has_button_press_requested = 0;
     menu_render();
-    assert(strstr(screen, "Request sent")); /* Only local injection completion, not HAS engagement. */
+    assert(strstr(screen, "HAS: Request sent")); /* Only local injection completion, not HAS engagement. */
 }
 
 static void test_conditional_actions(void) {
@@ -123,7 +123,7 @@ static void test_conditional_actions(void) {
     menu_action_reply(C1cmdForceFrontBrake);
     now += 1300;
     menu_render();
-    assert(strstr(screen, "End launch"));
+    assert(strstr(screen, "Disable launch"));
     unsigned before = commands;
     menu_event(MENU_SELECT);
     assert(chassis_state.launch_assist_enabled && commands == before);
@@ -147,7 +147,7 @@ static void test_fault_action_exclusion(void) {
     open_test_action("Read BCM faults");
     diagnostics_state.clear_faults_request = 1;
     menu_render();
-    assert(strstr(screen, "Clear active"));
+    assert(strstr(screen, "DTC clear active"));
     menu_event(MENU_SELECT);
     assert(!fault_reader_busy());
     diagnostics_state.clear_faults_request = 0;
@@ -158,7 +158,7 @@ static void test_fault_action_exclusion(void) {
     menu_event(MENU_NEXT); /* Clear faults */
     fault_reader_start(0x40);
     menu_render();
-    assert(strstr(screen, "Read active"));
+    assert(strstr(screen, "BCM read active"));
     menu_event(MENU_SELECT);
     assert(!diagnostics_state.clear_faults_request);
     fault_reader_cancel();
@@ -168,7 +168,7 @@ static void test_fault_action_exclusion(void) {
     diagnostics_state.clear_faults_request = 0;
     now += 1300;
     menu_render();
-    assert(strstr(screen, "Request sent"));
+    assert(strstr(screen, "DTC: Request sent"));
 }
 
 static void test_numeric_menu_flow(void) {
@@ -257,7 +257,7 @@ static void test_request_cancel_and_failure(void) {
     menu_render();
     assert(strstr(screen, "OFF WAIT"));
     menu_event(MENU_SELECT);
-    assert(strstr(screen, "Stop 4WD"));
+    assert(strstr(screen, "Stop AWD"));
     menu_event(MENU_SELECT);
     assert(chassis_state.awd_sequence == 0);
     now += 1300;
