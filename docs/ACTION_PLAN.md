@@ -29,9 +29,9 @@ to automatically flash hardware or publish every future change.
 | Layer | Verified state |
 | --- | --- |
 | Repository | `eujot/BACCAble`, default branch `master`; GitHub master is `5bf46aafae99b6b33c295dbad85c19c1cc4be6d7`. A local checkout may be on a task branch and must be checked separately. |
-| Latest beta | [v5-beta-10](https://github.com/eujot/BACCAble/releases/tag/v5-beta-10), published 2026-09-19, built from `bf2c75a308dadf886aae7efd477159d0f6c704c4`; four board roles have BIN/HEX/ELF, BUILD_INFO.json and SHA256SUMS. Release notes document the included P1/P2 work and the remaining hardware boundary. |
-| Published build identity | Release BUILD_INFO.json confirms `beta-bf2c75a`, ARM GCC 15.3.Rel1 and empty extra flags for every role. Production C1 includes the Information-menu input diagnostics; the hidden `MENU_DIAGNOSTICS` charset build is not enabled. C1 totals are 87,944/98,304 B Flash and 14,740/16,384 B RAM; these are linked totals, not runtime headroom measurements. |
-| Published-source checks | [Beta run 35468450049](https://github.com/eujot/BACCAble/actions/runs/35468450049) passed host tests, menu-label tests, cppcheck, C1/C2/BH/CAN builds, packaging and publication. These results describe the tagged source, not unrelated local edits. |
+| Latest beta | [v5-beta-11](https://github.com/eujot/BACCAble/releases/tag/v5-beta-11), published 2026-09-21, built from `05335859916e2f06ac13452bd621050de8a26a92`; four board roles have BIN/HEX/ELF, BUILD_INFO.json and SHA256SUMS. Release notes retain the hardware acceptance boundary. |
+| Published build identity | Release BUILD_INFO.json confirms `beta-0533585`, ARM GCC 15.3.Rel1 and empty extra flags for every role. C1 totals are 88,188/98,304 B Flash and 14,740/16,384 B RAM; C2 27,928/65,536 B and 12,044/16,384 B; BH 29,276/65,536 B and 12,040/16,384 B; CAN 24,260/65,536 B and 6,824/16,384 B. These are linked totals, not runtime headroom measurements. |
+| Published-source checks | [Beta run 35604403231](https://github.com/eujot/BACCAble/actions/runs/35604403231) passed host tests, menu-label tests, cppcheck, C1/C2/BH/CAN builds, packaging and publication. These results describe the tagged source, not unrelated local edits. |
 | Local checks, this audit | P0-01 was repaired locally. Host tests, label/CI checks, cppcheck and C1/C2/BH/CAN firmware lint/builds pass with the explicit Arm GNU Toolchain 15.2.Rel1 prefix; see the validation section below. |
 | Installed hardware | History records the user's beta-2 vehicle test and freeze; the installed versions of C1/C2/BH today are **unknown**. No evidence establishes beta-10 installation or full hardware acceptance. |
 | Flash capacity | On 2026-09-10 local time, the earlier session reported a direct register read of 128 KiB from the connected DFU target, associated with BH in that exchange. This is not a capacity measurement of all three controllers. |
@@ -106,7 +106,7 @@ The additional C1 `LARGE_DISPLAY` build passed. Linked C1 totals: 88,420 B Flash
 stack headroom is not measured. Source comparison confirmed unchanged catalog
 structure, decoding, numeric placeholders and setup descriptors outside labels.
 `git diff --check` passed.
-Integration/release: uncommitted local changes only; no PR, release or flashing.
+Integration/release: PR #30 merged; `v5-beta-11` published from master by run 35604403231. No flashing was performed.
 Hardware readability: UNKNOWN for this patch; verify the changed screens on IPC.
 
 ## Prioritized remaining work
