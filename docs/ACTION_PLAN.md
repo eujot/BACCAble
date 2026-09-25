@@ -1,6 +1,6 @@
 # BACCAble action plan and agent handoff
 
-Last verified: **2026-09-19**. This is the single source of planned work,
+Last updated: **2026-09-26** (dated verification boundaries below). This is the single source of planned work,
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
@@ -26,13 +26,20 @@ to automatically flash hardware or publish every future change.
 
 ## Verified baseline and deployment
 
-Beta-12 integration, **2026-09-26**: authorized to merge the Lab recorder and
-the USB CAN follow-up into remote master and publish `v5-beta-12`. Scope includes
-the previously local firmware/Lab fixes and CI coverage for Lab; unrelated local
-Docker scripts, downloaded firmware and generated files are excluded. The
-release notes are in [v5-beta-12](releases/v5-beta-12.md). Earlier "uncommitted"
-and "not released" entries below describe the historical audit state. Publication
-and the final source SHA must be recorded after the release workflow succeeds.
+Beta-12 integration, **2026-09-26**: Lab recorder and USB CAN follow-up merged
+into remote master at `b4147146f0b478d4b08401f2774c9229b8a4dca3` (integration
+merge `2cf2172`, USB/Lab fixes `da9e311`). Published
+[v5-beta-12](https://github.com/eujot/BACCAble/releases/tag/v5-beta-12) with
+[release notes](releases/v5-beta-12.md). Full
+[release CI 36194678499](https://github.com/eujot/BACCAble/actions/runs/36194678499)
+passed host/Lab tests, lint and all four builds using Arm GNU 15.3.Rel1. Downloaded
+all assets and verified all 13 SHA256SUMS entries and BUILD_INFO source identity.
+Binary sizes: C1 88460, C2 28032, BH 29372, CAN 24360 bytes. Build version is
+`beta-b414714`, flags empty. Firmware was not flashed; sustained three-board
+vehicle acceptance remains UNKNOWN. Unrelated local Docker scripts, downloaded
+firmware and generated files were excluded. Earlier "uncommitted" and "not
+released" entries below describe the historical audit state, superseded by this
+publication. SOC remains unmodified and the documented capture limits remain.
 
 USB capture responsiveness follow-up, **2026-09-25**, base `5d8a8f8`, local
 uncommitted changes: the user now sees runtime serial devices but reports only
