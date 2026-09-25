@@ -27,7 +27,8 @@ void usb_device_start(uint8_t serial) {
 void usb_device_stop(void) { hUsbDeviceFS.dev_state = 0; }
 void power_wake(void) {}
 void board_sync_restart(void) { runtime_state.instruct_slave_boards_trigger_enabled = 1; }
-void uart_resume(UART_HandleTypeDef *uart) { (void)uart; }
+static unsigned uart_resumes;
+void uart_resume(UART_HandleTypeDef *uart) { (void)uart; ++uart_resumes; }
 void parameter_request_cancel(void) {}
 void parameter_cache_reset(void) {}
 float parameter_cache_get(uint8_t id, uint32_t time) {
@@ -349,12 +350,15 @@ static void test_ibs(void) {
     assert(!ibs_override_enabled());
 }
 static void test_usb_modes(void) {
+    runtime_state.low_consume_is_active = 0;
+    uart_resumes = 0;
     output_length = 0;
     settings_state.usb_sniffer = 1;
     settings_state.usb_elm327 = 0;
     usb_modes_apply();
     usb_modes_process();
     assert(usb_modes_active() && usb_serial && led_usb);
+    assert(uart_resumes == 0); /* Preserve a live UART, including pending TX. */
     CAN_RxHeaderTypeDef h = {.StdId = 0x123, .IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .DLC = 3};
     uint8_t data[8] = {1, 2, 3, 99, 99, 99, 99, 99};
     for (unsigned i = 0; i < 24; i++)
@@ -375,10 +379,12 @@ static void test_usb_modes(void) {
     assert(!usb_modes_active() && !led_usb && !settings_state.usb_sniffer);
     settings_state.usb_sniffer = 1;
     assert(usb_modes_needs_apply());
+    runtime_state.low_consume_is_active = 1; /* UART was paused by power_process. */
     usb_modes_apply();
     assert(!usb_modes_needs_apply());
     usb_modes_process();
     assert(usb_modes_active());
+    assert(uart_resumes == 1 && !runtime_state.low_consume_is_active);
     hUsbDeviceFS.dev_state = USBD_STATE_CONFIGURED;
     output_length = 0;
     /* Match main.c's eight-frame receive budget over repeated busy passes. */

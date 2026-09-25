@@ -190,6 +190,13 @@ Known capture limits remain: hardware CAN FIFO overruns are not counted by the
 `0xaf` software-ring marker; zero reported drops is not proof of lossless capture.
 Frames are timestamped when processed, and board clocks are independent. RTR and
 the explicit standard/extended flag are absent. Normal vehicle features continue.
-The current Mac recorder also does not drain its pending input queue on shutdown;
-the last queued chunks can be omitted even on `q`/Ctrl-C. Recorder shutdown needs
-a separate correction before claiming complete end-to-end retention.
+The beta-12 Mac recorder does not drain its pending input queue on shutdown.
+The local post-beta-12 fix drains it while readers finish their final read, and
+aborts blocked producers on storage failure. This protects bytes already read
+by Lab, not data still buffered by the OS/device when capture stops. Session
+failure is reported when storage or cleanup fails. See ACTION_PLAN for validation.
+
+The local post-beta-12 firmware also avoids resetting an awake C1 UART when
+entering USB mode. Only a UART paused by low-power entry is resumed; pending
+normal transmissions retain their HAL state. Test USB entry during menu traffic
+and wake from low power on hardware before claiming the stall is resolved.
