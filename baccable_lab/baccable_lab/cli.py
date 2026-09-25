@@ -24,7 +24,8 @@ def _session_info(directory: Path) -> int:
     session = database.execute("SELECT id, started_at, ended_at, duration_seconds, status, host_clock FROM sessions").fetchone()
     print(json.dumps(dict(zip(("id", "started_at", "ended_at", "duration_seconds", "status", "host_clock"), session)), indent=2))
     print("\nBuses:")
-    for role in ("C1", "C2", "BH"):
+    manifest = json.loads((directory / "manifest.json").read_text())
+    for role in manifest["roles"]:
         frames = database.execute("SELECT count(*) FROM can_frames WHERE role = ?", (role,)).fetchone()[0]
         dropped = database.execute("SELECT coalesce(sum(dropped_count),0) FROM capture_loss WHERE role = ?", (role,)).fetchone()[0]
         print(f"  {role}: {frames} frames, {dropped} dropped")
@@ -62,8 +63,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="baccable", description="BACCAble Lab capture recorder")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("doctor", help="list serial devices without changing vehicle state")
-    capture_parser = sub.add_parser("capture", help="record C1, C2 and BH binary streams")
-    capture_parser.add_argument("--port", action="append", default=[], metavar="ROLE=DEVICE")
+    capture_parser = sub.add_parser("capture", help="record one or more C1/C2/BH binary streams")
+    capture_parser.add_argument("--port", action="append", required=True, metavar="ROLE=DEVICE",
+                                help="select a CAN port; repeat for additional roles (C1, C2, BH)")
     capture_parser.add_argument("--sessions", default=None, help="session root (default: ./sessions)")
     capture_parser.add_argument("--no-obd", action="store_true", help="document that OBD is disabled")
     capture_parser.add_argument("--no-voice", action="store_true", help="document that voice is disabled")

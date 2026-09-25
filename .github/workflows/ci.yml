@@ -57,6 +57,9 @@ jobs:
         run: python3 .github/scripts/test-ci.py
       - name: Menu label regression test
         run: python3 tests/test_menu_labels.py
+      - name: BACCAble Lab recorder tests
+        working-directory: baccable_lab
+        run: python3 -m unittest discover -s tests -v
       - id: host_tests
         name: Host regression tests with ASan and UBSan
         run: |

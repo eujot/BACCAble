@@ -69,10 +69,12 @@ on Windows, use the newly enumerated COM port. Port numbers are host-assigned.
 
 ## Binary CAN capture
 
-1. Select `USB mode: CAN` in Features and leave that submenu. ELM mode is switched off.
-2. Connect the USB port of the bus to record: C1 for powertrain, C2 for chassis,
+1. Connect the USB port of the bus to record: C1 for powertrain, C2 for chassis,
    BH for body. Multiple host connections can record the buses separately.
    Eject an existing USB disk before changing its role.
+2. On C1 select `USB mode: CAN` in Features and leave that submenu. ELM mode is
+   switched off. C1 sends the same capture setting to C2/BH over the board link.
+   An unconfigured session expires after ten seconds, so connect the cables first.
 3. Open the serial device as a binary stream. This mode does not produce SLCAN
    text or automatically create a CAN log on the USB disk. Normal vehicle feature
    processing continues during capture.
@@ -95,3 +97,99 @@ space is available. This extension distinguishes overflow from ordinary data.
 The upstream record format has no explicit standard/extended-ID flag and does
 not record RTR frames. Capture is bounded and may drop data when the host cannot
 keep up; the loss marker should be retained in exported logs.
+
+## Runtime USB audit, 2026-09-25
+
+Follow-up after the user observed runtime serial enumeration, but only two ports
+with three cables and intermittent UI unresponsiveness:
+
+- Auxiliary USB presence reporting incorrectly updated
+  `we_can_send_a_message_reply` every second and on connection changes. C2/BH
+  thereby granted themselves transmit windows on the shared half-duplex UART,
+  bypassing C1 arbitration. Simultaneous replies can corrupt board traffic,
+  including display updates. Presence is now queued without granting a window;
+  normal addressed commands/status polls from C1 permit transmission. A regression
+  test rejects the old behavior on C2; both auxiliary flavors pass with the fix.
+  This is a confirmed code defect, not yet a confirmed explanation of the user's
+  particular hardware stall.
+- USB product names now include C1/C2/BH (CA for CANable), and serial numbers
+  prefix the existing UID-derived value with the role. `baccable doctor` can show
+  the role even when UID contents match across boards (the user previously
+  reported identical DFU serials). This cannot restore a device that fails to
+  enumerate. macOS device paths may change after installing this firmware.
+- Each auxiliary capture session still expires independently after ten seconds
+  without USB configuration. Connecting a third cable later does not rearm that
+  board automatically. Connect all cables, select OFF and leave Features, then
+  select CAN and leave Features to resend activation. The mode broadcast has no
+  per-board acknowledgement; accepted UART enqueueing alone does not prove all
+  boards received it. Missing ports require role identification before diagnosis.
+- The capture drain is bounded by the 16-record ring, only filled in the main
+  loop; CDC busy returns immediately and retains the record. USB transmit-full
+  reporting only sets an error bit. No blocking wait for a host reader was found.
+  Mode switching does include 22 ms of USB reset delays (and C1 UART resume),
+  which can temporarily delay processing; this is not an infinite capture loop.
+  USB low-power entry is disabled. Physical UART collision rates and USB/CPU load
+  remain hardware acceptance items.
+
+Follow-up acceptance: flash the matching three-role set, connect all three USB
+cables before enabling CAN, run `doctor` and record each role/serial/path. Check
+menu navigation with all ports unopened, while recording all three, and after
+stopping the recorder. Then test disconnect/reconnect both within and beyond the
+ten-second expiry. Record which role disappears and whether the menu recovers
+after CAN is disabled; do not infer a hardware lockup from a stale display alone.
+
+The user observed all three STM32 DFU devices (`0483:df11`) through the same
+cables and hub, but no runtime serial ports after selecting CAN. This establishes
+working DFU USB communication, not successful application enumeration. The local
+candidate `usb-fix-5d8a8f8` on `milestone-1-recorder` addresses these findings:
+
+- **Rearming a saved mode:** expiry clears the runtime request and the RAM menu
+  flags but leaves Flash unchanged. Selecting CAN again could reproduce the
+  saved record exactly; the no-write path then skipped both USB activation and
+  auxiliary-board synchronization. That path now reapplies a changed runtime
+  request and resends board settings, without an unnecessary Flash write.
+- **USB clock:** the default HSI48 configuration had only a comment about CRS,
+  without enabling it. Automatic synchronization to USB SOF is now configured,
+  following the [ST F072 CDC clock example](https://github.com/STMicroelectronics/STM32CubeF0/blob/master/Projects/STM32072B_EVAL/Applications/USB_Device/CDC_Standalone/Src/main.c).
+  The HSE/PLL build retains its existing clock source. Missing CRS is a clock
+  reliability defect; its role in the reported enumeration failure still needs
+  hardware verification.
+- **Capture throughput:** each main-loop pass can receive eight CAN frames but
+  previously moved only four into the CDC queue. The bounded capture ring now
+  drains while CDC has room, retaining records when CDC returns busy. Simulated
+  sustained eight-frame batches no longer overflow merely because of that
+  scheduling mismatch. This does not establish maximum real bus throughput.
+
+The earlier claim that missing `GPIO_AF2_USB` configuration conclusively explains
+the failure was incorrect. The [ST F072 CDC MSP example](https://github.com/STMicroelectronics/STM32CubeF0/blob/master/Projects/STM32072B_EVAL/Applications/USB_Device/CDC_Standalone/Src/usbd_conf.c)
+explicitly describes that GPIO configuration as optional. No speculative GPIO
+change is included. Inspection also covered USB descriptors/class switching,
+endpoint PMA placement, IRQ dispatch, CDC buffer ownership, board command routing,
+power/LED ownership, CAN receive filters and ELM filter restoration. No additional
+confirmed enumeration blocker was found in those paths.
+
+Host regressions cover expiry/rearm, no-write persistence, CDC busy retry, record
+format/loss markers and C1/C2/BH throughput. The persistence and auxiliary
+throughput regressions fail against the original production sources. Four-role
+ARM builds and cppcheck pass. These are software checks, not Mac USB acceptance.
+
+Hardware acceptance after installing the matching C1/C2/BH candidate:
+
+1. Exit DFU, connect all three USB cables, select CAN on C1 and leave Features.
+   Confirm three runtime serial devices (VID:PID `0483:5740`), then map their
+   roles explicitly using PCB labels and one cable at a time. Reapply CAN if an
+   unplugged board's ten-second session expires.
+2. Exercise expiry and rearm: disconnect all cables for over ten seconds,
+   reconnect them, select CAN and leave Features. Confirm all three ports return
+   without changing an unrelated setting. Repeat after reboot with CAN saved.
+3. Record a stationary session with `baccable capture --port C1=... --port C2=...
+   --port BH=... --no-obd --no-voice`. Require plausible nonzero frame counts on
+   each active bus, parseable 16-byte records and inspection of reported losses.
+
+Known capture limits remain: hardware CAN FIFO overruns are not counted by the
+`0xaf` software-ring marker; zero reported drops is not proof of lossless capture.
+Frames are timestamped when processed, and board clocks are independent. RTR and
+the explicit standard/extended flag are absent. Normal vehicle features continue.
+The current Mac recorder also does not drain its pending input queue on shutdown;
+the last queued chunks can be omitted even on `q`/Ctrl-C. Recorder shutdown needs
+a separate correction before claiming complete end-to-end retention.

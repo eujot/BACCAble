@@ -1,6 +1,6 @@
 # BACCAble Lab
 
-Host-side recorder for three BACCAble binary CAN streams. Milestone 0 and the
+Host-side recorder for one, two or three BACCAble binary CAN streams. Milestone 0 and the
 software part of Milestone 1 are implemented; real hardware acceptance is still
 required before adding OBD, replay UI, voice, or analysis milestones.
 
@@ -30,9 +30,17 @@ python -m baccable_lab.cli session info SESSION_ID
 python -m baccable_lab.cli export SESSION_ID --basic
 ```
 
-The three ports must already be configured in BACCAble as `USB mode: CAN`.
+To capture only C1 (C2 or BH can also be selected alone):
+
+```sh
+baccable capture --port C1=/dev/cu.usbmodemXXXX --no-obd --no-voice
+```
+
+Only supplied `--port` roles are opened, recorded and shown in session info.
+Repeat `--port` to add another bus; each role must have a distinct device path.
+The selected ports must already be configured in BACCAble as `USB mode: CAN`.
 `doctor` never changes vehicle state. Capture stores each received byte stream
-as `C1.bin`, `C2.bin` and `BH.bin`, parses complete 16-byte records into
+as `<ROLE>.bin` for each selected role, parses complete 16-byte records into
 `session.sqlite3`, and preserves `0xAF` loss markers. Port paths are host-assigned
 and must be remapped after reconnects.
 

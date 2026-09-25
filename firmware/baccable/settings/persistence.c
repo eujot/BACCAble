@@ -42,8 +42,15 @@ uint8_t settings_save(void) {
     setup_fill_flash_params(values);
     load_settings();
     /* Serialized comparison also catches changes made outside menu callbacks. */
-    if (!memcmp(saved_settings, values, sizeof(values)))
+    if (!memcmp(saved_settings, values, sizeof(values))) {
+        /* A USB timeout changes runtime state, not the saved Flash record.
+         * Selecting the saved mode again must still restart all three ports. */
+        if (usb_modes_needs_apply()) {
+            board_sync_restart();
+            usb_modes_apply();
+        }
         return 0;
+    }
     if (!flash_record_save(SETTINGS_RECORD, 0x101, values, sizeof(values)))
         return 255;
     memcpy(saved_settings, values, sizeof(values));

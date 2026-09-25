@@ -32,6 +32,7 @@ static uint8_t old_visibility[30], saved[MENU_PREFS_SIZE];
 static bool have_old, have_saved, fail_save;
 static unsigned commands, queries, blank_screens;
 static unsigned settings_writes, preference_writes, usb_applies;
+static bool usb_needs_apply;
 static uint16_t fail_type;
 static uint8_t last_command;
 static bool uart_busy;
@@ -54,7 +55,8 @@ uint8_t board_uart_send(const uint8_t *data, size_t size) {
 }
 void pedal_booster_set_map(uint8_t map) { (void)map; }
 void _putchar(char c) { (void)c; }
-void usb_modes_apply(void) { ++usb_applies; }
+bool usb_modes_needs_apply(void) { return usb_needs_apply; }
+void usb_modes_apply(void) { ++usb_applies; usb_needs_apply = false; }
 void status_led_error(void) {}
 void status_led_activity(void) {}
 uint32_t can_tx(CAN_TxHeaderTypeDef *header, uint8_t *data) {
@@ -352,6 +354,24 @@ static void test_automatic_persistence(void) {
     fail_type = 0;
     menu_event(MENU_BACK);
     assert(settings_writes == 2 && preference_writes == 1 && usb_applies == 1);
+}
+
+/* Restart an expired USB session even when CAN is already saved in Flash. */
+static void test_usb_rearm_without_flash_write(void) {
+    fresh_menu();
+    settings_state.usb_sniffer = 1;
+    settings_state.usb_elm327 = 0;
+    assert(settings_save() == 0);
+    settings_writes = usb_applies = 0;
+    runtime_state.instruct_slave_boards_trigger_enabled = 0;
+    usb_needs_apply = true; /* Runtime expired, user selected saved CAN again. */
+    assert(settings_save() == 0);
+    assert(settings_writes == 0 && usb_applies == 1);
+    assert(runtime_state.instruct_slave_boards_trigger_enabled);
+    runtime_state.instruct_slave_boards_trigger_enabled = 0;
+    assert(settings_save() == 0);
+    assert(settings_writes == 0 && usb_applies == 1);
+    assert(!runtime_state.instruct_slave_boards_trigger_enabled);
 }
 
 /* A rejected screen remains retryable, including a periodic resend of identical text. */
@@ -1134,6 +1154,7 @@ int main(void) {
         HOST_TEST(test_present_retry),
         HOST_TEST(test_controller),
         HOST_TEST(test_automatic_persistence),
+        HOST_TEST(test_usb_rearm_without_flash_write),
         HOST_TEST(test_navigation_regressions),
         HOST_TEST(test_navigation_context),
         HOST_TEST(test_repeat_views),

@@ -49,7 +49,8 @@ extern "C" {
 #define DEVICE_ID2 (UID_BASE + 0x4)
 #define DEVICE_ID3 (UID_BASE + 0x8)
 
-#define USB_SIZ_STRING_SERIAL 0x1A
+/* Descriptor header plus UTF-16 role prefix (C1-/C2-/BH-/CA-) and 12 UID digits. */
+#define USB_SIZ_STRING_SERIAL 0x20
 
 /* USER CODE BEGIN EXPORTED_CONSTANTS */
 

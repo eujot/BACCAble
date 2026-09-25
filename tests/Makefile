@@ -22,6 +22,18 @@ test: build/test_core build/test_transport build/test_catalog build/test_menu bu
 	./build/test_upstream
 	./build/test_parking_c2
 	./build/test_parking_bh
+	./build/test_usb_c2
+	./build/test_usb_bh
+
+USB_AUX_SOURCES := test_usb_aux.c $(FIRMWARE)/features/usb_modes.c
+build/test_usb_c2: $(USB_AUX_SOURCES) $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) -I$(FIRMWARE)/USB_DEVICE/App $(CFLAGS) -DC2_FLAVOR=1 $(USB_AUX_SOURCES) -o $@
+build/test_usb_bh: $(USB_AUX_SOURCES) $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) -I$(FIRMWARE)/USB_DEVICE/App $(CFLAGS) -DBH_FLAVOR=1 $(USB_AUX_SOURCES) -o $@
+
+test: build/test_usb_c2 build/test_usb_bh
 
 build/test_catalog: test_catalog.c $(FIRMWARE)/diagnostics/parameter_catalog.c $(HEADERS) Makefile
 	@mkdir -p build

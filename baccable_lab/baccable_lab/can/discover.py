@@ -58,5 +58,5 @@ def doctor_lines() -> list[str]:
         suffix = f" ({', '.join(identity)})" if identity else ""
         lines.append(f"  {port.device}: {port.description or 'unknown'}{suffix}")
     lines.append("Role mapping is explicit; do not assume a stable /dev path.")
-    lines.append("Use --port C1=..., --port C2=... and --port BH=... for capture.")
+    lines.append("Capture only the roles you need: --port C1=..., --port C2=... or --port BH=...; combine as needed.")
     return lines

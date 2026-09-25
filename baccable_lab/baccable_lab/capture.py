@@ -1,4 +1,4 @@
-"""Concurrent three-port capture with a deliberately small terminal UI."""
+"""Capture selected CAN ports with a deliberately small terminal UI."""
 
 from __future__ import annotations
 
@@ -69,10 +69,12 @@ class _Keyboard:
 
 
 def capture(ports: dict[str, str], root: Path, command: list[str]) -> int:
-    roles = ["C1", "C2", "BH"]
-    missing = [role for role in roles if role not in ports]
-    if missing:
-        raise ValueError(f"missing role mapping: {', '.join(missing)}")
+    if not ports or any(role not in {"C1", "C2", "BH"} or not device
+                        for role, device in ports.items()):
+        raise ValueError("provide at least one port mapping: C1=DEVICE, C2=DEVICE or BH=DEVICE")
+    if len(set(ports.values())) != len(ports):
+        raise ValueError("each role must use a different serial device")
+    roles = [role for role in ("C1", "C2", "BH") if role in ports]
     root.mkdir(parents=True, exist_ok=True)
     session_id = new_session_id()
     directory = root / session_id

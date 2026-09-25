@@ -67,6 +67,16 @@
 #define USBD_LANGID_STRING 1033
 #define USBD_MANUFACTURER_STRING "Tr3ma"
 
+#if defined(BACCABLE_C1)
+    #define USB_BOARD_ROLE "C1"
+#elif defined(BACCABLE_C2)
+    #define USB_BOARD_ROLE "C2"
+#elif defined(BACCABLE_BH)
+    #define USB_BOARD_ROLE "BH"
+#else
+    #define USB_BOARD_ROLE "CA"
+#endif
+
 #ifdef ENABLE_USB_MASS_STORAGE
     #define USBD_PID_FS 22314
     #define USBD_PRODUCT_STRING_FS "BACCAble MSC"
@@ -251,13 +261,10 @@ uint8_t *USBD_FS_LangIDStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) 
  * @retval Pointer to descriptor buffer
  */
 uint8_t *USBD_FS_ProductStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
-    if (speed == 0) {
-        USBD_GetString((uint8_t *)(usb_device_is_serial() ? "BACCAble serial" : "BACCAble MSC"), USBD_StrDesc,
-                       length);
-    } else {
-        USBD_GetString((uint8_t *)(usb_device_is_serial() ? "BACCAble serial" : "BACCAble MSC"), USBD_StrDesc,
-                       length);
-    }
+    UNUSED(speed);
+    const char *product = usb_device_is_serial() ? "BACCAble " USB_BOARD_ROLE " serial"
+                                                : "BACCAble " USB_BOARD_ROLE " MSC";
+    USBD_GetString((uint8_t *)product, USBD_StrDesc, length);
     return USBD_StrDesc;
 }
 
@@ -342,10 +349,12 @@ static void Get_SerialNum(void) {
 
     deviceserial0 += deviceserial2;
 
-    if (deviceserial0 != 0) {
-        IntToUnicode(deviceserial0, &USBD_StringSerial[2], 8);
-        IntToUnicode(deviceserial1, &USBD_StringSerial[18], 4);
-    }
+    /* Distinguish board roles even when devices report identical UID contents. */
+    USBD_StringSerial[2] = USB_BOARD_ROLE[0];
+    USBD_StringSerial[4] = USB_BOARD_ROLE[1];
+    USBD_StringSerial[6] = '-';
+    IntToUnicode(deviceserial0, &USBD_StringSerial[8], 8);
+    IntToUnicode(deviceserial1, &USBD_StringSerial[24], 4);
 }
 
 /**

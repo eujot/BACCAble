@@ -25,8 +25,6 @@ void SystemClock_Config(void) {
         Error_Handler(2000);
     }
 
-    // configure CRS to stabilize HSI48
-
     /** Initializes the CPU, AHB and APB buses clocks
      */
     RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1;
@@ -54,6 +52,19 @@ void SystemClock_Config(void) {
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {
         Error_Handler(1000);
     }
+#ifndef HSE_ENABLED_FOR_UCAN
+    /* Lock the crystal-less USB clock to the host's 1 kHz SOF reference. */
+    __HAL_RCC_CRS_CLK_ENABLE();
+    RCC_CRSInitTypeDef crs = {
+        .Prescaler = RCC_CRS_SYNC_DIV1,
+        .Source = RCC_CRS_SYNC_SOURCE_USB,
+        .Polarity = RCC_CRS_SYNC_POLARITY_RISING,
+        .ReloadValue = __HAL_RCC_CRS_RELOADVALUE_CALCULATE(48000000, 1000),
+        .ErrorLimitValue = RCC_CRS_ERRORLIMIT_DEFAULT,
+        .HSI48CalibrationValue = RCC_CRS_HSI48CALIBRATION_DEFAULT,
+    };
+    HAL_RCCEx_CRSConfig(&crs);
+#endif
     __HAL_RCC_GPIOA_CLK_ENABLE();
 }
 

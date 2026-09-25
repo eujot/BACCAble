@@ -26,6 +26,93 @@ to automatically flash hardware or publish every future change.
 
 ## Verified baseline and deployment
 
+Beta-12 integration, **2026-09-26**: authorized to merge the Lab recorder and
+the USB CAN follow-up into remote master and publish `v5-beta-12`. Scope includes
+the previously local firmware/Lab fixes and CI coverage for Lab; unrelated local
+Docker scripts, downloaded firmware and generated files are excluded. The
+release notes are in [v5-beta-12](releases/v5-beta-12.md). Earlier "uncommitted"
+and "not released" entries below describe the historical audit state. Publication
+and the final source SHA must be recorded after the release workflow succeeds.
+
+USB capture responsiveness follow-up, **2026-09-25**, base `5d8a8f8`, local
+uncommitted changes: the user now sees runtime serial devices but reports only
+two with three cables and possible UI stalls. Fixed auxiliary presence reporting
+that self-granted shared UART transmit windows, violating C1 arbitration. Added
+role prefixes to USB product/serial descriptors so Lab doctor can identify ports,
+including boards with matching UID-derived serial values. Full host suite passes;
+the added arbitration regression fails with the old assignment restored.
+See [USB audit](architecture/USB_DIAGNOSTICS.md#runtime-usb-audit-2026-09-25)
+for independent ten-second expiry, unacknowledged activation broadcast, bounded
+capture/CDC behavior and the required three-board hardware acceptance procedure.
+No flash, merge or release performed; observed hardware cause remains UNKNOWN.
+Four-role firmware lint/builds pass with Arm GNU 15.2.Rel1; C1/C2/BH binary sizes
+remain within their Flash budgets. Candidate images, checksums, firmware diff
+and build metadata are in ignored `build/usb-review-5d8a8f8/`. This supersedes the
+earlier USB candidate for the next physical test, not a published beta release.
+
+Local SOC investigation and selected-bus Lab capture, **2026-09-25**, branch
+`milestone-1-recorder`, base `5d8a8f8` (uncommitted; not merged/released):
+
+- User reports missing SOC on beta-10 as well as the newer firmware. PR #3
+  (`3c5b49a`, since beta-2) changed both engine catalogs' `Batt charge / A`
+  from native IBS parameter 3 to ECM parameter 21 (DID `19BD`). Beta-10
+  therefore does not restore the former source. Native SOC remains on the
+  Advanced `Battery sources` page (IBS vs ECU), from standard frame `0x41A`,
+  byte 1 low seven bits; the cached SOC handler requires DLC >= 6.
+- Release-history audit: local tags 2.5.4/2.5.5, 2.7.1/V.2.7.1 through
+  V.2.9.1 used `BATT.:` for native SOC; V.2.15.5/6 also had
+  `BAT SoC&Current`. V.3.1.1, V.3.2.4 and v3.3.0 used the native SOC/current
+  pair and a separate BCM percentage page; stable-master-3.0.14+ also paired
+  voltage with native SOC. v5-beta retained native SOC in `Batt charge / A`,
+  labelled the separate BCM page `Batt charge ECU`, and already had UDS
+  validation/3-second cache expiry. Beta-2 switched the combined page to ECU
+  and added `Battery sources`; beta-3 corrected the BCM label and made
+  secondary pages Advanced. Beta-4 through beta-10 retain those mappings and
+  labels. Beta-11 changes the BCM reading text to `Batt BCM SOC ...%` and adds
+  the IBS percent sign on `Battery sources`; source IDs are unchanged. The
+  UDS decoder blob is identical across all eleven beta tags; request/cache
+  source blobs are identical from beta-2 through beta-11. This does not rule
+  out changes elsewhere affecting delivery or hardware/vehicle conditions.
+- `Batt charge BCM` uses parameter 34, DID `1005`, response `0x18DAF140`,
+  two bytes at payload offset 1. This layout predates the refactor; PR #7
+  renamed its ECU label to BCM without changing the source. The pre-refactor
+  decoder checked address and DLC but did not validate service/DID/ISO-TP
+  length. Current validation rejects mismatched, negative, fragmented or
+  too-short replies; readings also expire after 3 seconds. These differences
+  are plausible explanations, not confirmed vehicle faults. No speculative
+  SOC firmware change was made.
+- Next SOC evidence: capture C1 while holding `Batt charge / A`,
+  `Batt charge BCM` and `Battery sources` separately for about 20 seconds,
+  marking each interval. Inspect received `0x41A`, `0x18DAF110` (DID `19BD`)
+  and `0x18DAF140` (DID `1005`), including negative replies and lengths.
+  The firmware capture observes RX, not local diagnostic TX; absence of
+  replies alone does not prove a request was never sent. No vehicle capture
+  is available locally and the hardware cause remains UNKNOWN.
+- Lab now accepts any nonempty subset of C1/C2/BH. Only selected devices are
+  opened and included in raw files, manifest, summary and session info.
+  Empty/invalid mappings and duplicate device paths are rejected before
+  creating a session. CLI help, setup and acceptance instructions updated.
+  `python3 -m unittest discover -s tests -v` in `baccable_lab`: all 7 tests
+  pass, including all seven bus subsets, an empty selected bus, SQLite/raw
+  persistence, info/export and invalid mappings. Hardware verification remains
+  pending; the previously documented recorder shutdown queue limitation remains.
+
+Local USB follow-up, **2026-09-25**, branch `milestone-1-recorder`, base `5d8a8f8`:
+the user reports three functioning DFU devices through the same Mac USB hub but
+no runtime CAN serial ports. Local uncommitted candidate `usb-fix-5d8a8f8` fixes
+saved-mode rearming after session expiry, configures HSI48 CRS synchronization,
+and drains the capture ring to match the main loop's eight-frame receive budget.
+Host tests (including new C2/BH capture tests), four-role Arm GNU 15.2.Rel1 builds,
+cppcheck and diff checks pass. Regression tests reject the original persistence
+and capture scheduling behavior. Firmware installation and Mac enumeration remain
+**HARDWARE / UNVERIFIED**; no release or PR is implied. See the evidence, corrected
+GPIO diagnosis and acceptance steps in
+[USB diagnostics](architecture/USB_DIAGNOSTICS.md#runtime-usb-audit-2026-09-25).
+Also found: the Mac recorder can omit queued tail chunks on shutdown, and firmware
+loss markers do not count hardware CAN FIFO overruns. These remain retention gaps;
+do not claim lossless end-to-end capture. Candidate images and provenance are in
+the ignored local `build/usb-fix-5d8a8f8/` package.
+
 | Layer | Verified state |
 | --- | --- |
 | Repository | `eujot/BACCAble`, default branch `master`; GitHub master is `5bf46aafae99b6b33c295dbad85c19c1cc4be6d7`. A local checkout may be on a task branch and must be checked separately. |

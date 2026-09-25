@@ -47,14 +47,25 @@ void usb_modes_peer(uint8_t peer, bool connected) {
 /* Request binary capture on an auxiliary board. */
 void usb_modes_set_sniffer(bool enabled) { requested = enabled ? 1 : 0; }
 
+/* Compare preferences with the request, including sessions that have expired. */
+static uint8_t selected_mode(void) {
+    #if defined(BACCABLE_C1)
+    if (settings_state.usb_sniffer)
+        return 1;
+        #ifdef ACT_AS_ELM327
+    if (settings_state.usb_elm327)
+        return 2;
+        #endif
+    #endif
+    return 0;
+}
+
+bool usb_modes_needs_apply(void) { return selected_mode() != requested; }
+
 /* Apply saved USB preferences after the user finishes editing settings. */
 void usb_modes_apply(void) {
     #if defined(BACCABLE_C1)
-    requested = settings_state.usb_sniffer ? 1 : 0;
-        #ifdef ACT_AS_ELM327
-    if (!requested && settings_state.usb_elm327)
-        requested = 2;
-        #endif
+    requested = selected_mode();
     #endif
 }
 
@@ -160,7 +171,8 @@ void usb_modes_process(void) {
         #endif
                               connected};
         if (board_uart_send(presence, sizeof(presence))) {
-            runtime_state.we_can_send_a_message_reply = currentTime;
+            /* Queue presence until C1 grants this board a reply window.
+             * USB activity must not grant unsolicited access to the shared UART. */
             last_presence = currentTime;
             was_connected = connected;
         }
@@ -199,7 +211,9 @@ void usb_modes_process(void) {
         return;
     }
     cdc_process();
-    if (active == 1 && count && (count >= 4 || currentTime - last_flush >= 20)) {
+    /* Drain the bounded ring while CDC has space: CAN can deliver eight frames
+     * per main-loop pass, so sending only four here causes avoidable overflow. */
+    while (active == 1 && count && (count >= 4 || currentTime - last_flush >= 20)) {
         unsigned n = count < 4 ? count : 4;
         if (n > 16U - tail)
             n = 16U - tail;
@@ -207,7 +221,8 @@ void usb_modes_process(void) {
             tail = (tail + n) % 16;
             count -= n;
             last_flush = currentTime;
-        }
+        } else
+            break;
     }
 }
 #endif

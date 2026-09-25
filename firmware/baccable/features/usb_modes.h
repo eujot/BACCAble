@@ -4,6 +4,7 @@
 #include "stm32f0xx_hal.h"
 #include <stdbool.h>
 void usb_modes_apply(void);
+bool usb_modes_needs_apply(void);
 void usb_modes_process(void);
 void usb_modes_set_sniffer(bool enabled);
 void usb_modes_peer(uint8_t peer, bool connected);

@@ -362,7 +362,7 @@ static void test_usb_modes(void) {
     assert(!output_length);
     hUsbDeviceFS.dev_state = USBD_STATE_CONFIGURED;
     usb_modes_process();
-    assert(output_length == 64 && (uint8_t)output[0] == 0xa3 && (uint8_t)output[4] == 0x23 && !output[11]);
+    assert(output_length == 256 && (uint8_t)output[0] == 0xa3 && (uint8_t)output[4] == 0x23 && !output[11]);
     usb_sniffer_observe(&h, data);
     for (unsigned i = 0; i < 5; i++) {
         now += 21;
@@ -373,6 +373,33 @@ static void test_usb_modes(void) {
     now += 10001;
     usb_modes_process();
     assert(!usb_modes_active() && !led_usb && !settings_state.usb_sniffer);
+    settings_state.usb_sniffer = 1;
+    assert(usb_modes_needs_apply());
+    usb_modes_apply();
+    assert(!usb_modes_needs_apply());
+    usb_modes_process();
+    assert(usb_modes_active());
+    hUsbDeviceFS.dev_state = USBD_STATE_CONFIGURED;
+    output_length = 0;
+    /* Match main.c's eight-frame receive budget over repeated busy passes. */
+    for (unsigned pass = 0; pass < 20; ++pass) {
+        for (unsigned i = 0; i < 8; ++i)
+            usb_sniffer_observe(&h, data);
+        usb_modes_process();
+    }
+    assert(output_length == 20 * 8 * 16);
+    for (unsigned i = 0; i < output_length; i += 16)
+        assert((uint8_t)output[i] == 0xa3);
+    output_length = 0;
+    for (unsigned i = 0; i < 8; ++i)
+        usb_sniffer_observe(&h, data);
+    usb_busy = 1;
+    usb_modes_process();
+    assert(output_length == 0);
+    usb_modes_process();
+    assert(output_length == 8 * 16); /* Busy CDC retains every record. */
+    settings_state.usb_sniffer = 0;
+    hUsbDeviceFS.dev_state = 0;
     settings_state.usb_elm327 = 1;
     usb_modes_apply();
     usb_modes_process();
