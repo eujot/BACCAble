@@ -19,9 +19,9 @@ EXPECTED_SETUP = (
     "ESC/TC control",
     "Dyno action",
     "Brake action",
-    "AWD disable",
-    "DTC clear",
-    "BCM fault read",
+    "AWD off action",
+    "DTC clear action",
+    "BCM fault reader",
     "Virtual HAS",
     "QV exhaust",
 )
@@ -36,7 +36,7 @@ EXPECTED_ACTIONS = (
     "AWD off request",
     "Read BCM faults",
     "Clear DTCs",
-    "Clear time data",
+    "Reset best times",
     "Peak hold",
     "IBS SOC override",
 )

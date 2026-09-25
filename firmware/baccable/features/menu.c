@@ -57,7 +57,7 @@ static const ActionEntry actions[] = {
     {ACTION_AWD, 2, "AWD off request", UI_ENTRY_CONDITIONAL_ACTION},
     {ACTION_READ, 3, "Read BCM faults", UI_ENTRY_CONDITIONAL_ACTION},
     {ACTION_CLEAR, 3, "Clear DTCs", UI_ENTRY_CONDITIONAL_ACTION},
-    {ACTION_STATS, 3, "Clear time data", UI_ENTRY_ACTION},
+    {ACTION_STATS, 3, "Reset best times", UI_ENTRY_ACTION},
     {ACTION_PEAK, 3, "Peak hold", UI_ENTRY_TOGGLE},
     {ACTION_IBS, 3, "IBS SOC override", UI_ENTRY_CONDITIONAL_ACTION}
 };
@@ -76,7 +76,7 @@ static ActionRequest requests[ACTION_COUNT];
 #endif
 static const char *const roots[] = {"Favorites", "Readings", "Actions", "Settings", "Information"};
 static const char *const settings[] = {"Features",   "Favorites", "Shown pages",
-                                       "Fav. order", "Sort order"};
+                                       "Favorite order", "Sort order"};
 static char peer_versions[2][DASHBOARD_MESSAGE_MAX_LENGTH - 2];
 static uint32_t peer_updated[2];
 static uint8_t peer_seen[2];
@@ -172,28 +172,28 @@ static const char *action_unavailable(MenuAction id) {
         return "Request pending";
     switch (id) {
     case ACTION_READ:
-        return diagnostics_state.clear_faults_request ? "Clear active" : NULL;
+        return diagnostics_state.clear_faults_request ? "DTC clear active" : NULL;
     case ACTION_CLEAR:
         if (diagnostics_state.clear_faults_request)
-            return "Clear active";
-        return fault_reader_busy() ? "Read active" : NULL;
+            return "DTC clear active";
+        return fault_reader_busy() ? "BCM read active" : NULL;
     case ACTION_IBS:
         return telemetry_state.current_rpm_speed <= 400 ? "Start engine" : NULL;
     case ACTION_DYNO:
         if (chassis_state.front_brake_forced)
-            return "Release brk";
+            return "Release brake";
         if (chassis_state.stability_inverted)
             return "Reset ESC";
-        return runtime_state.car_steady_counter < 100 ? "Stop car" : NULL;
+        return runtime_state.car_steady_counter < 100 ? "Stop the car" : NULL;
     case ACTION_ESC:
         return chassis_state.dyno_mode_enabled_on_master || requests[ACTION_DYNO].state == REQUEST_WAIT
                    ? "Dyno active" : NULL;
     case ACTION_BRAKE:
         if (chassis_state.launch_assist_enabled)
-            return "End launch";
+            return "Disable launch";
         if (!chassis_state.front_brake_forced) {
             if (telemetry_state.current_speed_km_h != 0)
-                return "Stop car";
+                return "Stop the car";
             if (!chassis_state.dyno_mode_enabled_on_master)
                 return "Enable Dyno";
         }
@@ -201,7 +201,7 @@ static const char *action_unavailable(MenuAction id) {
     case ACTION_LAUNCH:
         return chassis_state.launch_assist_enabled ? NULL : "Launch OFF";
     case ACTION_AWD:
-        return !chassis_state.awd_sequence && runtime_state.car_steady_counter < 100 ? "Stop car" : NULL;
+        return !chassis_state.awd_sequence && runtime_state.car_steady_counter < 100 ? "Stop the car" : NULL;
     default:
         return NULL;
     }
@@ -472,7 +472,7 @@ static void action_run(void) {
         confirm_started = currentTime;
         menu_notice(id == ACTION_BRAKE && !chassis_state.front_brake_forced ? "Brake+launch? RES"
                     : id == ACTION_DYNO ? "Dyno+ESC? RES"
-                    : id == ACTION_AWD && chassis_state.awd_sequence ? "Stop 4WD req? RES"
+                    : id == ACTION_AWD && chassis_state.awd_sequence ? "Stop AWD req? RES"
                     : UI_SYMBOL_WARNING " RES to confirm");
         return;
     }
@@ -492,7 +492,7 @@ static void action_run(void) {
     case ACTION_CLEAR:
         diagnostics_state.clear_faults_request = 255;
         action_requested(id, true);
-        menu_notice("Clear faults WAIT");
+        menu_notice("DTC clear WAIT");
         return;
     case ACTION_STATS:
         menu_notice(statistics_reset() == 0 ? "Records cleared" : UI_SYMBOL_FAILURE " Save failed");
@@ -527,7 +527,7 @@ static void action_run(void) {
             }
             chassis_state.awd_sequence = 4;
         }
-        menu_notice("4WD requested");
+        menu_notice("AWD requested");
         return;
     case ACTION_EXHAUST:
         comfort_state.force_q_vexhaust_valve_opened = comfort_state.force_q_vexhaust_valve_opened ? 4 : 1;
@@ -558,7 +558,8 @@ static void action_render(char *text, size_t capacity, const ActionEntry *entry)
         return;
     }
     if (request->state == REQUEST_WAIT) {
-        ui_render_pending(text, capacity, entry->name,
+        ui_render_pending(text, capacity, id == ACTION_DYNO ? "Dyno" : id == ACTION_BRAKE ? "Brake"
+                          : id == ACTION_HAS ? "HAS button" : id == ACTION_ESC ? "ESC/TC" : entry->name,
                           id == ACTION_DYNO || id == ACTION_BRAKE ? (request->target ? "ON" : "OFF") : "");
         return;
     }
@@ -575,11 +576,12 @@ static void action_render(char *text, size_t capacity, const ActionEntry *entry)
         return;
     }
     if (id == ACTION_AWD && chassis_state.awd_sequence) {
-        ui_render_pending(text, capacity, "4WD req", "OFF");
+        ui_render_pending(text, capacity, "AWD req", "OFF");
     } else if (id == ACTION_EXHAUST && comfort_state.force_q_vexhaust_valve_opened) {
         ui_render_pending(text, capacity, "QV req", comfort_state.force_q_vexhaust_valve_opened == 4 ? "AUTO" : "OPEN");
     } else if ((id == ACTION_HAS || id == ACTION_CLEAR || id == ACTION_ESC) && request->state == REQUEST_SENT) {
-        ui_render_value(text, capacity, entry->name, "Request sent");
+        ui_render_value(text, capacity, id == ACTION_HAS ? "HAS" : id == ACTION_CLEAR ? "DTC" : "ESC/TC",
+                        id == ACTION_ESC ? "Req sent" : "Request sent");
     } else if (id == ACTION_DYNO) {
         ui_render_toggle(text, capacity, "Dyno", chassis_state.dyno_mode_enabled_on_master);
     } else if (id == ACTION_BRAKE) {
@@ -588,7 +590,7 @@ static void action_render(char *text, size_t capacity, const ActionEntry *entry)
     } else if (entry->type == UI_ENTRY_TOGGLE) {
         ui_render_checkbox(text, capacity, entry->name, parameter_peak_enabled());
     } else if (id == ACTION_IBS) {
-        ui_render_toggle(text, capacity, entry->name, ibs_override_enabled());
+        ui_render_toggle(text, capacity, "IBS override", ibs_override_enabled());
     } else {
         ui_render_action(text, capacity, entry->name);
     }
@@ -610,7 +612,7 @@ void menu_render(void) {
     notice = NULL;
     if (settings_state.awd_disabler_enabled && chassis_state.awd_sequence &&
         currentTime - last_input > 1500 && currentTime % 6000 < 1000) {
-        menu_present(UI_SYMBOL_WARNING " 4WD OFF request");
+        menu_present(UI_SYMBOL_WARNING " AWD OFF request");
         return;
     }
     char text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
@@ -698,7 +700,7 @@ void menu_render(void) {
             else
                 snprintf_(text, sizeof(text), "Input age:--");
         else if (info == 0)
-            ui_render_value(text, sizeof(text), "FW",
+            ui_render_value(text, sizeof(text), "C1",
                             !strncmp(FW_VERSION, "BACCABLE ", 9) ? FW_VERSION + 9 : FW_VERSION);
         else if (info == 4)
             ui_render_toggle(text, sizeof(text), "Immobilizer", security_state.immobilizer_enabled);
@@ -959,7 +961,7 @@ void menu_event(MenuEvent event) {
             break;
         case FAULTS:
             if (diagnostics_state.clear_faults_request)
-                menu_notice(UI_SYMBOL_WARNING " Clear active");
+                menu_notice(UI_SYMBOL_WARNING " DTC clear active");
             else {
                 fault_reader_start(0x40);
                 fault_index = 0;

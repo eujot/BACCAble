@@ -12,9 +12,9 @@ editor marks on an 18-character display.
 
 Features cycles `Engine: 2.0 I4`, `Engine: 2.9 V6`, `Engine: 2.2 D`.
 Existing gasoline settings default to I4; V6 owners should select V6 once.
-`Advanced` reveals technical and secondary layouts. Favorites retain saved
+`Advanced pages` reveals technical and secondary layouts. Favorites retain saved
 IDs and can include advanced pages, but incompatible engine pages are temporarily
-filtered. Feature switches such as `Dyno action`, `AWD disable` and `BCM fault read`
+filtered. Feature switches such as `Dyno action`, `AWD off action` and `BCM fault reader`
 permit access to Actions; they do not execute those actions. Immobilizer status
 is in Information.
 See the [full catalog audit](CATALOG_AUDIT.md) for classification and migration.
@@ -84,23 +84,23 @@ keep their previous format. The verified · and ± are reserved for meaningful
 future uses, not added as decoration. Hardware provenance and remaining checks
 are recorded in the [action plan](../ACTION_PLAN.md).
 
-`4WD req: OFF WAIT` and `QV req: OPEN WAIT`/`AUTO WAIT` mean an unresolved request,
-not measured drivetrain or valve state. 4WD repeats until explicitly cancelled;
-its confirmation says `Stop 4WD req? RES`. Exhaust release requests factory control,
+`AWD req: OFF WAIT` and `QV req: OPEN WAIT`/`AUTO WAIT` mean an unresolved request,
+not measured drivetrain or valve state. AWD repeats until explicitly cancelled;
+its confirmation says `Stop AWD req? RES`. Exhaust release requests factory control,
 not a confirmed closed position. Neither feature invents a positive vehicle ACK.
 
 Queued Dyno/brake commands remain WAIT until their existing C2 reply, a reported
 nonmatching result, or a 10-second UI confirmation timeout. Brake replies confirm
 an override sequence, not brake pressure. A timeout does not replay or cancel a
 vehicle command. Late physical/board behavior may still occur. HAS/clear countdown
-completion says `Request sent`, not HAS engaged or faults cleared; ESC has no
+completion says `HAS: Request sent` or `DTC: Request sent`, not HAS engaged or faults cleared; ESC has no
 reliable measured acknowledgement and can report `No confirmation`.
 
 ## Readable measurements and settings
 
 | Page label | Example screen | Meaning |
 | --- | --- | --- |
-| Oil temp / Oil temp (ECU) | `Oil temp 100°C` | Engine oil temperature |
+| Oil temp / Oil temp (ECU) | `Oil temp 100°C` / `Oil ECU temp 100°C` | Engine oil temperature; the ECU page names its source |
 | Coolant temp | `Coolant temp  90°C` | Engine coolant temperature |
 | Battery voltage | `Battery 14.20 V` | Battery voltage |
 | Battery current | `Battery  -12.3 A` | Signed battery current |
@@ -118,14 +118,24 @@ All 124 page templates, including units, are checked in both 18- and 24-characte
 Performance states `MISS` and `RUN` do not receive a seconds suffix.
 
 Settings describe their state directly: `Engine: 2.2 D`, `Pedal mode: Bypass`,
-`Shift RPM: 4500`, `Close: 2 locks`, `Open: OFF`. `Stop block` means suppressing
+`Shift RPM: 4500`, `Close win:2 locks`, `Open win: OFF`. `Block Start/Stop` means suppressing
 automatic Start/Stop; `Stop odo blink` means suppressing the blinking odometer.
+Window settings retain the lock/unlock button and press count on both widths;
+the 24-character display spells out `Close windows` and `Open windows`.
+`DPF regen alert` names the regeneration alert, `CAN routing` names message
+routing, and `Mute audio in R` distinguishes radio muting from `Auto PDC mute`.
+Ignition pages use the supported single-byte ° glyph for angles. The BCM charge
+page shows `Batt BCM SOC`, and battery-source comparisons give each value its own
+percent unit. `Reset best times` clears the saved acceleration records.
+Pending Dyno/brake/HAS/ESC screens use compact complete function names; sent
+requests identify HAS, DTC or ESC/TC without clipping a longer action title.
+These wording changes preserve page IDs, groups, table order and all controls.
 
 ## Personalization and actions
 
 1. In `Settings → Favorites`, RES adds/removes the selected page. `Ø` marks
    a favorite. Gasoline and diesel each have a six-page limit; I4/V6 share the gasoline list.
-2. In `Fav. order`, select an item with RES; `*` marks move mode. Move it
+2. In `Favorite order`, select an item with RES; `*` marks move mode. Move it
    with the direction controls and press RES again to finish. Movement stops at
    the list boundaries.
 3. In `Shown pages`, RES toggles catalog visibility. Hiding a page does not
@@ -322,7 +332,7 @@ existing C2 reply arms Launch Assist. While launch is active, Front brake refuse
 to silently disable it; use the separately named `Disable launch` action first.
 Known RPM, speed, Dyno and read/clear conflicts are shown before SELECT and checked
 again on execution. Dyno confirmation names its ESC reset dependency. Permissions
-for active Dyno/brake/4WD/QV/custom ESC cannot be disabled until their operation is
+for active Dyno/brake/AWD/QV/custom ESC cannot be disabled until their operation is
 released, avoiding hidden stops or resumed requests when permissions return.
 
 ## Hidden IPC diagnostics

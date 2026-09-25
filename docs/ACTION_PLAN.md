@@ -170,6 +170,32 @@ replies with a 10 s UI timeout; a brake reply describes a sequence, not pressure
 request, not confirmed engagement/cleared faults. See P1-05 for the misleading
 BCM-only clear label introduced by the later wording change.
 
+## Local menu wording audit — 2026-09-20
+
+Reviewed on `milestone-1-recorder`, HEAD `5d8a8f8f84823dd345b973703b3e10ce3b6e14aa`.
+The tracked tree was clean at the start; unrelated untracked build experiments
+and `baccable_lab/baccable_lab.egg-info/` were preserved.
+
+The uncommitted patch changes display wording only: explicit Start/Stop, window,
+regeneration, CAN-routing and audio labels; complete compact action/request names;
+consistent AWD terminology; ECU/BCM source labels; ignition degree glyphs and
+units on combined readings. Window wording uses the available 18/24-column width.
+Main sections, groups, entry order/IDs, parameter fields/precision, saved slots,
+commands, guards and timings are unchanged. Alphabetical views still sort by the
+current labels. No new glyph bytes or display protocol changes were introduced.
+
+Validation: all 15 host executables passed with Apple Clang and ASan/UBSan,
+including the 18/24-column catalogs, menu and diagnostic-menu variants; the menu
+label check and all 7 CI-helper tests passed. cppcheck and C1/C2/BH/CAN builds and
+size gates passed with explicit Arm GNU Toolchain 15.2.Rel1, `VERSION=local-labels`.
+The additional C1 `LARGE_DISPLAY` build passed. Linked C1 totals: 88,420 B Flash /
+14,740 B RAM (18 columns), 88,384 B Flash / 14,964 B RAM (24 columns); runtime
+stack headroom is not measured. Source comparison confirmed unchanged catalog
+structure, decoding, numeric placeholders and setup descriptors outside labels.
+`git diff --check` passed.
+Integration/release: uncommitted local changes only; no PR, release or flashing.
+Hardware readability: UNKNOWN for this patch; verify the changed screens on IPC.
+
 ## Prioritized remaining work
 
 Status vocabulary: **OPEN** = work remains; **OBSOLETE** = no current symptom or

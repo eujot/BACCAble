@@ -226,7 +226,7 @@ static void test_workflow_and_immediate_versions(void) {
     fault_reader_cancel();
     diagnostics_state.clear_faults_request = 1;
     menu_event(MENU_SELECT);
-    assert(!fault_reader_busy() && strstr(screen, "Clear active"));
+    assert(!fault_reader_busy() && strstr(screen, "DTC clear active"));
     diagnostics_state.clear_faults_request = 0;
     menu_event(MENU_BACK);
     assert(!fault_reader_busy() && strstr(screen, "Read BCM faults"));

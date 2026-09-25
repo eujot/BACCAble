@@ -663,7 +663,7 @@ static void test_repeat_views(void) {
     assert(strstr(screen, "Shown pages"));
     now += 180;
     menu_button(0x18, true);
-    assert(strstr(screen, "Fav. order"));
+    assert(strstr(screen, "Favorite order"));
     menu_button(0x10, true);
     menu_event(MENU_SELECT);
     menu_event(MENU_SELECT); /* Pick a favorite for reordering. */
@@ -821,7 +821,7 @@ static void expect_setup(uint8_t id, const char *expected) {
 }
 static void test_readable_screens(void) {
     fresh_menu();
-    expect_reading(0, 0x12, 100, 100, "Oil temp 100" "\xB0" "C");
+    expect_reading(0, 0x12, 100, 100, "Oil ECU temp 100" "\xB0" "C");
     expect_reading(1, 0x98, 100, 100, "Oil temp 100" "\xB0" "C");
     expect_reading(0, 0x20, 90, 90, "Coolant temp  90" "\xB0" "C");
     expect_reading(1, 0xa0, -20, -20, "Coolant temp -20" "\xB0" "C");
@@ -862,9 +862,23 @@ static void test_readable_screens(void) {
     settings_state.pedal_map_power = 10;
     expect_setup(29, "Pedal trim: +10");
     settings_state.close_windows_with_door_lock = 2;
-    expect_setup(25, "Close: 2 locks");
+#ifdef LARGE_DISPLAY
+    expect_setup(25, "Close windows: 2 locks");
+#else
+    expect_setup(25, "Close win:2 locks");
+#endif
     settings_state.open_windows_with_door_lock = 0;
-    expect_setup(26, "Open: OFF");
+#ifdef LARGE_DISPLAY
+    expect_setup(26, "Open windows: OFF");
+#else
+    expect_setup(26, "Open win: OFF");
+#endif
+    settings_state.open_windows_with_door_lock = 2;
+#ifdef LARGE_DISPLAY
+    expect_setup(26, "Open windows: 2 unlocks");
+#else
+    expect_setup(26, "Open win:2 unlocks");
+#endif
     settings_state.pedal_booster_enabled = 2;
     expect_setup(20, "Pedal mode: Bypass");
 
@@ -1017,11 +1031,11 @@ static void test_action_request_labels(void) {
     for (unsigned state = 1; state <= 4; ++state) {
         chassis_state.awd_sequence = state;
         menu_render();
-        assert(strstr(screen, "4WD req: OFF WAIT"));
+        assert(strstr(screen, "AWD req: OFF WAIT"));
     }
     now = 12000; /* Periodic warning must also avoid claiming confirmed disablement. */
     menu_render();
-    assert(strstr(screen, "! 4WD OFF request"));
+    assert(strstr(screen, "! AWD OFF request"));
     chassis_state.awd_sequence = 0;
     menu_render();
     assert(strstr(screen, "> AWD off request"));
