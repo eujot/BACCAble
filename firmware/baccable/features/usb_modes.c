@@ -123,9 +123,13 @@ static void switch_mode(uint8_t mode) {
         parameter_request_cancel();
         fault_reader_cancel();
         ibs_override_enable(false);
-        power_wake();
-        runtime_state.low_consume_is_active = 0;
-        uart_resume(&huart2);
+        /* Awake boards may already be transmitting: resetting HAL's UART state
+         * then would strand TXE. Only resume a UART paused by low-power entry. */
+        if (runtime_state.low_consume_is_active) {
+            power_wake();
+            runtime_state.low_consume_is_active = 0;
+            uart_resume(&huart2);
+        }
     }
     #endif
     active = mode;

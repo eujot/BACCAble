@@ -21,14 +21,18 @@ class SessionStore:
         self.session_id = session_id
         self.roles = roles
         self.database = sqlite3.connect(directory / "session.sqlite3")
-        self.database.executescript(SCHEMA)
-        self.database.execute(
-            "INSERT INTO sessions(id, started_at, status, host_clock) VALUES (?, ?, ?, ?)",
-            (session_id, utc_now(), "recording", "monotonic_ns"),
-        )
-        self.database.commit()
-        self._sequence = {role: 0 for role in roles}
-        self._loss_sequence = {role: 0 for role in roles}
+        try:
+            self.database.executescript(SCHEMA)
+            self.database.execute(
+                "INSERT INTO sessions(id, started_at, status, host_clock) VALUES (?, ?, ?, ?)",
+                (session_id, utc_now(), "recording", "monotonic_ns"),
+            )
+            self.database.commit()
+            self._sequence = {role: 0 for role in roles}
+            self._loss_sequence = {role: 0 for role in roles}
+        except BaseException:
+            self.close()
+            raise
 
     def add_record(self, record: CanRecord, raw_offset: int) -> None:
         if record.is_loss:
@@ -57,12 +61,17 @@ class SessionStore:
         )
 
     def finish(self, status: str, duration_seconds: float, stats: dict) -> None:
-        self.database.execute(
-            "UPDATE sessions SET ended_at=?, duration_seconds=?, status=? WHERE id=?",
-            (utc_now(), duration_seconds, status, self.session_id),
-        )
-        self.database.commit()
-        (self.directory / "summary.json").write_text(json.dumps(stats, indent=2) + "\n")
+        try:
+            self.database.execute(
+                "UPDATE sessions SET ended_at=?, duration_seconds=?, status=? WHERE id=?",
+                (utc_now(), duration_seconds, status, self.session_id),
+            )
+            self.database.commit()
+            (self.directory / "summary.json").write_text(json.dumps(stats, indent=2) + "\n")
+        finally:
+            self.close()
+
+    def close(self) -> None:
         self.database.close()
 
     def commit(self) -> None:

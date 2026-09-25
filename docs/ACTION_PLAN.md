@@ -26,6 +26,87 @@ to automatically flash hardware or publish every future change.
 
 ## Verified baseline and deployment
 
+Stability fixes 1–3, **2026-09-26**, branch `fix/usb-uart-capture-shutdown`
+based on `0b3733d` (not included in published beta-12): USB entry resumes the board UART only when leaving low
+power, preserving active TX on awake C1. Regression covers both awake entry
+(no resume) and wake entry (one resume). Lab stops further reads and drains its
+queue concurrently with final producer delivery, uses timed puts with an abort
+event on writer failure, and reports a reader exceeding shutdown timeout.
+Initialization is inside the cleanup boundary; partial raw-file opens unwind,
+all raw closes are attempted, and SQLite closes even on initialization/finish
+failure. Reader failure status is also consistent across DB, summary and terminal
+as part of the shutdown repair. A failing disk cannot guarantee final metadata
+or retention; bytes still in device/OS buffers are outside the drained boundary.
+Full host sanitizer suite, all four firmware lint/builds (Arm GNU 15.2.Rel1)
+and all 13 Lab tests pass. Local images are under
+`firmware/baccable/build/stability/{C1,C2,BH,CAN}/`, version `stability-local`.
+Lab regressions cover q/Ctrl-C with a full
+queue, disconnect, aborting a blocked producer, partial thread start, file-open,
+write/close, database commit/initialization, terminal initialization and summary
+write failures. Audit findings below describe beta-12; long-session counting,
+raw record offsets and general UART lost-completion recovery remain separate.
+No merge, release or hardware flashing performed for these fixes.
+
+Stability review, **2026-09-26**, beta-12 source `b414714`, documentation head
+`0b3733d`: review of the v5 transport/menu/storage/diagnostic paths and Lab,
+not exhaustive hardware certification. No production code changed in this review.
+Open findings, in priority order:
+
+- **P1 / UART state corruption on USB entry:** `usb_modes.c:switch_mode()`
+  unconditionally calls `uart_resume(&huart2)`, which overwrites HAL State with
+  READY and starts RX without first quiescing TX. The main loop calls
+  `board_uart_process()` immediately before `usb_modes_process()`, so TX can be
+  active at entry. With State changed to BUSY_RX, the bundled HAL's
+  `UART_Transmit_IT()` returns BUSY without writing TDR or disabling TXEIE;
+  the IRQ handler ignores that return. This can cause a repeated TXE interrupt
+  and starve normal work. An isolated native harness using the exact HAL TX
+  function confirmed 100 consecutive calls leave TXE enabled and the count
+  unchanged in that state. This is not an on-device reproduction. Fix USB entry
+  to preserve active UART operation or perform an explicit coordinated
+  pause/resume, with regression coverage for entry during TX. A lost completion
+  also has no ordinary-path TX deadline; assess recovery without truncating
+  valid transfers. This finding remains present in beta-12.
+- **P1 / Lab shutdown and blocked reader:** `_Reader.run()` uses blocking
+  `Queue.put()` without stop-aware timeout. When full, stop/join(1 second) does
+  not terminate it or close its serial context. Capture never drains pending
+  input before closing files. Synthetic production-code probes confirmed an
+  already queued frame is omitted on q with success status, and a full queue
+  leaves the reader alive and port open after stop (the harness drained one
+  slot afterwards to clean up). CLI daemon exit eventually closes OS resources;
+  repeated in-process sessions can retain threads, queues and ports. Implement
+  stop-aware producer/drain coordination and test full queues/disconnects.
+- **P2 / Lab exception cleanup:** resources and threads are initialized before
+  the main try/finally. A partial start failure bypasses cleanup; exceptions
+  during raw.close(), database commit or summary write can skip later cleanup.
+  Use structured resource ownership and independent cleanup on failure, with
+  disk-full/open/thread-start failure tests.
+- **P2 / contradictory session status:** a reader error sets SQLite status to
+  failed but summary.json retains complete and terminal says Session complete.
+  A simulated disconnect reproduced exit=2, DB=failed, summary=complete. Compute
+  final status once and use it consistently.
+- **P2 / long-session performance:** counts() scans accumulated frame index
+  entries once per second on the same thread that persists incoming data;
+  cost grows with recording length. Use running counters with database queries
+  for offline inspection. Throughput impact needs a sustained-session benchmark.
+- **P2 / raw record provenance:** every parsed record from a USB chunk receives
+  the chunk's initial raw_offset; split records receive the next chunk's offset.
+  Retain absolute parser record offsets before relying on SQLite offsets for
+  reconstruction. This is a data-integrity issue, not a memory leak.
+
+Memory review: fixed firmware transport buffers and USB static allocation avoid
+an unbounded per-frame heap. No repeated allocation leak was identified. The
+release C1 ELF includes newlib malloc (rand's lazily allocated state), so claiming
+the firmware never allocates dynamically would be incorrect. ELF sections:
+data=1764, bss=11444, heap/stack reservation including alignment=1540 bytes;
+reported RAM=14748 includes that reservation. `_end=0x200033a0`,
+`_estack=0x20004000` leave 3168 bytes shared by heap and stack before runtime
+allocation. The reserved 1024-byte stack is not a measured maximum or overflow
+guard. Measure high-water usage with nested IRQs/ELM/menu before claiming margin.
+Fault handlers deliberately loop forever and no enabled watchdog recovery was
+found. ELM has synchronous bounded waits (including up to 500 ms for USB output)
+and intentionally suspends normal features; this differs from binary CAN capture.
+Existing beta-12 CI/ASan/UBSan passes do not cover the above failure injections.
+
 Beta-12 integration, **2026-09-26**: Lab recorder and USB CAN follow-up merged
 into remote master at `b4147146f0b478d4b08401f2774c9229b8a4dca3` (integration
 merge `2cf2172`, USB/Lab fixes `da9e311`). Published

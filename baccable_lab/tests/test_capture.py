@@ -26,14 +26,18 @@ class CaptureTests(unittest.TestCase):
 
                 class Reader:
                     error = None
+                    discarded_bytes = 0
 
-                    def __init__(self, role, device, output, stop):
+                    def __init__(self, role, device, output, stop, abort):
                         self.role, self.device, self.output = role, device, output
 
                     def start(self):
                         opened.append((self.role, self.device))
                         if has_frames:
                             self.output.put((self.role, time.monotonic_ns(), FRAME))
+
+                    def is_alive(self):
+                        return False
 
                     def join(self, timeout):
                         pass
@@ -53,7 +57,7 @@ class CaptureTests(unittest.TestCase):
                 summary = json.loads((directory / 'summary.json').read_text())
                 self.assertEqual(manifest['roles'], ports)
                 self.assertEqual(set(summary['roles']), set(roles))
-                with sqlite3.connect(directory / 'session.sqlite3') as db:
+                with contextlib.closing(sqlite3.connect(directory / 'session.sqlite3')) as db:
                     self.assertEqual(dict(db.execute('SELECT role, count(*) FROM can_frames GROUP BY role')),
                                      dict.fromkeys(roles, 1) if has_frames else {})
                 with contextlib.redirect_stdout(io.StringIO()) as info:

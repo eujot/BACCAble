@@ -32,9 +32,11 @@ def new_session_id() -> str:
 
 
 class _Reader(threading.Thread):
-    def __init__(self, role: str, device: str, output: queue.Queue, stop: threading.Event):
+    def __init__(self, role: str, device: str, output: queue.Queue, stop: threading.Event, abort: threading.Event):
         super().__init__(name=f"capture-{role}", daemon=True)
         self.role, self.device, self.output, self.stop = role, device, output, stop
+        self.abort = abort
+        self.discarded_bytes = 0
         self.error: str | None = None
 
     def run(self) -> None:
@@ -44,7 +46,17 @@ class _Reader(threading.Thread):
                 while not self.stop.is_set():
                     data = port.read(4096)
                     if data:
-                        self.output.put((self.role, time.monotonic_ns(), data))
+                        item = (self.role, time.monotonic_ns(), data)
+                        # Normal stop still delivers the last read. A failed writer
+                        # explicitly aborts delivery so a full queue cannot trap us.
+                        while not self.abort.is_set():
+                            try:
+                                self.output.put(item, timeout=0.1)
+                                break
+                            except queue.Full:
+                                continue
+                        else:
+                            self.discarded_bytes += len(data)
         except Exception as exc:  # surfaced in the final summary, never hidden
             self.error = f"{self.role}: {exc}"
             self.stop.set()
@@ -56,7 +68,11 @@ class _Keyboard:
         self.previous = None
         if self.enabled:
             self.previous = termios.tcgetattr(sys.stdin)
-            tty.setcbreak(sys.stdin.fileno())
+            try:
+                tty.setcbreak(sys.stdin.fileno())
+            except BaseException:
+                self.close()
+                raise
 
     def read(self) -> str | None:
         if not self.enabled or not select.select([sys.stdin], [], [], 0)[0]:
@@ -80,20 +96,37 @@ def capture(ports: dict[str, str], root: Path, command: list[str]) -> int:
     directory = root / session_id
     directory.mkdir()
     write_manifest(directory, session_id, ports, command)
-    store = SessionStore(directory, session_id, roles)
-    raw = RawWriters(directory, roles)
+    store = raw = keyboard = None
     parsers = {role: BinaryCaptureParser(role) for role in roles}
     incoming: queue.Queue = queue.Queue(maxsize=4096)
-    stop = threading.Event()
-    readers = [_Reader(role, ports[role], incoming, stop) for role in roles]
-    keyboard = _Keyboard()
+    stop, abort = threading.Event(), threading.Event()
+    readers = []
     started = time.monotonic_ns()
     events = 0
-    status = "complete"
-    print(f"Session {session_id}; press 1-0/l for markers, q or Ctrl-C to stop")
-    for reader in readers:
-        reader.start()
+    discarded_queued_bytes = 0
+    errors: list[str] = []
+
+    def consume(item):
+        role, host_ns, data = item
+        offset = raw.write(role, data)
+        for record in parsers[role].feed(data, host_ns - started):
+            store.add_record(record, offset)
+
+    def cleanup(label, action):
+        try:
+            action()
+        except Exception as exc:
+            errors.append(f"{label}: {exc}")
+
     try:
+        store = SessionStore(directory, session_id, roles)
+        raw = RawWriters(directory, roles)
+        keyboard = _Keyboard()
+        print(f"Session {session_id}; press 1-0/l for markers, q or Ctrl-C to stop")
+        for role in roles:
+            reader = _Reader(role, ports[role], incoming, stop, abort)
+            reader.start()
+            readers.append(reader)
         last_screen = 0.0
         last_counts = {role: 0 for role in roles}
         while not stop.is_set():
@@ -105,13 +138,11 @@ def capture(ports: dict[str, str], root: Path, command: list[str]) -> int:
                 events += 1
                 print(f"\nEVENT {MARKERS[key]}")
             try:
-                role, host_ns, data = incoming.get(timeout=0.1)
+                item = incoming.get(timeout=0.1)
             except queue.Empty:
-                role = None
-            if role is not None:
-                offset = raw.write(role, data)
-                for record in parsers[role].feed(data, host_ns - started):
-                    store.add_record(record, offset)
+                pass
+            else:
+                consume(item)
             now = time.monotonic()
             if now - last_screen >= 1.0:
                 counts = store.counts()
@@ -131,25 +162,64 @@ def capture(ports: dict[str, str], root: Path, command: list[str]) -> int:
                 last_screen = now
     except KeyboardInterrupt:
         pass
-    except Exception:
-        status = "failed"
-        raise
+    except Exception as exc:
+        errors.append(f"capture: {exc}")
+        abort.set()
     finally:
         stop.set()
+        # Producers may still hold a final read, including while blocked on put.
+        # Drain concurrently until every producer exits and the queue is empty.
+        idle_since = time.monotonic()
+        while readers:
+            try:
+                item = incoming.get(timeout=0.05)
+            except queue.Empty:
+                if not any(reader.is_alive() for reader in readers):
+                    break
+                if time.monotonic() - idle_since > 2.0:
+                    errors.append("serial reader did not stop within its read timeout")
+                    abort.set()
+                    break
+            else:
+                idle_since = time.monotonic()
+                if not abort.is_set():
+                    try:
+                        consume(item)
+                    except Exception as exc:
+                        errors.append(f"drain: {exc}")
+                        abort.set()
+                else:
+                    discarded_queued_bytes += len(item[2])
+        abort.set()
         for reader in readers:
-            reader.join(timeout=1.0)
-        keyboard.close()
+            cleanup(f"join {reader.role}", lambda reader=reader: reader.join(timeout=0.5))
+            if reader.is_alive():
+                errors.append(f"{reader.role}: reader still running")
+        if keyboard is not None:
+            cleanup("restore terminal", keyboard.close)
+        if raw is not None:
+            cleanup("close raw files", raw.close)
         for parser in parsers.values():
             parser.finish()
         duration = (time.monotonic_ns() - started) / 1_000_000_000
-        errors = [reader.error for reader in readers if reader.error]
+        reader_errors = [reader.error for reader in readers if reader.error]
+        errors.extend(reader_errors)
         stats = {
             "session_id": session_id, "duration_seconds": duration, "events": events,
-            "status": status, "roles": {role: parsers[role].stats.__dict__ for role in roles},
-            "reader_errors": errors,
+            "status": "failed" if errors else "complete",
+            "roles": {role: parsers[role].stats.__dict__ for role in roles},
+            "reader_errors": reader_errors, "errors": errors,
+            "discarded_reader_bytes": sum(reader.discarded_bytes for reader in readers),
+            "discarded_queued_bytes": discarded_queued_bytes,
         }
-        raw.close()
-        store.finish("failed" if errors else status, duration, stats)
-        print(f"\nSession complete: {directory}")
+        if store is not None:
+            cleanup("finish database", lambda: store.finish(stats["status"], duration, stats))
+            cleanup("close database", store.close)
+        stats["status"] = "failed" if errors else "complete"
+        # Also attempt a failure summary if initialization/finalization failed.
+        if store is None or errors:
+            cleanup("write summary", lambda: (directory / "summary.json").write_text(
+                json.dumps(stats, indent=2) + "\n"))
+        print(f"\nSession {'failed' if errors else 'complete'}: {directory}")
         print(json.dumps(stats, indent=2))
-    return 0 if not errors else 2
+    return 2 if errors else 0
