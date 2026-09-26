@@ -47,7 +47,20 @@ static void test_refresh_during_changing_readings(void) {
     }
     assert(!memcmp(visible, text, 3));
 }
+static void test_radio_traffic_does_not_starve_menu(void) {
+    uint8_t text[DASHBOARD_MESSAGE_MAX_LENGTH];
+    memset(text, 'M', sizeof(text));
+    memset(visible, '?', sizeof(visible));
+    body_display_submit(text);
+    for (now = 1550; now <= 1950; now += 50) {
+        /* A new factory frame arrives before the 250 ms settle timer expires. */
+        body_display_factory_frame(DISPLAY_FRAGMENT_COUNT - 1, 0);
+        body_process();
+    }
+    assert(!memcmp(visible, text, sizeof(text)));
+}
 int main(void) {
-    const HostTest tests[] = {HOST_TEST(test_refresh_during_changing_readings)};
+    const HostTest tests[] = {HOST_TEST(test_refresh_during_changing_readings),
+                              HOST_TEST(test_radio_traffic_does_not_starve_menu)};
     host_tests_run("body_display", tests, sizeof(tests) / sizeof(tests[0]));
 }

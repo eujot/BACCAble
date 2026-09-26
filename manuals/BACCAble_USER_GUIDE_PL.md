@@ -851,7 +851,7 @@ Po zakończeniu używaj USB mode OFF do zwykłej pracy.
 | --- | --- |
 | RES nie otwiera menu | Włączony zapłon i aktywny zestaw wskaźników; CC i ACC wyłączone. Puść przyciski, a potem przytrzymaj RES przez 1,2 s. Sprawdź połączenie i oprogramowanie C1. Diagnostyka ELM może chwilowo wstrzymywać obsługę menu. |
 | Menu przeskakuje albo przestaje reagować | Rozróżniaj lekkie i mocne naciśnięcia. Po przerwie w komunikacji puść przycisk. W Information sprawdź Reports/Gaps/Input age oraz stan C2/BH. |
-| Na wyświetlaczu zostaje tekst radia | BH okresowo ponawia cały tekst BACCAble, również przy zmieniających się odczytach, i zleca odświeżenie po komunikatach radia. Jeśli menu nadal nie widać, sprawdź łącze BH i firmware. |
+| Na wyświetlaczu zostaje tekst radia | BH okresowo ponawia cały tekst BACCAble, również przy zmieniających się odczytach, i zleca odświeżenie po komunikatach radia, bez wstrzymywania fragmentów menu przy ciągłym tekście radia. Jeśli menu nadal nie widać, sprawdź łącze BH i firmware. |
 | Brakuje strony lub akcji | Sprawdź profil silnika, Shown pages, Advanced pages oraz ustawienie udostępniające akcję w Features. Ukryta strona z innego profilu może nadal zajmować miejsce w ulubionych. |
 | `No favorites` / `No pages` | Dodaj zgodne ulubione lub przywróć widoczność stron. Długie RES nadal pozwala wrócić. |
 | Odczyt pokazuje `--` | Poczekaj na aktualne dane, sprawdź stan zapłonu/silnika i obsługę przez ECU. Diagnostyka USB może wstrzymywać zwykłe zapytania. Obecność strony nie gwarantuje, że sterownik obsługuje jej parametr. |
