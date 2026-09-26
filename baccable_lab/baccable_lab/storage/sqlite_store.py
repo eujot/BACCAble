@@ -54,11 +54,20 @@ class SessionStore:
              record.device_timestamp_ms, record.arbitration_id, record.dlc, record.data, raw_offset),
         )
 
-    def add_event(self, host_ns: int, label: str, source: str = "keyboard", note: str = "") -> None:
-        self.database.execute(
+    def add_event(self, host_ns: int, label: str, source: str = "keyboard", note: str = "") -> int:
+        cursor = self.database.execute(
             "INSERT INTO events(session_id, host_ns, label, source, note) VALUES (?, ?, ?, ?, ?)",
             (self.session_id, host_ns, label, source, note),
         )
+        return int(cursor.lastrowid)
+
+    def update_event_note(self, event_id: int, note: str) -> None:
+        self.database.execute("UPDATE events SET note=? WHERE id=? AND session_id=?",
+                              (note, event_id, self.session_id))
+
+    def delete_event(self, event_id: int) -> None:
+        self.database.execute("DELETE FROM events WHERE id=? AND session_id=?",
+                              (event_id, self.session_id))
 
     def finish(self, status: str, duration_seconds: float, stats: dict) -> None:
         try:
