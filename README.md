@@ -3,6 +3,13 @@
 For current work, priorities and integration status, start with the
 [action plan and agent handoff](docs/ACTION_PLAN.md).
 
+For operation after connecting to the car, use the current
+[in-car user guide](manuals/BACCAble_USER_GUIDE_EN.md): menu navigation, every
+setting and action, all reading pages, and vehicle-function procedures. It
+updates the menu instructions in the older PDF/DOCX manuals for v5-beta-13.
+The same guide is available in [Polish](manuals/BACCAble_USER_GUIDE_PL.md), with
+the original on-screen menu names retained for easy reference.
+
 Direct contact: https://t.me/gaucholivido
 
 Telegram group for BACCABLE: https://t.me/baccable 

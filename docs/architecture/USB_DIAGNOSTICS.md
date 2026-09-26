@@ -1,5 +1,12 @@
 # USB diagnostics and new menu actions
 
+**Documentation maintenance:** changes to USB modes, capture/diagnostic operation,
+commands, timeouts or related menu actions must also update the affected sections
+of both user guides: [English](../../manuals/BACCAble_USER_GUIDE_EN.md) and
+[Polish](../../manuals/BACCAble_USER_GUIDE_PL.md). Follow the
+[AGENTS.md maintenance rule](../../AGENTS.md#keep-both-user-guides-current)
+and keep the instructions synchronized in the same change.
+
 Use a matching C1/C2/BH firmware set from this integration. Verify the C1 Flash
 requirement in [the integration report](UPSTREAM_SYNC.md#flash-and-ram) before
 flashing. The commands below describe runtime USB, not the STM32 DFU bootloader.

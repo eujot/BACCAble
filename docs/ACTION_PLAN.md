@@ -7,8 +7,8 @@ implementation; they are not separate backlogs. Update this file after each task
 ## Start here
 
 1. Read this file, then inspect `git status --short`, the current commit and the
-   diff. Preserve existing work. The audited working tree contains local firmware
-   edits; P0-01 was repaired locally, but the tree still needs review before release.
+   diff. Preserve existing work. Dated audits below describe their own source
+   baselines; inspect the current tree before treating an old local change as pending.
 2. Choose the first applicable open task below, respecting dependencies. A task
    marked implemented on another branch is not implemented on `master`.
 3. Read only the owning modules and relevant reference guides. Do not restart the
@@ -18,13 +18,62 @@ implementation; they are not separate backlogs. Update this file after each task
 4. Record implementation commit, checks, integration/release status and hardware
    evidence separately. A published binary is not proof of installation or a
    successful vehicle test. Do not mark a task done based on an old agent summary.
+5. For changes to the menu or device operation, update the affected sections of
+   **both** the [English](../manuals/BACCAble_USER_GUIDE_EN.md) and
+   [Polish](../manuals/BACCAble_USER_GUIDE_PL.md) user guides in the same change.
+   Include labels, navigation, messages, parameters, conditions and USB workflows
+   as applicable. Follow the [maintenance rule in AGENTS.md](../AGENTS.md#keep-both-user-guides-current);
+   check the code and keep both editions equivalent.
 
-Project documentation, code comments and menu text stay in English. Use small,
+Project documentation, code comments and menu text stay in English, except for
+the maintained Polish user guide. Use small,
 bounded changes and existing modules/tests. No model-specific workflow, mandatory
 PR count or broad rewrite is needed. This handoff is a backlog, not an instruction
 to automatically flash hardware or publish every future change.
 
 ## Verified baseline and deployment
+
+Documentation integration, **2026-09-26**: the EN/PL guides, README links and
+maintenance rules are prepared on `docs/in-car-guides-en-pl`, based directly on
+`origin/master` at `294818a`, for review and merge into `master`. This change
+contains documentation only; unrelated untracked build/helper files are excluded.
+
+User-guide maintenance rule, **2026-09-26**: added the requirement to update
+both EN/PL guides for user-visible menu and operation changes to `AGENTS.md`
+and this starting checklist. Added reminders in the menu, reading-catalog and
+USB technical guides. The Polish edition is explicitly exempt from the default
+English documentation language. Link and whitespace checks passed; no firmware
+or user-guide content changed in this task.
+
+Polish user-guide translation, **2026-09-26**: added the explicitly requested
+[Polish edition](../manuals/BACCAble_USER_GUIDE_PL.md) alongside the English guide
+and linked it from README. Uses plain Polish explanations while preserving
+on-screen English labels, messages and command syntax. Checked all 41 heading
+levels, 31 feature settings, 12 actions, 64 gasoline and 60 diesel reading rows
+against the English edition, including reading groups and advanced flags.
+Shell examples match, local links and Polish section anchors resolve, and
+whitespace checks pass. The English guide and firmware are unchanged by this
+translation task; no hardware verification was performed.
+
+In-car user documentation, **2026-09-26**: added
+[the current user guide](../manuals/BACCAble_USER_GUIDE_EN.md) and linked it from
+the repository README. Reconciled the legacy English DOCX/PDF descriptions with
+the current navigation, grouped Features order, 31 visible settings, 12 actions,
+9 ordinary Information pages and all 124 reading pages. Includes source-specific
+SOC explanations, mirror capture, brake/launch release semantics, USB modes and
+the limits of queued/sent/confirmed status. A documentation check matched all
+64 gasoline and 60 diesel labels, ordering, groups and advanced flags against
+firmware, checked feature/action coverage, and resolved local links and anchors;
+`git diff --check` passed. No firmware changes or hardware tests were made for
+this documentation task. Preserve the existing untracked build/helper files.
+
+Release status verified **2026-09-26**: PR #32 is integrated into `origin/master`
+at `294818a3271222b2bc7870541833ba9c1bf4c8a8`; the local `7386367` source tree
+matches that commit. [v5-beta-13](https://github.com/eujot/BACCAble/releases/tag/v5-beta-13)
+is published with notes. [Release run 36197554882](https://github.com/eujot/BACCAble/actions/runs/36197554882)
+completed successfully for that source. Stability fixes 1–3 below are therefore
+included in beta-13. Publication does not establish installation or vehicle
+acceptance.
 
 Stability fixes 1–3, **2026-09-26**, branch `fix/usb-uart-capture-shutdown`
 based on `0b3733d` (not included in published beta-12): USB entry resumes the board UART only when leaving low
@@ -45,7 +94,8 @@ queue, disconnect, aborting a blocked producer, partial thread start, file-open,
 write/close, database commit/initialization, terminal initialization and summary
 write failures. Audit findings below describe beta-12; long-session counting,
 raw record offsets and general UART lost-completion recovery remain separate.
-No merge, release or hardware flashing performed for these fixes.
+At the time of the local validation, no merge, release or hardware flashing had
+been performed; the later beta-13 integration/publication is recorded above.
 
 Stability review, **2026-09-26**, beta-12 source `b414714`, documentation head
 `0b3733d`: review of the v5 transport/menu/storage/diagnostic paths and Lab,
