@@ -384,3 +384,29 @@ closed still opens Favorites; the physical button protocol is unchanged.
 
 The [action plan](../ACTION_PLAN.md) records completed requirements, superseded
 decisions and the remaining hardware validation.
+
+## Display recovery audit (2026-09-26)
+
+The requested screen is the IPC text field between the gauges. Menu input is
+recognized on C1 and its text is sent to BH over UART; BH sends CAN ID 0x90.
+C1 repeats visible text at least every 500 ms, so an isolated lost screen command
+is retried. USB CAN does not intentionally suspend the menu; ELM diagnostics does.
+Cruise/ACC eligibility and fresh button reports still gate opening. BH suppresses
+text while `stability_inverted` owns the driving-mode presentation.
+
+Confirmed refresh defect in beta-13 and beta-14: the full-screen keepalive timer
+used the last accepted fragment, so changing readings could postpone recovery
+indefinitely. It now uses a separate 500 ms full-refresh clock. A new refresh
+starts at fragment zero; repeated refresh requests do not rewind an unfinished
+full refresh. The 50 ms fragment pacing is retained. Host CAN acceptance is not
+IPC acknowledgment, and this is not a guarantee of physical display latency.
+
+The real `body_process` regression corrupts an unchanged prefix in the simulated
+screen and updates the final character every 100 ms. The old body implementation
+never restores the prefix and fails; the candidate restores it. Existing menu
+suite checks ordered full refresh at both widths. These tests do not establish
+that either defect is the cause of this vehicle's intermittent menu opening.
+The beta-14 factory-message completion/250 ms fallback change alone does not
+block every transmit until the final fragment: ordinary sending still runs while
+that message is pending. Do not interpret that change as exclusive ownership of
+the IPC while the radio transmits.

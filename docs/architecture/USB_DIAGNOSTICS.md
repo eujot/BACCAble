@@ -207,3 +207,32 @@ The local post-beta-12 firmware also avoids resetting an awake C1 UART when
 entering USB mode. Only a UART paused by low-power entry is resumed; pending
 normal transmissions retain their HAL state. Test USB entry during menu traffic
 and wake from low power on hardware before claiming the stall is resolved.
+
+## Menu and missing auxiliary USB audit, 2026-09-26
+
+User reports beta-13/14 intermittent menu access and only C1 enumerating after
+CAN selection. All three beta-14 images were flashed and all cables connected
+before activation. This excludes a delayed third-cable connection as the reported
+trigger. The UART and USB mode paths are shared by these releases; beta-14 changes
+factory-display restoration and editor filtering, not USB activation.
+
+Confirmed RX framing defect: the board receiver requested a fixed-length remainder
+without an idle deadline. A truncated command could therefore consume bytes from
+the next command after an arbitrarily long gap, dispatching a composite message.
+Legacy messages have no checksum; payload bytes can also resemble addresses.
+The regression supplies five bytes of USB activation, a 30 ms gap and a complete
+activation command. The original receiver dispatches corrupted content and fails
+the assertion; the repaired receiver delivers the exact complete command.
+
+RX now collects one byte per callback, discards a partial frame after a 20 ms
+inter-byte gap and retains the existing diagnostic checksum and bounded RX queue.
+A full 25-byte UART frame takes less than 7 ms at 38400 baud. Tests cover adjacent
+frames and unsigned tick wrap as well as truncation. All boards should receive
+the matching repair. This fixes a demonstrated defect, not a hardware diagnosis.
+
+Remaining boundaries: capture activation is still an unacknowledged one-shot
+broadcast. Lost commands are not automatically retried after successful enqueue.
+CC/ACC state and fresh steering reports gate menu input on C1; BH receives screen
+content over UART. C1 serial enumeration alone proves neither BH health nor input
+health. UART TX has no ordinary lost-completion watchdog. No claim of on-car
+recovery or guaranteed three-port enumeration is made by host tests.

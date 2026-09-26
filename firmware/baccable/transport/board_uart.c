@@ -49,7 +49,11 @@ SendQueue *tx_queue_uart1 = &queue_instance_uart1;
 
 #endif
 
-static uint8_t frame_synchronized = 0;
+/* A truncated frame must not consume the next command after an idle gap.
+ * At 38400 baud even a 25-byte frame takes less than 7 ms. */
+#define UART_RX_GAP_MS 20U
+static uint8_t board_rx_byte, board_rx_used;
+static uint32_t board_rx_last_time;
 static uint8_t diagnostic_mode;
 
 /* Give diagnostic traffic exclusive ownership of the shared board link. */
@@ -138,7 +142,7 @@ void uart_init() {
     HAL_NVIC_EnableIRQ(USART2_IRQn);
 
     // **Enable reception in interrupt mode**
-    HAL_UART_Receive_IT(&huart2, &board_rx_buffer[0], 1); // Start receiving one byte
+    HAL_UART_Receive_IT(&huart2, &board_rx_byte, 1); // Start receiving one byte
 
 #if defined(BACCABLE_C1)
     __HAL_RCC_USART1_CLK_ENABLE(); // enable clock for usart1 (to schizzaforte)
@@ -182,48 +186,35 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 
 #endif
 
-    if (huart->Instance == USART2) { // message from other baccable chips
-        // evaluate received message
-        if ((board_rx_buffer[0] >= C1BusID) &&
-            (board_rx_buffer[0] <= 0x10)) { // if the received char indicates the beginning of a message
-            if (frame_synchronized) { // if we were sync, we can process the message, since the first char is
-                                      // correct and the sync indicates that te remaining part too is complete
+    if (huart->Instance == USART2) {
+        uint32_t now = currentTime;
+        if (now - board_rx_last_time >= UART_RX_GAP_MS)
+            board_rx_used = 0;
+        board_rx_last_time = now;
+        if (board_rx_used || (board_rx_byte >= C1BusID && board_rx_byte <= 0x10))
+            board_rx_buffer[board_rx_used++] = board_rx_byte;
+        if (board_rx_used == UART_BUFFER_SIZE) {
+            bool valid = true;
+            if (board_rx_buffer[0] >= 0x0e) {
+                uint8_t checksum = 0;
+                for (unsigned i = 0; i < 17; ++i)
+                    checksum ^= board_rx_buffer[i];
+                valid = checksum == board_rx_buffer[17] && board_rx_buffer[7] <= 8;
+            }
+            uint8_t next = (rx_head + 1) % UART_RX_SLOTS;
+            if (valid && next != rx_tail) {
 #if defined(ACT_AS_CANABLE)
                 status_led_activity();
 #endif
-
-                if (board_rx_buffer[0] >= 0x0e) {
-                    uint8_t checksum = 0;
-                    for (unsigned i = 0; i < 17; ++i)
-                        checksum ^= board_rx_buffer[i];
-                    if (checksum != board_rx_buffer[17] || board_rx_buffer[7] > 8) {
-                        frame_synchronized = 0;
-                        HAL_UART_Receive_IT(&huart2, board_rx_buffer, 1);
-                        return;
-                    }
-                }
-                uint8_t next = (rx_head + 1) % UART_RX_SLOTS;
-                if (next != rx_tail) {
-                    memcpy(rx_frames[rx_head], board_rx_buffer, UART_BUFFER_SIZE);
-                    __DMB();
-                    rx_head = next;
-                } else {
-                    status_led_error();
-                }
-
-                HAL_UART_Receive_IT(&huart2, &board_rx_buffer[0],
-                                    UART_BUFFER_SIZE); // receive next frame
-            } else { // otherwise we were not sync, therefore we need to receive the remaining part of the
-                     // message
-                frame_synchronized = 1;
-                HAL_UART_Receive_IT(&huart2, &board_rx_buffer[1],
-                                    UART_BUFFER_SIZE - 1); // receive remaining part of the frame
+                memcpy(rx_frames[rx_head], board_rx_buffer, UART_BUFFER_SIZE);
+                __DMB();
+                rx_head = next;
+            } else if (valid) {
+                status_led_error();
             }
-        } else {                    // we did not receive the begin of the message. discard it
-            frame_synchronized = 0; // we lost sync
-
-            HAL_UART_Receive_IT(&huart2, &board_rx_buffer[0], 1); // receive one char
+            board_rx_used = 0;
         }
+        HAL_UART_Receive_IT(&huart2, &board_rx_byte, 1);
     }
 }
 
@@ -271,7 +262,7 @@ void uart_pause(UART_HandleTypeDef *huart) {
 
 /* Resume communication and wait for a fresh message boundary. */
 void uart_resume(UART_HandleTypeDef *huart) {
-    frame_synchronized = 0; // sync lost
+    board_rx_used = 0; // Discard the interrupted board frame.
     // Clear RXNE by flushing the data register
     __HAL_UART_CLEAR_FLAG(huart, UART_CLEAR_FEF | UART_CLEAR_NEF | UART_CLEAR_OREF | UART_CLEAR_PEF);
     __HAL_UART_FLUSH_DRREGISTER(huart);
@@ -290,7 +281,7 @@ void uart_resume(UART_HandleTypeDef *huart) {
 #endif
 
     if (huart->Instance == USART2) {
-        HAL_UART_Receive_IT(huart, &board_rx_buffer[0], 1); // restart receiving one byte
+        HAL_UART_Receive_IT(huart, &board_rx_byte, 1); // restart receiving one byte
         last_sent_serial_msg_time =
             currentTime; // avoid to send message in the same moment when interrupt was restarted
     }
