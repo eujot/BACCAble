@@ -6,10 +6,13 @@
 /* Preserve the established IPC pacing while avoiding redundant text fragments. */
 #define DISPLAY_FRAGMENT_INTERVAL_MS 50U
 #define DISPLAY_KEEPALIVE_INTERVAL_MS 500U
+#define DISPLAY_FACTORY_SETTLE_MS 250U
 
 #if defined(BACCABLE_BH)
 
 static DisplayStream screen;
+static uint32_t factory_last_frame_time;
+static bool factory_message_pending;
 
 /* Accept new dashboard content when BACCAble display output is allowed. */
 void body_display_submit(const uint8_t *text) {
@@ -21,6 +24,16 @@ void body_display_submit(const uint8_t *text) {
 void body_display_refresh(void) {
     if (!chassis_state.stability_inverted)
         display_stream_refresh(&screen);
+}
+
+/* Restore the menu after a complete factory-display message, not after every fragment. */
+void body_display_factory_frame(uint8_t total_frame, uint8_t frame_number) {
+    factory_last_frame_time = currentTime;
+    factory_message_pending = true;
+    if (frame_number >= total_frame) {
+        body_display_refresh();
+        factory_message_pending = false;
+    }
 }
 
 /* Prepare body-bus features and restore saved mirror positions. */
@@ -60,6 +73,11 @@ void body_init() {
 void body_process() {
     if (chassis_state.stability_inverted) {
         display_stream_reset(&screen);
+        factory_message_pending = false;
+    } else if (factory_message_pending && currentTime - factory_last_frame_time >= DISPLAY_FACTORY_SETTLE_MS) {
+        /* A lost final fragment must not leave the BACCAble screen hidden indefinitely. */
+        body_display_refresh();
+        factory_message_pending = false;
     } else if (currentTime - display_state.last_sent_telematic_display_info_msg_time >=
                DISPLAY_FRAGMENT_INTERVAL_MS) {
         /* Suppressing identical submissions must not let an otherwise idle display expire. */

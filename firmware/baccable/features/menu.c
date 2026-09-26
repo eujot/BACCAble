@@ -408,9 +408,12 @@ static void select_page(void) {
 
 /* Prepare the visible, sorted list and restore the requested selection. */
 static void build_pages(uint16_t selected) {
-    list_count =
-        menu_page_list_filtered(&preferences, engine, group, view == FAVORITES || view == ORDER_FAVORITES,
-                                is_editor(), gasoline_v6, advanced_pages, list);
+    /* Editors always browse the complete engine catalog; the remembered reading
+       group must not hide pages from Favorites or Shown pages. */
+    uint8_t page_group = is_editor() ? 0 : group;
+    list_count = menu_page_list_filtered(&preferences, engine, page_group,
+                                         view == FAVORITES || view == ORDER_FAVORITES, is_editor(), gasoline_v6,
+                                         advanced_pages, list);
     selection = 0;
     for (unsigned i = 0; i < list_count; ++i)
         if (parameter_pages[engine][list[i]].id == selected)

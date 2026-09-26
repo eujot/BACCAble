@@ -5,9 +5,13 @@
 /* Restore BACCAble text when factory display content would replace it. */
 void vehicle_handle_display_content(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
 
+    if (rx_header->DLC < 2)
+        return;
+
 #if defined(BACCABLE_BH)
-    /* Restore after factory text without restarting a partially transmitted view. */
-    body_display_refresh();
+    uint8_t total_frame = (frame_data[0] >> 3) & 0x1F;
+    uint8_t frame_number = ((frame_data[0] & 0x07) << 2) | (frame_data[1] >> 6);
+    body_display_factory_frame(total_frame, frame_number);
 #endif
     // on BH can bus, slow bus at 125kbps, this message contains:
 

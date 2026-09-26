@@ -28,7 +28,12 @@ def _session_info(directory: Path) -> int:
     for role in manifest["roles"]:
         frames = database.execute("SELECT count(*) FROM can_frames WHERE role = ?", (role,)).fetchone()[0]
         dropped = database.execute("SELECT coalesce(sum(dropped_count),0) FROM capture_loss WHERE role = ?", (role,)).fetchone()[0]
-        print(f"  {role}: {frames} frames, {dropped} dropped")
+        startup = database.execute(
+            "SELECT coalesce(sum(dropped_count),0) FROM capture_loss WHERE role = ? AND host_ns <= ?",
+            (role, 2_000_000_000),
+        ).fetchone()[0]
+        active = dropped - startup
+        print(f"  {role}: {frames} frames, {dropped} dropped (startup {startup}, in-session {active})")
     losses = database.execute("SELECT count(*), coalesce(sum(dropped_count),0) FROM capture_loss").fetchone()
     events = database.execute("SELECT count(*) FROM events").fetchone()[0]
     print(f"  loss records: {losses[0]}, dropped frames: {losses[1]}")
@@ -43,15 +48,15 @@ def _export_basic(directory: Path, output: str | None) -> int:
     close = destination is not sys.stdout
     try:
         writer = csv.writer(destination)
-        writer.writerow(["kind", "role", "host_ns", "device_timestamp_ms", "can_id", "dlc", "data", "dropped", "label"])
+        writer.writerow(["kind", "role", "host_ns", "device_timestamp_ms", "can_id", "dlc", "data", "dropped", "label", "note"])
         for row in database.execute("SELECT role, host_ns, device_timestamp_ms, arbitration_id, dlc, data FROM can_frames ORDER BY host_ns, id"):
             role, host_ns, device_ms, can_id, dlc, data = row
-            writer.writerow(["frame", role, host_ns, device_ms, f"0x{can_id:X}", dlc, bytes(data).hex(), "", ""])
+            writer.writerow(["frame", role, host_ns, device_ms, f"0x{can_id:X}", dlc, bytes(data).hex(), "", "", ""])
         for row in database.execute("SELECT role, host_ns, device_timestamp_ms, dropped_count FROM capture_loss ORDER BY host_ns, id"):
             role, host_ns, device_ms, dropped = row
-            writer.writerow(["loss", role, host_ns, device_ms, "", "", "", dropped, ""])
-        for row in database.execute("SELECT host_ns, label FROM events ORDER BY host_ns, id"):
-            writer.writerow(["event", "", row[0], "", "", "", "", "", row[1]])
+            writer.writerow(["loss", role, host_ns, device_ms, "", "", "", dropped, "", ""])
+        for row in database.execute("SELECT host_ns, label, note FROM events ORDER BY host_ns, id"):
+            writer.writerow(["event", "", row[0], "", "", "", "", "", row[1], row[2]])
     finally:
         database.close()
         if close:

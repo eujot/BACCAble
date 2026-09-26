@@ -13,9 +13,30 @@ from baccable_lab.capture import capture
 from baccable_lab.cli import _export_basic, _session_info, main
 
 FRAME = bytes([0xA1, 1, 0, 0, 0x34, 0x12, 0, 0, 0xAA] + [0] * 7)
+LOSS = bytes([0xAF, 1, 0, 0, 5, 0] + [0] * 10)
 
 
 class CaptureTests(unittest.TestCase):
+    def test_marker_palette_custom_label_and_undo(self):
+        with tempfile.TemporaryDirectory() as temp:
+            class Reader:
+                error = None
+                discarded_bytes = 0
+                def __init__(self, role, device, output, stop, abort): self.role, self.output = role, output
+                def start(self): pass
+                def is_alive(self): return False
+                def join(self, timeout): pass
+            with patch('baccable_lab.capture._Reader', Reader), \
+                    patch('baccable_lab.capture._Keyboard') as keyboard, \
+                    contextlib.redirect_stdout(io.StringIO()):
+                keyboard.return_value.read.side_effect = ['c', 'u', '7', 'q']
+                keyboard.return_value.read_line.return_value = 'hood_open'
+                self.assertEqual(capture({'C1': '/dev/test-C1'}, Path(temp), ['capture']), 0)
+            directory, = Path(temp).iterdir()
+            with contextlib.closing(sqlite3.connect(directory / 'session.sqlite3')) as db:
+                events = db.execute('SELECT label FROM events ORDER BY id').fetchall()
+            self.assertEqual(events, [('left_indicator_on',)])
+
     def test_all_bus_selections_and_empty_bus(self):
         all_roles = ('C1', 'C2', 'BH')
         selections = [roles for count in range(1, 4)
@@ -67,6 +88,26 @@ class CaptureTests(unittest.TestCase):
                 with contextlib.redirect_stdout(io.StringIO()) as exported:
                     self.assertEqual(_export_basic(directory, None), 0)
                 self.assertEqual(len(exported.getvalue().splitlines()), (len(roles) if has_frames else 0) + 1)
+
+    def test_startup_loss_is_reported_separately(self):
+        with tempfile.TemporaryDirectory() as temp:
+            class Reader:
+                error = None
+                discarded_bytes = 0
+                def __init__(self, role, device, output, stop, abort): self.role, self.output = role, output
+                def start(self): self.output.put(('C1', time.monotonic_ns(), LOSS))
+                def is_alive(self): return False
+                def join(self, timeout): pass
+            with patch('baccable_lab.capture._Reader', Reader), \
+                    patch('baccable_lab.capture._Keyboard') as keyboard, \
+                    contextlib.redirect_stdout(io.StringIO()) as output:
+                keyboard.return_value.read.side_effect = [None, 'q']
+                self.assertEqual(capture({'C1': '/dev/test-C1'}, Path(temp), ['capture']), 0)
+            directory, = Path(temp).iterdir()
+            summary = json.loads((directory / 'summary.json').read_text())
+            self.assertEqual(summary['startup_dropped'], {'C1': 5})
+            self.assertEqual(summary['in_session_dropped'], {'C1': 0})
+            self.assertIn('WARNING C1', output.getvalue())
 
     def test_invalid_selections_do_not_create_sessions(self):
         for ports in ({}, {'OTHER': '/dev/a'}, {'C1': ''}, {'C1': '/dev/a', 'BH': '/dev/a'}):

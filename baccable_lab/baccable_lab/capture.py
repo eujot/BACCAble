@@ -25,6 +25,12 @@ MARKERS = {
     "9": "right_indicator_on", "0": "right_indicator_off",
     "l": "lock", "c": "custom",
 }
+STARTUP_LOSS_WINDOW_NS = 2_000_000_000
+
+
+def marker_help() -> str:
+    entries = [f"{key}={label}" for key, label in MARKERS.items()]
+    return "Markers: " + ", ".join(entries) + "; c=custom text, n=note, u=undo, q=stop"
 
 
 def new_session_id() -> str:
@@ -83,6 +89,16 @@ class _Keyboard:
         if self.previous is not None:
             termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.previous)
 
+    def read_line(self, prompt: str) -> str:
+        """Read a line without leaving the terminal in cbreak mode."""
+        self.close()
+        try:
+            return input(prompt).strip()
+        finally:
+            if self.enabled:
+                self.previous = termios.tcgetattr(sys.stdin)
+                tty.setcbreak(sys.stdin.fileno())
+
 
 def capture(ports: dict[str, str], root: Path, command: list[str]) -> int:
     if not ports or any(role not in {"C1", "C2", "BH"} or not device
@@ -103,6 +119,11 @@ def capture(ports: dict[str, str], root: Path, command: list[str]) -> int:
     readers = []
     started = time.monotonic_ns()
     events = 0
+    last_event_id: int | None = None
+    last_event_label: str | None = None
+    startup_losses = {role: 0 for role in roles}
+    in_session_losses = {role: 0 for role in roles}
+    startup_loss_reported: set[str] = set()
     discarded_queued_bytes = 0
     errors: list[str] = []
 
@@ -111,6 +132,14 @@ def capture(ports: dict[str, str], root: Path, command: list[str]) -> int:
         offset = raw.write(role, data)
         for record in parsers[role].feed(data, host_ns - started):
             store.add_record(record, offset)
+            if record.is_loss:
+                if record.host_ns <= STARTUP_LOSS_WINDOW_NS:
+                    startup_losses[role] += record.dropped_count
+                    if role not in startup_loss_reported:
+                        print(f"\nWARNING {role}: {record.dropped_count} frames lost during capture startup; recording continues")
+                        startup_loss_reported.add(role)
+                else:
+                    in_session_losses[role] += record.dropped_count
 
     def cleanup(label, action):
         try:
@@ -122,7 +151,7 @@ def capture(ports: dict[str, str], root: Path, command: list[str]) -> int:
         store = SessionStore(directory, session_id, roles)
         raw = RawWriters(directory, roles)
         keyboard = _Keyboard()
-        print(f"Session {session_id}; press 1-0/l for markers, q or Ctrl-C to stop")
+        print(f"Session {session_id}; {marker_help()}")
         for role in roles:
             reader = _Reader(role, ports[role], incoming, stop, abort)
             reader.start()
@@ -133,10 +162,34 @@ def capture(ports: dict[str, str], root: Path, command: list[str]) -> int:
             key = keyboard.read()
             if key in {"q", "Q", "\x03"}:
                 break
+            if key in {"?", "m", "M"}:
+                print(f"\n{marker_help()}")
+            elif key == "u":
+                if last_event_id is None:
+                    print("\nNo marker to undo")
+                else:
+                    store.delete_event(last_event_id)
+                    store.commit()
+                    print(f"\nUNDONE {last_event_label}")
+                    last_event_id = None
+                    last_event_label = None
+            elif key == "n":
+                if last_event_id is None:
+                    print("\nNo marker to annotate")
+                elif hasattr(keyboard, "read_line"):
+                    note = keyboard.read_line("Note: ")
+                    if note:
+                        store.update_event_note(last_event_id, note)
+                        store.commit()
+                        print(f"\nNOTE {note}")
             if key in MARKERS:
-                store.add_event(time.monotonic_ns() - started, MARKERS[key])
+                label = MARKERS[key]
+                if key == "c" and hasattr(keyboard, "read_line"):
+                    label = keyboard.read_line("Marker label: ") or "custom"
+                last_event_id = store.add_event(time.monotonic_ns() - started, label)
+                last_event_label = label
                 events += 1
-                print(f"\nEVENT {MARKERS[key]}")
+                print(f"\nEVENT {label}")
             try:
                 item = incoming.get(timeout=0.1)
             except queue.Empty:
@@ -211,6 +264,9 @@ def capture(ports: dict[str, str], root: Path, command: list[str]) -> int:
             "reader_errors": reader_errors, "errors": errors,
             "discarded_reader_bytes": sum(reader.discarded_bytes for reader in readers),
             "discarded_queued_bytes": discarded_queued_bytes,
+            "startup_loss_window_seconds": STARTUP_LOSS_WINDOW_NS / 1_000_000_000,
+            "startup_dropped": startup_losses,
+            "in_session_dropped": in_session_losses,
         }
         if store is not None:
             cleanup("finish database", lambda: store.finish(stats["status"], duration, stats))

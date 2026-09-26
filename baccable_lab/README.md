@@ -44,6 +44,12 @@ as `<ROLE>.bin` for each selected role, parses complete 16-byte records into
 `session.sqlite3`, and preserves `0xAF` loss markers. Port paths are host-assigned
 and must be remapped after reconnects.
 
+During capture, press `m` or `?` to show the marker palette. The quick keys add
+common vehicle events; `c` asks for a custom label, `n` adds a note to the last
+marker, and `u` removes the last marker. The first two seconds are reported
+separately as startup loss so an attachment backlog is visible without being
+confused with loss during the test.
+
 Hardware setup and the acceptance checklist are in [docs/HARDWARE_SETUP.md](docs/HARDWARE_SETUP.md)
 and [docs/CAPTURE.md](docs/CAPTURE.md). The parent project specification is
 in [../docs/baccable_lab/PROJECT.md](../docs/baccable_lab/PROJECT.md).
