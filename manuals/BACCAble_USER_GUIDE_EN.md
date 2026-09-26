@@ -795,7 +795,7 @@ commands and bus behavior. Use USB mode OFF for ordinary operation when finished
 | --- | --- |
 | RES does not open the menu | Ignition/panel awake; CC and ACC both off; release controls, then hold RES for 1.2 s. Check C1 connection/firmware. ELM diagnostics can temporarily own processing. |
 | Menu skips or stops reacting | Distinguish gentle from strong presses. Release after a stream interruption. Inspect Information's Reports/Gaps/Input age and C2/BH status. |
-| Radio text remains on the display | BH periodically resends the complete BACCAble text, including while values change, and requests restoration after factory radio messages. If the menu remains absent, check the BH link and firmware. |
+| Radio text remains on the display | BH periodically resends the complete BACCAble text, including while values change, and requests restoration after factory radio messages without pausing menu fragments during continuing radio traffic. If the menu remains absent, check the BH link and firmware. |
 | A page or action is missing | Correct engine profile; Shown pages; Advanced pages; action permission in Features. A hidden favorite may still occupy its saved slot under another profile. |
 | `No favorites` / `No pages` | Add compatible favorites or restore page visibility. Long RES still returns. |
 | A value shows `--` | Wait for fresh reports, check ignition/engine conditions and ECU compatibility. USB diagnostics can suspend normal queries. A displayed catalog entry is not a guarantee that the ECU implements it. |

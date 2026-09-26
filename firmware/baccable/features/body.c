@@ -75,28 +75,32 @@ void body_process() {
     if (chassis_state.stability_inverted) {
         display_stream_reset(&screen);
         factory_message_pending = false;
-    } else if (factory_message_pending && currentTime - factory_last_frame_time >= DISPLAY_FACTORY_SETTLE_MS) {
-        /* A lost final fragment must not leave the BACCAble screen hidden indefinitely. */
-        body_display_refresh();
-        factory_message_pending = false;
-    } else if (currentTime - display_state.last_sent_telematic_display_info_msg_time >=
-               DISPLAY_FRAGMENT_INTERVAL_MS) {
-        /* Changing readings must not postpone full recovery of overwritten text. */
-        if (currentTime - last_full_refresh >= DISPLAY_KEEPALIVE_INTERVAL_MS) {
-            display_stream_refresh(&screen);
-            last_full_refresh = currentTime;
+    } else {
+        if (factory_message_pending && currentTime - factory_last_frame_time >= DISPLAY_FACTORY_SETTLE_MS) {
+            /* A lost final fragment must not leave the BACCAble screen hidden indefinitely. */
+            body_display_refresh();
+            factory_message_pending = false;
         }
-        uint8_t fragment, text[3];
-        if (display_stream_peek(&screen, &fragment, text)) {
-            uint8_t *data = display_state.telematic_display_info_msg_data;
-            data[0] = (data[0] & ~0x07) | ((fragment >> 2) & 0x07);
-            data[1] = (data[1] & ~0xC0) | ((fragment << 6) & 0xC0);
-            data[3] = text[0];
-            data[5] = text[1];
-            data[7] = text[2];
-            if (can_tx(&display_state.telematic_display_info_msg_header, data) == HAL_OK) {
-                display_stream_accept(&screen);
-                display_state.last_sent_telematic_display_info_msg_time = currentTime;
+        /* Do not pause menu fragments while the radio is still sending text. */
+        if (currentTime - display_state.last_sent_telematic_display_info_msg_time >=
+            DISPLAY_FRAGMENT_INTERVAL_MS) {
+            /* Changing readings must not postpone full recovery of overwritten text. */
+            if (currentTime - last_full_refresh >= DISPLAY_KEEPALIVE_INTERVAL_MS) {
+                display_stream_refresh(&screen);
+                last_full_refresh = currentTime;
+            }
+            uint8_t fragment, text[3];
+            if (display_stream_peek(&screen, &fragment, text)) {
+                uint8_t *data = display_state.telematic_display_info_msg_data;
+                data[0] = (data[0] & ~0x07) | ((fragment >> 2) & 0x07);
+                data[1] = (data[1] & ~0xC0) | ((fragment << 6) & 0xC0);
+                data[3] = text[0];
+                data[5] = text[1];
+                data[7] = text[2];
+                if (can_tx(&display_state.telematic_display_info_msg_header, data) == HAL_OK) {
+                    display_stream_accept(&screen);
+                    display_state.last_sent_telematic_display_info_msg_time = currentTime;
+                }
             }
         }
     }

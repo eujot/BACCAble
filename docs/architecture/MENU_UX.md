@@ -197,7 +197,8 @@ every five seconds. Dedicated single-value pages remain available for clearer la
   once, so continuous browsing does not starve status replies.
 - BH prioritizes the latest screen and skips unchanged fragments. CAN queue
   rejection keeps work pending for retry. Factory text requests a full refresh
-  without resetting progress through the fragments.
+  without resetting progress through the fragments, and radio settle timing does
+  not pause fragment transmission.
 - Native readings refresh only from their corresponding valid CAN frames. UDS
   issues at most one request every 500 ms, after a 150 ms page-settling interval,
   cycling through up to four page values. Fault clearing pauses polling; the fault
