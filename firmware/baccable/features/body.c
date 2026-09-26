@@ -11,6 +11,7 @@
 #if defined(BACCABLE_BH)
 
 static DisplayStream screen;
+static uint32_t last_full_refresh;
 static uint32_t factory_last_frame_time;
 static bool factory_message_pending;
 
@@ -80,10 +81,11 @@ void body_process() {
         factory_message_pending = false;
     } else if (currentTime - display_state.last_sent_telematic_display_info_msg_time >=
                DISPLAY_FRAGMENT_INTERVAL_MS) {
-        /* Suppressing identical submissions must not let an otherwise idle display expire. */
-        if (currentTime - display_state.last_sent_telematic_display_info_msg_time >=
-            DISPLAY_KEEPALIVE_INTERVAL_MS)
+        /* Changing readings must not postpone full recovery of overwritten text. */
+        if (currentTime - last_full_refresh >= DISPLAY_KEEPALIVE_INTERVAL_MS) {
             display_stream_refresh(&screen);
+            last_full_refresh = currentTime;
+        }
         uint8_t fragment, text[3];
         if (display_stream_peek(&screen, &fragment, text)) {
             uint8_t *data = display_state.telematic_display_info_msg_data;

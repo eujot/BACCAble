@@ -24,6 +24,7 @@ test: build/test_core build/test_transport build/test_catalog build/test_menu bu
 	./build/test_parking_bh
 	./build/test_usb_c2
 	./build/test_usb_bh
+	./build/test_body_display
 
 USB_AUX_SOURCES := test_usb_aux.c $(FIRMWARE)/features/usb_modes.c
 build/test_usb_c2: $(USB_AUX_SOURCES) $(HEADERS) Makefile
@@ -117,3 +118,9 @@ build/test_menu_debug: $(MENU_SOURCES) $(HEADERS) Makefile
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC1_FLAVOR=1 -DMENU_DIAGNOSTICS -DGIT_VERSION=\"test\" $(MENU_SOURCES) -lm -o $@
 
 test: build/test_menu_debug
+
+BODY_DISPLAY_SOURCES := test_body_display.c $(FIRMWARE)/features/body.c $(FIRMWARE)/features/display_stream.c $(FIRMWARE)/state/display.c
+build/test_body_display: $(BODY_DISPLAY_SOURCES) $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DBH_FLAVOR=1 $(BODY_DISPLAY_SOURCES) -o $@
+test: build/test_body_display

@@ -221,11 +221,12 @@ static void test_display(void) {
     display_stream_submit(&stream, c);
     drain_display(&stream, visible);
     assert(!memcmp(visible, c, sizeof(c))); /* Clear the complete old suffix. */
+    stream.cursor = DISPLAY_FRAGMENT_COUNT / 2; /* Last partial update ended mid-message. */
     display_stream_refresh(&stream);
     for (unsigned i = 0; i < DISPLAY_FRAGMENT_COUNT; ++i) {
         display_stream_submit(&stream, c);
         display_stream_refresh(&stream); /* Repeated factory traffic does not restart restoration. */
-        assert(display_stream_peek(&stream, &part, chars));
+        assert(display_stream_peek(&stream, &part, chars) && part == i);
         display_stream_accept(&stream);
     }
     assert(!display_stream_peek(&stream, &part, chars));

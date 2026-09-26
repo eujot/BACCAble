@@ -60,6 +60,9 @@ void display_stream_refresh(DisplayStream *stream) {
         return;
     for (unsigned i = 0; i < sizeof(stream->target); ++i) {
         if (stream->target[i] != ' ') {
+            /* A complete IPC message begins with fragment zero. Once started,
+             * subsequent refresh requests must let it reach its final fragment. */
+            stream->cursor = 0;
             stream->forced = (1U << DISPLAY_FRAGMENT_COUNT) - 1U;
             update_dirty(stream);
             return;

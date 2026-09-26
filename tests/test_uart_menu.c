@@ -12,7 +12,11 @@ uint32_t fake_primask;
 static uint32_t now = 3000, result = HAL_OK;
 static const uint8_t *active;
 static uint8_t expected[UART_BUFFER_SIZE];
-static unsigned transmissions;
+static unsigned transmissions, received;
+static uint8_t *rx_target;
+static uint16_t rx_remaining;
+static uint8_t received_frame[UART_BUFFER_SIZE];
+extern void HAL_UART_RxCpltCallback(UART_HandleTypeDef *uart);
 uint32_t HAL_GetTick(void) { return now; }
 void HAL_Delay(uint32_t duration) { now += duration; }
 void HAL_GPIO_Init(void *port, GPIO_InitTypeDef *config) {
@@ -30,9 +34,10 @@ uint32_t HAL_HalfDuplex_Init(UART_HandleTypeDef *uart) {
     return HAL_OK;
 }
 uint32_t HAL_UART_Receive_IT(UART_HandleTypeDef *uart, uint8_t *data, uint16_t size) {
-    (void)uart;
-    (void)data;
-    (void)size;
+    if (uart == &huart2) {
+        rx_target = data;
+        rx_remaining = size;
+    }
     return HAL_OK;
 }
 uint32_t HAL_UART_Transmit_IT(UART_HandleTypeDef *uart, uint8_t *data, uint16_t size) {
@@ -55,7 +60,48 @@ void Error_Handler(uint16_t value) {
     (void)value;
     assert(0);
 }
-void board_commands_dispatch(const uint8_t *message) { (void)message; }
+void board_commands_dispatch(const uint8_t *message) {
+    memcpy(received_frame, message, sizeof(received_frame));
+    ++received;
+}
+static void receive_bytes(const uint8_t *bytes, unsigned count) {
+    for (unsigned i = 0; i < count; ++i) {
+        assert(rx_remaining);
+        *rx_target++ = bytes[i];
+        if (!--rx_remaining)
+            HAL_UART_RxCpltCallback(&huart2);
+    }
+}
+static void test_receive_gap_recovery(void) {
+    uart_init();
+    runtime_state.low_consume_is_active = 1; /* No background TX during RX checks. */
+    uint8_t frame[UART_BUFFER_SIZE];
+    memset(frame, ' ', sizeof(frame));
+    frame[0] = C2_Bh_BusID;
+    frame[1] = C2_BH_CMD_USB_CAPTURE;
+    frame[2] = 1;
+    receive_bytes(frame, 5); /* Interrupted command, followed by a fresh full command. */
+    now += 30;
+    receive_bytes(frame, sizeof(frame));
+    board_uart_process();
+    assert(received == 1);
+    assert(memcmp(frame, received_frame, sizeof(frame)) == 0);
+    /* Back-to-back full frames, with no idle gap, must also work. */
+    receive_bytes(frame, sizeof(frame));
+    receive_bytes(frame, sizeof(frame));
+    board_uart_process();
+    assert(received == 3);
+    /* Incomplete frames across tick wrap must not poison the next command. */
+    now = UINT32_MAX - 10U;
+    receive_bytes(frame, 3);
+    now = 20;
+    receive_bytes(frame, sizeof(frame));
+    board_uart_process();
+    assert(received == 4);
+    assert(memcmp(frame, received_frame, sizeof(frame)) == 0);
+    now = 3000;
+    runtime_state.low_consume_is_active = 0;
+}
 void parameter_cache_put(uint8_t id, float value, uint32_t when) {
     (void)id;
     (void)value;
@@ -128,6 +174,7 @@ static void test_uart_menu_behavior(void) {
 
 int main(void) {
     const HostTest tests[] = {
+        HOST_TEST(test_receive_gap_recovery),
         HOST_TEST(test_uart_menu_behavior)
     };
     host_tests_run("uart_menu", tests, sizeof(tests) / sizeof(tests[0]));
