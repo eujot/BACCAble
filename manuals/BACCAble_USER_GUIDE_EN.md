@@ -168,6 +168,10 @@ permits. Lists do not show item counters.
    favorite before adding another when the list is full.
 4. Return with long RES, then open the main-menu `Favorites` to see live values.
 
+The Favorites editor always starts with the complete compatible catalog. The
+reading group last used in `Readings` does not restrict this list. Advanced
+pages remain available in the editor; engine compatibility still applies.
+
 Gasoline and diesel have separate saved favorite lists. I4 and V6 share the
 gasoline list. An incompatible favorite is temporarily hidden when the engine
 profile changes, but still occupies its saved slot. Select the original profile
@@ -787,6 +791,7 @@ commands and bus behavior. Use USB mode OFF for ordinary operation when finished
 | --- | --- |
 | RES does not open the menu | Ignition/panel awake; CC and ACC both off; release controls, then hold RES for 1.2 s. Check C1 connection/firmware. ELM diagnostics can temporarily own processing. |
 | Menu skips or stops reacting | Distinguish gentle from strong presses. Release after a stream interruption. Inspect Information's Reports/Gaps/Input age and C2/BH status. |
+| Radio text remains on the display | The BH controller restores the BACCAble screen after the complete factory radio message. If it does not return, check the BH link and firmware, then close and reopen the menu. |
 | A page or action is missing | Correct engine profile; Shown pages; Advanced pages; action permission in Features. A hidden favorite may still occupy its saved slot under another profile. |
 | `No favorites` / `No pages` | Add compatible favorites or restore page visibility. Long RES still returns. |
 | A value shows `--` | Wait for fresh reports, check ignition/engine conditions and ECU compatibility. USB diagnostics can suspend normal queries. A displayed catalog entry is not a guarantee that the ECU implements it. |

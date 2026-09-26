@@ -182,6 +182,11 @@ mieści się na nie miejsce. Listy nie pokazują numeru bieżącej pozycji.
 4. Wróć długim RES, a następnie otwórz `Favorites` w menu głównym, aby oglądać
    bieżące wartości.
 
+Edytor Favorites zawsze rozpoczyna od pełnego katalogu stron zgodnych z bieżącym
+profilem. Ostatnia grupa używana w `Readings` nie ogranicza tej listy. Strony
+zaawansowane również są dostępne w edytorze, ale nadal obowiązuje zgodność z
+profilem silnika.
+
 Benzyna i diesel mają oddzielnie zapisane listy ulubionych. I4 i V6 korzystają
 ze wspólnej listy benzynowej. Po zmianie profilu silnika niepasująca strona jest
 tymczasowo ukrywana, ale nadal zajmuje zapisane miejsce. Aby ją usunąć, w razie
@@ -842,6 +847,7 @@ Po zakończeniu używaj USB mode OFF do zwykłej pracy.
 | --- | --- |
 | RES nie otwiera menu | Włączony zapłon i aktywny zestaw wskaźników; CC i ACC wyłączone. Puść przyciski, a potem przytrzymaj RES przez 1,2 s. Sprawdź połączenie i oprogramowanie C1. Diagnostyka ELM może chwilowo wstrzymywać obsługę menu. |
 | Menu przeskakuje albo przestaje reagować | Rozróżniaj lekkie i mocne naciśnięcia. Po przerwie w komunikacji puść przycisk. W Information sprawdź Reports/Gaps/Input age oraz stan C2/BH. |
+| Na wyświetlaczu zostaje tekst radia | Kontroler BH przywraca ekran BACCAble po odebraniu całego komunikatu radia. Jeśli ekran nie wraca, sprawdź połączenie BH i oprogramowanie, a następnie zamknij i ponownie otwórz menu. |
 | Brakuje strony lub akcji | Sprawdź profil silnika, Shown pages, Advanced pages oraz ustawienie udostępniające akcję w Features. Ukryta strona z innego profilu może nadal zajmować miejsce w ulubionych. |
 | `No favorites` / `No pages` | Dodaj zgodne ulubione lub przywróć widoczność stron. Długie RES nadal pozwala wrócić. |
 | Odczyt pokazuje `--` | Poczekaj na aktualne dane, sprawdź stan zapłonu/silnika i obsługę przez ECU. Diagnostyka USB może wstrzymywać zwykłe zapytania. Obecność strony nie gwarantuje, że sterownik obsługuje jej parametr. |

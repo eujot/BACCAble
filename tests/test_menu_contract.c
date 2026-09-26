@@ -178,6 +178,21 @@ static void test_entry_renderer_bounds(void) {
 
 /* Profile filtering preserves favorite identities without visible counters. */
 static void test_unnumbered_filtered_editors(void) {
+    MenuPreferences catalog_preferences;
+    uint8_t catalog[64];
+    menu_preferences_default(&catalog_preferences);
+    const uint16_t required[2][5] = {{0x06, 0x0a, 0x0b, 0x16, 0x3b},
+                                     {0x86, 0x95, 0xb8, 0x00, 0x00}};
+    for (unsigned engine = 0; engine < 2; ++engine) {
+        unsigned count = menu_page_list_filtered(&catalog_preferences, engine, 0, false, true,
+                                                  engine == 0, true, catalog);
+        for (unsigned required_index = 0; required_index < 5 && required[engine][required_index]; ++required_index) {
+            bool found = false;
+            for (unsigned i = 0; i < count; ++i)
+                found |= parameter_pages[engine][catalog[i]].id == required[engine][required_index];
+            assert(found);
+        }
+    }
     for (unsigned v6 = 0; v6 < 2; ++v6) {
         fresh_contract();
         MenuPreferences prefs;
@@ -198,10 +213,23 @@ static void test_unnumbered_filtered_editors(void) {
         }
         to_settings();
         menu_event(MENU_NEXT); menu_event(MENU_SELECT); /* Edit favorites. */
-        menu_event(MENU_PREVIOUS_GROUP); /* All pages, not only the remembered Engine group. */
+        bool saw_intercooler = false;
+        bool saw_battery = false;
+        for (unsigned i = 0; i < gasoline_page_count; ++i) {
+            saw_intercooler |= strstr(screen, "Intercooler") != NULL;
+            saw_battery |= strstr(screen, "Batt") != NULL;
+            menu_event(MENU_NEXT);
+        }
+        assert(saw_intercooler && saw_battery); /* Editors must not inherit the previous reading group. */
         expect_no_position();
         menu_event(MENU_BACK); menu_event(MENU_NEXT); menu_event(MENU_SELECT);
         expect_no_position(); /* Visible pages. */
+        bool shown_saw_intercooler = false;
+        for (unsigned i = 0; i < gasoline_page_count; ++i) {
+            shown_saw_intercooler |= strstr(screen, "Intercooler") != NULL;
+            menu_event(MENU_NEXT);
+        }
+        assert(shown_saw_intercooler); /* Shown pages also uses the complete catalog. */
         menu_event(MENU_BACK); menu_event(MENU_NEXT); menu_event(MENU_SELECT);
         expect_no_position();
         menu_event(MENU_SELECT);
