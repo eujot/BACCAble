@@ -1,5 +1,12 @@
 # Reading catalog audit and engine-aware menu
 
+**Documentation maintenance:** when reading labels, units, sources, groups,
+visibility or engine compatibility change, update both user-guide catalogs and
+their affected explanations: [English](../../manuals/BACCAble_USER_GUIDE_EN.md)
+and [Polish](../../manuals/BACCAble_USER_GUIDE_PL.md). Apply the
+[AGENTS.md maintenance rule](../../AGENTS.md#keep-both-user-guides-current)
+in the same change as the implementation.
+
 All **64 gasoline and 60 diesel pages** retain their IDs, physical order,
 parameter IDs, templates and scales. Classification is a browsing policy, not
 proof that every ECU supports every inherited diagnostic request.

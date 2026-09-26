@@ -3,6 +3,13 @@
 This guide describes the merged firmware at `0a72dcd` (v5-beta-9). The
 [action plan](../ACTION_PLAN.md) tracks local changes and unfinished work.
 
+**Documentation maintenance:** changes to menu labels, order, navigation,
+messages, settings, readings or actions must update the affected sections of both
+the [English user guide](../../manuals/BACCAble_USER_GUIDE_EN.md) and
+the [Polish user guide](../../manuals/BACCAble_USER_GUIDE_PL.md) in the same change.
+Keep descriptions aligned with the code and both editions equivalent; follow
+the [AGENTS.md maintenance rule](../../AGENTS.md#keep-both-user-guides-current).
+
 The catalog contains 64 gasoline pages and 60 diesel pages. Navigation,
 preferences and text transport have separate modules. All display labels use
 English with selected raw Latin-1 glyphs. Page labels fit within 16 characters, leaving two characters for
