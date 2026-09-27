@@ -1111,7 +1111,7 @@ static void test_board_sync_retry(void) {
     runtime_state.all_processors_wakeup_time = 0;
     commands = 0;
     board_sync_restart();
-    for (unsigned option = 0; option < 8; ++option) {
+    for (unsigned option = 0; option < 7; ++option) {
         uart_busy = true;
         board_sync_process();
         assert(commands == option);
@@ -1122,7 +1122,7 @@ static void test_board_sync_retry(void) {
     board_sync_process();
     assert(!runtime_state.instruct_slave_boards_trigger_enabled);
     board_sync_process();
-    assert(commands == 8);
+    assert(commands == 7);
 }
 
 #include "test_setup_ui.c"

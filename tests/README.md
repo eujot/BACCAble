@@ -25,3 +25,15 @@ Register new case functions in the executable's `HostTest` array using
 Keep related assertions together; do not split stateful cases solely for reporting.
 The existing CI publishes reports on failures too, without extra token permissions,
 third-party report actions, dependencies or a second test execution.
+
+### USB class transition regression
+
+`make -C tests test` includes `test_usb_lifecycle`, built with the bundled ST
+USB core, MSC/BOT/SCSI and CDC implementations; only hardware and storage
+boundaries are stubbed. ASan/UBSan cover configured MSC-to-CDC teardown, repeated
+transitions, unconfigured teardown, failed initialization/start, retry exhaustion,
+cancellation during reset, tick wrap and the read-only EP0 status request.
+Upstream/auxiliary and UART/menu suites cover addressed mode acknowledgements,
+missing/stale peers, queue rejection, timeout/re-entry and lost TX completion.
+These checks do not emulate macOS enumeration, UART electrical collisions or
+vehicle CAN timing; see the hardware procedure in USB_DIAGNOSTICS.md.

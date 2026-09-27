@@ -78,6 +78,8 @@ USBD_StatusTypeDef  USBD_StdItfReq(USBD_HandleTypeDef  *pdev, USBD_SetupReqTyped
 USBD_StatusTypeDef  USBD_StdEPReq(USBD_HandleTypeDef  *pdev, USBD_SetupReqTypedef  *req);
 
 
+USBD_StatusTypeDef USBD_VendorRequest(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
+
 void USBD_CtlError(USBD_HandleTypeDef  *pdev, USBD_SetupReqTypedef *req);
 
 void USBD_ParseSetupRequest(USBD_SetupReqTypedef *req, uint8_t *pdata);

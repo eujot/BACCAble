@@ -1,6 +1,6 @@
 # BACCAble action plan and agent handoff
 
-Last updated: **2026-09-26** (dated verification boundaries below). This is the single source of planned work,
+Last updated: **2026-09-27** (dated verification boundaries below). This is the single source of planned work,
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
@@ -32,6 +32,35 @@ PR count or broad rewrite is needed. This handoff is a backlog, not an instructi
 to automatically flash hardware or publish every future change.
 
 ## Verified baseline and deployment
+
+USB recovery candidate, **2026-09-27**, branch `fix/usb-class-transition`:
+
+- Isolated from unrelated local CI/menu work. Exact release base is
+  `v5-beta-16`, `eded486f0ab022cda3f87b99070b813c7d7de38b`, verified against the
+  release BUILD_INFO.json. Beta 13 has the same faulty USB teardown path.
+- Confirmed with the actual ST core/MSC/BOT under ASan/UBSan: the old
+  `USBD_Stop` followed by `USBD_DeInit` calls MSC class teardown twice; the
+  second call writes through a null class pointer. C2/BH stop at the fault,
+  explaining missing CDC and the stalled BH display path. This reproduces a
+  software defect, not the exact historical execution on the user's boards.
+- Fixed single teardown and guarded MSC cleanup; added asynchronous USB reset,
+  propagated start errors, at most three attempts, addressed per-board mode
+  requests/status, UART TX recovery, and read-only EP0 status snapshots.
+  Lab `doctor --usb-status --samples 3` reads diagnostics without consuming CAN.
+  Updated both user guides and the owning USB guide.
+- Validation: native ASan/UBSan suites including the real USB lifecycle,
+  Lab unit tests, menu-label checks and four-flavor ARM builds/static analysis.
+  Final image sizes, exact source SHA, compiler, flags, checksums and logs are
+  recorded in the test bundle, not inferred from the release baseline.
+- Integration: candidate only; no tag, release or hardware flashing. The
+  original working tree and its unrelated edits are preserved. This section
+  supersedes older USB acceptance claims below for this reported failure.
+- **Hardware acceptance remains open:** repeated three-port enumeration,
+  responsive menu during capture, OFF/re-entry, missing-board/USB errors,
+  warm/cold boot and hub power. No boards were available for this audit;
+  no voltage measurements or vehicle results are claimed. Follow
+  [the audit and vehicle procedure](architecture/USB_DIAGNOSTICS.md#msc-to-cdc-failure-and-recovery-candidate-2026-09-27).
+
 
 Documentation integration, **2026-09-26**: the EN/PL guides, README links and
 maintenance rules are prepared on `docs/in-car-guides-en-pl`, based directly on

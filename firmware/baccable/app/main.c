@@ -1,4 +1,5 @@
 #include "app/main.h"
+#include "usb_device.h"
 #include "stm32f0xx_it.h"
 #include "diagnostics/parameter_cache.h"
 #include "features/parking.h"
@@ -9,6 +10,7 @@
 
 /* Prepare this board's enabled features and restore its saved preferences. */
 static void application_init(void) {
+    usb_device_record_reset(RCC->CSR);
     SystemClock_Config();
     status_led_init();
     can_init();
@@ -27,8 +29,8 @@ static void application_init(void) {
     #endif
         MX_USB_DEVICE_Init();
     }
-    RCC->CSR |= RCC_CSR_RMVF;
 #endif
+    RCC->CSR |= RCC_CSR_RMVF; /* Captured before initialization on every role. */
 #if defined(BACCABLE_C1) || defined(BACCABLE_C2)
     can_set_bitrate(CAN_BITRATE_500K);
     can_enable();
@@ -111,6 +113,7 @@ int main(void) {
     application_init();
     for (;;) {
         uint32_t started = currentTime;
+        usb_device_process();
         board_uart_process();
 #if !defined(ACT_AS_CANABLE)
         usb_modes_process();

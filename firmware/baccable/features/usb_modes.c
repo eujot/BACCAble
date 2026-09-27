@@ -14,6 +14,132 @@
 extern USBD_HandleTypeDef hUsbDeviceFS;
 static uint8_t requested, active;
 static uint32_t activation, last_flush;
+static uint8_t command_token;
+static uint8_t debug_snapshot[64];
+    #if defined(BACCABLE_C1)
+static uint8_t generation, pending_mask, attempts[2], alternate[2];
+static uint8_t peer_status[2][16], status_seen;
+static uint32_t status_time[2];
+    #else
+static bool status_pending;
+    #endif
+
+/* This cached snapshot proves main-loop progress separately from enumeration.
+ * Published with IRQs masked; EP0 reads never drive the UART or alter capture. */
+void usb_modes_debug_read(uint8_t out[64]) { memcpy(out, debug_snapshot, 64); }
+
+static void local_status(uint8_t out[16]) {
+    out[0] = requested;
+    out[1] = active;
+    out[2] = command_token;
+    usb_device_status(out + 3);
+    board_uart_status(out + 11);
+}
+
+void usb_modes_request(uint8_t mode, uint8_t token) {
+    #if !defined(BACCABLE_C1)
+    if (mode <= 1) {
+        requested = mode;
+        command_token = token;
+    }
+    status_pending = true;
+    #else
+    (void)mode;
+    (void)token;
+    #endif
+}
+
+void usb_modes_ack(uint8_t peer, const uint8_t status[16]) {
+    #if defined(BACCABLE_C1)
+    if (peer > 1 || status[0] > 1 || status[1] > 1 || status[3] > 4 || status[5] > 4)
+        return;
+    memcpy(peer_status[peer], status, 16);
+    status_seen |= 1U << peer;
+    status_time[peer] = currentTime;
+    if (status[0] == (requested == 1) && status[2] == generation)
+        pending_mask &= ~(1U << peer);
+    #else
+    (void)peer;
+    (void)status;
+    #endif
+}
+
+/* Replace every other version poll, preserving the shared link's traffic budget.
+ * Pending activation gets three addressed deliveries. A query never rearms an
+ * expired session or resets a failed USB controller. Rejected enqueue attempts
+ * do not consume the bounded command delivery budget. */
+uint8_t usb_modes_poll(uint8_t peer, uint8_t command[4]) {
+    #if defined(BACCABLE_C1)
+    command[0] = peer ? BhBusID : C2BusID;
+    if ((pending_mask & (1U << peer)) || (alternate[peer] ^= 1)) {
+        command[1] = BOARD_CMD_USB_STATE;
+        command[2] = 255;
+        command[3] = generation;
+        if ((pending_mask & (1U << peer)) && attempts[peer] < 3) {
+            command[2] = requested == 1;
+        }
+        return 4;
+    }
+    command[0] = peer ? BhBusIDgetStatus : C2BusID;
+    command[1] = peer ? 0 : C2cmdGetStatus;
+    return 2;
+    #else
+    (void)peer;
+    (void)command;
+    return 0;
+    #endif
+}
+
+void usb_modes_poll_queued(uint8_t peer, const uint8_t command[4]) {
+    #if defined(BACCABLE_C1)
+    if (peer < 2 && command[1] == BOARD_CMD_USB_STATE && command[2] <= 1 && attempts[peer] < 3)
+        ++attempts[peer];
+    #else
+    (void)peer;
+    (void)command;
+    #endif
+}
+
+static void publish_status(void) {
+    uint8_t next[64] = {1, 0, 1, 0};
+    uint32_t now = currentTime;
+    for (unsigned i = 0; i < 4; ++i)
+        next[4 + i] = now >> (8 * i);
+    #if defined(BACCABLE_C1)
+    next[3] = pending_mask;
+    next[12] = attempts[0];
+    next[13] = attempts[1];
+    next[14] = generation;
+    local_status(next + 16);
+    for (unsigned peer = 0; peer < 2; ++peer) {
+        uint32_t age = now - status_time[peer];
+        if ((status_seen & (1U << peer)) && age < 5000)
+            next[2] |= 2U << peer;
+        uint16_t ms = !(status_seen & (1U << peer)) || age > 65535 ? 65535 : age;
+        next[8 + peer * 2] = ms;
+        next[9 + peer * 2] = ms >> 8;
+        memcpy(next + 32 + peer * 16, peer_status[peer], 16);
+    }
+    #else
+        #ifdef BACCABLE_BH
+    next[1] = 2;
+        #else
+    next[1] = 1;
+        #endif
+    next[2] = 1U << next[1];
+    local_status(next + 16 + next[1] * 16);
+    if (status_pending) {
+        uint8_t reply[19] = {C1BusID, C1_CMD_USB_STATE, next[1] - 1};
+        memcpy(reply + 3, next + 16 + next[1] * 16, 16);
+        if (board_uart_send(reply, sizeof(reply)))
+            status_pending = false;
+    }
+    #endif
+    uint32_t irq = __get_PRIMASK();
+    __disable_irq();
+    memcpy(debug_snapshot, next, sizeof(next));
+    __set_PRIMASK(irq);
+}
 
 static uint8_t frames[16][16], head, tail, count;
 static uint16_t dropped;
@@ -66,6 +192,10 @@ bool usb_modes_needs_apply(void) { return selected_mode() != requested; }
 void usb_modes_apply(void) {
     #if defined(BACCABLE_C1)
     requested = selected_mode();
+    ++generation;
+    command_token = generation;
+    pending_mask = 3;
+    attempts[0] = attempts[1] = 0;
     #endif
 }
 
@@ -159,6 +289,7 @@ static void switch_mode(uint8_t mode) {
 
 /* Maintain USB sessions and return to normal operation after disconnection or inactivity. */
 void usb_modes_process(void) {
+    publish_status();
     bool connected = hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED;
     #if defined(BACCABLE_C1)
     for (unsigned i = 0; i < 2; ++i)
@@ -193,7 +324,10 @@ void usb_modes_process(void) {
     }
     bool peer_capture = false;
     #if defined(BACCABLE_C1)
-    peer_capture = active == 1 && peer_mask;
+    for (unsigned peer = 0; peer < 2; ++peer)
+        if (active == 1 && (status_seen & (1U << peer)) && currentTime - status_time[peer] < 5000 &&
+            peer_status[peer][1] == 1 && peer_status[peer][5] == USBD_STATE_CONFIGURED)
+            peer_capture = true;
     #endif
     bool expired = !connected && !peer_capture && (currentTime - activation >= 10000);
     #ifdef ACT_AS_ELM327
@@ -203,6 +337,7 @@ void usb_modes_process(void) {
         requested = 0;
     #if defined(BACCABLE_C1)
         settings_state.usb_sniffer = settings_state.usb_elm327 = 0;
+        usb_modes_apply(); /* Cancel any unacknowledged activation with an OFF generation. */
     #endif
         switch_mode(0);
         return;

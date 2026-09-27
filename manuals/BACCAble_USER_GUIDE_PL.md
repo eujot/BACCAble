@@ -830,6 +830,35 @@ Jeśli mimo podłączenia wszystkich kabli przed włączeniem CAN pojawia się t
 sprawdź zgodność wersji firmware oraz raporty stanu C2/BH. Łącze między kontrolerami
 przenosi też tekst menu: jego awaria może ukryć menu, chociaż USB C1 nadal działa.
 
+### Diagnostyka wersji testowej z poprawką USB
+
+W wersji testowej z poprawką USB C1 wysyła polecenia oddzielnie do C2 i BH i czeka
+na ich potwierdzenia. Pojawienie się wszystkich portów może potrwać kilka sekund.
+Uruchomienie USB ma najwyżej trzy próby; błąd nie zatrzymuje zwykłej obsługi menu.
+Aby spróbować ponownie, wybierz OFF i wyjdź z Features, a następnie wybierz CAN
+i ponownie wyjdź z Features. Wgraj wszystkie trzy obrazy z tego samego zestawu;
+starszy firmware C2/BH nie obsługuje nowego protokołu.
+
+Po zaktualizowaniu Lab i zainstalowaniu opcjonalnych zależności `usb-status` uruchom:
+
+```sh
+baccable doctor --usb-status --samples 3
+```
+
+Polecenie odczytuje stan bez otwierania portu przechwytywania. `pending_ack` podaje
+kontrolery, które nie potwierdziły trybu. `fresh: false` oznacza stary odczyt albo
+brak odpowiedzi. `usb_stage: ready` oznacza uruchomienie USB, a `configured: true`
+— skonfigurowanie go przez komputer. `last_usb_error` zachowuje ostatni błąd aż do
+restartu, także po udanym odzyskaniu połączenia. W bezpośrednim odczycie z kontrolera
+`main_loop_ms` powinien rosnąć między próbkami. Sam nieruchomy ekran nie rozstrzyga,
+czy zatrzymał się C1, czy BH przestał otrzymywać nowy tekst.
+
+Przed zmianą trybu wysuń zamontowane dyski. Ostrzeżenie macOS o odłączeniu dysku
+nie potwierdza błędu CDC; sprawdź nowe porty i raport stanu. Instalację, diagnostykę
+i próbę powtarzalności opisuje
+[audyt USB i test w samochodzie](../docs/architecture/USB_DIAGNOSTICS.md#msc-to-cdc-failure-and-recovery-candidate-2026-09-27).
+Działanie tej wersji testowej w samochodzie wymaga jeszcze potwierdzenia.
+
 ### Diagnostyka zgodna z ELM
 
 Wybierz `USB mode: ELM327`, wyjdź z Features i połącz zgodny program

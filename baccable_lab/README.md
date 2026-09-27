@@ -53,3 +53,24 @@ confused with loss during the test.
 Hardware setup and the acceptance checklist are in [docs/HARDWARE_SETUP.md](docs/HARDWARE_SETUP.md)
 and [docs/CAPTURE.md](docs/CAPTURE.md). The parent project specification is
 in [../docs/baccable_lab/PROJECT.md](../docs/baccable_lab/PROJECT.md).
+
+## USB transition diagnostics (recovery candidate firmware)
+
+Install the matching candidate C1/C2/BH set and update Lab from its source checkout.
+In the existing Lab virtual environment:
+
+```sh
+python -m pip install -e '.[hardware,usb-status]'
+baccable doctor --usb-status --samples 3
+```
+
+PyUSB requires libusb (on macOS, `brew install libusb` if no backend is installed).
+The optional read-only EP0 request does not open CDC or consume capture records.
+It reports local and C1-cached peer USB stages, mode acknowledgements, reset flags,
+UART counters and main-loop snapshot time. Compare samples for progress and heed
+`fresh: false` on old peer records. Older firmware can stall this unsupported
+request; regular `baccable doctor` still works. No attached device or a failed
+control read returns status 2. A successful read does not itself certify all
+three capture buses; inspect `pending_ack`, freshness and configured states.
+See the [USB audit](../docs/architecture/USB_DIAGNOSTICS.md#msc-to-cdc-failure-and-recovery-candidate-2026-09-27)
+for field definitions and vehicle acceptance.

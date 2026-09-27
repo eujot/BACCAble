@@ -14,6 +14,9 @@ TelemetryState telemetry_state;
 RuntimeState runtime_state;
 UART_HandleTypeDef huart2;
 USBD_HandleTypeDef hUsbDeviceFS;
+uint32_t fake_primask;
+void usb_device_status(uint8_t out[8]) { memset(out, 0, 8); out[2] = hUsbDeviceFS.dev_state; }
+void board_uart_status(uint8_t out[5]) { memset(out, 0, 5); }
 static bool usb_serial, led_usb;
 void led_strip_set_usb(uint8_t enabled) { led_usb = enabled; }
 void HAL_GPIO_DeInit(void *port, uint32_t pins) {
@@ -414,6 +417,58 @@ static void test_usb_modes(void) {
     usb_modes_process();
     assert(!elm327_is_enabled() && !usb_modes_active());
 }
+/* Missing peers, stale acknowledgements and query-only polling must not cause
+ * an endless USB restart or exhaust retries when a UART queue rejects a poll. */
+static void test_usb_acknowledgements(void) {
+    settings_state.usb_sniffer = 1;
+    settings_state.usb_elm327 = 0;
+    usb_modes_apply();
+    uint8_t command[4], reply[16] = {0}, snapshot[64];
+    for (unsigned i = 0; i < 10; ++i) {
+        assert(usb_modes_poll(0, command) == 4 && command[2] == 1);
+        /* Queue rejects the command: no delivery was accepted. */
+    }
+    uint8_t token = command[3];
+    for (unsigned i = 0; i < 3; ++i) {
+        assert(usb_modes_poll(0, command) == 4 && command[2] == 1);
+        usb_modes_poll_queued(0, command);
+    }
+    for (unsigned i = 0; i < 10; ++i)
+        assert(usb_modes_poll(0, command) == 4 && command[2] == 255);
+    reply[0] = 1;
+    reply[2] = token - 1;
+    usb_modes_ack(0, reply);
+    usb_modes_process(); usb_modes_debug_read(snapshot);
+    assert(snapshot[3] == 3); /* Previous command's reply cannot acknowledge this one. */
+    reply[2] = token;
+    usb_modes_ack(0, reply);
+    usb_modes_process(); usb_modes_debug_read(snapshot);
+    assert(snapshot[3] == 2 && (snapshot[2] & 2));
+    settings_state.usb_sniffer = 0;
+    usb_modes_apply();
+    assert(usb_modes_poll(0, command) == 4 && command[2] == 0 && command[3] != token);
+    usb_modes_process();
+    now += 5001;
+    usb_modes_process(); usb_modes_debug_read(snapshot);
+    assert(!(snapshot[2] & 2)); /* Historical peer state is explicitly stale. */
+}
+static void test_usb_peer_capture_lease(void) {
+    settings_state.usb_sniffer = 1;
+    settings_state.usb_elm327 = 0;
+    usb_modes_apply(); usb_modes_process();
+    uint8_t peer[16] = {1, 1, 0, 3, 0, USBD_STATE_CONFIGURED};
+    now += 10001;
+    usb_modes_ack(0, peer);
+    usb_modes_process();
+    assert(usb_modes_active()); /* An actual C2-only CDC capture keeps C1 coordinating. */
+    peer[0] = peer[1] = 0; /* An MSC volume must not masquerade as a capture lease. */
+    usb_modes_peer(0, true);
+    usb_modes_ack(0, peer);
+    usb_modes_process();
+    assert(!usb_modes_active());
+    uint8_t command[4];
+    assert(usb_modes_poll(0, command) == 4 && command[2] == 0);
+}
 /* Reject a busy configuration send and expose lost remote replies to the client. */
 static void test_link_loss(void) {
     elmlink_init();
@@ -444,6 +499,8 @@ int main(void) {
         HOST_TEST(test_faults),
         HOST_TEST(test_elm),
         HOST_TEST(test_usb_modes),
+        HOST_TEST(test_usb_acknowledgements),
+        HOST_TEST(test_usb_peer_capture_lease),
         HOST_TEST(test_ibs),
         HOST_TEST(test_link_loss)
     };

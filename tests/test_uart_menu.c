@@ -64,6 +64,12 @@ void board_commands_dispatch(const uint8_t *message) {
     memcpy(received_frame, message, sizeof(received_frame));
     ++received;
 }
+void usb_modes_poll_queued(uint8_t peer, const uint8_t command[4]) { (void)peer; (void)command; }
+uint8_t usb_modes_poll(uint8_t peer, uint8_t command[4]) {
+    command[0] = peer ? BhBusIDgetStatus : C2BusID;
+    command[1] = peer ? 0 : C2cmdGetStatus;
+    return 2;
+}
 static void receive_bytes(const uint8_t *bytes, unsigned count) {
     for (unsigned i = 0; i < count; ++i) {
         assert(rx_remaining);
@@ -120,6 +126,25 @@ static void finish(void) {
     now += 251;
     runtime_state.all_processors_wakeup_time = now; /* Keep this test independent of background polls. */
 }
+static void test_uart_lost_completion(void) {
+    uint8_t status[5];
+    runtime_state.all_processors_wakeup_time = now;
+    display('X'); board_uart_process();
+    board_uart_status(status); assert(status[0]);
+    now += 10; board_uart_process();
+    board_uart_status(status); assert(status[0] && !status[3]);
+    now += 51; board_uart_process();
+    board_uart_status(status); assert(!status[0] && status[3] == 1);
+    now += 251;
+    display('Y'); board_uart_process();
+    assert(active[1] == 'Y'); finish();
+    result = HAL_BUSY;
+    display('Z'); board_uart_process();
+    now += 51; board_uart_process();
+    board_uart_status(status); assert(status[3] == 2);
+    result = HAL_OK; now += 251; board_uart_process();
+    assert(active[1] == 'Z'); finish();
+}
 static void test_uart_menu_behavior(void) {
     uart_init();
     runtime_state.all_processors_wakeup_time = now;
@@ -175,6 +200,7 @@ static void test_uart_menu_behavior(void) {
 int main(void) {
     const HostTest tests[] = {
         HOST_TEST(test_receive_gap_recovery),
+        HOST_TEST(test_uart_lost_completion),
         HOST_TEST(test_uart_menu_behavior)
     };
     host_tests_run("uart_menu", tests, sizeof(tests) / sizeof(tests[0]));

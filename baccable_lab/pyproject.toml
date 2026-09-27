@@ -11,6 +11,7 @@ dependencies = []
 
 [project.optional-dependencies]
 hardware = ["pyserial>=3.5"]
+usb-status = ["pyusb>=1.2"]
 test = ["pytest>=8"]
 
 [project.scripts]

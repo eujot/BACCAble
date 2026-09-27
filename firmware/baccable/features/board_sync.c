@@ -51,12 +51,6 @@ void board_sync_process(void) {
         break;
     case 6:
         command[0] = C2_Bh_BusID;
-        command[1] = C2_BH_CMD_USB_CAPTURE;
-        command[2] = settings_state.usb_sniffer;
-        length = 3;
-        break;
-    case 7:
-        command[0] = C2_Bh_BusID;
         command[1] =
             settings_state.has_function_enabled ? C2_Bh_cmdFunctHAS_Enabled : C2_Bh_cmdFunctHAS_Disabled;
         break;

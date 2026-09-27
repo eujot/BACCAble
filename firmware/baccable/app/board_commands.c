@@ -31,6 +31,9 @@ void board_commands_dispatch(const uint8_t *message) {
 #if defined(BACCABLE_C1)
         menu_action_reply(message[1]);
         switch (message[1]) {
+        case C1_CMD_USB_STATE:
+            usb_modes_ack(message[2], message + 3);
+            break;
         case C1_CMD_USB_PRESENCE:
             usb_modes_peer(message[2], message[3] == 1);
             break;
@@ -111,6 +114,9 @@ void board_commands_dispatch(const uint8_t *message) {
         case C2cmdToggleHas: // request to press HAS button for more consecutive messages
             comfort_state.has_button_press_requested = 5;
             break;
+        case BOARD_CMD_USB_STATE:
+            usb_modes_request(message[2], message[3]);
+            break;
         case C2cmdGetStatus:
             reply_version(C1cmdStatusC2);
             break;
@@ -126,6 +132,9 @@ void board_commands_dispatch(const uint8_t *message) {
     case BhBusID: // message directed to baccable connected to BH bus
 #if defined(BACCABLE_BH)
         switch (message[1]) {
+        case BOARD_CMD_USB_STATE:
+            usb_modes_request(message[2], message[3]);
+            break;
         case BHcmdOdometerBlinkDisable: // odometer blink disable request
             display_state.disable_odometer_blink = 1;
             break;

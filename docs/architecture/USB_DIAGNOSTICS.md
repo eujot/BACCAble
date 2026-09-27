@@ -236,3 +236,132 @@ CC/ACC state and fresh steering reports gate menu input on C1; BH receives scree
 content over UART. C1 serial enumeration alone proves neither BH health nor input
 health. UART TX has no ordinary lost-completion watchdog. No claim of on-car
 recovery or guaranteed three-port enumeration is made by host tests.
+
+## MSC-to-CDC failure and recovery candidate, 2026-09-27
+
+Verified baseline: beta-16 `eded486f0ab022cda3f87b99070b813c7d7de38b`,
+confirmed by the published BUILD_INFO.json (`beta-eded486`, GCC 15.3.Rel1).
+The user reports the same failure on beta-13, including one successful three-bus
+capture followed by repeated failures. All three images and USB cables were
+present before CAN activation. Neither late cable insertion nor a missing Lab
+reader explains the reported trigger.
+
+**Confirmed software defect:** `usb_device_stop()` called `USBD_Stop()` and then
+`USBD_DeInit()`. In the bundled ST core both functions deinitialize the class.
+The first MSC deinitialization clears `pClassData`; the second calls
+`MSC_BOT_DeInit()` and writes `bot_state` through NULL (address 0x8 in the host
+reproduction). ASan/UBSan reproduces the fault using the actual beta-16 USB
+core and MSC/BOT code and the exact two-call shutdown sequence. The relevant
+sources are identical in beta-13. On the MCU this invalid write can fault;
+a stopped BH cannot transmit the next screen even if C1 and its USB still run.
+This explains the observed asymmetry: ordinary C2/BH start MSC, ordinary C1 does
+not. The legacy HardFault handler loops forever. Error_Handler does not call
+uart_resume; that earlier chat diagnosis was incorrect.
+
+An earlier success is consistent with a different startup state: normal MSC is
+started only when PORRSTF is set. A warm reset without MSC startup can bypass the
+faulty shutdown path. This is a code-supported explanation, not proof of the
+power/reset history of the user's successful run. USB enumeration is not proof
+of main-loop progress. No hub-voltage/current measurements were available.
+
+Changes in this candidate:
+
+- Mask USB callbacks, close class endpoints before powering down the peripheral,
+  deinitialize only once,
+  tolerate partial/unconfigured MSC teardown, and mask the USB IRQ while class
+  resources change. Preserve UART and SysTick service during this transition.
+- Schedule a 100 ms detach and 2 ms reset through the main loop. Propagate low-level
+  init/start errors. Allow at most three initialization attempts, separated by
+  250 ms after failures, then leave a readable failed state. OFF cancels pending
+  work; OFF then CAN explicitly starts another attempt budget. The last USB
+  error remains available until reboot, including after successful recovery.
+- Replace the unacknowledged capture broadcast with addressed requests using the
+  existing C1 status-poll scheduler. Each peer gets at most three accepted UART
+  enqueues per generation. Pending acknowledgements are distinct from ready or
+  configured USB. Status queries do not restart expired sessions. Mode expiry
+  sends a fresh OFF generation. Only confirmed peer CDC capture extends the C1
+  capture lease; a mounted MSC disk is not a capture connection.
+- Remove the old MSC init callback's unsolicited UART notification/window.
+  Presence is queued from the main loop under ordinary C1 arbitration.
+- Recover board UART TX that remains active or HAL-busy for over 50 ms. A valid
+  19/25-byte frame takes under 7 ms. Never automatically replay an interrupted
+  vehicle action. Status/capture commands use their bounded retry, and menu text
+  is refreshed normally. This is not a cure for an interrupt storm that prevents
+  the main loop from executing.
+
+### Read-only status protocol
+
+`baccable doctor --usb-status --samples 3` uses PyUSB/libusb and a device-recipient
+vendor IN control request (`bmRequestType=0xc0`, `bRequest=0x5a`, value/index zero).
+It does not open/claim CDC interfaces, consume capture bytes, or change USB mode.
+Install the optional Lab `usb-status` extra. macOS requires a working libusb
+backend. Firmware without this request reports an unsupported/stalled transfer;
+that alone does not imply a frozen MCU. Ordinary doctor remains unchanged.
+
+The response is 64 bytes, protocol version 1:
+
+| Offset | Meaning |
+| --- | --- |
+| 0 | Protocol version (1) |
+| 1 | Source: C1=0, C2=1, BH=2, CAN=3 |
+| 2 | Fresh-status mask: C1 bit 0, C2 bit 1, BH bit 2 |
+| 3 | Unacknowledged command mask: C2 bit 0, BH bit 1 |
+| 4–7 | Last main-loop snapshot time, little-endian milliseconds |
+| 8–11 | C2/BH status ages, uint16 milliseconds; 65535 means unseen/saturated |
+| 12–14 | C2/BH accepted delivery counts, current C1 generation |
+| 16–31, 32–47, 48–63 | C1, C2, BH status records |
+
+Each 16-byte record contains requested/active modes (0 OFF, 1 CAN, 2 C1 ELM),
+accepted command token, USB stage, last USB error, USB device state, start-attempt
+count, four-byte raw RCC reset flags, UART TX-active flag, two-byte UART error
+count and two-byte TX-recovery count. Stages are OFF=0, DETACH=1, RESET=2, READY=3,
+FAILED=4; errors are none=0, init=1, class=2, interface=3, start=4, speed=5.
+Device state 3 means configured. READY means the controller started, not that the
+host configured it. Reset flags are captured before application initialization
+and then cleared on every role; counters/errors describe the current boot.
+C1 caches auxiliary responses; records older than five seconds are not fresh.
+Compare consecutive `main_loop_ms` snapshots on a directly connected device to
+check progress. An advancing C1 timestamp with stale BH status localizes a peer
+or link failure without claiming BH's last cached state is current.
+
+### Vehicle acceptance procedure
+
+This candidate has software validation, not vehicle acceptance. Use its matching
+C1/C2/BH set, the original vehicle settings/display width, and record the build ID.
+Do not mix it with old auxiliary firmware: addressed capture requests are new.
+
+1. Park the car, leave CC/ACC off as in the reported reproduction, and connect all
+   three USB cables. Record `system_profiler SPUSBDataType`, `baccable doctor`,
+   and whether the menu responds. Eject mounted C2/BH volumes before switching.
+   macOS's warning when switching a still-mounted volume is separate from CDC
+   enumeration failure; ejecting alone did not repair the old NULL write.
+2. Select CAN and leave Features. After five seconds run
+   `baccable doctor --usb-status --samples 3`. Require three correctly identified
+   serial devices, fresh C2/BH records, empty pending_ack, active mode 1 and USB
+   device state 3. Check that directly read main_loop_ms advances on all boards.
+   Verify NEXT/PREVIOUS/BACK while no capture client has opened a port.
+3. Capture all three buses for ten minutes. Navigate the menu and play/change radio
+   tracks. Require advancing frame counts on every active bus, readable menu and
+   retained/reported losses. Zero software-ring loss does not prove zero hardware
+   FIFO loss. Save doctor output before/during/after capture with the session.
+4. Stop capture and choose OFF. Verify menu navigation and return to normal MSC
+   where enabled. Repeat OFF/CAN ten times and check that ports and menu recover
+   every time, without a full power removal. Run doctor again after each cycle.
+5. Repeat with C1 alone and a C2-only or BH-only capture, then all three again.
+   Disconnect/reconnect one auxiliary USB both before and after the ten-second
+   timeout; use OFF then CAN to rearm an expired session. Other connected streams
+   and menu must continue. Recheck startup with CAN saved across a warm restart
+   and a full power removal. Do not drive USB or CAN pins to inject electrical faults.
+6. If the symptom remains, preserve USB enumeration, all diagnostic samples,
+   build ID, exact action/time, LED behavior and capture session. A missing CDC
+   with a fresh peer FAILED/READY record differs from an entirely stale peer.
+   Measure supply/reset behavior if the new evidence points there; do not blame
+   the hub without measurements.
+
+Host coverage uses the real ST core/MSC/BOT/CDC sources with hardware stubs,
+plus mode/acknowledgement, UART timeout and Lab decoder regressions. It covers
+repeated configured/unconfigured transitions, USB reset, partial init failure,
+start failure/retry exhaustion, cancellation, tick wrap, read-only EP0 requests,
+missing/stale acknowledgements, queue rejection, expiry/rearm, C2-only capture
+leases and HAL-busy/lost completion. It cannot certify physical enumeration,
+voltage stability or radio coexistence in the vehicle.

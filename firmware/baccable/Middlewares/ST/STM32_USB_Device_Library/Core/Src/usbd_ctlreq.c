@@ -111,6 +111,14 @@ static uint8_t USBD_GetLen(uint8_t *buf);
 * @param  req: usb request
 * @retval status
 */
+/* Application hook for read-only device diagnostics, independent of CDC data. */
+__weak USBD_StatusTypeDef USBD_VendorRequest(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req)
+{
+  UNUSED(pdev);
+  UNUSED(req);
+  return USBD_FAIL;
+}
+
 USBD_StatusTypeDef  USBD_StdDevReq(USBD_HandleTypeDef *pdev,
                                    USBD_SetupReqTypedef *req)
 {
@@ -118,9 +126,15 @@ USBD_StatusTypeDef  USBD_StdDevReq(USBD_HandleTypeDef *pdev,
 
   switch (req->bmRequest & USB_REQ_TYPE_MASK)
   {
-    case USB_REQ_TYPE_CLASS:
     case USB_REQ_TYPE_VENDOR:
-      pdev->pClass->Setup(pdev, req);
+      if (USBD_VendorRequest(pdev, req) != USBD_OK)
+        USBD_CtlError(pdev, req);
+      break;
+    case USB_REQ_TYPE_CLASS:
+      if (pdev->pClass != NULL && pdev->pClassData != NULL)
+        pdev->pClass->Setup(pdev, req);
+      else
+        USBD_CtlError(pdev, req);
       break;
 
     case USB_REQ_TYPE_STANDARD:
