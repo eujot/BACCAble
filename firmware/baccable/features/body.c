@@ -5,20 +5,70 @@
 
 /* Preserve the established IPC pacing while avoiding redundant text fragments. */
 #define DISPLAY_FRAGMENT_INTERVAL_MS 50U
-#define DISPLAY_KEEPALIVE_INTERVAL_MS 500U
+#define DISPLAY_KEEPALIVE_INTERVAL_MS 1000U
 #define DISPLAY_FACTORY_SETTLE_MS 250U
+#define DISPLAY_FACTORY_GUARD_MS 100U
+#define DISPLAY_FACTORY_MAX_DEFER_MS 1000U
+#define DISPLAY_FACTORY_MAX_FRAMES 32U
 
 #if defined(BACCABLE_BH)
 
 static DisplayStream screen;
 static uint32_t last_full_refresh;
 static uint32_t factory_last_frame_time;
-static bool factory_message_pending;
+static uint32_t factory_defer_started;
+static uint8_t factory_staging[DISPLAY_FACTORY_MAX_FRAMES][8];
+static uint8_t factory_saved[DISPLAY_FACTORY_MAX_FRAMES][8];
+static uint8_t factory_next, factory_total, factory_code, factory_saved_total, factory_restore_index;
+static bool factory_collecting, factory_saved_valid, factory_interrupted, factory_open;
+static bool factory_bounded_restart, factory_restore, menu_active;
+
+static bool nonblank(const uint8_t *text, unsigned length) {
+    for (unsigned i = 0; i < length; ++i) {
+        if (text[i] != ' ')
+            return true;
+    }
+    return false;
+}
+
+static bool audio_text_code(uint8_t info_code) {
+    /* Vehicle media inputs and the observed CarPlay text context. */
+    return (info_code >= 0x05 && info_code <= 0x09) || info_code == 0x21;
+}
 
 /* Accept new dashboard content when BACCAble display output is allowed. */
 void body_display_submit(const uint8_t *text) {
-    if (!chassis_state.stability_inverted)
-        display_stream_submit(&screen, text);
+    if (chassis_state.stability_inverted)
+        return;
+    if (!nonblank(text, DASHBOARD_MESSAGE_MAX_LENGTH)) {
+        menu_active = false;
+        factory_interrupted = false;
+        display_stream_reset(&screen);
+        if (factory_saved_valid) {
+            factory_restore = true;
+            factory_restore_index = 0;
+        } else {
+            uint8_t blank[DISPLAY_OUTPUT_LENGTH];
+            memset(blank, ' ', sizeof(blank));
+            display_stream_submit(&screen, blank);
+        }
+        return;
+    }
+
+    uint8_t output[DISPLAY_OUTPUT_LENGTH];
+    memset(output, ' ', sizeof(output));
+    unsigned length = DASHBOARD_MESSAGE_MAX_LENGTH;
+    while (length && text[length - 1] == ' ')
+        --length;
+    memcpy(output, text, length);
+    output[length] = '\r';
+    memcpy(output + length + 1, DISPLAY_FOOTER, DISPLAY_FOOTER_LENGTH);
+    bool opening = !menu_active;
+    menu_active = true;
+    factory_restore = false;
+    display_stream_submit(&screen, output);
+    if (opening)
+        display_stream_restart(&screen);
 }
 
 /* Restore BACCAble content after factory display activity when allowed. */
@@ -27,13 +77,48 @@ void body_display_refresh(void) {
         display_stream_refresh(&screen);
 }
 
-/* Restore the menu after a complete factory-display message, not after every fragment. */
-void body_display_factory_frame(uint8_t total_frame, uint8_t frame_number) {
+/* Track complete media text and defer menu recovery until factory traffic settles. */
+void body_display_factory_frame(const uint8_t data[8], uint8_t dlc) {
+    if (dlc < 2)
+        return;
+    uint8_t total_frame = (data[0] >> 3) & 0x1F;
+    uint8_t frame_number = ((data[0] & 0x07) << 2) | (data[1] >> 6);
+    uint8_t info_code = data[1] & 0x3F;
     factory_last_frame_time = currentTime;
-    factory_message_pending = true;
-    if (frame_number >= total_frame) {
-        body_display_refresh();
-        factory_message_pending = false;
+    factory_open = frame_number < total_frame;
+    if (menu_active && !factory_interrupted) {
+        factory_interrupted = true;
+        factory_defer_started = currentTime;
+        factory_bounded_restart = false;
+    }
+    if (factory_restore)
+        factory_restore = false; /* The radio has taken over the display itself. */
+
+    /* Only complete text transfers select a source or replace the saved radio text. */
+    if (dlc != 8 || !total_frame || !audio_text_code(info_code) ||
+        total_frame >= DISPLAY_FACTORY_MAX_FRAMES) {
+        factory_collecting = false;
+        return;
+    }
+    if (frame_number == 0) {
+        factory_collecting = true;
+        factory_total = total_frame;
+        factory_code = info_code;
+        factory_next = 0;
+    }
+    if (!factory_collecting || total_frame != factory_total || info_code != factory_code ||
+        frame_number != factory_next) {
+        factory_collecting = false;
+        return;
+    }
+    memcpy(factory_staging[factory_next], data, 8);
+    ++factory_next;
+    if (frame_number == total_frame) {
+        memcpy(factory_saved, factory_staging, (total_frame + 1U) * 8U);
+        factory_saved_total = total_frame;
+        factory_saved_valid = true;
+        factory_collecting = false;
+        display_state.telematic_display_info_field_info_code = info_code;
     }
 }
 
@@ -42,6 +127,7 @@ void body_init() {
     // let's open the can bus because we may need data
     can_set_bitrate(CAN_BITRATE_125K); // set can speed to 125kpbs
     can_enable();                      // enable can port
+    display_state.telematic_display_info_field_total_frame_number = DISPLAY_FRAGMENT_COUNT - 1U;
 
     // prepare msg to send:
     // total frame number is on byte 0 from bit 7 to 3
@@ -74,26 +160,50 @@ void body_init() {
 void body_process() {
     if (chassis_state.stability_inverted) {
         display_stream_reset(&screen);
-        factory_message_pending = false;
+        menu_active = false;
+        factory_interrupted = false;
+        factory_restore = false;
     } else {
-        if (factory_message_pending && currentTime - factory_last_frame_time >= DISPLAY_FACTORY_SETTLE_MS) {
-            /* A lost final fragment must not leave the BACCAble screen hidden indefinitely. */
-            body_display_refresh();
-            factory_message_pending = false;
+        if (factory_restore &&
+            currentTime - display_state.last_sent_telematic_display_info_msg_time >= DISPLAY_FRAGMENT_INTERVAL_MS) {
+            if (can_tx(&display_state.telematic_display_info_msg_header,
+                       factory_saved[factory_restore_index]) == HAL_OK) {
+                display_state.last_sent_telematic_display_info_msg_time = currentTime;
+                if (factory_restore_index++ == factory_saved_total)
+                    factory_restore = false;
+            }
         }
-        /* Do not pause menu fragments while the radio is still sending text. */
-        if (currentTime - display_state.last_sent_telematic_display_info_msg_time >=
+        if (factory_interrupted) {
+            bool settled = (!factory_open && currentTime - factory_last_frame_time >= DISPLAY_FACTORY_GUARD_MS) ||
+                           currentTime - factory_last_frame_time >= DISPLAY_FACTORY_SETTLE_MS;
+            if (settled) {
+                display_stream_restart(&screen);
+                last_full_refresh = currentTime;
+                factory_interrupted = false;
+            } else if (currentTime - factory_defer_started >= DISPLAY_FACTORY_MAX_DEFER_MS &&
+                       !factory_bounded_restart) {
+                /* Continuous factory traffic cannot suppress the menu forever. */
+                display_stream_restart(&screen);
+                factory_bounded_restart = true;
+            }
+            if (!settled && !factory_bounded_restart)
+                goto done;
+        }
+        if (!factory_restore && currentTime - display_state.last_sent_telematic_display_info_msg_time >=
             DISPLAY_FRAGMENT_INTERVAL_MS) {
-            /* Changing readings must not postpone full recovery of overwritten text. */
-            if (currentTime - last_full_refresh >= DISPLAY_KEEPALIVE_INTERVAL_MS) {
+            /* Reassert the menu even when neither C1 nor the radio changed it. */
+            if (menu_active && currentTime - last_full_refresh >= DISPLAY_KEEPALIVE_INTERVAL_MS) {
                 display_stream_refresh(&screen);
                 last_full_refresh = currentTime;
             }
             uint8_t fragment, text[3];
             if (display_stream_peek(&screen, &fragment, text)) {
                 uint8_t *data = display_state.telematic_display_info_msg_data;
+                data[0] = (data[0] & ~0xF8) |
+                          ((display_state.telematic_display_info_field_total_frame_number << 3) & 0xF8);
                 data[0] = (data[0] & ~0x07) | ((fragment >> 2) & 0x07);
-                data[1] = (data[1] & ~0xC0) | ((fragment << 6) & 0xC0);
+                data[1] = ((fragment << 6) & 0xC0) |
+                          (display_state.telematic_display_info_field_info_code & 0x3F);
                 data[3] = text[0];
                 data[5] = text[1];
                 data[7] = text[2];
@@ -105,6 +215,7 @@ void body_process() {
         }
     }
 
+done:
     parking_mirrors_process();
 }
 

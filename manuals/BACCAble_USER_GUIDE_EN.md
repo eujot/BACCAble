@@ -1,7 +1,8 @@
 # BACCAble — in-car user guide
 
-This guide describes the dashboard menu and vehicle functions in **v5-beta-13**
-(release source `294818a`). It starts after BACCAble has been installed and
+This guide describes the current dashboard-menu firmware source. The display
+changes described below are awaiting a vehicle test and a new release after
+**v5-beta-17**. It starts after BACCAble has been installed and
 connected to the vehicle. Installation, wiring and firmware flashing are outside
 its scope. Use a matching C1/C2/BH firmware set.
 
@@ -135,6 +136,17 @@ The main menu order is fixed. Page availability follows the selected engine,
 The instrument panel has either 18 or 24 text positions, depending on the
 firmware build. Labels and live screens can differ to make room for values.
 For example, `Batt charge BCM` opens a `Batt BCM SOC` reading.
+
+The menu appears on the first text line. A temporary `BACCAble beta` caption
+appears on the smaller second line. BH reuses the last complete media-text
+source observed on the vehicle bus, such as the vehicle USB input or CarPlay,
+instead of switching the display to the Bluetooth icon. Before any media text
+has been observed, BH uses its configured fallback source. It sends the full
+menu again about once per second even when the radio sends no new text. After
+a radio title/artist message, it waits briefly and restarts the menu from its
+first fragment. Closing the menu restores the last complete radio text BH saw;
+new radio text can replace it at any time. Physical IPC behavior still needs
+vehicle verification.
 
 | Mark or message | Meaning and response |
 | --- | --- |
@@ -822,7 +834,7 @@ commands and bus behavior. Use USB mode OFF for ordinary operation when finished
 | --- | --- |
 | RES does not open the menu | Ignition/panel awake; CC and ACC both off; release controls, then hold RES for 1.2 s. Check C1 connection/firmware. ELM diagnostics can temporarily own processing. |
 | Menu skips or stops reacting | Distinguish gentle from strong presses. Release after a stream interruption. Inspect Information's Reports/Gaps/Input age and C2/BH status. |
-| Radio text remains on the display | BH periodically resends the complete BACCAble text, including while values change, and requests restoration after factory radio messages without pausing menu fragments during continuing radio traffic. If the menu remains absent, check the BH link and firmware. |
+| Radio text remains on the display | BH should resend the complete two-line BACCAble message about once per second and restart it after a radio title/artist transfer. It follows the last observed media-text source. If the menu remains absent, check the BH link, matching firmware and the actual BH CAN output; host capture records received frames, not BH's own transmissions. |
 | A page or action is missing | Correct engine profile; Shown pages; Advanced pages; action permission in Features. A hidden favorite may still occupy its saved slot under another profile. |
 | `No favorites` / `No pages` | Add compatible favorites or restore page visibility. Long RES still returns. |
 | A value shows `--` | Wait for fresh reports, check ignition/engine conditions and ECU compatibility. USB diagnostics can suspend normal queries. A displayed catalog entry is not a guarantee that the ECU implements it. |

@@ -155,7 +155,7 @@ static unsigned drain_display(DisplayStream *stream, uint8_t *visible) {
 /* Check latest-target updates, retry ownership, fairness and restoration at both widths. */
 static void test_display(void) {
     DisplayStream stream = {0};
-    uint8_t a[DASHBOARD_MESSAGE_MAX_LENGTH], b[sizeof(a)], c[sizeof(a)], visible[sizeof(a)];
+    uint8_t a[DISPLAY_OUTPUT_LENGTH], b[sizeof(a)], c[sizeof(a)], visible[sizeof(a)];
     uint8_t part, chars[3];
     memset(a, 'A', sizeof(a));
     memset(b, 'B', sizeof(b));

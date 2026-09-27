@@ -45,7 +45,7 @@ void display_stream_accept(DisplayStream *stream) {
     unsigned i = stream->fragment;
     memcpy(stream->sent + i * DISPLAY_FRAGMENT_SIZE, stream->offered, DISPLAY_FRAGMENT_SIZE);
     stream->known |= 1U << i;
-    stream->forced &= (uint8_t)~(1U << i);
+    stream->forced &= (uint16_t)~(1U << i);
     stream->cursor = (i + 1) % DISPLAY_FRAGMENT_COUNT;
     stream->offering = false;
     update_dirty(stream);
@@ -68,4 +68,13 @@ void display_stream_refresh(DisplayStream *stream) {
             return;
         }
     }
+}
+
+/* A factory message interrupted this transfer: resend every part from zero. */
+void display_stream_restart(DisplayStream *stream) {
+    if (!stream->valid)
+        return;
+    stream->cursor = 0;
+    stream->forced = (1U << DISPLAY_FRAGMENT_COUNT) - 1U;
+    update_dirty(stream);
 }

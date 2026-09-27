@@ -33,14 +33,30 @@ to automatically flash hardware or publish every future change.
 
 ## Verified baseline and deployment
 
-CI duplicate-run reduction, **2026-09-28**, branch `fix/ci-single-pr-run`,
-based on `origin/master` at `7717505`: the CI workflow's direct `push` trigger
-now covers `master` only. Pull requests still run the full required CI, direct
-master updates still run CI, and release/diagnostic reusable calls remain
-unchanged. This removes the duplicate push and pull-request runs observed for
-commit `ca1bef0` on PR #39 (runs 36355278991 and 36355299930). The change is
-workflow-only; no firmware or vehicle test is involved. GitHub Actions must
-confirm one PR run on this branch and a master push after merge.
+CI duplicate-run reduction, **2026-09-28** ([PR #40](https://github.com/eujot/BACCAble/pull/40)),
+merged to `master` as `3c68b7a`: direct `push` CI now covers `master` only.
+Pull requests still run CI, and release/diagnostic reusable calls are unchanged.
+This removes the duplicate push and pull-request runs observed for commit
+`ca1bef0` on PR #39 (runs 36355278991 and 36355299930). The branch produced
+one successful PR run (36355667493) and no branch-push run; the merged commit
+passed master push CI (36355833867). This change affects workflows only.
+
+IPC menu visibility candidate, **2026-09-28**, branch
+`fix/ipc-current-source-menu`, based on `origin/master` at `7717505` after
+beta-17. BH now learns the display source from complete factory media text
+transfers (including the observed USB `0x06` and CarPlay `0x21` contexts),
+restarts a full menu transfer after factory text, periodically retransmits it
+without new radio frames, and adds a temporary `BACCAble beta` second line.
+On close it replays the last complete factory media message. Incomplete text,
+blank control frames and CAN enqueue failures have host regression coverage.
+Both user guides and the menu transport guide describe this candidate.
+Native Apple Clang ASan/UBSan host tests and all four C1/C2/BH/CAN ARM
+lint/builds with Arm GNU 15.2.Rel1 passed. No vehicle test or flash has been
+performed. The IPC's actual handling of a two-line BACCAble message under
+each source, its ownership priority during sustained radio traffic, and menu
+latency require a car test. Before a complete media transfer has been seen,
+the existing configured source remains the fallback. An isolated pull request
+contains this change; it is not part of beta-17.
 
 USB recovery fix and beta-17 release, **2026-09-27** ([PR #37](https://github.com/eujot/BACCAble/pull/37)):
 

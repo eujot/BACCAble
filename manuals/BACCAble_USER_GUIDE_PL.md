@@ -1,7 +1,8 @@
 # BACCAble — instrukcja obsługi w samochodzie
 
-Ta instrukcja opisuje menu na zestawie wskaźników i funkcje dostępne w wersji
-**v5-beta-13** (kod wydania: `294818a`). Dotyczy obsługi urządzenia już zamontowanego
+Ta instrukcja opisuje menu na zestawie wskaźników i funkcje w bieżącym kodzie
+firmware. Opisane niżej zmiany wyświetlania wymagają jeszcze próby w samochodzie
+i nowego wydania po **v5-beta-17**. Instrukcja dotyczy urządzenia już zamontowanego
 i podłączonego do samochodu. Nie obejmuje montażu, okablowania ani wgrywania
 oprogramowania. Kontrolery C1, C2 i BH powinny mieć pasujący do siebie zestaw
 oprogramowania z tego samego wydania.
@@ -148,6 +149,17 @@ Zależnie od wgranej wersji oprogramowania wyświetlacz wykorzystuje 18 lub 24
 pozycje tekstowe. Nazwa na liście może różnić się od podpisu bieżącego odczytu,
 aby zrobić miejsce na wartości. Na przykład strona `Batt charge BCM` wyświetla
 odczyt podpisany `Batt BCM SOC`.
+
+Menu pojawia się w pierwszej linii tekstu. W mniejszej drugiej linii widnieje
+tymczasowy napis `BACCAble beta`. BH używa źródła ostatniego kompletnego tekstu
+multimediów odebranego z magistrali samochodu, np. USB auta albo CarPlay, więc
+nie przełącza ikony na Bluetooth. Zanim BH odbierze taki tekst, korzysta ze
+źródła zapasowego ustawionego w firmware. Ponawia całe menu mniej więcej raz
+na sekundę, także gdy radio nie wysyła nowych ramek. Po wiadomości z tytułem
+i wykonawcą czeka krótko i zaczyna wysyłanie menu od pierwszego fragmentu.
+Po zamknięciu menu przywraca ostatni kompletny tekst radia, który odebrał;
+nowy tekst radia może go zastąpić. Działanie na ekranie samochodu wymaga jeszcze
+sprawdzenia.
 
 | Symbol lub komunikat | Znaczenie i sposób obsługi |
 | --- | --- |
@@ -880,7 +892,7 @@ Po zakończeniu używaj USB mode OFF do zwykłej pracy.
 | --- | --- |
 | RES nie otwiera menu | Włączony zapłon i aktywny zestaw wskaźników; CC i ACC wyłączone. Puść przyciski, a potem przytrzymaj RES przez 1,2 s. Sprawdź połączenie i oprogramowanie C1. Diagnostyka ELM może chwilowo wstrzymywać obsługę menu. |
 | Menu przeskakuje albo przestaje reagować | Rozróżniaj lekkie i mocne naciśnięcia. Po przerwie w komunikacji puść przycisk. W Information sprawdź Reports/Gaps/Input age oraz stan C2/BH. |
-| Na wyświetlaczu zostaje tekst radia | BH okresowo ponawia cały tekst BACCAble, również przy zmieniających się odczytach, i zleca odświeżenie po komunikatach radia, bez wstrzymywania fragmentów menu przy ciągłym tekście radia. Jeśli menu nadal nie widać, sprawdź łącze BH i firmware. |
+| Na wyświetlaczu zostaje tekst radia | BH powinien ponawiać cały dwuliniowy komunikat BACCAble mniej więcej raz na sekundę i zaczynać go od początku po wiadomości radia. Używa źródła ostatniego odebranego tekstu multimediów. Jeśli menu nadal nie widać, sprawdź łącze BH, zgodność firmware i ramki nadawane przez BH; capture na komputerze zapisuje ramki odebrane, nie własną transmisję BH. |
 | Brakuje strony lub akcji | Sprawdź profil silnika, Shown pages, Advanced pages oraz ustawienie udostępniające akcję w Features. Ukryta strona z innego profilu może nadal zajmować miejsce w ulubionych. |
 | `No favorites` / `No pages` | Dodaj zgodne ulubione lub przywróć widoczność stron. Długie RES nadal pozwala wrócić. |
 | Odczyt pokazuje `--` | Poczekaj na aktualne dane, sprawdź stan zapłonu/silnika i obsługę przez ECU. Diagnostyka USB może wstrzymywać zwykłe zapytania. Obecność strony nie gwarantuje, że sterownik obsługuje jej parametr. |
