@@ -1,6 +1,6 @@
 # BACCAble action plan and agent handoff
 
-Last updated: **2026-09-27** (dated verification boundaries below). This is the single source of planned work,
+Last updated: **2026-09-28** (dated verification boundaries below). This is the single source of planned work,
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
@@ -32,6 +32,15 @@ PR count or broad rewrite is needed. This handoff is a backlog, not an instructi
 to automatically flash hardware or publish every future change.
 
 ## Verified baseline and deployment
+
+CI duplicate-run reduction, **2026-09-28**, branch `fix/ci-single-pr-run`,
+based on `origin/master` at `7717505`: the CI workflow's direct `push` trigger
+now covers `master` only. Pull requests still run the full required CI, direct
+master updates still run CI, and release/diagnostic reusable calls remain
+unchanged. This removes the duplicate push and pull-request runs observed for
+commit `ca1bef0` on PR #39 (runs 36355278991 and 36355299930). The change is
+workflow-only; no firmware or vehicle test is involved. GitHub Actions must
+confirm one PR run on this branch and a master push after merge.
 
 USB recovery fix and beta-17 release, **2026-09-27** ([PR #37](https://github.com/eujot/BACCAble/pull/37)):
 
