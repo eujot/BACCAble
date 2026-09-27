@@ -6,6 +6,7 @@
 #include "diagnostics/fault_reader.h"
 #include "features/periodic.h"
 #include "features/display_stream.h"
+#include "features/ipc_display_test.h"
 #include "app/powertrain.h"
 #include "diagnostics/parameter_cache.h"
 #include "diagnostics/parameter_request.h"
@@ -1142,6 +1143,7 @@ int main(void) {
         HOST_TEST(test_setup_ui),
         HOST_TEST(test_shared_renderers),
         HOST_TEST(test_navigation_contract),
+        HOST_TEST(test_ipc_display_menu),
         HOST_TEST(test_unnumbered_list_contract),
         HOST_TEST(test_immediate_reading_integrity),
         HOST_TEST(test_entry_renderer_bounds),

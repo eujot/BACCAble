@@ -33,6 +33,23 @@ to automatically flash hardware or publish every future change.
 
 ## Verified baseline and deployment
 
+IPC source/Unicode display experiment, **2026-09-28**, branch
+`feat/ipc-display-test` based on merged PR #39 (`383c8c8`): added a
+production-accessible `Information → IPC display test` submenu with explicit
+USB (`0x06`), Bluetooth (`0x09`) and observed CarPlay (`0x21`) codes. BH emits
+four fixed 16-bit character patterns: glyph samples, 48-character rulers for
+each line, and a two-line 24+24-character sample. The test is temporary,
+non-persistent, uses the existing coalesced screen UART channel, and resumes
+the normal menu on exit or after its idle timeout. Host tests cover navigation,
+exact CAN fragment numbering/UTF character bytes under each code, periodic
+retransmission, factory-text interruption, CAN retry, five-second command
+lease and return to the normal menu. Apple Clang ASan/UBSan host tests,
+menu-label checks, CI-script tests and four-flavor ARM lint/builds with
+Arm GNU 15.2.Rel1 pass. Both user guides and the menu
+transport guide describe how to compare the visible output. Vehicle acceptance
+is still open: actual glyph support, icon/source behavior, line clipping and
+BH TX must be observed on the car. No firmware has been flashed for this task.
+
 CI duplicate-run reduction, **2026-09-28** ([PR #40](https://github.com/eujot/BACCAble/pull/40)),
 merged to `master` as `3c68b7a`: direct `push` CI now covers `master` only.
 Pull requests still run CI, and release/diagnostic reusable calls are unchanged.

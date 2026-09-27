@@ -44,3 +44,7 @@ complete USB/CarPlay source adoption, rejection of incomplete transfers,
 radio/menu separation with bounded deferral, CAN enqueue retry, and replay of
 the previous radio text when the menu closes. The suite validates generated
 frames and state transitions, not IPC arbitration or visible pixels.
+The IPC display experiment also checks source-specific `0x090` headers,
+16-bit glyph bytes, complete ordered transfers, 48-character line rulers and
+normal-menu recovery after the diagnostic screen. It also checks radio-text
+interruption, CAN queue retry and the command lease that releases a stale test.

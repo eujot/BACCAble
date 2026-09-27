@@ -62,6 +62,8 @@ static void test_navigation_contract(void) {
                 assert(!strcmp(original, screen));
                 menu_event(MENU_NEXT);
             }
+            assert(strstr(screen, "IPC display test"));
+            menu_event(MENU_NEXT);
 #ifdef MENU_DIAGNOSTICS
             expect_no_position();
             menu_event(MENU_SELECT);
@@ -75,6 +77,40 @@ static void test_navigation_contract(void) {
         menu_event(MENU_BACK);
         assert(!dashboard_state.baccable_dashboard_menu_visible);
     }
+}
+
+/* A diagnostic screen uses a coalesced binary UART packet and exits cleanly. */
+static void test_ipc_display_menu(void) {
+    fresh_contract();
+    menu_event(MENU_BACK);
+    for (unsigned i = 0; i < 4; ++i) menu_event(MENU_NEXT);
+    menu_event(MENU_SELECT);
+    for (unsigned i = 0; i < 9; ++i) menu_event(MENU_NEXT);
+    assert(strstr(screen, "IPC display test"));
+    menu_event(MENU_SELECT);
+    assert(strstr(screen, "USB source"));
+    menu_event(MENU_NEXT);
+    assert(strstr(screen, "Bluetooth source"));
+    menu_event(MENU_SELECT); /* Select Bluetooth without starting a test. */
+    menu_event(MENU_NEXT);
+    menu_event(MENU_NEXT);
+    assert(strstr(screen, "UTF glyphs"));
+    menu_event(MENU_SELECT);
+    assert((uint8_t)screen[0] == IPC_TEST_SENTINEL);
+    assert((uint8_t)screen[1] == 0x09 && (uint8_t)screen[2] == 0);
+    menu_event(MENU_NEXT);
+    assert((uint8_t)screen[1] == 0x09 && (uint8_t)screen[2] == 1);
+    menu_event(MENU_BACK);
+    assert(strstr(screen, "UTF glyphs"));
+    menu_event(MENU_BACK);
+    assert(strstr(screen, "IPC display test"));
+    assert((uint8_t)screen[0] != IPC_TEST_SENTINEL);
+    menu_event(MENU_SELECT);
+    menu_event(MENU_SELECT);
+    assert((uint8_t)screen[0] == IPC_TEST_SENTINEL);
+    now += 60001;
+    menu_process();
+    assert((uint8_t)screen[0] != IPC_TEST_SENTINEL && menu_parameters_active());
 }
 
 /* Browse visible peers without prefixes, including temporarily unavailable actions. */

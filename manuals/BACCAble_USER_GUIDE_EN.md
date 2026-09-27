@@ -124,7 +124,7 @@ Main menu
 │  ├─ Shown pages            Show/hide pages in Readings
 │  ├─ Favorite order         Arrange Favorites
 │  └─ Sort order             Grouped or alphabetical reading lists
-└─ Information               Versions, configuration and input status
+└─ Information               Versions, input status and IPC display test
 ```
 
 The main menu order is fixed. Page availability follows the selected engine,
@@ -511,8 +511,8 @@ disable the override; otherwise the menu displays `! Stop IBS first`.
 
 ## Information
 
-These pages are read-only. Gentle up/down moves through them; short RES does not
-toggle the displayed state.
+The status pages are read-only. Gentle up/down moves through them; short RES does
+not toggle their state. The final `IPC display test` entry opens a test submenu.
 
 | Page, in order | Meaning |
 | --- | --- |
@@ -525,11 +525,34 @@ toggle the displayed state.
 | `Gaps:` | Count of interruptions detected in the input report stream. |
 | `Max gap:…ms` | Longest observed input-report interval in milliseconds. |
 | `Input age:…ms` | Time since the last input report; `--` if none is available. |
+| `> IPC display test` | Open source-specific character and line-length tests on the IPC. |
 
 C2/BH version replies older than about five seconds are treated as stale. Input
 counters describe menu controls, **not CAN capture frame counts**. Special builds
-with menu diagnostics may add an `IPC diag` service page; this is not part of the
-ordinary release menu.
+with menu diagnostics may also add an `IPC diag` service page.
+
+For an IPC test, park safely, open `Information → IPC display test`, and choose
+`USB source`, `Bluetooth source`, or `CarPlay source` with short RES. The selected
+entry has the usual checked mark. This selects only the **display-message code**
+(`0x06`, `0x09`, or the `0x21` observed during the CarPlay capture); it does not
+change the vehicle's audio source. Run the same four tests under each code:
+
+| Test entry | Text sent by BH | What to inspect |
+| --- | --- | --- |
+| `UTF glyphs` | First line `UTF A: ° ± × Ą Ł`; second line `UTF B: • € Ω Ж 中` | Which 16-bit characters the IPC can draw under this source. A missing glyph does not prove the CAN transfer failed. |
+| `Line 1 length` | A 48-character ruler starting `123456789A123456789B…` on line one; `L1: 48 chars` on line two | Where the first line clips, wraps or scrolls. `A`, `B`, `C`, `D` mark positions 10, 20, 30, 40. |
+| `Line 2 length` | `L2: 48 chars` on line one; the same 48-character ruler on line two | Where the smaller line clips, wraps or scrolls. |
+| `Both lines` | `TOP:12345678901234567890` and `BOTTOM:12345678901234567` | Whether both 24-character lines coexist and how each is rendered. |
+
+Short RES or gentle up/down changes to the next/previous test while its pattern
+is on screen. Hold RES to return to the test list; hold it again to return to
+Information. The test ends automatically after about 60 seconds without input.
+BH repeats the selected complete pattern about every three seconds and resumes
+it after radio text. If C1's test commands stop reaching BH, BH releases the
+test after five seconds. It uses the chosen message code even if another audio
+source is playing. The icon, line layout, clipping and supported glyphs are
+experimental: record what actually appears for each source. BACCAble Lab's
+ordinary capture records received CAN frames, not BH's own display transmissions.
 
 ## Reading the measurements
 
