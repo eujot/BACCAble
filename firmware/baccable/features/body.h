@@ -5,7 +5,7 @@
 
 void body_display_submit(const uint8_t *text);
 void body_display_refresh(void);
-void body_display_factory_frame(uint8_t total_frame, uint8_t frame_number);
+void body_display_factory_frame(const uint8_t data[8], uint8_t dlc);
 void body_init();
 void body_process();
 uint8_t mirror_positions_save();

@@ -1,6 +1,6 @@
 # BACCAble action plan and agent handoff
 
-Last updated: **2026-09-27** (dated verification boundaries below). This is the single source of planned work,
+Last updated: **2026-09-28** (dated verification boundaries below). This is the single source of planned work,
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
@@ -32,6 +32,23 @@ PR count or broad rewrite is needed. This handoff is a backlog, not an instructi
 to automatically flash hardware or publish every future change.
 
 ## Verified baseline and deployment
+
+IPC menu visibility candidate, **2026-09-28**, branch
+`fix/ipc-current-source-menu`, based on `origin/master` at `7717505` after
+beta-17. BH now learns the display source from complete factory media text
+transfers (including the observed USB `0x06` and CarPlay `0x21` contexts),
+restarts a full menu transfer after factory text, periodically retransmits it
+without new radio frames, and adds a temporary `BACCAble beta` second line.
+On close it replays the last complete factory media message. Incomplete text,
+blank control frames and CAN enqueue failures have host regression coverage.
+Both user guides and the menu transport guide describe this candidate.
+Native Apple Clang ASan/UBSan host tests and all four C1/C2/BH/CAN ARM
+lint/builds with Arm GNU 15.2.Rel1 passed. No vehicle test or flash has been
+performed. The IPC's actual handling of a two-line BACCAble message under
+each source, its ownership priority during sustained radio traffic, and menu
+latency require a car test. Before a complete media transfer has been seen,
+the existing configured source remains the fallback. An isolated pull request
+contains this change; it is not part of beta-17.
 
 USB recovery fix and beta-17 release, **2026-09-27** ([PR #37](https://github.com/eujot/BACCAble/pull/37)):
 

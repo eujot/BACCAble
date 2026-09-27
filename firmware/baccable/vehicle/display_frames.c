@@ -9,9 +9,7 @@ void vehicle_handle_display_content(const CAN_RxHeaderTypeDef *rx_header, uint8_
         return;
 
 #if defined(BACCABLE_BH)
-    uint8_t total_frame = (frame_data[0] >> 3) & 0x1F;
-    uint8_t frame_number = ((frame_data[0] & 0x07) << 2) | (frame_data[1] >> 6);
-    body_display_factory_frame(total_frame, frame_number);
+    body_display_factory_frame(frame_data, rx_header->DLC);
 #endif
     // on BH can bus, slow bus at 125kbps, this message contains:
 

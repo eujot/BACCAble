@@ -25,6 +25,7 @@ test: build/test_core build/test_transport build/test_catalog build/test_menu bu
 	./build/test_usb_c2
 	./build/test_usb_bh
 	./build/test_body_display
+	./build/test_body_display_large
 	./build/test_usb_lifecycle
 
 USB_AUX_SOURCES := test_usb_aux.c $(FIRMWARE)/features/usb_modes.c
@@ -124,7 +125,10 @@ BODY_DISPLAY_SOURCES := test_body_display.c $(FIRMWARE)/features/body.c $(FIRMWA
 build/test_body_display: $(BODY_DISPLAY_SOURCES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DBH_FLAVOR=1 $(BODY_DISPLAY_SOURCES) -o $@
-test: build/test_body_display
+build/test_body_display_large: $(BODY_DISPLAY_SOURCES) $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DBH_FLAVOR=1 -DLARGE_DISPLAY $(BODY_DISPLAY_SOURCES) -o $@
+test: build/test_body_display build/test_body_display_large
 
 # Real USB stack coverage: the ordinary mode tests intentionally mock USB hardware.
 USB_STACK := $(FIRMWARE)/Middlewares/ST/STM32_USB_Device_Library

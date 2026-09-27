@@ -190,8 +190,8 @@ every five seconds. Dedicated single-value pages remain available for clearer la
   Integer settings avoid float formatting.
 - Lists are sorted when built. Only the current view is formatted; menu storage
   has fixed capacity and does not allocate heap memory.
-- Periodic rendering runs every 100 ms. Identical text is suppressed for 500 ms,
-  then resent to keep the display active.
+- C1 renders every 100 ms and retries identical UART screen submissions after
+  500 ms. BH independently retransmits the complete IPC screen every second.
 - UART retains the latest waiting screen, preserves command FIFO and never
   overwrites an active transfer. A screen may precede a waiting status poll only
   once, so continuous browsing does not starve status replies.
@@ -208,17 +208,26 @@ every five seconds. Dedicated single-value pages remain available for clearer la
   `--` instead of a truncated number.
 
 The 100 ms render interval is not a measured dashboard response time. UART still
-requires a gap greater than 250 ms; display text travels in three-character parts
-at intervals of at least 50 ms: six parts for 18 characters, eight for 24. Fast
-browsing can skip intermediate waiting screens. Actual smoothness, factory-message
-interaction and Race mask behavior still require vehicle testing.
+requires a gap greater than 250 ms. C1 sends an 18- or 24-character first line
+to BH. BH adds `\rBACCAble beta` and sends 11 or 13 three-character CAN parts
+at intervals of at least 50 ms. Fast browsing can skip intermediate waiting
+screens. Actual two-line rendering, factory-message interaction and Race mask
+behavior still require vehicle testing.
 
 BH replaces unsent content with the latest target and sends only changed
-three-character fragments. Round-robin selection prevents frequent changes from
-starving the end of the screen; rejected CAN submissions remain pending. Nonblank
-text is refreshed after factory display traffic and after 500 ms without a
-successful fragment submission. CAN acceptance does not confirm IPC rendering:
-fragment updates cannot guarantee an atomic screen change.
+three-character fragments between full refreshes. Round-robin selection
+prevents frequent changes from starving the end of the screen; rejected CAN
+submissions remain pending. BH learns a media-text context from a complete
+factory `0x090` transfer (`0x05`–`0x09` or observed CarPlay `0x21`) and uses it
+for the menu. Other factory codes, blank controls and incomplete transfers do
+not change the source. Before any such transfer, the configured fallback code
+applies. After a factory transfer BH waits 100 ms, or 250 ms of silence after
+an incomplete transfer, then restarts all menu fragments from zero. A one-second
+maximum deferral prevents continuing radio traffic from hiding the menu forever.
+The full menu is resent independently every second during quiet periods. On
+menu close, BH replays the last complete factory media text if available.
+CAN enqueue acceptance does not confirm on-wire delivery or IPC rendering;
+source ownership and the second-line layout still need vehicle validation.
 
 ## Compatibility
 

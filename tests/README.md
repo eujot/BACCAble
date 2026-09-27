@@ -37,3 +37,10 @@ Upstream/auxiliary and UART/menu suites cover addressed mode acknowledgements,
 missing/stale peers, queue rejection, timeout/re-entry and lost TX completion.
 These checks do not emulate macOS enumeration, UART electrical collisions or
 vehicle CAN timing; see the hardware procedure in USB_DIAGNOSTICS.md.
+
+The BH display suite runs at both 18- and 24-character menu widths. It checks
+the temporary second line, periodic full retransmission without radio traffic,
+complete USB/CarPlay source adoption, rejection of incomplete transfers,
+radio/menu separation with bounded deferral, CAN enqueue retry, and replay of
+the previous radio text when the menu closes. The suite validates generated
+frames and state transitions, not IPC arbitration or visible pixels.
