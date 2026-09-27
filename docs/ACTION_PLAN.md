@@ -33,6 +33,14 @@ to automatically flash hardware or publish every future change.
 
 ## Verified baseline and deployment
 
+CI duplicate-run reduction, **2026-09-28** ([PR #40](https://github.com/eujot/BACCAble/pull/40)),
+merged to `master` as `3c68b7a`: direct `push` CI now covers `master` only.
+Pull requests still run CI, and release/diagnostic reusable calls are unchanged.
+This removes the duplicate push and pull-request runs observed for commit
+`ca1bef0` on PR #39 (runs 36355278991 and 36355299930). The branch produced
+one successful PR run (36355667493) and no branch-push run; the merged commit
+passed master push CI (36355833867). This change affects workflows only.
+
 IPC menu visibility candidate, **2026-09-28**, branch
 `fix/ipc-current-source-menu`, based on `origin/master` at `7717505` after
 beta-17. BH now learns the display source from complete factory media text
