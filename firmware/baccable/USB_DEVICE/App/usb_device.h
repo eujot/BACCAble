@@ -75,7 +75,12 @@ extern "C" {
 
 /** USB Device initialization function. */
 void MX_USB_DEVICE_Init(void);
+enum { USB_STAGE_OFF, USB_STAGE_DETACH, USB_STAGE_RESET, USB_STAGE_READY, USB_STAGE_FAILED };
 void usb_device_start(uint8_t serial);
+void usb_device_process(void);
+void usb_device_fault(uint8_t error);
+void usb_device_record_reset(uint32_t flags);
+void usb_device_status(uint8_t out[8]);
 void usb_device_stop(void);
 uint8_t usb_device_is_serial(void);
 

@@ -2,6 +2,7 @@
 #include "stm32f0xx_hal.h"
 #include "app/main.h"
 #include "diagnostics/parameter_cache.h"
+#include "features/usb_modes.h"
 
 // extern void Error_Handler(void);
 
@@ -19,6 +20,20 @@ static uint8_t screen_pending;
 static uint8_t screen_overtook_poll;
 #endif
 static volatile uint8_t board_tx_active, pedal_tx_active;
+static uint32_t board_tx_started, board_busy_since;
+static uint8_t board_busy;
+static volatile uint16_t uart_errors;
+static uint16_t uart_recoveries;
+void board_uart_status(uint8_t out[5]) {
+    uint32_t irq = __get_PRIMASK();
+    __disable_irq();
+    out[0] = board_tx_active;
+    out[1] = uart_errors;
+    out[2] = uart_errors >> 8;
+    out[3] = uart_recoveries;
+    out[4] = uart_recoveries >> 8;
+    __set_PRIMASK(irq);
+}
 static volatile uint8_t pedal_response, pedal_response_pending;
 #define QUEUE_SIZE 10 // max queue size
 
@@ -293,6 +308,8 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
     if ((currentTime - runtime_state.last_uart_error_callback) > 1000)
         status_led_error();
     runtime_state.last_uart_error_callback = currentTime;
+    if (huart->Instance == USART2 && uart_errors != UINT16_MAX)
+        ++uart_errors;
 
     uart_pause(huart);
     if ((runtime_state.low_consume_is_active == 0) || (huart->Instance == USART1))
@@ -345,7 +362,11 @@ static uint8_t queue_start(SendQueue *queue, UART_HandleTypeDef *uart, uint8_t *
     #endif
             memcpy(active_buffer, queue->tx_buffer[queue->head], length);
         if (HAL_UART_Transmit_IT(uart, active_buffer, length) == HAL_OK) {
+            if (uart == &huart2)
+                board_busy = 0;
             *active = 1;
+            if (uart == &huart2)
+                board_tx_started = currentTime;
     #if defined(BACCABLE_C1)
             /* At most one display may overtake a queued poll, even during continuous scrolling. */
             if (queue == tx_queue)
@@ -359,6 +380,9 @@ static uint8_t queue_start(SendQueue *queue, UART_HandleTypeDef *uart, uint8_t *
                 --queue->count;
             }
             started = 1;
+        } else if (uart == &huart2 && !board_busy) {
+            board_busy = 1;
+            board_busy_since = currentTime;
         }
     }
     __set_PRIMASK(irq);
@@ -437,6 +461,17 @@ void pedal_uart_process(void) {
 
 /* Process board responses, poll their status and send eligible outgoing messages. */
 void board_uart_process(void) {
+    /* A board frame takes under 7 ms. Recover a lost TX completion without
+     * touching ordinary transfers or granting an unsolicited auxiliary reply. */
+    if (!diagnostic_mode && ((board_tx_active && currentTime - board_tx_started > 50) ||
+                             (board_busy && currentTime - board_busy_since > 50))) {
+        board_busy = 0;
+        uart_pause(&huart2);
+        if (!runtime_state.low_consume_is_active)
+            uart_resume(&huart2);
+        if (uart_recoveries != UINT16_MAX)
+            ++uart_recoveries;
+    }
     for (unsigned budget = 0; budget < UART_RX_SLOTS && rx_tail != rx_head; ++budget) {
         board_commands_dispatch(rx_frames[rx_tail]);
         __DMB();
@@ -450,13 +485,17 @@ void board_uart_process(void) {
     if (currentTime - runtime_state.all_processors_wakeup_time >
         TIMING__C1____DELAY_BEFORE_OTHER_CHIP_STATUS_REQUEST_MS) {
         if (currentTime - last_c2_poll_time > TIMING__C1____C2_STATUS_REQUEST_TIMEOUT_MS) {
-            const uint8_t command[] = {C2BusID, C2cmdGetStatus};
-            board_uart_send(command, sizeof(command));
+            uint8_t command[4];
+            uint8_t length = usb_modes_poll(0, command);
+            if (board_uart_send(command, length))
+                usb_modes_poll_queued(0, command);
             last_c2_poll_time = currentTime;
         }
         if (currentTime - last_bh_poll_time > TIMING__C1____BH_STATUS_REQUEST_TIMEOUT_MS) {
-            const uint8_t command[] = {BhBusIDgetStatus};
-            board_uart_send(command, sizeof(command));
+            uint8_t command[4];
+            uint8_t length = usb_modes_poll(1, command);
+            if (board_uart_send(command, length))
+                usb_modes_poll_queued(1, command);
             last_bh_poll_time = currentTime;
         }
     }
@@ -470,6 +509,7 @@ void board_uart_process(void) {
         case AllResetFaults:
             last_c2_poll_time = currentTime;
             break;
+        case BhBusID:
         case BhBusIDgetStatus:
             last_bh_poll_time = currentTime;
             break;

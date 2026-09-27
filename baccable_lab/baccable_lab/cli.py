@@ -8,6 +8,7 @@ import json
 import os
 import sqlite3
 import sys
+import time
 from pathlib import Path
 
 from baccable_lab.can.discover import doctor_lines, parse_mapping
@@ -67,7 +68,9 @@ def _export_basic(directory: Path, output: str | None) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="baccable", description="BACCAble Lab capture recorder")
     sub = parser.add_subparsers(dest="command", required=True)
-    sub.add_parser("doctor", help="list serial devices without changing vehicle state")
+    doctor = sub.add_parser("doctor", help="list serial devices without changing vehicle state")
+    doctor.add_argument("--usb-status", action="store_true", help="read firmware USB/UART diagnostics over EP0 (requires PyUSB)")
+    doctor.add_argument("--samples", type=int, default=1, help="USB diagnostic samples, one second apart (1-60)")
     capture_parser = sub.add_parser("capture", help="record one or more C1/C2/BH binary streams")
     capture_parser.add_argument("--port", action="append", required=True, metavar="ROLE=DEVICE",
                                 help="select a CAN port; repeat for additional roles (C1, C2, BH)")
@@ -101,6 +104,18 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "doctor":
             print("\n".join(doctor_lines()))
+            if args.usb_status:
+                from baccable_lab.can.usb_status import read_usb_status
+                if not 1 <= args.samples <= 60:
+                    raise ValueError("--samples must be between 1 and 60")
+                failed = False
+                for sample in range(args.samples):
+                    if sample:
+                        time.sleep(1)
+                    reports = read_usb_status()
+                    print(json.dumps({"sample": sample + 1, "usb_status": reports}, indent=2))
+                    failed |= not reports or any("error" in report for report in reports)
+                return 2 if failed else 0
             return 0
         if args.command == "capture":
             return capture(parse_mapping(args.port), _root(args.sessions), sys.argv)

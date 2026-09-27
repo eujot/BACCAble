@@ -126,17 +126,8 @@ USBD_StorageTypeDef USBD_Storage_Interface_fops_FS = {
 /* Private functions ---------------------------------------------------------*/
 /* Notify the main board that a USB disk session has started on a companion board. */
 int8_t STORAGE_Init_FS(uint8_t lun) {
-// USB was plugged
-// if BH or C2, send message to C1
-#if (defined(BACCABLE_BH) || defined(BACCABLE_C2))
-    status_led_activity();
-    runtime_state.usb_connected_to_slave = 1; // we use this to avoid to unmount the disk
-    uint8_t tmpArr2[2] = {C1BusID, C1usbConnected};
-    board_uart_send(tmpArr2, 2);
-    runtime_state.we_can_send_a_message_reply =
-        TIMING__C2_BH_USB_CONNECT_TO_C1_NOTIFICATION_DELAY_MS; // enable sending the message thru serial line
-                                                               // to C1, for a offset from now
-#endif
+    /* Presence is reported by usb_modes_process in normal C1 reply windows.
+     * A USB interrupt must not grant C2/BH simultaneous access to the UART. */
     return (USBD_OK);
 }
 

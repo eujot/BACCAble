@@ -114,9 +114,7 @@ USBD_StatusTypeDef USBD_Init(USBD_HandleTypeDef *pdev,
   pdev->dev_state = USBD_STATE_DEFAULT;
   pdev->id = id;
   /* Initialize low level driver */
-  USBD_LL_Init(pdev);
-
-  return USBD_OK;
+  return USBD_LL_Init(pdev);
 }
 
 /**
@@ -127,17 +125,17 @@ USBD_StatusTypeDef USBD_Init(USBD_HandleTypeDef *pdev,
 */
 USBD_StatusTypeDef USBD_DeInit(USBD_HandleTypeDef *pdev)
 {
-  /* Set Default State */
+  /* The application masks the USB IRQ before teardown. Close class endpoints
+   * while the peripheral clock is still running, then power down the device. */
   pdev->dev_state = USBD_STATE_DEFAULT;
-
-  /* Free Class Resources */
-  pdev->pClass->DeInit(pdev, (uint8_t)pdev->dev_config);
-
-  /* Stop the low level driver  */
+  if (pdev->pClass != NULL && pdev->pClassData != NULL)
+  {
+    pdev->pClass->DeInit(pdev, (uint8_t)pdev->dev_config);
+  }
   USBD_LL_Stop(pdev);
-
-  /* Initialize low level driver */
   USBD_LL_DeInit(pdev);
+  pdev->pClass = NULL;
+  pdev->pClassData = NULL;
 
   return USBD_OK;
 }
@@ -178,9 +176,7 @@ USBD_StatusTypeDef  USBD_RegisterClass(USBD_HandleTypeDef *pdev, USBD_ClassTypeD
 USBD_StatusTypeDef  USBD_Start(USBD_HandleTypeDef *pdev)
 {
   /* Start the low level driver  */
-  USBD_LL_Start(pdev);
-
-  return USBD_OK;
+  return USBD_LL_Start(pdev);
 }
 
 /**

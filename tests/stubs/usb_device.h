@@ -3,6 +3,7 @@
 #include "usbd_cdc.h"
 void usb_device_start(uint8_t serial);
 void usb_device_stop(void);
+void usb_device_status(uint8_t out[8]);
 uint8_t usb_device_is_serial(void);
 void MX_USB_DEVICE_Init(void);
 #endif

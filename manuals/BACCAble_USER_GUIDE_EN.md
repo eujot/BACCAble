@@ -776,6 +776,33 @@ If only C1 appears although all USB cables were connected before enabling CAN,
 check the matching firmware set and the C2/BH status reports. The board link also
 carries menu text; its failure can hide the menu while C1 USB still works.
 
+### USB recovery candidate diagnostics
+
+In the USB recovery candidate, C1 sends addressed mode requests and waits for
+C2/BH acknowledgements. Allow a few seconds for all three ports. USB initialization
+has at most three attempts; a failure leaves normal menu processing running.
+Select OFF and leave Features, then CAN and leave Features to try again. Install
+all three matching candidate images; old auxiliary firmware lacks this protocol.
+
+With the updated Lab and its optional `usb-status` dependencies installed, run:
+
+```sh
+baccable doctor --usb-status --samples 3
+```
+
+This reads status without opening a capture port. `pending_ack` lists boards that
+have not acknowledged the mode; `fresh: false` marks old or missing status.
+`usb_stage: ready` means USB started; `configured: true` means the host configured
+it. `last_usb_error` remains recorded after recovery until reboot. The directly
+read `main_loop_ms` should advance between samples. A stationary screen alone
+cannot establish whether C1 stopped or BH lost screen updates.
+
+Eject mounted disks before changing mode. A macOS disk-removal warning does not
+confirm CDC failure; check the new ports and status. See the
+[USB audit and vehicle test](../docs/architecture/USB_DIAGNOSTICS.md#msc-to-cdc-failure-and-recovery-candidate-2026-09-27)
+for installation, diagnostics and the repeatability test. Candidate vehicle
+acceptance is still pending.
+
 ### ELM-compatible diagnostics
 
 Select `USB mode: ELM327`, leave Features, then connect a compatible host

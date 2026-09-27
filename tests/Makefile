@@ -25,6 +25,7 @@ test: build/test_core build/test_transport build/test_catalog build/test_menu bu
 	./build/test_usb_c2
 	./build/test_usb_bh
 	./build/test_body_display
+	./build/test_usb_lifecycle
 
 USB_AUX_SOURCES := test_usb_aux.c $(FIRMWARE)/features/usb_modes.c
 build/test_usb_c2: $(USB_AUX_SOURCES) $(HEADERS) Makefile
@@ -124,3 +125,11 @@ build/test_body_display: $(BODY_DISPLAY_SOURCES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DBH_FLAVOR=1 $(BODY_DISPLAY_SOURCES) -o $@
 test: build/test_body_display
+
+# Real USB stack coverage: the ordinary mode tests intentionally mock USB hardware.
+USB_STACK := $(FIRMWARE)/Middlewares/ST/STM32_USB_Device_Library
+USB_LIFECYCLE_SOURCES := test_usb_lifecycle.c $(FIRMWARE)/USB_DEVICE/App/usb_device.c $(wildcard $(USB_STACK)/Core/Src/*.c) $(wildcard $(USB_STACK)/Class/MSC/Src/*.c) $(wildcard $(USB_STACK)/Class/CDC/Src/*.c)
+build/test_usb_lifecycle: $(USB_LIFECYCLE_SOURCES) $(shell find usb_lifecycle_stubs -type f) Makefile
+	@mkdir -p build
+	$(CC) -Iusb_lifecycle_stubs -I$(USB_STACK)/Core/Inc -I$(USB_STACK)/Class/MSC/Inc -I$(USB_STACK)/Class/CDC/Inc -I$(FIRMWARE)/USB_DEVICE/App $(CPPFLAGS) $(CFLAGS) -Wno-unused-parameter -Wno-missing-field-initializers -DBH_FLAVOR=1 $(USB_LIFECYCLE_SOURCES) -o $@
+test: build/test_usb_lifecycle

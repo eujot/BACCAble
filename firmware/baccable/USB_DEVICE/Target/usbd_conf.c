@@ -85,7 +85,7 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef *pcdHandle) {
 
         /* Peripheral interrupt init */
         HAL_NVIC_SetPriority(USB_IRQn, 0, 0);
-        HAL_NVIC_EnableIRQ(USB_IRQn);
+        /* Enabled by usb_device_process after class registration. */
         /* USER CODE BEGIN USB_MspInit 1 */
 
         /* USER CODE END USB_MspInit 1 */
@@ -181,7 +181,8 @@ void HAL_PCD_ResetCallback(PCD_HandleTypeDef *hpcd)
     USBD_SpeedTypeDef speed = USBD_SPEED_FULL;
 
     if (hpcd->Init.speed != PCD_SPEED_FULL) {
-        Error_Handler(8000);
+        usb_device_fault(5);
+        return;
     }
     /* Set Speed. */
     USBD_LL_SetSpeed((USBD_HandleTypeDef *)hpcd->pData, speed);
@@ -318,7 +319,7 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev) {
     if (HAL_PCD_Init(&hpcd_USB_FS) != HAL_OK) {
         status_led_error();
         // status_led_activity(); //added for test by Gaucho 13/12/2025
-        Error_Handler(8500);
+        return USBD_FAIL;
     }
 
 #if (USE_HAL_PCD_REGISTER_CALLBACKS == 1U)

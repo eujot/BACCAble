@@ -47,6 +47,10 @@
 void board_uart_set_diagnostic(uint8_t enabled);
 uint8_t board_uart_diagnostic_send(const uint8_t *data, size_t length);
 
+#define BOARD_CMD_USB_STATE 0x45
+#define C1_CMD_USB_STATE 0x46
+void board_uart_status(uint8_t out[5]);
+
 #define C1_CMD_USB_PRESENCE 0x42
 #define C2_BH_CMD_USB_CAPTURE 0x44
 #define C1cmdStatusC2 0x40

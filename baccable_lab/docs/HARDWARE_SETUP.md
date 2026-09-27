@@ -24,3 +24,10 @@ connect all cables, apply OFF in Features, then apply CAN again.
 This firmware mode is binary capture, not SLCAN, and normal BACCAble feature
 processing continues. It is not a guarantee that the boards are electrically
 silent. Do not call a session passive without separate hardware evidence.
+
+With the matching USB recovery candidate and updated Lab, use
+`baccable doctor --usb-status --samples 3` to distinguish an unacknowledged board
+request, a USB initialization failure, and a ready controller waiting for host
+configuration. Install the optional `usb-status` extra as described in the Lab
+README. Do not mix old and new board images. Run the repeatability and recovery
+procedure in the [USB audit](../../docs/architecture/USB_DIAGNOSTICS.md#msc-to-cdc-failure-and-recovery-candidate-2026-09-27).
