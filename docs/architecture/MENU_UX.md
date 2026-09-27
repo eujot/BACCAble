@@ -229,6 +229,24 @@ menu close, BH replays the last complete factory media text if available.
 CAN enqueue acceptance does not confirm on-wire delivery or IPC rendering;
 source ownership and the second-line layout still need vehicle validation.
 
+The ordinary Information menu also exposes `IPC display test`. C1 selects a
+message code (`0x06` USB, `0x09` Bluetooth, or the observed CarPlay-session
+`0x21`) and one of four fixed patterns. It sends a reserved screen payload
+marker over the existing coalesced UART screen channel. BH then constructs
+complete CAN `0x090` messages with 16-bit big-endian character units. This
+avoids passing non-ASCII test text through C1's normal single-byte renderer.
+The patterns probe Unicode glyphs, a 48-character first line, a 48-character
+second line, and two 24-character lines. Repeated UART commands do not restart
+an unfinished transfer. BH retries failed CAN queue submissions, waits for
+factory text to settle, and retransmits the complete selected pattern every
+three seconds. A normal menu screen stops the test. The source code is forced
+only for the active test and never changes the vehicle's audio source. A five-second
+UART command lease releases the test if C1 disappears, restoring the last
+complete factory text when available. The
+experiment does not establish whether the IPC supports surrogate pairs or
+renders every selected glyph; record the actual screen and an independent BH
+TX trace for vehicle acceptance.
+
 ## Compatibility
 
 `LARGE_DISPLAY` selects 24 characters; otherwise the width is 18. C1, C2 and BH

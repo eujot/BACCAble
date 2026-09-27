@@ -135,7 +135,7 @@ Menu główne
 │  ├─ Shown pages            Pokazywanie i ukrywanie stron w Readings
 │  ├─ Favorite order         Kolejność ulubionych
 │  └─ Sort order             Sortowanie według grup albo alfabetycznie
-└─ Information               Wersje, konfiguracja i stan sygnałów z przycisków
+└─ Information               Wersje, przyciski i test wyświetlacza IPC
 ```
 
 Kolejność menu głównego jest stała. Dostępność stron zależy od wybranego silnika
@@ -547,8 +547,9 @@ razie menu pokaże `! Stop IBS first` — najpierw zatrzymaj podmienianie IBS.
 
 ## Informacje: Information
 
-To strony tylko do odczytu. Lekkie naciśnięcia góra/dół przełączają między nimi.
-Krótkie RES nie zmienia pokazanego stanu.
+Strony ze stanem służą tylko do odczytu. Lekkie naciśnięcia góra/dół przełączają
+między nimi; krótkie RES nie zmienia ich stanu. Ostatnia pozycja `IPC display test`
+otwiera podmenu testowe.
 
 | Strona, według kolejności | Znaczenie |
 | --- | --- |
@@ -561,11 +562,35 @@ Krótkie RES nie zmienia pokazanego stanu.
 | `Gaps:` | Liczba wykrytych przerw w docieraniu komunikatów o przyciskach. |
 | `Max gap:…ms` | Najdłuższy zaobserwowany odstęp między komunikatami o przyciskach, w milisekundach. |
 | `Input age:…ms` | Czas od ostatniego komunikatu o przyciskach. `--` oznacza, że nie ma takiego odczytu. |
+| `> IPC display test` | Test znaków i długości linii wyświetlacza dla wybranego kodu źródła. |
 
 Odpowiedzi z wersją C2/BH starsze niż około pięć sekund są uznawane za nieaktualne.
 Liczniki dotyczą obsługi menu, **nie liczby ramek zapisanych podczas przechwytywania
-CAN**. Specjalne wersje z diagnostyką menu mogą dodawać stronę serwisową `IPC diag`.
-Nie należy ona do zwykłego menu wydania.
+CAN**. Specjalne wersje z diagnostyką menu mogą dodatkowo zawierać stronę serwisową
+`IPC diag`.
+
+Zatrzymaj samochód w bezpiecznym miejscu i otwórz `Information → IPC display test`.
+Krótkim RES wybierz `USB source`, `Bluetooth source` albo `CarPlay source`;
+zaznaczona pozycja ma zwykły symbol wyboru. Wybierasz w ten sposób tylko **kod
+komunikatu na ekranie** (`0x06`, `0x09` albo `0x21` zaobserwowany w sesji CarPlay),
+a nie rzeczywiste źródło dźwięku. Uruchom te same cztery próby dla każdego kodu:
+
+| Pozycja testu | Tekst wysyłany przez BH | Co sprawdzić |
+| --- | --- | --- |
+| `UTF glyphs` | Pierwsza linia `UTF A: ° ± × Ą Ł`; druga `UTF B: • € Ω Ж 中` | Które znaki 16-bitowe wyświetlacz potrafi narysować przy tym źródle. Brak znaku nie dowodzi, że nie dotarła ramka CAN. |
+| `Line 1 length` | Linijka 48 znaków zaczynająca się od `123456789A123456789B…` w pierwszej linii; `L1: 48 chars` w drugiej | W którym miejscu pierwsza linia jest ucinana, zawijana albo przewijana. `A`, `B`, `C`, `D` oznaczają pozycje 10, 20, 30, 40. |
+| `Line 2 length` | `L2: 48 chars` w pierwszej linii; ta sama linijka 48 znaków w drugiej | Gdzie kończy się widoczny tekst mniejszej linii. |
+| `Both lines` | `TOP:12345678901234567890` oraz `BOTTOM:12345678901234567` | Czy obie linie po 24 znaki są wyświetlane jednocześnie i jak wyglądają. |
+
+Gdy wzorzec jest na ekranie, krótkie RES lub lekkie góra/dół przełącza próbę.
+Przytrzymanie RES wraca do listy testów; kolejne wraca do Information. Po około
+60 sekundach bez naciskania przycisków test kończy się automatycznie. BH ponawia
+cały wybrany wzorzec mniej więcej co trzy sekundy i wznawia go po tekście radia.
+Jeśli polecenia testowe z C1 przestaną docierać do BH, BH zakończy test po pięciu
+sekundach. Używa wybranego kodu, nawet gdy gra inne źródło dźwięku. Ikona, układ linii,
+ucięcie tekstu i zestaw dostępnych znaków wymagają sprawdzenia w samochodzie:
+zapisz, co rzeczywiście widać dla każdego źródła. Zwykły capture BACCAble Lab
+zapisuje odebrane ramki CAN, a nie ramki wyświetlacza nadawane przez BH.
 
 ## Jak rozumieć odczyty
 

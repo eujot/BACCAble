@@ -1,6 +1,7 @@
 #include "features/menu.h"
 #include "features/ui_entry.h"
 #include "features/menu_diagnostics.h"
+#include "features/ipc_display_test.h"
 #include "diagnostics/fault_reader.h"
 #include "features/ibs_override.h"
 #include "app/powertrain.h"
@@ -21,6 +22,8 @@ typedef enum {
     EDIT_VISIBLE,
     ORDER_FAVORITES,
     INFO,
+    IPC_TEST_MENU,
+    IPC_TEST_ACTIVE,
     FAULTS
 #ifdef MENU_DIAGNOSTICS
     , DIAGNOSTICS
@@ -70,10 +73,13 @@ typedef struct {
 static ActionRequest requests[ACTION_COUNT];
 #define ACTION_TIMEOUT_MS 10000U
 #ifdef MENU_DIAGNOSTICS
-#define INFO_PAGES 10U
+#define INFO_PAGES 11U
 #else
-#define INFO_PAGES 9U
+#define INFO_PAGES 10U
 #endif
+static const uint8_t ipc_test_sources[] = {0x06, 0x09, 0x21};
+static const char *const ipc_test_source_labels[] = {"USB source", "Bluetooth source", "CarPlay source"};
+static const char *const ipc_test_patterns[] = {"UTF glyphs", "Line 1 length", "Line 2 length", "Both lines"};
 static const char *const roots[] = {"Favorites", "Readings", "Actions", "Settings", "Information"};
 static const char *const settings[] = {"Features",   "Favorites", "Shown pages",
                                        "Favorite order", "Sort order"};
@@ -97,6 +103,7 @@ static uint8_t gasoline_v6, advanced_pages;
 static uint8_t root, group = 1, function, setting, info, editor_page, engine;
 static uint8_t list[64], list_count, selection, order_selected;
 static uint8_t setup_last, fault_index;
+static uint8_t ipc_test_source, ipc_test_entry, ipc_test_pattern;
 static uint32_t page_changed, last_render, last_query, notice_started;
 static const char *notice;
 static char notice_text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
@@ -251,26 +258,42 @@ static void function_move(int direction, bool next_group) {
     }
 }
 
+/* Queue a screen payload, including diagnostic control bytes, with normal coalescing. */
+static bool menu_present_packet(const uint8_t *content) {
+    uint8_t message[UART_BUFFER_SIZE];
+    message[0] = BhBusIDparamString;
+    memcpy(message + 1, content, DASHBOARD_MESSAGE_MAX_LENGTH);
+    if (previous_valid && !memcmp(previous_text, content, sizeof(previous_text)) &&
+        currentTime - previous_sent < 500)
+        return false;
+    if (!board_uart_send(message, sizeof(message)))
+        return false;
+    memcpy(previous_text, content, sizeof(previous_text));
+    previous_valid = 1;
+    previous_sent = currentTime;
+    return true;
+}
+
 /* Request the current screen while avoiding unnecessary repeated text updates. */
 void menu_present(const char *text) {
-    uint8_t message[UART_BUFFER_SIZE];
-    memset(message, ' ', sizeof(message));
-    message[0] = BhBusIDparamString;
+    uint8_t content[DASHBOARD_MESSAGE_MAX_LENGTH];
+    memset(content, ' ', sizeof(content));
     size_t length = strlen(text);
     if (length > DASHBOARD_MESSAGE_MAX_LENGTH)
         length = DASHBOARD_MESSAGE_MAX_LENGTH;
-    memcpy(message + 1, text, length);
-    if (previous_valid && !memcmp(previous_text, message + 1, sizeof(previous_text)) &&
-        currentTime - previous_sent < 500)
-        return;
-    /* Remember only accepted screens so UART rejection does not delay the next attempt. */
-    if (!board_uart_send(message, sizeof(message)))
-        return;
-    memcpy(previous_text, message + 1, sizeof(previous_text));
-    previous_valid = 1;
-    previous_sent = currentTime;
-    if (!text[0])
+    memcpy(content, text, length);
+    if (menu_present_packet(content) && !text[0])
         close_pending = false;
+}
+
+/* BH generates the full UTF-16 display message; UART only selects its test. */
+static void menu_present_ipc_test(void) {
+    uint8_t content[DASHBOARD_MESSAGE_MAX_LENGTH];
+    memset(content, ' ', sizeof(content));
+    content[0] = IPC_TEST_SENTINEL;
+    content[1] = ipc_test_sources[ipc_test_source];
+    content[2] = ipc_test_pattern;
+    menu_present_packet(content);
 }
 
 /* Show the complete reading immediately, without a list prefix or title delay. */
@@ -336,6 +359,7 @@ void menu_init(void) {
     function = 0;
     setting = 0;
     info = 0;
+    ipc_test_source = ipc_test_entry = ipc_test_pattern = 0;
     setup_last = 0;
     notice = NULL;
     confirmed_action = 255;
@@ -685,11 +709,15 @@ void menu_render(void) {
 #endif
     case INFO:
 #ifdef MENU_DIAGNOSTICS
-        if (info == 9) {
+        if (info == 10) {
             ui_render_action(text, sizeof(text), "IPC diag");
             break;
         }
 #endif
+        if (info == 9) {
+            ui_render_action(text, sizeof(text), "IPC display test");
+            break;
+        }
         if (info == 5)
             snprintf_(text, sizeof(text), "Reports:%lu", (unsigned long)input.reports_seen);
         else if (info == 6)
@@ -718,6 +746,16 @@ void menu_render(void) {
                 snprintf_(text, sizeof(text), UI_SYMBOL_UNKNOWN " %s no reply", peer ? "BH" : "C2");
         }
         break;
+    case IPC_TEST_MENU:
+        if (ipc_test_entry < 3)
+            ui_render_checkbox(text, sizeof(text), ipc_test_source_labels[ipc_test_entry],
+                               ipc_test_source == ipc_test_entry);
+        else
+            ui_render_action(text, sizeof(text), ipc_test_patterns[ipc_test_entry - 3]);
+        break;
+    case IPC_TEST_ACTIVE:
+        menu_present_ipc_test();
+        return;
     }
     menu_present(text);
 }
@@ -767,6 +805,14 @@ static void request_exit(MenuView destination, bool close) {
 
 /* Cancel one unfinished workflow or return to its parent after persistence. */
 static void back(void) {
+    if (view == IPC_TEST_ACTIVE) {
+        view = IPC_TEST_MENU;
+        return;
+    }
+    if (view == IPC_TEST_MENU) {
+        view = INFO;
+        return;
+    }
 #ifdef MENU_DIAGNOSTICS
     if (view == DIAGNOSTICS) {
         view = INFO;
@@ -862,6 +908,12 @@ void menu_event(MenuEvent event) {
 #endif
         case INFO:
             info = wrap(info, INFO_PAGES, direction);
+            break;
+        case IPC_TEST_MENU:
+            ipc_test_entry = wrap(ipc_test_entry, 3 + IPC_TEST_PATTERN_COUNT, direction);
+            break;
+        case IPC_TEST_ACTIVE:
+            ipc_test_pattern = wrap(ipc_test_pattern, IPC_TEST_PATTERN_COUNT, direction);
             break;
         case SETUP:
             if (jump)
@@ -971,12 +1023,27 @@ void menu_event(MenuEvent event) {
             }
             break;
         case INFO:
-#ifdef MENU_DIAGNOSTICS
             if (info == 9) {
+                view = IPC_TEST_MENU;
+                break;
+            }
+#ifdef MENU_DIAGNOSTICS
+            if (info == 10) {
                 view = DIAGNOSTICS;
                 break;
             }
 #endif
+            break;
+        case IPC_TEST_MENU:
+            if (ipc_test_entry < 3)
+                ipc_test_source = ipc_test_entry;
+            else {
+                ipc_test_pattern = ipc_test_entry - 3;
+                view = IPC_TEST_ACTIVE;
+            }
+            break;
+        case IPC_TEST_ACTIVE:
+            ipc_test_pattern = wrap(ipc_test_pattern, IPC_TEST_PATTERN_COUNT, 1);
             break;
 #ifdef MENU_DIAGNOSTICS
         case DIAGNOSTICS:
@@ -994,7 +1061,8 @@ void menu_button(uint8_t button, bool allowed) {
     MenuEvent event = menu_input_update(&input, button, allowed, currentTime);
     bool repeat_allowed = allowed && !save_failed && dashboard_state.baccable_dashboard_menu_visible &&
                           (view == FAVORITES || view == VALUES || view == GROUPS ||
-                           view == SETTINGS || view == SETUP || is_editor() ||
+                           view == SETTINGS || view == SETUP || view == IPC_TEST_MENU ||
+                           view == IPC_TEST_ACTIVE || is_editor() ||
                            (view == ORDER_FAVORITES && !order_selected));
     if (event == MENU_NONE)
         event = menu_input_repeat(&input, repeat_allowed, currentTime);
@@ -1018,7 +1086,8 @@ void menu_process(void) {
         dashboard_clear();
     if (!dashboard_state.baccable_dashboard_menu_visible)
         return;
-    bool editor = view == SETTINGS || view == SETUP || is_editor() || view == ORDER_FAVORITES;
+    bool editor = view == SETTINGS || view == SETUP || view == IPC_TEST_MENU ||
+                  view == IPC_TEST_ACTIVE || is_editor() || view == ORDER_FAVORITES;
     /* Reading screens are intentionally persistent; active diagnostics get a fresh grace period. */
     if (fault_reader_busy() || diagnostics_state.clear_faults_request) {
         last_input = currentTime;
