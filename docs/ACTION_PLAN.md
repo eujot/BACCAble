@@ -33,7 +33,7 @@ to automatically flash hardware or publish every future change.
 
 ## Verified baseline and deployment
 
-USB recovery candidate, **2026-09-27**, branch `fix/usb-class-transition`:
+USB recovery fix and beta-17 release, **2026-09-27** ([PR #37](https://github.com/eujot/BACCAble/pull/37)):
 
 - Isolated from unrelated local CI/menu work. Exact release base is
   `v5-beta-16`, `eded486f0ab022cda3f87b99070b813c7d7de38b`, verified against the
@@ -52,9 +52,17 @@ USB recovery candidate, **2026-09-27**, branch `fix/usb-class-transition`:
   Lab unit tests, menu-label checks and four-flavor ARM builds/static analysis.
   Final image sizes, exact source SHA, compiler, flags, checksums and logs are
   recorded in the test bundle, not inferred from the release baseline.
-- Integration: candidate only; no tag, release or hardware flashing. The
-  original working tree and its unrelated edits are preserved. This section
-  supersedes older USB acceptance claims below for this reported failure.
+- Merged to `master` as `5f1b493119ecf42e05f3c2244eaacf5e35dc0b03` and
+  published as [`v5-beta-17`](https://github.com/eujot/BACCAble/releases/tag/v5-beta-17),
+  firmware version `beta-5f1b493`. Release workflow 36304510045 passed host
+  ASan/UBSan tests, Lab tests, cppcheck, all four ARM builds and artifact
+  packaging. Release assets include BIN/HEX for C1/C2/BH/CAN, ELF for all four,
+  `BUILD_INFO.json` and `SHA256SUMS`; the release page records changes and
+  hardware acceptance limits. Local `u16-f516496` images use ARM 15.2 and are
+  separate diagnostic artifacts; use the published beta-17 set for this test.
+- No firmware was flashed during this task. The original working tree and its
+  unrelated local edits remain preserved. This section supersedes older USB
+  acceptance claims below for this reported failure.
 - **Hardware acceptance remains open:** repeated three-port enumeration,
   responsive menu during capture, OFF/re-entry, missing-board/USB errors,
   warm/cold boot and hub power. No boards were available for this audit;
