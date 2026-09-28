@@ -36,6 +36,20 @@ to automatically flash hardware or publish every future change.
 
 ## Current work
 
+Multi-bus preview startup fix, **2026-09-28**, branch
+`fix/lab-preview-multiple-buses`, based on master `c0bdf9b`: preview assigned
+the same `SIMULATED` endpoint to every role, so shared capture validation
+rejected the default three-bus preview and any two-role selection before
+starting readers. Give each role a distinct `SIMULATED:<ROLE>` endpoint;
+retain duplicate-device rejection for real capture. The CLI regression now
+exercises the default, every nonempty bus subset and repeated role selection,
+checks per-role raw/SQLite data, verifies no real serial reader is constructed,
+and confirms temporary-session deletion. All 29 Lab tests, Python compile
+checks and whitespace checks pass. Interactive terminal smoke tests with the
+actual demo readers show frames for C1/C2/BH by default and C1/BH when selected,
+and exit successfully with `q`. Handoff changes are committed on the task
+branch. No vehicle test is needed to verify this host-only startup defect.
+
 Handoff/pull recovery, **2026-09-28**: a local, uncommitted ACTION_PLAN blocked
 the fast-forward from `eeffe082` to merged PR #43 at `c39a286`. Its complete
 contents were retained in the local named Git backup
