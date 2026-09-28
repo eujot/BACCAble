@@ -8,12 +8,19 @@ deletes its temporary session on exit. Optional `--role C1`, `--role C2`, and
 During a real capture or preview, the terminal dashboard displays recent raw
 CAN frames and IDs, per-bus frame/loss totals, and the four newest events on a
 timestamped event timeline. Marker groups stay visible; selecting one displays
-all of its available labels. The catalog is grouped by Vehicle, Driving,
-IPC/media, Suspension/chassis, Weather/wipers, Lights and Climate. To place a
+all of its available labels. The expanded catalog is grouped by vehicle, driving,
+powertrain/transmission, engine/live readings, brakes/stability, driver
+assistance/safety, body/access, IPC/media, suspension/chassis, weather/wipers,
+lights, lighting/visibility, climate/comfort, parking/manoeuvring and
+electrical/diagnostics. To place a
 grouped marker, press `g`, the group key shown on screen, then its item number
-(`0` selects item 10). Number keys `1`–`0` retain their existing quick markers.
-`c` adds a custom label, `n` adds a note to the most recent marker, `u` removes
-that marker, and `q` finishes the capture. `m` or `?` shows the controls again.
+(`0` selects item 10). Number keys `1`–`0` retain their existing quick markers,
+and their exact actions are written on the screen. Press `f` and type an action
+to search the catalog: one best match is recorded directly; with multiple
+matches choose a number, or press Enter to add the typed phrase; no match adds
+the phrase as a custom marker. `c` adds a custom label, `n` adds a note to the
+most recent marker, `u` removes that marker, and `q` finishes the capture.
+`m` or `?` shows the controls again. See [the marker catalog and CAN limits](MARKERS.md).
 
 All event labels are manual observations. For example, `Rain detected`,
 `Suspension active`, `IPC menu overwritten`, and `A/C on` are not automatically

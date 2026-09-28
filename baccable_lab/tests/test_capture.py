@@ -56,6 +56,86 @@ class CaptureTests(unittest.TestCase):
                 label, source = db.execute('SELECT label, source FROM events').fetchone()
             self.assertEqual((label, source), ('ipc_menu_overwritten', 'keyboard'))
 
+    def test_search_finds_alias_and_saves_stable_marker(self):
+        with tempfile.TemporaryDirectory() as temp:
+            class Reader:
+                error = None
+                discarded_bytes = 0
+                def __init__(self, role, device, output, stop, abort): self.role = role
+                def start(self): pass
+                def is_alive(self): return False
+                def join(self, timeout): pass
+            with patch('baccable_lab.capture._Reader', Reader), \
+                    patch('baccable_lab.capture._Keyboard') as keyboard, \
+                    contextlib.redirect_stdout(io.StringIO()):
+                keyboard.return_value.read.side_effect = ['f', 'q']
+                keyboard.return_value.read_line.return_value = 'ABS'
+                self.assertEqual(capture({'C1': '/dev/test-C1'}, Path(temp), ['capture']), 0)
+            directory, = Path(temp).iterdir()
+            with contextlib.closing(sqlite3.connect(directory / 'session.sqlite3')) as db:
+                event = db.execute('SELECT label, source FROM events').fetchone()
+            self.assertEqual(event, ('abs_intervention', 'keyboard'))
+
+    def test_search_adds_unmatched_text_as_custom_marker(self):
+        with tempfile.TemporaryDirectory() as temp:
+            class Reader:
+                error = None
+                discarded_bytes = 0
+                def __init__(self, role, device, output, stop, abort): self.role = role
+                def start(self): pass
+                def is_alive(self): return False
+                def join(self, timeout): pass
+            with patch('baccable_lab.capture._Reader', Reader), \
+                    patch('baccable_lab.capture._Keyboard') as keyboard, \
+                    contextlib.redirect_stdout(io.StringIO()):
+                keyboard.return_value.read.side_effect = ['f', 'q']
+                keyboard.return_value.read_line.return_value = 'intercooler temperature peak'
+                self.assertEqual(capture({'C1': '/dev/test-C1'}, Path(temp), ['capture']), 0)
+            directory, = Path(temp).iterdir()
+            with contextlib.closing(sqlite3.connect(directory / 'session.sqlite3')) as db:
+                event = db.execute('SELECT label, source FROM events').fetchone()
+            self.assertEqual(event, ('intercooler temperature peak', 'typed'))
+
+    def test_search_can_select_one_of_multiple_matches(self):
+        with tempfile.TemporaryDirectory() as temp:
+            class Reader:
+                error = None
+                discarded_bytes = 0
+                def __init__(self, role, device, output, stop, abort): self.role = role
+                def start(self): pass
+                def is_alive(self): return False
+                def join(self, timeout): pass
+            with patch('baccable_lab.capture._Reader', Reader), \
+                    patch('baccable_lab.capture._Keyboard') as keyboard, \
+                    contextlib.redirect_stdout(io.StringIO()):
+                keyboard.return_value.read.side_effect = ['f', 'q']
+                keyboard.return_value.read_line.side_effect = ['ACC', '1']
+                self.assertEqual(capture({'C1': '/dev/test-C1'}, Path(temp), ['capture']), 0)
+            directory, = Path(temp).iterdir()
+            with contextlib.closing(sqlite3.connect(directory / 'session.sqlite3')) as db:
+                label, = db.execute('SELECT label FROM events').fetchone()
+            self.assertIn(label, {'acc_set', 'acc_following', 'acc_resume', 'acc_cancelled'})
+
+    def test_search_enter_saves_ambiguous_query_as_custom_text(self):
+        with tempfile.TemporaryDirectory() as temp:
+            class Reader:
+                error = None
+                discarded_bytes = 0
+                def __init__(self, role, device, output, stop, abort): self.role = role
+                def start(self): pass
+                def is_alive(self): return False
+                def join(self, timeout): pass
+            with patch('baccable_lab.capture._Reader', Reader), \
+                    patch('baccable_lab.capture._Keyboard') as keyboard, \
+                    contextlib.redirect_stdout(io.StringIO()):
+                keyboard.return_value.read.side_effect = ['f', 'q']
+                keyboard.return_value.read_line.side_effect = ['ACC', '']
+                self.assertEqual(capture({'C1': '/dev/test-C1'}, Path(temp), ['capture']), 0)
+            directory, = Path(temp).iterdir()
+            with contextlib.closing(sqlite3.connect(directory / 'session.sqlite3')) as db:
+                event = db.execute('SELECT label, source FROM events').fetchone()
+            self.assertEqual(event, ('ACC', 'typed'))
+
     def test_all_bus_selections_and_empty_bus(self):
         all_roles = ('C1', 'C2', 'BH')
         selections = [roles for count in range(1, 4)

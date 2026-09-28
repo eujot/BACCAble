@@ -52,16 +52,18 @@ discards the temporary session when you quit. Select roles with repeatable
 
 The live terminal screen shows recent raw CAN frames, frame/loss counts, and
 the four newest event markers as a timeline. It keeps all marker groups visible
-and shows a group's complete list when you select it. Groups are Vehicle,
-Driving, IPC/media, Suspension/chassis,
-Weather/wipers, Lights and Climate. Press `g`, a group key, then the marker's
-number to add a grouped marker; the screen shows the available keys. Existing
-quick keys `1`–`0` remain available. Press `c` for a custom label, `n` to add a
-note to the latest marker, `u` to undo it, and `q` to finish. These are manual
-observations, not automatic CAN signal detections; the live frame view shows
-raw identifiers and bytes. The first two seconds are reported separately as
-startup loss so an attachment backlog is visible without being confused with
-loss during the test.
+and shows a group's complete list when you select it. Press `f` and type an
+action to find a catalog marker; if no marker matches, your text is saved as a
+custom marker. When several markers match, choose one or press Enter to save
+your text. The screen also spells out the stable quick-key mapping (`1`–`0`),
+so the actions do not need to be memorized. Press `g`, a group key, then the
+marker number to browse the full catalog. Press `c` for a custom label, `n` to
+add a note to the latest marker, `u` to undo it, and `q` to finish. The complete
+catalog, search terms, and CAN interpretation limits are in
+[docs/MARKERS.md](docs/MARKERS.md). Markers are manual observations, not
+automatic CAN signal detections; the live frame view shows raw identifiers and
+bytes. The first two seconds are reported separately as startup loss so an
+attachment backlog is visible without being confused with loss during the test.
 
 Hardware setup and the acceptance checklist are in [docs/HARDWARE_SETUP.md](docs/HARDWARE_SETUP.md)
 and [docs/CAPTURE.md](docs/CAPTURE.md). The parent project specification is

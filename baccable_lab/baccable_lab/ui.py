@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import textwrap
 
-from baccable_lab.events.catalog import EVENT_GROUPS, GROUP_BY_LABEL, label_text
+from baccable_lab.events.catalog import EVENT_GROUPS, GROUP_BY_LABEL, QUICK_MARKERS, label_text
 
 
 def _clip(value: str, width: int) -> str:
@@ -54,8 +54,10 @@ def render_dashboard(
         rows.extend("  " + part for part in textwrap.wrap(overview.strip(), width=max(20, width - 4)))
     elif selected_group == "":
         rows.append("  Choose one group key:")
-        rows.append(_clip("  " + "  |  ".join(
-            f"[{key}] {title}" for key, (title, _) in EVENT_GROUPS.items()), width))
+        choices = "  " + "  |  ".join(
+            f"[{key}] {title}" for key, (title, _) in EVENT_GROUPS.items())
+        rows.extend("  " + part for part in textwrap.wrap(
+            choices.strip(), width=max(20, width - 4), break_long_words=False))
     else:
         title, entries = EVENT_GROUPS[selected_group]
         rows.append(f"  {title}: press an item number (0 selects item 10), or Esc to cancel")
@@ -63,8 +65,11 @@ def render_dashboard(
                               for index, (label, _) in enumerate(entries, 1))
         rows.extend("  " + part for part in textwrap.wrap(options, width=max(20, width - 4),
                                                            break_long_words=False))
-    rows.append(line)
-    rows.extend(textwrap.wrap("KEYS  1–0 quick markers  |  g grouped marker  |  c custom  |  n note  |  u undo  |  m help  |  q finish",
+    rows.extend((line, "QUICK MARKERS  (press the key to timestamp the action)"))
+    quick = "  " + "  |  ".join(f"[{key}] {label_text(label)}" for key, label in QUICK_MARKERS.items())
+    rows.extend("  " + part for part in textwrap.wrap(quick.strip(), width=max(20, width - 4),
+                                                       break_long_words=False))
+    rows.extend(textwrap.wrap("ACTIONS  [f] find/type marker  |  [g] grouped marker  |  [l] Lock  |  [c] custom  |  [n] note  |  [u] undo  |  [m/?] help  |  [q] finish",
                               width=max(20, width - 2)))
     if prompt:
         rows.append(_clip(prompt, width))
@@ -72,4 +77,5 @@ def render_dashboard(
 
 
 def marker_help() -> str:
-    return "Markers: 1-0 quick events; g then group key then item number; c=custom, n=note, u=undo, q=finish"
+    return ("Markers: 1-0 quick actions (shown on screen); f=find a catalog marker or add typed text; "
+            "g then group key then item number; c=custom, n=note, u=undo, q=finish")
