@@ -16,6 +16,23 @@ Preserve unrelated local edits. Keep project documentation, menu labels and code
 comments in English, except for the maintained Polish user guide described below.
 Read the linked technical guide for the area being changed.
 
+## Keep the checkout ready for pulls
+
+Update `docs/ACTION_PLAN.md` in the same task branch or isolated worktree as
+the implementation. Include the handoff update in that branch's commits and
+PR; do not leave agent-authored handoff changes uncommitted in the user's
+`master` checkout or copy them back there after opening a PR. Documentation-only
+handoff work also belongs on a committed task branch. Inspect `git status` at
+completion and report any pre-existing edits that still remain.
+
+If local changes block a pull, inspect them and preserve their full contents
+in a named Git backup before restoring any tracked file. Reconcile useful
+handoff entries on the task branch, then fast-forward the user's clean checkout.
+Do not use `assume-unchanged`, `skip-worktree`, destructive resets, or automatic
+stash configuration to hide the issue. Preserve unrelated edits and existing
+stashes. This rule concerns changes made by the agent; it does not authorize
+discarding the user's work.
+
 ## Keep both user guides current
 
 Whenever a change affects menu labels or structure, navigation, displayed

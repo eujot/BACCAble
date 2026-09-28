@@ -18,6 +18,9 @@ implementation; they are not separate backlogs. Update this file after each task
 4. Record implementation commit, checks, integration/release status and hardware
    evidence separately. A published binary is not proof of installation or a
    successful vehicle test. Do not mark a task done based on an old agent summary.
+   Commit this handoff in the same task branch/worktree as the change; never
+   leave agent-authored updates uncommitted in the user's `master` checkout.
+   Follow [the checkout rule in AGENTS.md](../AGENTS.md#keep-the-checkout-ready-for-pulls).
 5. For changes to the menu or device operation, update the affected sections of
    **both** the [English](../manuals/BACCAble_USER_GUIDE_EN.md) and
    [Polish](../manuals/BACCAble_USER_GUIDE_PL.md) user guides in the same change.
@@ -33,6 +36,18 @@ to automatically flash hardware or publish every future change.
 
 ## Current work
 
+Handoff/pull recovery, **2026-09-28**: a local, uncommitted ACTION_PLAN blocked
+the fast-forward from `eeffe082` to merged PR #43 at `c39a286`. Its complete
+contents were retained in the local named Git backup
+`backup/action-plan-before-pull-20260928` and verified byte-for-byte before
+restoring only that tracked file. The user's master now matches the remote;
+unrelated untracked files and existing stashes were preserved. Useful earlier
+capture observations are recorded below with their historical scope. AGENTS.md
+now requires handoff edits to be committed on the task branch and prohibits
+copying them back uncommitted into master. This documentation-only change is
+prepared on `docs/keep-handoff-committed`; whitespace and recovery-state checks
+pass. No firmware or capture behavior changed.
+
 BACCAble Lab marker catalog and quick search, **2026-09-28**, based on
 `origin/master` at `eeffe082`: expanded the manual marker catalog to cover
 vehicle/body controls, powertrain and live readings (including SOC and
@@ -45,9 +60,39 @@ describes all groups, search, source research, safe-use boundaries and why raw
 CAN does not decode feature names. All 29 native Lab unit tests, Python
 compile checks and `git diff --check` pass locally. The first full PR CI run
 ([36470892309](https://github.com/eujot/BACCAble/actions/runs/36470892309))
-passed Lab/host tests, lint and all four firmware builds. PR #43 is open for
-review. No vehicle or hardware test is claimed. Firmware and both device user
+passed Lab/host tests, lint and all four firmware builds. PR #43 was merged
+into master at `c39a286`. No vehicle or hardware test is claimed for this Lab
+UI change. Firmware and both device user
 guides are unchanged.
+
+### Recovered historical capture observations (2026-09-26–27)
+
+These measurements were recorded in the previously local handoff; they are
+preserved here as historical evidence, not new acceptance results or a second
+backlog. Later IPC source tracking, periodic menu retransmission and two-line
+display changes are covered by the integrated candidate entries below.
+
+Session `20260927-185147Z` recorded all three USB roles for 181 s. The owner
+reported that selecting USB CAN no longer stalled the device, while radio
+track changes still obscured the menu. The earlier review found 33 complete
+radio 0x090 title/artist transfers lasting 200–405 ms; 29 exceeded the old
+18-character menu width and 13 adjacent gaps were shorter than 250 ms.
+Thirteen C1 0x2FA holds lasted 1.302–4.541 s. Their start/release timestamps
+were added as 26 explicitly CAN-derived events and `long_back_holds.csv`;
+no radio 0x090 frame overlapped a hold, and three holds occurred within a
+15.093 s radio-text silence. These captures contain CAN RX, not BH's own
+display TX or C1–BH UART, so they cannot by themselves locate the display
+failure. No manual marker established exact visible-menu state during a hold.
+
+The later USB-playback session had 33 complete transfers (301 frames) with
+source context `0x06`, a `0x0D` title/artist separator and two blank controls;
+the owner observed a USB icon and two lines. The CarPlay-playback session
+`20260926-182645Z` had three complete transfers (57 frames) with context
+`0x21` and eight blank `0x01`/`0x0F` messages. The old BACCAble one-line
+Bluetooth context was `0x09`. These observations motivated the later source
+tracking and display-layout candidates; they do not establish undocumented
+IPC ownership or clear-control semantics. Detailed historical timing reports
+remain in the sessions' ignored `display_analysis.md` files.
 
 ## Verified baseline and deployment
 
