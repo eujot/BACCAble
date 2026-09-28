@@ -125,7 +125,7 @@ def main(argv: list[str] | None = None) -> int:
             return capture(parse_mapping(args.port), _root(args.sessions), sys.argv)
         if args.command == "preview":
             roles = args.role or ["C1", "C2", "BH"]
-            ports = {role: "SIMULATED" for role in roles}
+            ports = {role: f"SIMULATED:{role}" for role in roles}
             with tempfile.TemporaryDirectory(prefix="baccable-preview-") as temporary:
                 return capture(ports, Path(temporary) / "sessions", ["baccable", "preview"], preview=True)
         if args.command == "sessions":

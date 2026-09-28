@@ -222,12 +222,55 @@ class CaptureTests(unittest.TestCase):
         self.assertEqual(result.exception.code, 2)
 
     def test_preview_command_needs_no_ports_and_uses_temporary_demo_roles(self):
-        with patch('baccable_lab.capture._Keyboard') as keyboard, \
-                contextlib.redirect_stdout(io.StringIO()) as output:
-            keyboard.return_value.read.side_effect = ['q']
-            self.assertEqual(main(['preview', '--role', 'BH']), 0)
-        self.assertIn('Offline preview ended', output.getvalue())
-        self.assertIn('no session was saved', output.getvalue())
+        all_roles = ('C1', 'C2', 'BH')
+        cases = [(['preview'], all_roles)]
+        for count in range(1, 4):
+            for roles in itertools.combinations(all_roles, count):
+                arguments = ['preview']
+                for role in roles:
+                    arguments.extend(['--role', role])
+                cases.append((arguments, roles))
+        # Repeated selectors still represent one simulated bus, not two readers.
+        cases.append((['preview', '--role', 'C1', '--role', 'C1'], ('C1',)))
+        for arguments, roles in cases:
+            with self.subTest(arguments=arguments):
+                opened = []
+
+                class DemoReader:
+                    error = None
+                    discarded_bytes = 0
+
+                    def __init__(self, role, device, incoming, stop, abort):
+                        self.role, self.device, self.incoming = role, device, incoming
+
+                    def start(self):
+                        opened.append((self.role, self.device))
+                        self.incoming.put((self.role, time.monotonic_ns(), FRAME))
+
+                    def is_alive(self): return False
+                    def join(self, timeout): pass
+
+                def checked_capture(ports, root, command, **kwargs):
+                    result = capture(ports, root, command, **kwargs)
+                    directory, = root.iterdir()
+                    with contextlib.closing(sqlite3.connect(directory / 'session.sqlite3')) as db:
+                        counts = dict(db.execute('SELECT role, count(*) FROM can_frames GROUP BY role'))
+                    self.assertEqual(counts, dict.fromkeys(roles, 1))
+                    self.assertEqual({file.stem for file in directory.glob('*.bin')}, set(roles))
+                    return result
+
+                with patch('baccable_lab.capture._DemoReader', DemoReader), \
+                        patch('baccable_lab.capture._Reader') as serial_reader, \
+                        patch('baccable_lab.capture._Keyboard') as keyboard, \
+                        patch('baccable_lab.cli.capture', side_effect=checked_capture) as recorder, \
+                        contextlib.redirect_stdout(io.StringIO()) as output:
+                    keyboard.return_value.read.side_effect = [None, 'q']
+                    self.assertEqual(main(arguments), 0)
+                serial_reader.assert_not_called()
+                self.assertEqual(dict(opened), {role: f'SIMULATED:{role}' for role in roles})
+                self.assertFalse(recorder.call_args.args[1].exists())
+                self.assertIn('Offline preview ended', output.getvalue())
+                self.assertIn('no session was saved', output.getvalue())
 
 
 if __name__ == '__main__':
