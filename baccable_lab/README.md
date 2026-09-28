@@ -22,6 +22,7 @@ needed only for real USB capture and `pytest` only for the test suite.
 ```sh
 source .venv/bin/activate
 python -m baccable_lab.cli doctor
+python -m baccable_lab.cli preview
 python -m baccable_lab.cli capture --port C1=/dev/cu.usbmodemXXXX \
   --port C2=/dev/cu.usbmodemYYYY --port BH=/dev/cu.usbmodemZZZZ \
   --no-obd --no-voice
@@ -44,11 +45,23 @@ as `<ROLE>.bin` for each selected role, parses complete 16-byte records into
 `session.sqlite3`, and preserves `0xAF` loss markers. Port paths are host-assigned
 and must be remapped after reconnects.
 
-During capture, press `m` or `?` to show the marker palette. The quick keys add
-common vehicle events; `c` asks for a custom label, `n` adds a note to the last
-marker, and `u` removes the last marker. The first two seconds are reported
-separately as startup loss so an attachment backlog is visible without being
-confused with loss during the test.
+`preview` runs the same live screen without opening USB serial devices or
+requiring a car. It generates clearly labelled synthetic C1/C2/BH frames and
+discards the temporary session when you quit. Select roles with repeatable
+`--role`, for example `baccable preview --role C1 --role BH`.
+
+The live terminal screen shows recent raw CAN frames, frame/loss counts, and
+the four newest event markers as a timeline. It keeps all marker groups visible
+and shows a group's complete list when you select it. Groups are Vehicle,
+Driving, IPC/media, Suspension/chassis,
+Weather/wipers, Lights and Climate. Press `g`, a group key, then the marker's
+number to add a grouped marker; the screen shows the available keys. Existing
+quick keys `1`–`0` remain available. Press `c` for a custom label, `n` to add a
+note to the latest marker, `u` to undo it, and `q` to finish. These are manual
+observations, not automatic CAN signal detections; the live frame view shows
+raw identifiers and bytes. The first two seconds are reported separately as
+startup loss so an attachment backlog is visible without being confused with
+loss during the test.
 
 Hardware setup and the acceptance checklist are in [docs/HARDWARE_SETUP.md](docs/HARDWARE_SETUP.md)
 and [docs/CAPTURE.md](docs/CAPTURE.md). The parent project specification is

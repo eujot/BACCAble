@@ -1,4 +1,26 @@
-# Capture acceptance
+# Capture screen and acceptance
+
+To practise without a BACCAble or vehicle, run `baccable preview`. The preview
+uses synthetic frames, marks them as demo traffic, opens no serial ports, and
+deletes its temporary session on exit. Optional `--role C1`, `--role C2`, and
+`--role BH` arguments select the simulated buses; by default all three appear.
+
+During a real capture or preview, the terminal dashboard displays recent raw
+CAN frames and IDs, per-bus frame/loss totals, and the four newest events on a
+timestamped event timeline. Marker groups stay visible; selecting one displays
+all of its available labels. The catalog is grouped by Vehicle, Driving,
+IPC/media, Suspension/chassis, Weather/wipers, Lights and Climate. To place a
+grouped marker, press `g`, the group key shown on screen, then its item number
+(`0` selects item 10). Number keys `1`–`0` retain their existing quick markers.
+`c` adds a custom label, `n` adds a note to the most recent marker, `u` removes
+that marker, and `q` finishes the capture. `m` or `?` shows the controls again.
+
+All event labels are manual observations. For example, `Rain detected`,
+`Suspension active`, `IPC menu overwritten`, and `A/C on` are not automatically
+inferred from CAN. The live preview deliberately shows raw frame data and does
+not guess signal meanings.
+
+## Capture acceptance
 
 Before starting, record the firmware release, board identities and port mapping.
 Run a stationary 20–30 minute session. The capture screen shows the marker

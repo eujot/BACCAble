@@ -33,6 +33,28 @@ to automatically flash hardware or publish every future change.
 
 ## Verified baseline and deployment
 
+BACCAble Lab offline preview and capture dashboard, **2026-09-28**, branch
+`feat/lab-offline-preview` from the current `master`: adds `baccable preview`
+with synthetic multi-bus traffic, a live raw-frame pane, latest-event timeline,
+and grouped manual markers for IPC/media, suspension, rain/wipers, lights,
+climate and common driving/vehicle events. The same screen is used during real
+capture. Preview data lives in a temporary directory and is discarded on exit;
+labels are explicitly manual observations, not decoded CAN signals. Lab README
+and capture guide describe use. Native Lab suite (23 tests) and Python compile
+checks pass; vehicle/hardware capture behavior is unchanged and not exercised
+by this host-only UI work. Opened as [PR #42](https://github.com/eujot/BACCAble/pull/42).
+CI run [36467027208](https://github.com/eujot/BACCAble/actions/runs/36467027208)
+passed Lab/host tests, lint and all four firmware builds on commit `a32e915`;
+the PR is awaiting review and merge.
+
+Beta-18 release, **2026-09-28**: merged PRs #39–#41 are included at
+`fdb14135314053d98a4b0b4574bc1e5e3ba2cc5f` and published as
+[`v5-beta-18`](https://github.com/eujot/BACCAble/releases/tag/v5-beta-18).
+Release workflow [36358007483](https://github.com/eujot/BACCAble/actions/runs/36358007483)
+passed host/Lab/menu tests, cppcheck and C1/C2/BH/CAN builds. Release assets
+include BIN/HEX/ELF, `BUILD_INFO.json`, `SHA256SUMS` and release notes. IPC
+display behavior still needs in-car verification.
+
 IPC source/Unicode display experiment, **2026-09-28**, branch
 `feat/ipc-display-test` based on merged PR #39 (`383c8c8`): added a
 production-accessible `Information → IPC display test` submenu with explicit
