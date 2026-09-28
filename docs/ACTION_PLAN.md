@@ -67,7 +67,8 @@ length guards, diagnostics, markers, templates, passive CLI commands and
 read-only WAL behavior and incomplete IPC rejection. All 46 Lab tests and whitespace/Python compilation
 checks pass locally. Firmware, on-device menu and capture behavior are unchanged;
 no new firmware build, release or vehicle trial is claimed. Changes and this
-handoff are committed on the task branch; merge/release is not performed here.
+handoff are committed on the task branch and prepared for PR review against
+master; merge/release is not performed here.
 
 Multi-bus preview startup fix, **2026-09-28**, branch
 `fix/lab-preview-multiple-buses`, based on master `c0bdf9b`: preview assigned
