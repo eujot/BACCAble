@@ -16,6 +16,13 @@ Preserve unrelated local edits. Keep project documentation, menu labels and code
 comments in English, except for the maintained Polish user guide described below.
 Read the linked technical guide for the area being changed.
 
+For CAN capture analysis or changes to the signal dictionary, read
+[the session analysis workflow](baccable_lab/docs/SESSION_ANALYSIS.md).
+Load the existing dictionary and research hypotheses before interpreting new
+recordings. Preserve original dumps and markers; retain evidence, contradictions
+and provenance when updating knowledge. Refresh the readable CAN catalog with
+the machine-readable dictionary so subsequent sessions reuse the same meanings.
+
 ## Keep the checkout ready for pulls
 
 Update `docs/ACTION_PLAN.md` in the same task branch or isolated worktree as

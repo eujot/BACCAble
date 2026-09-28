@@ -1,0 +1,165 @@
+{
+  "schema_version": 1,
+  "scope": "Passive research claims; not executable signals or permission for CAN transmission.",
+  "hypotheses": [
+    {
+      "id": "IPC-LIGHT-001",
+      "status": "candidate",
+      "role": "BH",
+      "can_id": "0x46C",
+      "dlc": 8,
+      "parts": [
+        [
+          5,
+          1,
+          1
+        ]
+      ],
+      "description": "Bit changes with the recorded exterior-light ON/OFF pair; exact lamp/status meaning unconfirmed.",
+      "evidence": [
+        {
+          "session": "20260928-204607Z",
+          "event_ids": [
+            10,
+            11
+          ],
+          "on_host_seconds": 265.647627,
+          "off_host_seconds": 308.721234,
+          "on_data": "009063ACD40E0000",
+          "off_data": "009063ACD40C0000"
+        }
+      ],
+      "contradictions": [],
+      "alternatives": [
+        "lamp activation",
+        "illumination/status synchronized with lamp activation"
+      ],
+      "next_test": "Repeat at least three cycles in another session; distinguish parking lights, manual low beam, AUTO mode without illumination, and automatic illumination. Mark actual lamp state separately from selector position."
+    },
+    {
+      "id": "IPC-LIGHT-002",
+      "status": "candidate",
+      "role": "C1",
+      "can_id": "0x545",
+      "dlc": 8,
+      "parts": [
+        [
+          4,
+          7,
+          1
+        ]
+      ],
+      "description": "Bit follows the same light pair; it may participate in IPC illumination state rather than encode a brightness value.",
+      "evidence": [
+        {
+          "session": "20260928-204607Z",
+          "event_ids": [
+            10,
+            11
+          ],
+          "on_host_seconds": 265.671007,
+          "off_host_seconds": 308.87885,
+          "on_data": "001D8C8380044000",
+          "off_data": "001D4C8300044000"
+        }
+      ],
+      "contradictions": [],
+      "alternatives": [
+        "illumination mode",
+        "lighting state",
+        "dependent IPC status"
+      ],
+      "next_test": "Separate lamp ON/OFF from brightness changes; keep lamps steady while adjusting brightness, then repeat with manual/AUTO selection."
+    },
+    {
+      "id": "IPC-LIGHT-003",
+      "status": "candidate",
+      "role": "C2",
+      "can_id": "0x73E",
+      "dlc": 8,
+      "parts": [
+        [
+          3,
+          6,
+          1
+        ]
+      ],
+      "description": "Exploratory step has 0->1 at the light-ON marker and 1->0 at OFF, matching BH 0x354 byte 3 bit 6. This does not establish a common decoder for both buses.",
+      "evidence": [
+        {
+          "session": "20260928-204607Z",
+          "event_ids": [
+            10,
+            11
+          ],
+          "report_section": "candidate_bit_steps"
+        }
+      ],
+      "contradictions": [],
+      "next_test": "Repeat independently and compare manual lamps, AUTO selection, actual illumination and beam/fog states."
+    },
+    {
+      "id": "BODY-BRAKE-001",
+      "status": "candidate",
+      "role": "C1",
+      "can_id": "0x384",
+      "dlc": 8,
+      "parts": [
+        [
+          3,
+          3,
+          1
+        ]
+      ],
+      "description": "Historical park-brake interpretation agrees with the explicit parking-brake pair about 0.8-0.9 s after markers; earlier generic brake markers also overlap transitions.",
+      "evidence": [
+        {
+          "session": "20260928-204607Z",
+          "event_ids": [
+            8,
+            9
+          ],
+          "report_section": "marker_correlations"
+        },
+        {
+          "session": "20260928-204100Z",
+          "event_ids": [
+            18,
+            19,
+            20,
+            21,
+            22
+          ],
+          "report_section": "signal_statistics"
+        }
+      ],
+      "contradictions": [
+        "Generic brake labels do not distinguish EPB operation from brake-pedal use; no independent actuator-state reference was captured."
+      ],
+      "next_test": "Record pedal-only cycles with EPB unchanged, then EPB-only transitions while maintaining pedal pressure. Mark button operation and completed actuator state separately. Inspect C2 separately."
+    },
+    {
+      "id": "BODY-WINDOW-001",
+      "status": "unresolved",
+      "role": null,
+      "can_id": null,
+      "description": "Window actions are present but no window field is identified. Raw bit steps include many unrelated candidates and mixed driver/passenger annotations.",
+      "evidence": [
+        {
+          "session": "20260928-204100Z",
+          "event_ids": [
+            23,
+            25,
+            26,
+            27
+          ],
+          "report_section": "candidate_bit_steps"
+        }
+      ],
+      "contradictions": [
+        "Event 26 describes driver-window closing and notes passenger-window opening. Only one explicitly driver-open marker; movement duration and final positions are unknown."
+      ],
+      "next_test": "Stationary: driver down/up three times, then passenger down/up separately. Mark switch press, release and full-open/full-closed states; keep other controls and ignition steady."
+    }
+  ]
+}

@@ -1,8 +1,9 @@
 # BACCAble Lab
 
 Host-side recorder for one, two or three BACCAble binary CAN streams. Milestone 0 and the
-software part of Milestone 1 are implemented; real hardware acceptance is still
-required before adding OBD, replay UI, voice, or analysis milestones.
+software part of Milestone 1 are implemented. Offline session review and a
+versioned CAN dictionary are available; the full hardware acceptance checklist
+remains separate from those analysis results.
 
 ## One-command setup
 
@@ -29,6 +30,8 @@ python -m baccable_lab.cli capture --port C1=/dev/cu.usbmodemXXXX \
 python -m baccable_lab.cli sessions
 python -m baccable_lab.cli session info SESSION_ID
 python -m baccable_lab.cli export SESSION_ID --basic
+python -m baccable_lab.cli dictionary --role BH --id 0x46C
+python -m baccable_lab.cli session decode SESSION_ID --role BH --id 0x46C --limit 20
 ```
 
 To capture only C1 (C2 or BH can also be selected alone):
@@ -68,6 +71,26 @@ attachment backlog is visible without being confused with loss during the test.
 Hardware setup and the acceptance checklist are in [docs/HARDWARE_SETUP.md](docs/HARDWARE_SETUP.md)
 and [docs/CAPTURE.md](docs/CAPTURE.md). The parent project specification is
 in [../docs/baccable_lab/PROJECT.md](../docs/baccable_lab/PROJECT.md).
+
+## Offline CAN knowledge
+
+[CAN_DICTIONARY.md](docs/CAN_DICTIONARY.md) describes bus-specific fields,
+diagnostic DIDs, code sources and observed coverage. The packaged JSON dictionary
+keeps marker evidence separate from code comments and CAN-derived annotations.
+`session decode` prints saved frames with known fields and an empirical stable-bit
+comparison; it opens no serial port. Unknown identifiers and enum values stay raw.
+
+```sh
+baccable review --sessions sessions --output /tmp/baccable-review-NEW-DATE.json
+```
+
+Review reads finished recordings, preserves dumps, includes capture errors and
+loss, compares manual markers, reconstructs IPC messages and proposes exploratory
+bit steps. It refuses an existing output file and output inside the capture root.
+Candidates require human review and independent controls before naming a function.
+See [the findings](docs/research/20260928-findings.md) and the reusable
+[agent analysis workflow](docs/SESSION_ANALYSIS.md) for adding new evidence and
+using existing knowledge in the next recording.
 
 ## USB transition diagnostics (recovery candidate firmware)
 

@@ -19,3 +19,6 @@ baccable = "baccable_lab.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
+
+[tool.setuptools.package-data]
+baccable_lab = ["knowledge/*.json"]
