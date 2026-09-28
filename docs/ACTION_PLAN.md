@@ -43,8 +43,11 @@ common acronym; a unique match is timestamped directly, ambiguous results can
 be selected, and unmatched text becomes a custom marker. `baccable_lab/docs/MARKERS.md`
 describes all groups, search, source research, safe-use boundaries and why raw
 CAN does not decode feature names. All 29 native Lab unit tests, Python
-compile checks and `git diff --check` pass locally; PR CI is pending. No vehicle
-or hardware test is claimed. Firmware and both device user guides are unchanged.
+compile checks and `git diff --check` pass locally. The first full PR CI run
+([36470892309](https://github.com/eujot/BACCAble/actions/runs/36470892309))
+passed Lab/host tests, lint and all four firmware builds. PR #43 is open for
+review. No vehicle or hardware test is claimed. Firmware and both device user
+guides are unchanged.
 
 ## Verified baseline and deployment
 
