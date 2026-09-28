@@ -8,6 +8,7 @@ import json
 import os
 import sqlite3
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -77,6 +78,9 @@ def build_parser() -> argparse.ArgumentParser:
     capture_parser.add_argument("--sessions", default=None, help="session root (default: ./sessions)")
     capture_parser.add_argument("--no-obd", action="store_true", help="document that OBD is disabled")
     capture_parser.add_argument("--no-voice", action="store_true", help="document that voice is disabled")
+    preview = sub.add_parser("preview", help="practice the live interface with simulated CAN traffic; no hardware required")
+    preview.add_argument("--role", action="append", choices=("C1", "C2", "BH"),
+                         help="simulated bus to show (repeatable; default: C1, C2 and BH)")
     sessions = sub.add_parser("sessions", help="list completed and active sessions")
     sessions.add_argument("--sessions", default=None)
     session = sub.add_parser("session", help="inspect one session")
@@ -119,6 +123,11 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if args.command == "capture":
             return capture(parse_mapping(args.port), _root(args.sessions), sys.argv)
+        if args.command == "preview":
+            roles = args.role or ["C1", "C2", "BH"]
+            ports = {role: "SIMULATED" for role in roles}
+            with tempfile.TemporaryDirectory(prefix="baccable-preview-") as temporary:
+                return capture(ports, Path(temporary) / "sessions", ["baccable", "preview"], preview=True)
         if args.command == "sessions":
             paths = list_sessions(_root(args.sessions)) if _root(args.sessions).exists() else []
             for path in paths:

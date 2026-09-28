@@ -37,6 +37,25 @@ class CaptureTests(unittest.TestCase):
                 events = db.execute('SELECT label FROM events ORDER BY id').fetchall()
             self.assertEqual(events, [('left_indicator_on',)])
 
+    def test_grouped_marker_selection_is_saved_with_stable_label(self):
+        with tempfile.TemporaryDirectory() as temp:
+            class Reader:
+                error = None
+                discarded_bytes = 0
+                def __init__(self, role, device, output, stop, abort): self.role = role
+                def start(self): pass
+                def is_alive(self): return False
+                def join(self, timeout): pass
+            with patch('baccable_lab.capture._Reader', Reader), \
+                    patch('baccable_lab.capture._Keyboard') as keyboard, \
+                    contextlib.redirect_stdout(io.StringIO()):
+                keyboard.return_value.read.side_effect = ['g', 'i', '2', 'q']
+                self.assertEqual(capture({'C1': '/dev/test-C1'}, Path(temp), ['capture']), 0)
+            directory, = Path(temp).iterdir()
+            with contextlib.closing(sqlite3.connect(directory / 'session.sqlite3')) as db:
+                label, source = db.execute('SELECT label, source FROM events').fetchone()
+            self.assertEqual((label, source), ('ipc_menu_overwritten', 'keyboard'))
+
     def test_all_bus_selections_and_empty_bus(self):
         all_roles = ('C1', 'C2', 'BH')
         selections = [roles for count in range(1, 4)
@@ -121,6 +140,14 @@ class CaptureTests(unittest.TestCase):
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as result:
             main(['capture'])
         self.assertEqual(result.exception.code, 2)
+
+    def test_preview_command_needs_no_ports_and_uses_temporary_demo_roles(self):
+        with patch('baccable_lab.capture._Keyboard') as keyboard, \
+                contextlib.redirect_stdout(io.StringIO()) as output:
+            keyboard.return_value.read.side_effect = ['q']
+            self.assertEqual(main(['preview', '--role', 'BH']), 0)
+        self.assertIn('Offline preview ended', output.getvalue())
+        self.assertIn('no session was saved', output.getvalue())
 
 
 if __name__ == '__main__':
