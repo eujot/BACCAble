@@ -42,8 +42,10 @@ capture. Preview data lives in a temporary directory and is discarded on exit;
 labels are explicitly manual observations, not decoded CAN signals. Lab README
 and capture guide describe use. Native Lab suite (23 tests) and Python compile
 checks pass; vehicle/hardware capture behavior is unchanged and not exercised
-by this host-only UI work. Opened as [PR #42](https://github.com/eujot/BACCAble/pull/42);
-await its CI before merge.
+by this host-only UI work. Opened as [PR #42](https://github.com/eujot/BACCAble/pull/42).
+CI run [36467027208](https://github.com/eujot/BACCAble/actions/runs/36467027208)
+passed Lab/host tests, lint and all four firmware builds on commit `a32e915`;
+the PR is awaiting review and merge.
 
 Beta-18 release, **2026-09-28**: merged PRs #39–#41 are included at
 `fdb14135314053d98a4b0b4574bc1e5e3ba2cc5f` and published as
