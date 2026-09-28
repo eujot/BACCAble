@@ -15,7 +15,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from baccable_lab.can.baccable_binary import BinaryCaptureParser
-from baccable_lab.events.catalog import EVENT_GROUPS, MARKERS
+from baccable_lab.events.catalog import EVENT_GROUPS, MARKERS, label_text
+from baccable_lab.events.search import search_markers
 from baccable_lab.storage.manifest import write_manifest
 from baccable_lab.storage.raw_writer import RawWriters
 from baccable_lab.storage.sqlite_store import SessionStore
@@ -185,6 +186,7 @@ def capture(ports: dict[str, str], root: Path, command: list[str], *, preview: b
         while not stop.is_set():
             key = keyboard.read()
             label = ""
+            marker_source = "keyboard"
             selected_from_group = False
             if key in {"q", "Q", "\x03"}:
                 break
@@ -215,6 +217,34 @@ def capture(ports: dict[str, str], root: Path, command: list[str], *, preview: b
             elif key == "g":
                 group_selection = ""
                 status_message = "Choose a marker group key shown below"
+            elif key == "f" and hasattr(keyboard, "read_line"):
+                query = keyboard.read_line("Find marker or type an action: ")
+                if query:
+                    matches = search_markers(query)
+                    if len(matches) == 1:
+                        label = matches[0][0]
+                        status_message = f"Matched marker: {matches[0][1]}"
+                    elif len(matches) > 1:
+                        choices = "\n".join(f"{i}. {title}" for i, (_, title) in enumerate(matches, 1))
+                        answer = keyboard.read_line(
+                            f"Matches for {query!r}:\n{choices}\n"
+                            "Choose a number, or press Enter to add the typed action: "
+                        )
+                        if answer.isdigit() and 1 <= int(answer) <= len(matches):
+                            label, title = matches[int(answer) - 1]
+                            status_message = f"Matched marker: {title}"
+                        elif not answer:
+                            label = query
+                            marker_source = "typed"
+                            status_message = "Added typed action as a custom marker"
+                        else:
+                            status_message = "Marker search cancelled; choose a listed number or press Enter"
+                    else:
+                        label = query
+                        marker_source = "typed"
+                        status_message = "No catalog match; added typed action as a custom marker"
+                else:
+                    status_message = "Marker search cancelled"
             elif key == "u":
                 if last_event_id is None:
                     status_message = "No marker to undo"
@@ -246,11 +276,12 @@ def capture(ports: dict[str, str], root: Path, command: list[str], *, preview: b
                 if label == "custom" and hasattr(keyboard, "read_line"):
                     label = keyboard.read_line("Marker label: ") or "custom"
                 at = time.monotonic_ns() - started
-                last_event_id = store.add_event(time.monotonic_ns() - started, label)
+                last_event_id = store.add_event(time.monotonic_ns() - started, label, source=marker_source)
                 last_event_label = label
                 timeline.append((at / 1_000_000_000, label, ""))
                 events += 1
-                status_message = f"Added marker: {label.replace('_', ' ')}"
+                if not status_message.startswith("Matched marker:") and not status_message.startswith("No catalog match") and not status_message.startswith("Added typed action"):
+                    status_message = f"Added marker: {label_text(label)}"
             try:
                 item = incoming.get(timeout=0.1)
             except queue.Empty:

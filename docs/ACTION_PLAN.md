@@ -31,6 +31,24 @@ bounded changes and existing modules/tests. No model-specific workflow, mandator
 PR count or broad rewrite is needed. This handoff is a backlog, not an instruction
 to automatically flash hardware or publish every future change.
 
+## Current work
+
+BACCAble Lab marker catalog and quick search, **2026-09-28**, based on
+`origin/master` at `eeffe082`: expanded the manual marker catalog to cover
+vehicle/body controls, powertrain and live readings (including SOC and
+intercooler temperature), brakes/stability, driver assistance, IPC/media,
+chassis, weather, lights, comfort, parking and diagnostics. The capture screen
+now spells out the `1`–`0` quick-key meanings, and `f` searches by action or
+common acronym; a unique match is timestamped directly, ambiguous results can
+be selected, and unmatched text becomes a custom marker. `baccable_lab/docs/MARKERS.md`
+describes all groups, search, source research, safe-use boundaries and why raw
+CAN does not decode feature names. All 29 native Lab unit tests, Python
+compile checks and `git diff --check` pass locally. The first full PR CI run
+([36470892309](https://github.com/eujot/BACCAble/actions/runs/36470892309))
+passed Lab/host tests, lint and all four firmware builds. PR #43 is open for
+review. No vehicle or hardware test is claimed. Firmware and both device user
+guides are unchanged.
+
 ## Verified baseline and deployment
 
 BACCAble Lab offline preview and capture dashboard, **2026-09-28**, branch
@@ -40,12 +58,10 @@ and grouped manual markers for IPC/media, suspension, rain/wipers, lights,
 climate and common driving/vehicle events. The same screen is used during real
 capture. Preview data lives in a temporary directory and is discarded on exit;
 labels are explicitly manual observations, not decoded CAN signals. Lab README
-and capture guide describe use. Native Lab suite (23 tests) and Python compile
-checks pass; vehicle/hardware capture behavior is unchanged and not exercised
-by this host-only UI work. Opened as [PR #42](https://github.com/eujot/BACCAble/pull/42).
-CI run [36467027208](https://github.com/eujot/BACCAble/actions/runs/36467027208)
-passed Lab/host tests, lint and all four firmware builds on commit `a32e915`;
-the PR is awaiting review and merge.
+and capture guide describe use. PR #42 was merged into master as
+`eeffe08248174249176a03a76614754a7bb9fa17`; its CI passed Lab/host tests, lint
+and all four firmware builds. Vehicle/hardware capture behavior was not
+exercised by that host-only UI work.
 
 Beta-18 release, **2026-09-28**: merged PRs #39–#41 are included at
 `fdb14135314053d98a4b0b4574bc1e5e3ba2cc5f` and published as

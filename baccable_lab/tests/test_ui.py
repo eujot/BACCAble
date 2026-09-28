@@ -4,7 +4,8 @@ import unittest
 
 from baccable_lab.can.baccable_binary import BinaryCaptureParser
 from baccable_lab.capture import _DemoReader
-from baccable_lab.events.catalog import EVENT_GROUPS
+from baccable_lab.events.catalog import EVENT_GROUPS, QUICK_MARKERS
+from baccable_lab.events.search import search_markers
 from baccable_lab.ui import render_dashboard
 
 
@@ -20,11 +21,13 @@ class DashboardTests(unittest.TestCase):
         for expected in ("OFFLINE PREVIEW", "DEMO", "0x090", "EVENT TIMELINE",
                          "IPC / media",
                          "Menu overwritten", "song changed", "Track changed",
-                         "g grouped marker"):
+                         "[g] grouped marker", "[f] find/type marker", "[1] Unlock",
+                         "[7] Left indicator on"):
             self.assertIn(expected, screen)
         overview = render_dashboard(mode="LIVE CAPTURE", elapsed=0, counts={}, latest={}, timeline=[])
-        for group in ("Vehicle", "Driving", "IPC / media", "Suspension / chassis",
-                      "Weather / wipers", "Lights", "Climate"):
+        for group in ("Vehicle", "Driving", "Powertrain / transmission", "Brakes / stability",
+                      "Driver assistance / safety", "IPC / media", "Suspension / chassis",
+                      "Weather", "wipers", "Lights", "Climate / comfort", "Electrical / diagnostics"):
             self.assertIn(group, overview)
 
     def test_marker_catalog_is_selectable_with_single_digit_group_indices(self):
@@ -35,6 +38,25 @@ class DashboardTests(unittest.TestCase):
         labels = {label for _, entries in EVENT_GROUPS.values() for label, _ in entries}
         self.assertTrue(expected <= labels)
         self.assertTrue(all(len(entries) <= 10 for _, entries in EVENT_GROUPS.values()))
+        self.assertGreaterEqual(len(labels), 120)
+        self.assertEqual(len(QUICK_MARKERS), 10)
+
+    def test_marker_search_handles_aliases_and_returns_stable_labels(self):
+        self.assertEqual(search_markers("ABS")[0], ("abs_intervention", "ABS intervention"))
+        self.assertIn(("tpms_warning", "Tyre pressure warning"), search_markers("tpms"))
+        self.assertIn(("suspension_active", "Suspension active"), search_markers("ADC"))
+        self.assertIn(("intercooler_temperature_high", "Intercooler temperature high"),
+                      search_markers("temperatura intercoolera"))
+        self.assertIn(("rain_detected", "Rain detected"), search_markers("DESZCZ"))
+        self.assertEqual(search_markers("no such marker phrase"), [])
+        self.assertIn(("steering_heating_changed", "Steering heating changed"),
+                      search_markers("STEERING HEATING"))
+
+    def test_expanded_group_picker_wraps_and_keeps_every_group_key_visible(self):
+        screen = render_dashboard(mode="LIVE CAPTURE", elapsed=0, counts={}, latest={},
+                                  timeline=[], width=60, selected_group="")
+        for key in EVENT_GROUPS:
+            self.assertIn(f"[{key}]", screen)
 
     def test_offline_reader_generates_parseable_sample_records(self):
         output = queue.Queue()
