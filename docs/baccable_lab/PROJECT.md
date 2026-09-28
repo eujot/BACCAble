@@ -10,7 +10,7 @@
 
 **Project directory:** `baccable_lab/`
 
-## Current implementation status (2026-09-20)
+## Current implementation status (2026-09-29)
 
 - **Milestone 0 — complete.** The checkout, firmware capture format, USB
   assumptions and development setup were verified. The host project skeleton
@@ -19,13 +19,16 @@
   binary parser, raw stream preservation, SQLite session store, loss markers,
   common host timeline, keyboard markers, session inspection and CSV export are
   implemented and covered by host tests.
-- **Hardware acceptance — pending.** The three BACCAble ports must still be
-  connected to the actual Mac and vehicle for a meaningful stationary capture.
-  This is the next action after the PR is merged. Do not mark Milestone 1
-  complete until that run passes the checklist in section 14.5 and
-  `baccable_lab/docs/CAPTURE.md`.
-- **Later milestones — blocked.** OBD, replay UI, voice, video and analysis
-  work must wait until hardware capture acceptance passes.
+- **Hardware acceptance — partial evidence.** Saved owner recordings from
+  September 26–28 include complete multi-bus captures, but do not establish the
+  full stationary 20–30 minute checklist. Keep that acceptance open until a
+  documented run passes section 14.5 and `baccable_lab/docs/CAPTURE.md`.
+- **Offline knowledge — implemented on the analysis task branch.** Read-only
+  session review, a versioned signal dictionary, empirical frame templates,
+  saved-frame annotations and an agent workflow use the owner's actual dumps.
+  See [the workflow](../../baccable_lab/docs/SESSION_ANALYSIS.md) and the root
+  action plan for integration status. This is passive analysis; OBD, live
+  advisor, replay UI, voice and video acceptance remain separate work.
 
 ---
 

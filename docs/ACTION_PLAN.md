@@ -1,6 +1,6 @@
 # BACCAble action plan and agent handoff
 
-Last updated: **2026-09-28** (dated verification boundaries below). This is the single source of planned work,
+Last updated: **2026-09-29** (dated verification boundaries below). This is the single source of planned work,
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
@@ -35,6 +35,39 @@ PR count or broad rewrite is needed. This handoff is a backlog, not an instructi
 to automatically flash hardware or publish every future change.
 
 ## Current work
+
+CAN session knowledge and iterative analysis, **2026-09-29**, branch
+`feat/lab-can-dictionary`, based on source snapshot `c550e161`: reviewed
+12 owner recordings from September 26–28 (8,446,020 frames, 99 manual events,
+26 explicitly CAN-derived events). Three new recordings add reverse, park,
+windows, ignition, EPB, media and lighting observations. Preserve original
+databases, committed WAL, raw streams and markers; their hashes are in the
+versioned evidence ledger. Six runs are complete; failed-run data and parser/
+reader errors remain visible, and the full stationary hardware acceptance
+checklist is still open.
+
+The packaged passive dictionary describes 43 bus-specific messages, 115 fields
+and 76 diagnostic catalog entries, links 153 marker labels, inventories 337
+bus/ID/DLC shapes, and stores 215 empirical templates learned from complete
+runs. Code decoding, historical comments, manual correlation and CAN-derived
+annotations are separate evidence sources. New lighting bits are research
+hypotheses, not implemented actuator behavior; ambiguous window/brake labels
+and the earlier reversed indicator labels are retained. `dictionary`, `review`
+and `session decode` support read-only lookup, provenance-preserving batch
+review and annotations of saved frames. The automated bit-step screen is
+explicitly exploratory and does not create named decoders from correlations.
+
+Read [the agent workflow](../baccable_lab/docs/SESSION_ANALYSIS.md),
+[the generated frame catalog](../baccable_lab/docs/CAN_DICTIONARY.md) and
+[the dated findings](../baccable_lab/docs/research/20260928-findings.md).
+AGENTS.md directs future capture-analysis work to this workflow. Evidence
+attachment and Markdown generation scripts keep the catalog reusable for
+subsequent recordings. Lab host tests cover source/layout provenance, roles,
+length guards, diagnostics, markers, templates, passive CLI commands and
+read-only WAL behavior and incomplete IPC rejection. All 46 Lab tests and whitespace/Python compilation
+checks pass locally. Firmware, on-device menu and capture behavior are unchanged;
+no new firmware build, release or vehicle trial is claimed. Changes and this
+handoff are committed on the task branch; merge/release is not performed here.
 
 Multi-bus preview startup fix, **2026-09-28**, branch
 `fix/lab-preview-multiple-buses`, based on master `c0bdf9b`: preview assigned

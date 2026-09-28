@@ -88,6 +88,12 @@ def build_parser() -> argparse.ArgumentParser:
     info = session_sub.add_parser("info")
     info.add_argument("session")
     info.add_argument("--sessions", default=None)
+    decode = session_sub.add_parser("decode", help="annotate saved frames using the CAN dictionary")
+    decode.add_argument("session")
+    decode.add_argument("--sessions", default=None)
+    decode.add_argument("--role", required=True, choices=("C1", "C2", "BH"))
+    decode.add_argument("--id", required=True, type=lambda value: int(value, 0), dest="can_id")
+    decode.add_argument("--limit", type=int, default=20, help="maximum frames to print (1-1000)")
     event = sub.add_parser("event", help="add an event to an existing session")
     event_sub = event.add_subparsers(dest="event_command", required=True)
     add = event_sub.add_parser("add")
@@ -100,12 +106,55 @@ def build_parser() -> argparse.ArgumentParser:
     export.add_argument("--basic", action="store_true", required=True)
     export.add_argument("--output", "-o", default=None)
     export.add_argument("--sessions", default=None)
+    dictionary = sub.add_parser("dictionary", help="inspect the passive, evidence-based CAN dictionary")
+    dictionary.add_argument("--role", choices=("C1", "C2", "BH"))
+    dictionary.add_argument("--id", type=lambda value: int(value, 0), dest="can_id",
+                            help="numeric CAN ID, e.g. 0x46C")
+    dictionary.add_argument("--data", help="hex payload to decode; requires --role and --id")
+    review = sub.add_parser("review", help="review saved sessions read-only against the CAN dictionary")
+    review.add_argument("--sessions", default=None)
+    review.add_argument("--output", "-o", required=True, help="new JSON report outside the session directory")
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
+        if args.command == "dictionary":
+            from baccable_lab.knowledge.catalog import decode_frame, load_dictionary
+            catalog = load_dictionary()
+            if args.data is not None:
+                if args.role is None or args.can_id is None:
+                    raise ValueError("--data requires --role and --id")
+                result = decode_frame(catalog, args.role, args.can_id, bytes.fromhex(args.data))
+            else:
+                result = {**catalog, "messages": [m for m in catalog["messages"]
+                          if (args.role is None or m["role"] == args.role)
+                          and (args.can_id is None or int(m["can_id"], 16) == args.can_id)],
+                          "diagnostic_parameters": [p for p in catalog["diagnostic_parameters"]
+                          if (args.role is None or p["role"] == args.role)
+                          and (args.can_id is None or args.can_id in
+                               (int(p["request_id"], 16), int(p["response_id"], 16)))]}
+                for key in ('frame_templates','observed_inventory'):
+                    result[key] = [item for item in catalog.get(key, [])
+                                   if (args.role is None or item['role'] == args.role)
+                                   and (args.can_id is None or int(item['can_id'],16) == args.can_id)]
+            print(json.dumps(result, indent=2))
+            return 0
+        if args.command == "review":
+            from baccable_lab.knowledge.review import review_sessions
+            root = _root(args.sessions).resolve()
+            output = Path(args.output).resolve()
+            if output == root or root in output.parents:
+                raise ValueError("write the report outside the captured session directory")
+            if output.exists():
+                raise ValueError("report already exists; choose a new output path")
+            result = review_sessions(root)
+            with output.open("x", encoding="utf-8") as stream:
+                json.dump(result, stream, indent=2)
+                stream.write("\n")
+            print(f"reviewed {len(result['sessions'])} sessions, {result['total_frames']} frames: {output}")
+            return 0
         if args.command == "doctor":
             print("\n".join(doctor_lines()))
             if args.usb_status:
@@ -134,6 +183,23 @@ def main(argv: list[str] | None = None) -> int:
                 print(path.name)
             return 0
         if args.command == "session":
+            if args.session_command == "decode":
+                from baccable_lab.knowledge.catalog import decode_frame, load_dictionary
+                from baccable_lab.knowledge.review import open_readonly
+                if not 1 <= args.limit <= 1000 or not 0 <= args.can_id <= 0x1FFFFFFF:
+                    raise ValueError("--limit must be 1-1000 and --id a classical CAN identifier")
+                directory = resolve_session(_root(args.sessions), args.session)
+                database = open_readonly(directory)
+                try:
+                    catalog = load_dictionary()
+                    for host, device, dlc, data in database.execute(
+                        "SELECT host_ns,device_timestamp_ms,dlc,data FROM can_frames WHERE role=? "
+                        "AND arbitration_id=? ORDER BY sequence LIMIT ?", (args.role, args.can_id, args.limit)):
+                        result = decode_frame(catalog, args.role, args.can_id, bytes(data)[:dlc])
+                        print(json.dumps({"host_ns":host,"device_timestamp_ms":device,**result}))
+                finally:
+                    database.close()
+                return 0
             return _session_info(resolve_session(_root(args.sessions), args.session))
         if args.command == "event":
             directory = resolve_session(_root(args.sessions), args.session)
@@ -146,7 +212,7 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if args.command == "export":
             return _export_basic(resolve_session(_root(args.sessions), args.session), args.output)
-    except (ValueError, OSError, RuntimeError) as exc:
+    except (ValueError, OSError, RuntimeError, sqlite3.Error) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     return 2
