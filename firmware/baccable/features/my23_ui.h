@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
-#define MY23_L1_VISIBLE 14U
+#define MY23_L1_VISIBLE 16U
 #define MY23_L2_VISIBLE 22U
 #define MY23_PACKET_MARKER 2U
 #define MY23_PACKET_SIZE (1U + MY23_L1_VISIBLE + MY23_L2_VISIBLE)

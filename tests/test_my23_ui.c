@@ -13,16 +13,18 @@ static void test_my23_glyph_budget(void) {
         assert(encoded[limit] == 'X');
     }
     uint8_t packet[MY23_PACKET_SIZE];
-    my23_packet_mode(packet, UI_MODE_LIST, "1234567890123", "");
-    assert(packet[1] == 0x80 && packet[14] == 0x87 && packet[15] == ' ');
-    my23_packet_mode(packet, UI_MODE_LIST, "123456789012", "next");
-    assert(!memcmp(packet + 3, "123456789012", 12) && !memcmp(packet + 15, "next", 4));
-    my23_packet(packet, "12345678901234EXTRA", "1234567890123456789012EXTRA");
-    assert(!memcmp(packet + 1, "12345678901234", 14));
-    assert(!memcmp(packet + 15, "1234567890123456789012", 22));
+    my23_packet_mode(packet, UI_MODE_LIST, "123456789012345", "");
+    assert(packet[1] == 0x80 && packet[MY23_L1_VISIBLE] == 0x87 &&
+           packet[1 + MY23_L1_VISIBLE] == ' ');
+    my23_packet_mode(packet, UI_MODE_LIST, "12345678901234", "next");
+    assert(!memcmp(packet + 3, "12345678901234", 14) &&
+           !memcmp(packet + 1 + MY23_L1_VISIBLE, "next", 4));
+    my23_packet(packet, "1234567890123456EXTRA", "1234567890123456789012EXTRA");
+    assert(!memcmp(packet + 1, "1234567890123456", MY23_L1_VISIBLE));
+    assert(!memcmp(packet + 1 + MY23_L1_VISIBLE, "1234567890123456789012", 22));
     my23_packet(packet, "Gear", "RPM 3500");
-    assert(packet[5] == ' ' && !memcmp(packet + 15, "RPM 3500", 8));
-    for (unsigned i = 5; i < 15; ++i) assert(packet[i] == ' ');
+    assert(packet[5] == ' ' && !memcmp(packet + 1 + MY23_L1_VISIBLE, "RPM 3500", 8));
+    for (unsigned i = 5; i < 1 + MY23_L1_VISIBLE; ++i) assert(packet[i] == ' ');
 }
 /* MY23 Readings keeps the old value text and previews the next eligible page. */
 static void test_my23_readings_preview_and_unavailable_gear(void) {
@@ -42,7 +44,7 @@ static void test_my23_readings_preview_and_unavailable_gear(void) {
     while (selected < count && pages[selected] != gear) ++selected;
     assert(selected < count && count > 1);
     const char *next = parameter_pages[0][pages[(selected + 1) % count]].label;
-    assert(!memcmp(screen_packet + 16, next, strlen(next) < 22 ? strlen(next) : 22));
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, next, strlen(next) < 22 ? strlen(next) : 22));
     int coolant = menu_page_index(0, 0x20);
     assert(coolant >= 0);
     parameter_cache_put(42, 88, now);
@@ -53,7 +55,7 @@ static void test_my23_readings_preview_and_unavailable_gear(void) {
     parameter_cache_put(5, 101, now);
     menu_show_parameter((uint8_t)pair); menu_render();
     assert(!memcmp(screen_packet + 2, "Oil", 3));
-    assert(screen_packet[16] != ' '); /* The next page, never a split value. */
+    assert(screen_packet[2 + MY23_L1_VISIBLE] != ' '); /* The next page, never a split value. */
     int four = menu_page_index(0, 0x37);
     assert(four >= 0);
     for (unsigned i = 0; i < 4; ++i) parameter_cache_put(91 + i, i + 1, now);
@@ -69,17 +71,17 @@ static void test_my23_readings_preview_and_unavailable_gear(void) {
     while (selected < count && pages[selected] != four) ++selected;
     assert(selected < count && count > 1);
     next = parameter_pages[0][pages[(selected + 1) % count]].label;
-    assert(!memcmp(screen_packet + 16, next, strlen(next) < 22 ? strlen(next) : 22));
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, next, strlen(next) < 22 ? strlen(next) : 22));
     menu_event(MENU_BACK); menu_event(MENU_BACK); /* Return to root. */
     menu_event(MENU_PREVIOUS); menu_event(MENU_SELECT); /* Information. */
     for (unsigned i = 0; i < 5; ++i) menu_event(MENU_NEXT);
-    assert(!memcmp(screen_packet + 16, "Gaps", 4));
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "Gaps", 4));
     for (unsigned i = 0; i < 4; ++i) menu_event(MENU_NEXT);
 #ifdef MENU_DIAGNOSTICS
-    assert(!memcmp(screen_packet + 16, "IPC diag", 8));
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "IPC diag", 8));
     menu_event(MENU_NEXT);
 #endif
-    assert(!memcmp(screen_packet + 16, "C1 firmware", 11));
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "C1 firmware", 11));
 }
 
 static void test_atomic_favorite_packing(void) {
@@ -87,7 +89,7 @@ static void test_atomic_favorite_packing(void) {
     parameter_cache_reset(); parameter_peak_enable(false);
     parameter_cache_put(6, 3, now); parameter_cache_put(97, 3500, now);
     parameter_cache_put(7, 100, now); parameter_cache_put(25, -0.5f, now);
-    char first[15], second[23];
+    char first[MY23_L1_VISIBLE + 1], second[MY23_L2_VISIBLE + 1];
     favorite_parameters_render(0, &favorite, now, first, second);
     assert(!strcmp(first, "Gear 3"));
     assert(!strcmp(second, "Engine RPM 3500"));
@@ -275,10 +277,10 @@ static void test_my23_list_and_old_favorite_migration(void) {
     assert(screen_packet[2] == 'O');
     menu_event(MENU_BACK); /* Root/current + next. */
     assert(screen_packet[2] == 0x80 && !memcmp(screen_packet + 4, "Favorites", 9));
-    assert(!memcmp(screen_packet + 16, "Readings", 8));
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "Readings", 8));
     menu_event(MENU_PREVIOUS); /* Wrap to last/current and first/next. */
     assert(!memcmp(screen_packet + 4, "Information", 11));
-    assert(!memcmp(screen_packet + 16, "Favorites", 9));
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "Favorites", 9));
     menu_event(MENU_BACK); /* Save migrated preferences on close. */
     assert(have_saved);
     MenuPreferences restored;
@@ -330,10 +332,10 @@ static void test_my23_remaining_list_previews(void) {
     menu_event(MENU_PREVIOUS); expect_my23_list("Both lines", "USB source");
     menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_NEXT);
     expect_my23_list("UTF glyphs", "Line 1 length");
-    menu_present("12345678901234›•▲▼✓×°±→…");
-    assert(!memcmp(screen_packet+2,"12345678901234",14));
+    menu_present("1234567890123456›•▲▼✓×°±→…");
+    assert(!memcmp(screen_packet + 2, "1234567890123456", MY23_L1_VISIBLE));
     const uint8_t symbols[] = {0x80,0x81,0x82,0x83,0x84,0x85,0xb0,0xb1,0x86,0x87};
-    assert(!memcmp(screen_packet+16,symbols,sizeof(symbols)));
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, symbols, sizeof(symbols)));
 }
 static void test_v6_parameter_label_identity(void) {
     char fifth[40],sixth[40];
@@ -384,20 +386,20 @@ static void test_my23_visibility_transaction(void) {
     MenuPreferences original; assert(menu_preferences_decode(&original,saved));
     menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_SELECT);
     assert(screen_packet[2]==0x80 && screen_packet[4]==0x84);
-    uint8_t preview[22]; memcpy(preview,screen_packet+16,22);
+    uint8_t preview[22]; memcpy(preview, screen_packet + 2 + MY23_L1_VISIBLE, 22);
     menu_event(MENU_SELECT); /* Hide only in the draft. */
-    assert(screen_packet[4]==0x85 && !memcmp(preview,screen_packet+16,22));
+    assert(screen_packet[4]==0x85 && !memcmp(preview, screen_packet + 2 + MY23_L1_VISIBLE, 22));
     assert(menu_preferences_save()==0);
     MenuPreferences live; assert(menu_preferences_decode(&live,saved));
     assert(!memcmp(original.hidden,live.hidden,sizeof(live.hidden)));
     menu_event(MENU_BACK);
-    assert(!memcmp(screen_packet+16,"HOLD SAVE",9));
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "HOLD SAVE", 9));
     menu_event(MENU_BACK); /* Discard. */
     expect_my23_list("Shown pages","Sort order");
     menu_event(MENU_SELECT); assert(screen_packet[4]==0x84);
     menu_event(MENU_SELECT); menu_event(MENU_BACK); menu_event(MENU_HOLD);
     now+=2000; menu_render();
-    assert(screen_packet[4]==0x85 && !memcmp(preview,screen_packet+16,22));
+    assert(screen_packet[4]==0x85 && !memcmp(preview, screen_packet + 2 + MY23_L1_VISIBLE, 22));
     menu_event(MENU_BACK); expect_my23_list("Shown pages","Sort order");
     dashboard_state.baccable_dashboard_menu_visible=0; menu_init(); menu_event(MENU_HOLD);
     assert(menu_preferences_save()==0 && menu_preferences_decode(&live,saved));

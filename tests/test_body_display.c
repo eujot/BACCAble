@@ -263,8 +263,9 @@ static void test_my23_fixed_fields_and_unicode_under_each_source(void) {
                 visible[part * 3 + j] = ((uint16_t)frame[2 + j*2] << 8) | frame[3 + j*2];
         }
         assert(visible[0] == 0x203a && visible[2] == 'G');
-        for (unsigned i = 6; i < 14; ++i) assert(visible[i] == ' ');
-        assert(visible[14] == '\r' && visible[15] == 'R' && visible[23] == 0x2022);
+        for (unsigned i = 6; i < MY23_L1_VISIBLE; ++i) assert(visible[i] == ' ');
+        assert(visible[MY23_L1_VISIBLE] == '\r' && visible[MY23_L1_VISIBLE + 1] == 'R' &&
+               visible[MY23_L1_VISIBLE + 9] == 0x2022);
         /* Shortening either line must clear old glyphs without moving the field. */
         my23_packet(packet, "OIL", "✓");
         before = transmitted_count; body_display_submit(packet);
@@ -276,8 +277,39 @@ static void test_my23_fixed_fields_and_unicode_under_each_source(void) {
             for (unsigned j = 0; j < 3; ++j)
                 visible[part * 3 + j] = ((uint16_t)frame[2+j*2] << 8) | frame[3+j*2];
         }
-        assert(visible[0] == 'O' && visible[14] == '\r' && visible[15] == 0x2713);
-        for (unsigned i = 16; i < DISPLAY_OUTPUT_LENGTH; ++i) assert(visible[i] == ' ');
+        assert(visible[0] == 'O' && visible[MY23_L1_VISIBLE] == '\r' &&
+               visible[MY23_L1_VISIBLE + 1] == 0x2713);
+        for (unsigned i = MY23_L1_VISIBLE + 2; i < DISPLAY_OUTPUT_LENGTH; ++i) assert(visible[i] == ' ');
+        /* The measured 16-column upper field and the 22-column lower field
+         * must share one complete 13-fragment CAN transfer. */
+        my23_packet(packet, "1234567890123456EXTRA", "ABCDEFGHIJKLMNOPQRSTUVEXTRA");
+        before = transmitted_count; body_display_submit(packet);
+        advance(1000 + DISPLAY_FRAGMENT_COUNT * 50);
+        unsigned seen = 0;
+        for (unsigned i = before; i < transmitted_count; ++i) {
+            const uint8_t *frame = transmitted[i];
+            unsigned part = fragment(frame);
+            seen |= 1U << part;
+            for (unsigned j = 0; j < 3; ++j)
+                visible[part * 3 + j] = ((uint16_t)frame[2+j*2] << 8) | frame[3+j*2];
+        }
+        assert(seen == (1U << DISPLAY_FRAGMENT_COUNT) - 1);
+        for (unsigned i = 0; i < MY23_L1_VISIBLE; ++i)
+            assert(visible[i] == (uint16_t)"1234567890123456"[i]);
+        assert(visible[MY23_L1_VISIBLE] == '\r');
+        for (unsigned i = 0; i < MY23_L2_VISIBLE; ++i)
+            assert(visible[MY23_L1_VISIBLE + 1 + i] == 'A' + i);
+        /* A blank first line must not release a nonblank second line. */
+        my23_packet(packet, "", " Next page");
+        before = transmitted_count; body_display_submit(packet);
+        advance(1000 + DISPLAY_FRAGMENT_COUNT * 50);
+        for (unsigned i = before; i < transmitted_count; ++i) {
+            const uint8_t *frame = transmitted[i];
+            unsigned part = fragment(frame);
+            for (unsigned j = 0; j < 3; ++j)
+                visible[part * 3 + j] = ((uint16_t)frame[2+j*2] << 8) | frame[3+j*2];
+        }
+        assert(visible[MY23_L1_VISIBLE] == '\r' && visible[MY23_L1_VISIBLE + 2] == 'N');
     }
 }
 

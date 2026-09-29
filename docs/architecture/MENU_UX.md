@@ -29,7 +29,7 @@ flowchart LR
 
 `IPC_MY23_IS_INSTALLED` chooses the C1 **default** profile. Saved `MY23 IPC`
 can override it. `LARGE_DISPLAY` independently chooses the legacy 18/24-character
-width. MY23 always has budgets `MY23_L1_VISIBLE = 14` and
+width. MY23 always has budgets `MY23_L1_VISIBLE = 16` and
 `MY23_L2_VISIBLE = 22`. Those are visible glyph counts, not UTF-8 byte limits.
 
 The main menu remains Favorites, Readings, Actions, Settings, Information.
@@ -108,8 +108,8 @@ static Back footer. A long active title ends with `…`.
 Settings show draft values with `▲▼ CHANGE`; confirmation shows
 `HOLD SAVE•2X DISCARD` and saved feedback `✓ SAVED`. Every Reading uses its
 catalog template on L1, including multi-value pages; L2 previews the next page.
-The 14-glyph upper field clips a longer catalog line. No formatter can display
-more than 14 glyphs there while also retaining the next-page preview.
+The 16-glyph upper field clips a longer catalog line. No formatter can display
+more than 16 glyphs there while also retaining the next-page preview.
 Ordinary MY23 screens have no fixed footer.
 Legacy uses ASCII/verified Latin-1 glyphs and single-line confirmation wording.
 The renderer translates MY23 control tokens before legacy output.
@@ -133,7 +133,7 @@ cannot split the selected UTF-8 sequences. This is a bounded BMP vocabulary,
 not support for arbitrary Unicode or surrogate pairs. Legacy diagnostic bytes
 are not translated through the MY23 token table.
 
-A screen packet is 38 bytes: board address, profile marker `0x02`, 14 glyph
+A screen packet is 40 bytes: board address, profile marker `0x02`, 16 glyph
 tokens for L1, 22 glyph tokens for L2. The reserved `0x01` display-test marker is
 unchanged. Normal command/status/ELM packets retain their legacy fixed size;
 the UART receiver recognizes the longer screen by its board address. The latest
@@ -142,13 +142,20 @@ FIFO entries. Flash matching C1/C2/BH images: old boards do not understand the
 longer screen packet. The legacy width still needs to match across boards for
 command/status/ELM framing.
 
-BH builds `14 padded glyphs + CR + 22 padded glyphs + two trailing spaces` for
+BH builds `16 padded glyphs + CR + 22 padded glyphs` for
 MY23 and transmits three **16-bit big-endian** character units per CAN 0x090
-frame. L2 always begins at character offset 15. It never depends on L1's text
+frame. L2 always begins at character offset 17. It never depends on L1's text
 length, title, or UTF-8 bytes. Both fields are fully cleared at every submission.
 This removes the firmware source of stale suffixes and moving field offsets;
 physical IPC alignment remains part of the vehicle test. Legacy retains its
 original first-line/CR/footer layout and original 11/13-fragment count.
+
+The owner measured 16 visible upper glyphs after beta 19. The earlier 14-glyph
+boundary placed CR at offset 14 and L2 at 15, two character positions before
+the measured boundary. The 16-glyph boundary places CR at 16 and L2 at 17.
+The resulting 39-character CAN payload still uses 13 three-character fragments;
+only the shared board UART screen packet grows by two bytes. This is a concrete
+candidate for the observed left-shifted L2, pending an in-car display check.
 
 ## Vehicle readability correction after beta 19
 

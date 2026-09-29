@@ -967,7 +967,7 @@ void menu_render(void) {
             else if (info == 1 || info == 2) {
                 unsigned peer = info - 1;
                 menu_present_lines(peer ? "BH firmware" : "C2 firmware", peer_seen[peer] && currentTime - peer_updated[peer] <= 5000 ? peer_versions[peer] : "No reply");
-            } else if (info == 3) menu_present_lines("IPC MY23", "14 / 22 glyphs");
+            } else if (info == 3) menu_present_lines("IPC MY23", "16 / 22 glyphs");
             else menu_present_lines("Immobilizer", security_state.immobilizer_enabled ? "ON" : "OFF");
             return;
         }

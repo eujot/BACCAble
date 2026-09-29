@@ -44,7 +44,7 @@ bool favorite_parameter_supported(uint8_t engine, bool v6, uint8_t id) {
     unsigned element;
     return id == 97 || source_page(engine, v6, id, &element) != NULL;
 }
-/* Keep the labels recognizable even when the first IPC line has only 14 glyphs. */
+/* Keep the labels recognizable within the first IPC line's glyph budget. */
 const char *favorite_parameter_label(uint8_t engine, bool v6, uint8_t id, bool compact) {
     static const struct { uint8_t id; const char *full, *compact; } names[] = {
         {1, "Power", "Power"}, {2, "Torque", "Torque"},
@@ -179,7 +179,7 @@ static void readable_line(uint8_t engine, uint8_t id, uint32_t now, unsigned wid
     snprintf_(out, width + 1, "%s", strlen(value) <= width ? value : "Value too wide");
 }
 void favorite_parameters_render(uint8_t engine, const FavoriteParameters *favorite, uint32_t now,
-                                char first[15], char second[23]) {
+                                char first[17], char second[23]) {
     readable_line(engine, favorite->params[0], now, MY23_L1_VISIBLE, first);
     readable_line(engine, favorite->params[1], now, MY23_L2_VISIBLE, second);
 }

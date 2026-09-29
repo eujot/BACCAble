@@ -143,7 +143,7 @@ pozycje tekstowe. Nazwa na liście może różnić się od podpisu bieżącego o
 aby zrobić miejsce na wartości. Na przykład strona `Batt charge BCM` wyświetla
 odczyt podpisany `Batt BCM SOC`.
 
-MY23 ma **14 widocznych znaków w pierwszej linii i 22 w drugiej**. Lista
+MY23 ma **16 widocznych znaków w pierwszej linii i 22 w drugiej**. Lista
 pokazuje bieżącą pozycję z `›`, a pod nią następną. Edytor pokazuje ustawienie
 oraz szkic wartości z `▲▼ CHANGE`. Druga linia zawiera również pytanie o zapis
 lub jego wynik. Ulubione pokazują po jednej wybranej stronie odczytów w każdej
@@ -213,7 +213,7 @@ slotów zachowują w pamięci miejsca 3–5 dla zgodności, ale nie są one poka
 ani odpytywane. Zapis dwóch widocznych slotów nie usuwa pozostałych ID.
 W MY23 każda strona Readings zachowuje format katalogu w pierwszej linii, także
 gdy zawiera dwa, trzy albo cztery pomiary. Druga linia zapowiada następną stronę.
-Górne pole MY23 mieści najwyżej 14 znaków. Dłuższy tekst katalogu zostanie tam
+Górne pole MY23 mieści najwyżej 16 znaków. Dłuższy tekst katalogu zostanie tam
 ucięty; jego reszta nie zmieści się równocześnie z zapowiedzią następnej strony.
 Strony statusu Information też
 zapowiadają kolejną pozycję; przy wielu kodach usterek druga linia pokazuje
@@ -261,7 +261,7 @@ Szkic nie steruje samochodem przed udanym zapisem.
 | `LED strip` | Wyłączona / włączona | Steruje zamontowaną, zgodną listwą LED WS281x na podstawie danych samochodu, np. położenia pedału przyspieszenia i biegu. Wymaga dodatkowego sprzętu. Sterowanie listwą jest wstrzymywane, gdy USB korzysta ze wspólnego wyprowadzenia. |
 | `Shift light` | Wyłączona / włączona | Wysyła polecenie pokazania sygnału zmiany biegu po przekroczeniu Shift RPM. Wymaga zgodnej obsługi wskazania w trybie Race. Nie zmienia biegu za kierowcę. |
 | `Shift RPM` | 1500–6000 obr./min, co 250 | Próg obrotów silnika dla sygnału zmiany biegu. |
-| `MY23 display` | Wyłączona / włączona | Włącza układ MY23: 14 znaków w pierwszej linii i 22 w drugiej. OFF zachowuje starszy układ jednej linii z szerokością 18/24 znaków wybraną przy kompilacji. |
+| `MY23 display` | Wyłączona / włączona | Włącza układ MY23: 16 znaków w pierwszej linii i 22 w drugiej. OFF zachowuje starszy układ jednej linii z szerokością 18/24 znaków wybraną przy kompilacji. |
 | `DPF regen alert` | Wyłączona / włączona | Włącza powiadomienia o regeneracji DPF w dieslu. Zobacz [obserwowanie DPF](#obserwowanie-dpf). |
 | `Auto rotate` | Wyłączona / włączona | Automatycznie zmienia stronę bieżących odczytów co pięć sekund. |
 | `Advanced pages` | Wyłączona / włączona | Dodaje techniczne i dodatkowe strony do Readings, z uwzględnieniem profilu silnika i ustawionej widoczności. |
@@ -577,7 +577,7 @@ otwiera podmenu testowe.
 | Wersja C1 | Wersja oprogramowania kontrolera obsługującego menu. |
 | Wersja C2 | Wersja kontrolera podwozia. `? C2 no reply` oznacza brak aktualnej odpowiedzi z wersją. |
 | Wersja BH | Wersja kontrolera nadwozia. `? BH no reply` oznacza brak aktualnej odpowiedzi z wersją. |
-| `MY23:ON/OFF …ch` | Starszy profil: ustawienie MY23 i szerokość 18/24 znaki. MY23 pokazuje `IPC MY23` oraz `14 / 22 glyphs`. |
+| `MY23:ON/OFF …ch` | Starszy profil: ustawienie MY23 i szerokość 18/24 znaki. MY23 pokazuje `IPC MY23` oraz `16 / 22 glyphs`. |
 | `Immobilizer: ON/OFF` | Zapisane ustawienie immobilizera BACCAble. Nie można go przełączyć na tej stronie. |
 | `Reports:` | Liczba komunikatów o przyciskach kierownicy odebranych przez menu. Pomaga sprawdzić, dlaczego przyciski nie reagują. |
 | `Gaps:` | Liczba wykrytych przerw w docieraniu komunikatów o przyciskach. |

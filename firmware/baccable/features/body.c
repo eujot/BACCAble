@@ -5,6 +5,9 @@
 #include "features/parking_mirrors.h"
 #include "storage/flash_records.h"
 
+_Static_assert(DISPLAY_OUTPUT_LENGTH == MY23_L1_VISIBLE + 1U + MY23_L2_VISIBLE,
+               "MY23 lines must fill the complete CAN display stream");
+
 /* Preserve the established IPC pacing while avoiding redundant text fragments. */
 #define DISPLAY_FRAGMENT_INTERVAL_MS 50U
 #define DISPLAY_KEEPALIVE_INTERVAL_MS 1000U
@@ -68,7 +71,9 @@ void body_display_submit(const uint8_t *text) {
         return;
     }
     ipc_display_test_stop();
-    if (!nonblank(text, DASHBOARD_MESSAGE_MAX_LENGTH)) {
+    bool my23 = text[0] == MY23_PACKET_MARKER;
+    screen_my23 = my23;
+    if (!nonblank(text + my23, my23 ? MY23_PACKET_SIZE - 1 : DASHBOARD_MESSAGE_MAX_LENGTH)) {
         release_display();
         return;
     }
@@ -76,8 +81,7 @@ void body_display_submit(const uint8_t *text) {
     uint8_t output[DISPLAY_OUTPUT_LENGTH];
     memset(output, ' ', sizeof(output));
     unsigned length = DASHBOARD_MESSAGE_MAX_LENGTH;
-    screen_my23 = text[0] == MY23_PACKET_MARKER;
-    if (text[0] == MY23_PACKET_MARKER) {
+    if (my23) {
         /* Fixed protocol fields: L2 never shifts with L1's text length. */
         memcpy(output, text + 1, MY23_L1_VISIBLE);
         output[MY23_L1_VISIBLE] = '\r';

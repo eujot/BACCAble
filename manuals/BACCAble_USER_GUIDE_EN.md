@@ -131,7 +131,7 @@ The main menu order is fixed. Page availability follows the selected engine,
 
 ## Display symbols and messages
 
-MY23 has **14 visible glyphs in line 1 and 22 in line 2**. A list shows the
+MY23 has **16 visible glyphs in line 1 and 22 in line 2**. A list shows the
 current item with `›` above the next item. Editors show a setting and its draft
 value, with `▲▼ CHANGE`. Confirmation and saved feedback use the second line.
 Live Favorites show one complete selected reading page on each line. Readings
@@ -199,7 +199,7 @@ are not displayed or polled. Saving Slots 1–2 does not erase those old IDs.
 Every MY23 Readings page keeps its catalog format on line 1, whether it contains
 one, two, three or four values. Line 2 previews the next page. The Information status pages likewise
 preview the next page; multiple fault codes show the following code on line 2.
-The upper MY23 field shows at most 14 glyphs: a longer catalog line is clipped
+The upper MY23 field shows at most 16 glyphs: a longer catalog line is clipped
 there, and its remaining text cannot also occupy the next-page preview.
 
 Gasoline and diesel retain separate sets. Engine-incompatible saved pages
@@ -244,7 +244,7 @@ workflow; their draft does not control the car before successful persistence.
 | `LED strip` | Off / on | Drive an installed compatible WS281x LED strip using vehicle data such as accelerator position and gear. This requires the optional hardware. Output pauses while USB owns the shared pin. |
 | `Shift light` | Off / on | Request the instrument-panel shift warning above `Shift RPM`, with compatible Race-mode display support. This does not shift the gearbox. |
 | `Shift RPM` | 1500–6000 RPM, step 250 | Engine-speed threshold for the shift warning. |
-| `MY23 display` | Off / on | Use the MY23 menu layout: 14 glyphs on line 1 and 22 on line 2. OFF retains the legacy single-line layout with the compiled 18/24-character width. |
+| `MY23 display` | Off / on | Use the MY23 menu layout: 16 glyphs on line 1 and 22 on line 2. OFF retains the legacy single-line layout with the compiled 18/24-character width. |
 | `DPF regen alert` | Off / on | Enable diesel regeneration notifications. See [DPF monitoring](#dpf-monitoring). |
 | `Auto rotate` | Off / on | Rotate live pages every five seconds. |
 | `Advanced pages` | Off / on | Include technical/secondary pages in Readings, subject to profile and manual visibility. |
@@ -540,7 +540,7 @@ not toggle their state. The final `IPC display test` entry opens a test submenu.
 | C1 version | Firmware version of the controller managing the menu. |
 | C2 version | Chassis-controller version. `? C2 no reply` means no recent version reply. |
 | BH version | Body-controller version. `? BH no reply` means no recent version reply. |
-| `MY23:ON/OFF …ch` | Legacy: MY23 preference and compiled 18/24 width. MY23 instead shows `IPC MY23` and `14 / 22 glyphs`. |
+| `MY23:ON/OFF …ch` | Legacy: MY23 preference and compiled 18/24 width. MY23 instead shows `IPC MY23` and `16 / 22 glyphs`. |
 | `Immobilizer: ON/OFF` | Stored BACCAble immobilizer preference, not an editable menu switch. |
 | `Reports:` | Number of steering-wheel input reports observed by the menu. Useful when diagnosing unresponsive controls. |
 | `Gaps:` | Count of interruptions detected in the input report stream. |

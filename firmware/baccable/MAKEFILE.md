@@ -184,7 +184,7 @@ for flavor in C1 C2 BH CAN; do
 done
 ```
 
-Screen packets now have a dedicated 38-byte UART capacity, independent of the
+Screen packets now have a dedicated 40-byte UART capacity, independent of the
 legacy command/status width. Flash matching images on C1, C2 and BH. The host
 matrix checks gesture boundaries, draft/save/discard, five-slot Favorites,
 glyph budgets, fixed L2 offsets, source preservation and migration failures.

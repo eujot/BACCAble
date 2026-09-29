@@ -7,7 +7,7 @@
 /* The IPC's second line carries a temporary BACCAble identity below the menu. */
 #define DISPLAY_FOOTER "BACCAble beta"
 #define DISPLAY_FOOTER_LENGTH (sizeof(DISPLAY_FOOTER) - 1U)
-#define DISPLAY_OUTPUT_LENGTH 39U /* 14 glyphs, CR, 22 glyphs, two trailing pads. */
+#define DISPLAY_OUTPUT_LENGTH 39U /* 16 glyphs, CR, 22 glyphs. */
 #define DISPLAY_FRAGMENT_COUNT (DISPLAY_OUTPUT_LENGTH / DISPLAY_FRAGMENT_SIZE)
 #define DISPLAY_LEGACY_FRAGMENT_COUNT ((DASHBOARD_MESSAGE_MAX_LENGTH + 1U + DISPLAY_FOOTER_LENGTH + 2U) / 3U)
 _Static_assert(DASHBOARD_MESSAGE_MAX_LENGTH % DISPLAY_FRAGMENT_SIZE == 0 && DISPLAY_FRAGMENT_COUNT <= 16,
