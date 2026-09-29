@@ -18,6 +18,7 @@ are supported; a menu entry alone does not establish compatibility.
 - [Controls and navigation](#controls-and-navigation)
 - [Menu structure](#menu-structure)
 - [Display symbols and messages](#display-symbols-and-messages)
+- [Temporary IPC refresh options](#temporary-ipc-refresh-options)
 - [Favorites and reading layout](#favorites-and-reading-layout)
 - [Settings: Features](#settings-features)
 - [Function workflows](#function-workflows)
@@ -117,13 +118,14 @@ Main menu
 │  │     └─ < Back
 │  ├─ Favorites              Favorite 1–6 → Slot 1–5 → measurement
 │  ├─ Shown pages            Show/hide pages in Readings
-│  └─ Sort order             Grouped or alphabetical reading lists
+│  ├─ Sort order             Grouped or alphabetical reading lists
+│  └─ BACCAble IPC           Temporary refresh experiments
 └─ Information               Versions, input status and IPC display test
 ```
 
 This Settings layout applies to MY23 and to any profile after a five-slot set
 has been saved. Before that first save, legacy Settings retains Features,
-Page favorites, Shown pages, Favorite order, Sort order, Favorites.
+Page favorites, Shown pages, Favorite order, Sort order, Favorites, BACCAble IPC.
 
 The main menu order is fixed. Page availability follows the selected engine,
 `Advanced pages` and `Shown pages`. A group without eligible pages may show
@@ -166,6 +168,45 @@ alignment and radio takeover still require the vehicle acceptance test.
 Ignition correction uses `°` for an angle. Negative readings retain their minus
 sign. Optional `«`/`»` beside a numeric editor indicate adjustment, when space
 permits. Lists do not show item counters.
+
+## Temporary IPC refresh options
+
+Open `Settings → BACCAble IPC`. Up/down selects a row; a short RES click cycles
+its value and applies it immediately. Double-click returns to Settings. These
+experimental controls do not use HOLD SAVE and never write to Flash.
+
+| Row / choice | Effect |
+| --- | --- |
+| `Safe 50ms` | Default: 50 ms between menu CAN fragments. |
+| `Quick 20ms` | 20 ms between fragments. |
+| `Fast 10ms` | 10 ms between fragments. |
+| `Write Full` | Default: send a complete, padded screen from the first to the last fragment. Its content stays fixed during that transmission; newer screens wait in one replaceable slot. |
+| `Write Delta` | Send changed fragments; newer values may replace content during transmission. This is a comparison mode and can show mixed old/new text. |
+| `Reset safe` | Restore `Safe 50ms` and `Write Full` immediately. |
+
+Remember a test as a pair, for example **Quick + Full**. MY23 needs 13 frames:
+a full pass takes roughly 650 / 260 / 130 ms at Safe / Quick / Fast, plus any
+CAN or radio wait. A new screen can also wait for the active pass to finish.
+The IPC decides when received fragments become visible; Full prevents firmware
+from mixing screens, but does not guarantee an instantaneous visual swap.
+The periodic full reassertion remains one second in both modes. Radio source
+tracking, settling and bounded arbitration remain active. Restoring radio text
+and the separate Information → IPC display test keep their original 50 ms pace.
+
+Use matching C1/C2/BH firmware. These choices exist only in RAM, even if other
+Features are saved. A complete power cycle restores Safe + Full. Disconnect
+**both USB power and OBD** to power down the entire device. BH also falls back
+to Safe + Full after five seconds without renewal from C1. While C1 is running,
+it renews the chosen experimental pair once per second, including after menu
+exit; a BH-only restart may therefore receive that pair again. `UART busy: retry`
+means the click was not accepted; retry it. Queue acceptance is not a BH or IPC
+acknowledgment.
+
+For comparison, use the same audio source and repeat: long/short menu labels,
+current/next scrolling, live Favorites, radio track change, then return to the
+menu. Record the pair, visible overlap, response delay and source. Start with
+Safe + Full, then Quick + Full, Fast + Full, and optionally compare Delta.
+If behavior worsens, select Reset safe or completely power down the device.
 
 ## Favorites and reading layout
 

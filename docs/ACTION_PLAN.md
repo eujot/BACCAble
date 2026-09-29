@@ -45,6 +45,41 @@ Notes are maintained in [v5-beta-19.md](releases/v5-beta-19.md). Vehicle
 acceptance is still open; publication does not confirm MY23 screen appearance,
 button timing or behavior in the car.
 
+## Temporary IPC refresh controls, 2026-09-29
+
+Implemented on `fix/ipc-refresh-controls`, based on released master `23db240`.
+The prior stream could splice a newly submitted screen into an in-progress CAN
+message, and 13 MY23 fragments at 50 ms needed about 650 ms per pass. BH now
+uses Full by default: one immutable image plus one replaceable pending target,
+complete padded passes, ordered fragments and retry without advancing on CAN
+queue failure. Radio interruption still restarts from the latest target; profile
+changes reset the stream rather than switching encoding within an image.
+
+Settings → BACCAble IPC offers Safe 50ms / Quick 20ms / Fast 10ms, Write Full /
+Write Delta, and Reset safe. Up/down chooses the row; SELECT changes it
+immediately; BACK returns. These options live outside persisted settings and
+never write Flash. The BH-only command 0x47 carries bounded indices, with a
+five-second lease for experiments; C1 renews once per second, including outside
+the menu, with queue-full retry also rate limited. A failed selection enqueue
+leaves the previous choice. A complete power cycle restores Safe + Full;
+C1-only reset stops renewal, and BH-only reset can be followed by reapplication
+from C1. The original IPC test patterns and radio restoration stay at 50 ms.
+
+Validation: 340 passing host scenarios with Apple Clang ASan/UBSan, all 16
+flavor/IPC/width builds with full Arm GNU 15.2.Rel1, C1/BH cppcheck and diff
+whitespace checks. Tests cover immutable full images, latest-pending coalescing,
+CAN retry, pace selection, invalid input, lease fallback, initialization reset,
+both menu profiles, UART busy and no Flash writes. Maximum Flash/static RAM:
+C1 94,804/15,536 B; C2 29,104/12,416 B; BH 32,752/13,260 B; CAN 25,200/7,032 B.
+Logs remain under repo tmp (`ipc-tests.log`, `ipc-arm-matrix.log`, `ipc-lint.log`).
+
+Both user guides contain the same controls and comparison procedure. Pending
+vehicle acceptance: compare Safe/Quick/Fast + Full, optionally Delta, using the
+same source, long/short labels, scrolling, Favorites and radio track changes.
+CAN enqueue success is not a visible IPC commit: Full prevents firmware mixing
+but cannot guarantee atomic physical screen replacement. The existing one-second
+reassertion and factory arbitration remain. No new beta or hardware flash.
+
 ## Current work
 
 MY23 menu and shared navigation, **2026-09-29**, branch `feat/my23-menu-ux`,
