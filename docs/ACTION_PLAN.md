@@ -55,7 +55,7 @@ abbreviations and reported `Gear 15`. The first two commits on branch
 pages into individual measurements. The clarified requirement is to keep every
 Readings page in its original one-line catalog format, whether it contains one,
 two, three or four measurements, and preview the next page on L2. A Favorite
-must select two complete catalog pages, one per line. The current branch revision
+must select two complete catalog pages, one per line. Commit `2857f93` on the branch
 implements that contract and changes Favorite storage to version 2
 page IDs. Version-1 atomic measurement IDs convert in RAM on load (including a
 reserved compatibility page for extra RPM); older page
