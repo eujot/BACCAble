@@ -63,6 +63,17 @@ bool record_save(const RecordStorage *storage, uint16_t type, const void *data, 
     int previous = latest(storage, type, length);
     if (previous >= 0 && !memcmp(storage->pages[previous] + RECORD_HEADER_SIZE, data, length))
         return true;
+    /* A format migration must not erase the only valid old record before commit. */
+    if (previous < 0) {
+        for (unsigned i = 0; i < 2; ++i) {
+            const uint8_t *page = storage->pages[i];
+            if (!page) continue;
+            size_t old_length = read16(page + 6);
+            if (old_length && old_length <= RECORD_MAX_PAYLOAD && valid(page, read16(page + 4), old_length) &&
+                (previous < 0 || (uint32_t)(read32(page + 8) - read32(storage->pages[previous] + 8)) < 0x80000000U))
+                previous = i;
+        }
+    }
     unsigned next = previous == 0 ? 1 : 0;
     uint32_t generation = previous < 0 ? 0 : read32(storage->pages[previous] + 8) + 1;
     uint8_t record[RECORD_HEADER_SIZE + RECORD_MAX_PAYLOAD];

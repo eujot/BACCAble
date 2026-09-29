@@ -7,8 +7,8 @@
  *   1. Add the runtime field in state/settings.c and state/settings.h.
  *   2. Add one SETUP_TOGGLE(...) entry below with its menu text.
  *
- * Declare the shared entry type and numeric bounds below. Callbacks retain
- * feature-specific behavior; common rendering and draft editing live in setup_menu.c.
+ * Declare the shared entry type and numeric bounds below. Rendering callbacks are read-only; draft editing and post-save
+ * effects live in setup_menu.c.
  */
 
 #include "settings/setup_menu.h"
@@ -233,30 +233,17 @@
     #define DEFAULT_EUJOT 0
 
     #define SETUP_TOGGLE(flash, text, def, variable) \
-        {flash, 1, def, SETUP_VALUE_UINT8, &(variable), text, 0, UI_ENTRY_TOGGLE, 0, 0, 0, 0}
-    #define SETUP_TOGGLE_ACTION(flash, text, def, variable, action_fn) \
-        {flash, 1, def, SETUP_VALUE_UINT8, &(variable), text, 0, UI_ENTRY_TOGGLE, 0, 0, 0, action_fn}
-    #define SETUP_TOGGLE_RENDER_ACTION(flash, text, def, variable, render_fn, action_fn) \
-        {flash, 1, def, SETUP_VALUE_UINT8, &(variable), text, render_fn, UI_ENTRY_ENUM, 0, 0, 0, action_fn}
-    #define SETUP_VALUE8_ACTION(flash, text, max, def, variable, render_fn, action_fn) \
-        {flash, max, def, SETUP_VALUE_UINT8, &(variable), text, render_fn, UI_ENTRY_ENUM, 0, 0, 0, action_fn}
-    #define SETUP_NUMBER(flash, text, max, def, type, variable, render_fn, min, step, action_fn) \
-        {flash, max, def, type, &(variable), text, render_fn, UI_ENTRY_NUMBER, min, (type == SETUP_VALUE_INT8_AS_UINT8 ? 10 : max), step, action_fn}
+        {flash, 1, def, SETUP_VALUE_UINT8, &(variable), text, 0, UI_ENTRY_TOGGLE, 0, 0, 0}
+    #define SETUP_PROFILE(flash, text, def, variable, render_fn) \
+        {flash, 1, def, SETUP_VALUE_UINT8, &(variable), text, render_fn, UI_ENTRY_ENUM, 0, 0, 0}
+    #define SETUP_ENUM8(flash, text, max, def, variable, render_fn) \
+        {flash, max, def, SETUP_VALUE_UINT8, &(variable), text, render_fn, UI_ENTRY_ENUM, 0, 0, 0}
+    #define SETUP_NUMBER(flash, text, max, def, type, variable, render_fn, min, step) \
+        {flash, max, def, type, &(variable), text, render_fn, UI_ENTRY_NUMBER, min, (type == SETUP_VALUE_INT8_AS_UINT8 ? 10 : max), step}
     #define SETUP_HIDDEN_TOGGLE(flash, def, variable) \
-        {flash, 1, def, SETUP_VALUE_UINT8, &(variable), SETUP_TEXT_HIDDEN, 0, UI_ENTRY_TOGGLE, 0, 0, 0, 0}
+        {flash, 1, def, SETUP_VALUE_UINT8, &(variable), SETUP_TEXT_HIDDEN, 0, UI_ENTRY_TOGGLE, 0, 0, 0}
 
-static void setup_action_usb_mode(void);
 static void setup_render_usb_mode(void);
-static void setup_action_start_stop(void);
-static void setup_action_esc_tc(void);
-static void setup_action_diesel_params(void);
-static void setup_action_odometer_blink(void);
-static void setup_action_pedal_booster(void);
-static void setup_action_pedal_power(void);
-static void setup_action_acc_autostart(void);
-static void setup_action_close_windows(void);
-static void setup_action_open_windows(void);
-static void setup_action_has_virtual_pad(void);
 
 static void setup_render_launch_torque(void);
 static void setup_render_shift_rpm(void);
@@ -267,24 +254,20 @@ static void setup_render_acc_autostart(void);
 static void setup_render_close_windows(void);
 static void setup_render_open_windows(void);
 
-// Common entry patterns:
-//   SETUP_TOGGLE(SETUP_FLASH_XXX, "Menu Text", DEFAULT_XXX, variable)
-//   SETUP_TOGGLE_ACTION(SETUP_FLASH_XXX, "Menu Text", DEFAULT_XXX, variable, setup_action_xxx)
-//   SETUP_VALUE8_ACTION(SETUP_FLASH_XXX, "Menu Text", max, DEFAULT_XXX, variable, setup_render_xxx,
-//   setup_action_xxx)
+// Interaction follows the shared draft engine; no callback may mutate live values.
 const SetupParam setup_params[] = {
     // Core setup
     SETUP_HIDDEN_TOGGLE(SETUP_FLASH_IMMOBILIZER, DEFAULT_IMMOBILIZER, security_state.immobilizer_enabled),
-    SETUP_TOGGLE_ACTION(SETUP_FLASH_START_STOP, "Block Start/Stop", DEFAULT_START_STOP,
-                        settings_state.smart_disable_start_stop_enabled, setup_action_start_stop),
+    SETUP_TOGGLE(SETUP_FLASH_START_STOP, "Block Start/Stop", DEFAULT_START_STOP,
+                        settings_state.smart_disable_start_stop_enabled),
     SETUP_NUMBER(SETUP_FLASH_LAUNCH_TORQUE, "Launch Nm", 600, DEFAULT_LAUNCH_TORQUE,
-                 SETUP_VALUE_UINT16, settings_state.launch_torque_threshold, setup_render_launch_torque, 25, 25, 0),
+                 SETUP_VALUE_UINT16, settings_state.launch_torque_threshold, setup_render_launch_torque, 25, 25),
     SETUP_TOGGLE(SETUP_FLASH_LED_CONTROLLER, "LED strip", DEFAULT_LED_CONTROLLER,
                  settings_state.led_strip_controller_enabled),
     SETUP_TOGGLE(SETUP_FLASH_SHIFT_INDICATOR, "Shift light", DEFAULT_SHIFT_INDICATOR,
                  settings_state.shift_indicator_enabled),
     SETUP_NUMBER(SETUP_FLASH_SHIFT_RPM, "Shift RPM", 6000, DEFAULT_SHIFT_RPM,
-                 SETUP_VALUE_UINT16, settings_state.shift_threshold, setup_render_shift_rpm, 1500, 250, 0),
+                 SETUP_VALUE_UINT16, settings_state.shift_threshold, setup_render_shift_rpm, 1500, 250),
     SETUP_TOGGLE(SETUP_FLASH_MY23_IPC, "MY23 display", DEFAULT_MY23_IPC,
                  settings_state.ipc_my23_is_installed),
     SETUP_TOGGLE(SETUP_FLASH_REGEN_ALERT, "DPF regen alert", DEFAULT_REGEN_ALERT,
@@ -295,8 +278,8 @@ const SetupParam setup_params[] = {
     // Diagnostics and messages
     SETUP_TOGGLE(SETUP_FLASH_ROUTE_MESSAGES, "CAN routing", DEFAULT_ROUTE_MESSAGES,
                  settings_state.route_msg_enabled),
-    SETUP_TOGGLE_ACTION(SETUP_FLASH_ESC_TC_CUSTOMIZER, "ESC/TC control", DEFAULT_ESC_TC_CUSTOMIZER,
-                        settings_state.esc_tc_customizator_enabled, setup_action_esc_tc),
+    SETUP_TOGGLE(SETUP_FLASH_ESC_TC_CUSTOMIZER, "ESC/TC control", DEFAULT_ESC_TC_CUSTOMIZER,
+                        settings_state.esc_tc_customizator_enabled),
     SETUP_TOGGLE(SETUP_FLASH_DYNO, "Dyno action", DEFAULT_DYNO, settings_state.dyno_mode_master_enabled),
     SETUP_TOGGLE(SETUP_FLASH_ACC_VIRTUAL_PAD, "Virtual ACC", DEFAULT_ACC_VIRTUAL_PAD,
                  settings_state.acc_virtual_pad_enabled),
@@ -309,31 +292,26 @@ const SetupParam setup_params[] = {
     SETUP_TOGGLE(SETUP_FLASH_READ_FAULTS, "BCM fault reader", DEFAULT_READ_FAULTS,
                  settings_state.read_faults_enabled),
     SETUP_HIDDEN_TOGGLE(SETUP_FLASH_REMOTE_START, DEFAULT_REMOTE_START, settings_state.remote_start_enabled),
-    SETUP_TOGGLE_RENDER_ACTION(SETUP_FLASH_DIESEL_PARAMS, "Engine profile", DEFAULT_DIESEL_PARAMS,
-                               settings_state.is_diesel_enabled, setup_render_diesel_params,
-                               setup_action_diesel_params),
+    SETUP_PROFILE(SETUP_FLASH_DIESEL_PARAMS, "Engine profile", DEFAULT_DIESEL_PARAMS,
+                               settings_state.is_diesel_enabled, setup_render_diesel_params),
 
     // Driver assistance and comfort
-    SETUP_TOGGLE_ACTION(SETUP_FLASH_ODOMETER_BLINK, "Stop odo blink", DEFAULT_ODOMETER_BLINK,
-                        settings_state.disable_odometer_blink, setup_action_odometer_blink),
-    SETUP_VALUE8_ACTION(SETUP_FLASH_PEDAL_BOOSTER, "Pedal mode", 8, DEFAULT_PEDAL_BOOSTER,
-                        settings_state.pedal_booster_enabled, setup_render_pedal_booster,
-                        setup_action_pedal_booster),
+    SETUP_TOGGLE(SETUP_FLASH_ODOMETER_BLINK, "Stop odo blink", DEFAULT_ODOMETER_BLINK,
+                        settings_state.disable_odometer_blink),
+    SETUP_ENUM8(SETUP_FLASH_PEDAL_BOOSTER, "Pedal mode", 8, DEFAULT_PEDAL_BOOSTER,
+                        settings_state.pedal_booster_enabled, setup_render_pedal_booster),
     SETUP_NUMBER(SETUP_FLASH_PEDAL_POWER, "Pedal trim", 255, DEFAULT_PEDAL_POWER,
-                 SETUP_VALUE_INT8_AS_UINT8, settings_state.pedal_map_power, setup_render_pedal_power, -10, 2,
-                 setup_action_pedal_power),
+                 SETUP_VALUE_INT8_AS_UINT8, settings_state.pedal_map_power, setup_render_pedal_power, -10, 2),
     {SETUP_FLASH_PARK_MIRROR, 1, DEFAULT_PARK_MIRROR, SETUP_VALUE_UINT8,
-     &settings_state.park_mirror, "Park mirror", 0, UI_ENTRY_SUBMENU, 0, 0, 0, 0},
-    SETUP_VALUE8_ACTION(SETUP_FLASH_ACC_AUTOSTART, "ACC resume", 2, DEFAULT_ACC_AUTOSTART,
-                        settings_state.acc_autostart, setup_render_acc_autostart, setup_action_acc_autostart),
-    SETUP_VALUE8_ACTION(SETUP_FLASH_CLOSE_WINDOWS, "Close windows", 2, DEFAULT_CLOSE_WINDOWS,
-                        settings_state.close_windows_with_door_lock, setup_render_close_windows,
-                        setup_action_close_windows),
-    SETUP_VALUE8_ACTION(SETUP_FLASH_OPEN_WINDOWS, "Open windows", 2, DEFAULT_OPEN_WINDOWS,
-                        settings_state.open_windows_with_door_lock, setup_render_open_windows,
-                        setup_action_open_windows),
-    SETUP_TOGGLE_ACTION(SETUP_FLASH_HAS_VIRTUAL_PAD, "Virtual HAS", DEFAULT_HAS_VIRTUAL_PAD,
-                        settings_state.has_function_enabled, setup_action_has_virtual_pad),
+     &settings_state.park_mirror, "Park mirror", 0, UI_ENTRY_SUBMENU, 0, 0, 0},
+    SETUP_ENUM8(SETUP_FLASH_ACC_AUTOSTART, "ACC resume", 2, DEFAULT_ACC_AUTOSTART,
+                        settings_state.acc_autostart, setup_render_acc_autostart),
+    SETUP_ENUM8(SETUP_FLASH_CLOSE_WINDOWS, "Close windows", 2, DEFAULT_CLOSE_WINDOWS,
+                        settings_state.close_windows_with_door_lock, setup_render_close_windows),
+    SETUP_ENUM8(SETUP_FLASH_OPEN_WINDOWS, "Open windows", 2, DEFAULT_OPEN_WINDOWS,
+                        settings_state.open_windows_with_door_lock, setup_render_open_windows),
+    SETUP_TOGGLE(SETUP_FLASH_HAS_VIRTUAL_PAD, "Virtual HAS", DEFAULT_HAS_VIRTUAL_PAD,
+                        settings_state.has_function_enabled),
     SETUP_TOGGLE(SETUP_FLASH_QV_EXHAUST_FLAP, "QV exhaust", DEFAULT_QV_EXHAUST_FLAP,
                  settings_state.qv_exhaust_flap_function_enabled),
     SETUP_HIDDEN_TOGGLE(SETUP_FLASH_EUJOT, DEFAULT_EUJOT, settings_state.eujot_enabled),
@@ -343,7 +321,7 @@ const SetupParam setup_params[] = {
     SETUP_TOGGLE(SETUP_FLASH_ROTATE, "Auto rotate", 0, settings_state.rotate_readings),
 
     {34, 1, 0, SETUP_VALUE_UINT8, &settings_state.usb_sniffer,
-     "USB mode", setup_render_usb_mode, UI_ENTRY_EXCLUSIVE_MODE, 0, 0, 0, setup_action_usb_mode},
+     "USB mode", setup_render_usb_mode, UI_ENTRY_EXCLUSIVE_MODE, 0, 0, 0},
     SETUP_HIDDEN_TOGGLE(35, 0, settings_state.usb_elm327),
 
     SETUP_TOGGLE(37, "Advanced pages", 0, settings_state.advanced_pages),
@@ -374,26 +352,6 @@ static void setup_write_number(const char *label, int value) {
     setup_write_text(0, text);
 }
 
-/* Keep the original flash flags while exposing one exclusive USB personality. */
-static void setup_action_usb_mode(void) {
-    if (ibs_override_enabled()) {
-        menu_notice(UI_SYMBOL_WARNING " Stop IBS first");
-        return;
-    }
-    if (settings_state.usb_sniffer) {
-        settings_state.usb_sniffer = 0;
-#ifdef ACT_AS_ELM327
-        settings_state.usb_elm327 = 1;
-#else
-        settings_state.usb_elm327 = 0;
-#endif
-    } else if (settings_state.usb_elm327) {
-        settings_state.usb_elm327 = 0;
-    } else {
-        settings_state.usb_sniffer = 1;
-    }
-}
-
 static void setup_render_usb_mode(void) {
     char text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
     const char *mode = settings_state.usb_sniffer ? "CAN" : "OFF";
@@ -403,99 +361,6 @@ static void setup_render_usb_mode(void) {
 #endif
     ui_render_value(text, sizeof(text), "USB mode", mode);
     setup_write_text(0, text);
-}
-
-/* Toggle the automatic engine-stop blocking preference. */
-static void setup_action_start_stop(void) {
-    settings_state.smart_disable_start_stop_enabled = !settings_state.smart_disable_start_stop_enabled;
-    comfort_state.request_to_disable_start_and_stop = 0;
-}
-
-/* Toggle custom stability-control behavior and notify the other boards. */
-static void setup_action_esc_tc(void) {
-    settings_state.esc_tc_customizator_enabled = !settings_state.esc_tc_customizator_enabled;
-
-    uint8_t msg[2] = {C2_Bh_BusID, C2_Bh_cmdFunction_ESC_TC_Enabled};
-    if (!settings_state.esc_tc_customizator_enabled) {
-        chassis_state.stability_inverted = 0;
-        msg[1] = C2_Bh_cmdFunction_ESC_TC_Disabled;
-    }
-    board_uart_send(msg, 2);
-}
-
-/* Cycle I4 gasoline, V6 gasoline and diesel without changing saved page identities. */
-static void setup_action_diesel_params(void) {
-    if (settings_state.is_diesel_enabled) {
-        settings_state.is_diesel_enabled = 0;
-        settings_state.gasoline_v6 = 0;
-    } else if (!settings_state.gasoline_v6) {
-        settings_state.gasoline_v6 = 1;
-    } else {
-        settings_state.is_diesel_enabled = 1;
-    }
-    parameter_page_count = settings_state.is_diesel_enabled ? diesel_page_count : gasoline_page_count;
-}
-
-/* Toggle suppression of the dashboard's blinking odometer. */
-static void setup_action_odometer_blink(void) {
-    settings_state.disable_odometer_blink = !settings_state.disable_odometer_blink;
-
-    uint8_t msg[2] = {BhBusID, BHcmdOdometerBlinkDefault};
-    if (settings_state.disable_odometer_blink)
-        msg[1] = BHcmdOdometerBlinkDisable;
-    board_uart_send(msg, 2);
-}
-
-/* Select the next accelerator-response mode and notify the other boards. */
-static void setup_action_pedal_booster(void) {
-    settings_state.pedal_booster_enabled++;
-    if (settings_state.pedal_booster_enabled > 8)
-        settings_state.pedal_booster_enabled = 0;
-    if (settings_state.pedal_booster_enabled == 0)
-        pedal_booster_set_map(2);
-
-    uint8_t msg[3] = {C2_Bh_BusID, C2_Bh_cmdSetPedalBoostStatus, settings_state.pedal_booster_enabled};
-    board_uart_send(msg, 3);
-}
-
-/* Adjust the selected pedal-response trim and request a fresh map status. */
-static void setup_action_pedal_power(void) {
-    pedal_state.current_schizzaforte_map = '-';
-}
-
-/* Select how adaptive cruise resumes after a stop. */
-static void setup_action_acc_autostart(void) {
-    settings_state.acc_autostart++;
-    if (settings_state.acc_autostart > 2)
-        settings_state.acc_autostart = 0;
-}
-
-/* Select the lock-button gesture that closes the windows. */
-static void setup_action_close_windows(void) {
-    settings_state.close_windows_with_door_lock++;
-    if (settings_state.close_windows_with_door_lock > 2)
-        settings_state.close_windows_with_door_lock = 0;
-    comfort_state.close_windows_request = 0;
-    comfort_state.door_locks_requests_counter = 0;
-}
-
-/* Select the unlock-button gesture that opens the windows. */
-static void setup_action_open_windows(void) {
-    settings_state.open_windows_with_door_lock++;
-    if (settings_state.open_windows_with_door_lock > 2)
-        settings_state.open_windows_with_door_lock = 0;
-    comfort_state.open_windows_request = 0;
-    comfort_state.door_unlocks_requests_counter = 0;
-}
-
-/* Toggle the virtual highway-assist button and notify the other boards. */
-static void setup_action_has_virtual_pad(void) {
-    settings_state.has_function_enabled = !settings_state.has_function_enabled;
-
-    uint8_t msg[2] = {C2_Bh_BusID, C2_Bh_cmdFunctHAS_Disabled};
-    if (settings_state.has_function_enabled)
-        msg[1] = C2_Bh_cmdFunctHAS_Enabled;
-    board_uart_send(msg, 2);
 }
 
 /* Show the selected launch-assist torque threshold. */

@@ -42,10 +42,11 @@ void ui_render_toggle(char *text, size_t capacity, const char *label, bool enabl
     ui_render_value(text, capacity, label, enabled ? UI_VALUE_ON : UI_VALUE_OFF);
 }
 
-/* Mark an editable draft without changing the meaning of its numeric value. */
-void ui_render_number(char *text, size_t capacity, const char *label, int value, bool editing) {
+/* Share numeric layout while retaining explicit signs on signed trim values. */
+static __attribute__((noinline)) void render_number(char *text, size_t capacity, const char *label,
+                                                    int value, bool editing, bool signed_value) {
     char number[16];
-    snprintf_(number, sizeof(number), "%d", value);
+    snprintf_(number, sizeof(number), signed_value ? "%+d" : "%d", value);
     if (editing && capacity > 2) {
         text[0] = UI_SYMBOL_SELECTED[0];
         text[1] = ' ';
@@ -54,18 +55,11 @@ void ui_render_number(char *text, size_t capacity, const char *label, int value,
     } else
         ui_render_value(text, capacity, label, number);
 }
-
-/* Preserve the sign on trim values so positive and negative adjustments are explicit. */
+void ui_render_number(char *text, size_t capacity, const char *label, int value, bool editing) {
+    render_number(text, capacity, label, value, editing, false);
+}
 void ui_render_signed_number(char *text, size_t capacity, const char *label, int value, bool editing) {
-    char number[16];
-    snprintf_(number, sizeof(number), "%+d", value);
-    if (editing && capacity > 2) {
-        text[0] = UI_SYMBOL_SELECTED[0];
-        text[1] = ' ';
-        ui_render_value(text + 2, capacity - 2, label, number);
-        editor_directions(text, capacity);
-    } else
-        ui_render_value(text, capacity, label, number);
+    render_number(text, capacity, label, value, editing, true);
 }
 
 /* Distinguish commands and workflows from editable values. */

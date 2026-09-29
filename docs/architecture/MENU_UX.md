@@ -1,440 +1,206 @@
-# MY23 display menu and extension guide
+# Menu, MY23 rendering and input contract
 
-This guide describes the merged firmware at `0a72dcd` (v5-beta-9). The
-[action plan](../ACTION_PLAN.md) tracks local changes and unfinished work.
+This guide describes the MY23 UI candidate. Integration and physical acceptance
+are tracked only in [ACTION_PLAN.md](../ACTION_PLAN.md).
 
-**Documentation maintenance:** changes to menu labels, order, navigation,
-messages, settings, readings or actions must update the affected sections of both
-the [English user guide](../../manuals/BACCAble_USER_GUIDE_EN.md) and
-the [Polish user guide](../../manuals/BACCAble_USER_GUIDE_PL.md) in the same change.
-Keep descriptions aligned with the code and both editions equivalent; follow
-the [AGENTS.md maintenance rule](../../AGENTS.md#keep-both-user-guides-current).
+**Maintenance:** update both [EN](../../manuals/BACCAble_USER_GUIDE_EN.md) and
+[PL](../../manuals/BACCAble_USER_GUIDE_PL.md) user guides whenever menu labels,
+structure, gestures, settings, parameters or device operation change. See
+[AGENTS.md](../../AGENTS.md#keep-both-user-guides-current).
 
-The catalog contains 64 gasoline pages and 60 diesel pages. Navigation,
-preferences and text transport have separate modules. All display labels use
-English with selected raw Latin-1 glyphs. Page labels fit within 16 characters, leaving two characters for
-editor marks on an 18-character display.
+## Ownership and display profiles
 
-## Engine profile and advanced pages
+C1 owns menu navigation, drafts, engine filtering and persistence. BH owns IPC
+CAN transmission. C2 receives shared board traffic but does not render the menu.
+There is no heap allocation in the UI.
 
-Features cycles `Engine: 2.0 I4`, `Engine: 2.9 V6`, `Engine: 2.2 D`.
-Existing gasoline settings default to I4; V6 owners should select V6 once.
-`Advanced pages` reveals technical and secondary layouts. Favorites retain saved
-IDs and can include advanced pages, but incompatible engine pages are temporarily
-filtered. Feature switches such as `Dyno action`, `AWD off action` and `BCM fault reader`
-permit access to Actions; they do not execute those actions. Immobilizer status
-is in Information.
-See the [full catalog audit](CATALOG_AUDIT.md) for classification and migration.
-
-## Controls
-
-Menu controls are available when both cruise control and adaptive cruise control
-are disabled. Release the buttons after disabling them. Hold RES for 1200 ms to
-open the last favorite. The distance button has the same menu function as RES.
-
-| Gesture | Result |
-| --- | --- |
-| Short RES, then release | Use or confirm the current item; status/reading pages ignore SELECT |
-| Hold RES for 1200 ms | Return one level; from the main menu, close |
-| Gentle down/up | Next/previous item; hold to repeat in lists |
-| Stronger down/up | Next/previous reading, action or setting group |
-
-In favorites, a stronger press also moves one item. Moving through a gentle press
-into a stronger press may perform an item step before the group jump. Holding a
-gentle direction repeats after 500 ms, then every 180 ms while fresh reports arrive.
-Repeat applies to readings, groups, Settings, Features and page editors.
-It does not apply to Actions, RES/BACK, stronger presses, or moving a selected
-favorite in the reorder editor. Delayed reports never trigger a catch-up burst.
-A gap longer than 300 ms in button reports requires a fresh release.
-Releasing RES after a hold does not select another item.
-
-Main menu: **Favorites → Readings → Actions → Settings → Information**.
-Reading groups: All readings, Engine, Temperatures, Battery, DPF / AdBlue,
-Performance, Other. Empty lists show `No pages` or `No favorites`; returning still
-works. Menu lists do not display position counters, leaving the full width for
-labels, values and semantic markers. Readings and firmware versions appear
-immediately without an intermediate numbered title. CAN queries and the 50 ms
-fragment interval are unchanged.
-
-## Shared entry types and symbols
-
-`features/ui_entry.h` is the shared contract: toggle, enum, number, action,
-conditional action, capture, exclusive mode, submenu and status. Setup descriptors
-carry the type and numeric bounds; action descriptors carry the interaction type.
-Equivalent types use `ui_render_*` helpers. Vehicle modules retain command and
-sequence logic. `settings/setup_entries.c` defines every setup slot, type and
-callback; `features/menu.c` defines actions and their conditions. The global view
-contract is listed below.
-
-| Representation | Meaning |
-| --- | --- |
-| `Ø Auto rotate` / `O Auto rotate` | True editable toggle; SELECT flips the preference |
-| `Engine: 2.0 I4` | Named enum; SELECT cycles |
-| `* Shift RPM: 3500` | Numeric draft; directions edit, SELECT accepts, BACK cancels |
-| `> Read BCM faults` | Action/workflow; SELECT enters or requests it |
-| `! Start engine` | Known unmet condition or failure |
-| `? BH no reply` | Unknown/stale status |
-| `< Back` | Exit a submenu |
-| `*` in favorite ordering | Selected item being moved |
-
-Production uses ASCII plus the small hardware-reported vocabulary in
-`features/ui_glyphs.h`. Editable booleans and membership lists use O/Ø; status-only
-and vehicle-request state retain ON/OFF. `*` still means editing/reordering, `>`
-means enter/action, `!` is attention/precondition, `?` is unknown, and `×` marks a
-failed local operation. A missing vehicle confirmation remains `?`, not a claim
-that the requested physical state failed. Signs on numeric readings remain signs.
-
-Temperature formatting reuses an existing unit gap for °C or adds a degree byte
-only if all original values/units fit. Dense pages may retain C. Numeric editors
-add «/» only when the complete existing label/value still fits; narrow editors
-keep their previous format. The verified · and ± are reserved for meaningful
-future uses, not added as decoration. Hardware provenance and remaining checks
-are recorded in the [action plan](../ACTION_PLAN.md).
-
-`AWD req: OFF WAIT` and `QV req: OPEN WAIT`/`AUTO WAIT` mean an unresolved request,
-not measured drivetrain or valve state. AWD repeats until explicitly cancelled;
-its confirmation says `Stop AWD req? RES`. Exhaust release requests factory control,
-not a confirmed closed position. Neither feature invents a positive vehicle ACK.
-
-Queued Dyno/brake commands remain WAIT until their existing C2 reply, a reported
-nonmatching result, or a 10-second UI confirmation timeout. Brake replies confirm
-an override sequence, not brake pressure. A timeout does not replay or cancel a
-vehicle command. Late physical/board behavior may still occur. HAS/clear countdown
-completion says `HAS: Request sent` or `DTC: Request sent`, not HAS engaged or faults cleared; ESC has no
-reliable measured acknowledgement and can report `No confirmation`.
-
-## Readable measurements and settings
-
-| Page label | Example screen | Meaning |
-| --- | --- | --- |
-| Oil temp / Oil temp (ECU) | `Oil temp 100°C` / `Oil ECU temp 100°C` | Engine oil temperature; the ECU page names its source |
-| Coolant temp | `Coolant temp  90°C` | Engine coolant temperature |
-| Battery voltage | `Battery 14.20 V` | Battery voltage |
-| Battery current | `Battery  -12.3 A` | Signed battery current |
-| Battery charge | `Batt charge  80%` | Reported battery state of charge |
-| Oil pressure | `Oil press  1.20bar` | Engine oil pressure |
-| DPF temp | `DPF temp  650 C` | Particulate-filter temperature |
-
-Voltage, current and state of charge remain separate readings; voltage alone is
-not presented as proof that the alternator is charging. Dual readings include
-separate units, for example `Batt 14.2V  -12.3A`. Fields also accommodate
-`-150.5 A` and negative boost pressure without removing the measurement sign.
-Temperatures and speed use whole units; a single voltage reading uses two decimal
-places and current uses one. This changes presentation rounding, not decoding.
-All 124 page templates, including units, are checked in both 18- and 24-character builds.
-Performance states `MISS` and `RUN` do not receive a seconds suffix.
-
-Settings describe their state directly: `Engine: 2.2 D`, `Pedal mode: Bypass`,
-`Shift RPM: 4500`, `Close win:2 locks`, `Open win: OFF`. `Block Start/Stop` means suppressing
-automatic Start/Stop; `Stop odo blink` means suppressing the blinking odometer.
-Window settings retain the lock/unlock button and press count on both widths;
-the 24-character display spells out `Close windows` and `Open windows`.
-`DPF regen alert` names the regeneration alert, `CAN routing` names message
-routing, and `Mute audio in R` distinguishes radio muting from `Auto PDC mute`.
-Ignition pages use the supported single-byte ° glyph for angles. The BCM charge
-page shows `Batt BCM SOC`, and battery-source comparisons give each value its own
-percent unit. `Reset best times` clears the saved acceleration records.
-Pending Dyno/brake/HAS/ESC screens use compact complete function names; sent
-requests identify HAS, DTC or ESC/TC without clipping a longer action title.
-These wording changes preserve page IDs, groups, table order and all controls.
-
-## Personalization and actions
-
-1. In `Settings → Favorites`, RES adds/removes the selected page. `Ø` marks
-   a favorite. Gasoline and diesel each have a six-page limit; I4/V6 share the gasoline list.
-2. In `Favorite order`, select an item with RES; `*` marks move mode. Move it
-   with the direction controls and press RES again to finish. Movement stops at
-   the list boundaries.
-3. In `Shown pages`, RES toggles catalog visibility. Hiding a page does not
-   remove it from favorites. An automatic performance result may temporarily
-   show a hidden page without changing its saved visibility.
-4. In `Sort order`, RES switches between functional grouping and A–Z by page
-   label. Sorting affects the catalog and editors; favorites retain their custom
-   order. Stronger presses move between groups in editors.
-5. Return with a long RES. Committed changes are saved automatically when leaving
-   configuration or closing the menu. Unchanged domains are skipped; successful
-   persistence is silent. There are no explicit Save entries.
-   The last favorite and last pages within groups are remembered.
-
-Favorites, visibility and remembered pages are separate for gasoline and diesel;
-sort order is shared. Switching engine profiles clears the measurement cache.
-`× Save failed: RES` keeps the menu open and the changes in RAM. RES retries the
-pending exit explicitly. BACK cancels that exit and stays in the current view;
-committed RAM changes remain unsaved until a later successful exit. Other navigation
-is ignored while the error is shown; idle processing does not retry automatically.
-Persistent failure also prevents closing through the main menu. Settings and menu
-preferences are separate saves, not a combined transaction.
-
-Vehicle-control actions require a second RES within three seconds. Moving away
-or returning cancels confirmation. Reading BCM faults and toggling maximum hold
-do not require that confirmation. Existing availability, stationary-vehicle and dyno
-conditions still apply. `Request queued` and WAIT mean that a request was
-accepted, not that an ECU confirmed completion. Immobilizer displays its state in Information;
-the separate existing steering-wheel gesture changes it only outside the menu;
-a long menu direction hold cannot trigger that gesture. `Read BCM faults` opens
-a result browser after the option is enabled in Features. It reads BCM codes,
-not faults from every ECU. The `Clear DTCs` action runs the existing
-multi-controller clear sequence; its wording does not claim BCM-only scope.
-USB capture, ELM diagnostics and the temporary IBS
-action are described in [USB diagnostics](USB_DIAGNOSTICS.md).
-
-`Peak hold` retains numerical maxima until a page/profile change or toggle;
-status values remain live. `Auto rotate` advances through the selected list
-every five seconds. Dedicated single-value pages remain available for clearer labels.
-
-## Responsiveness and memory
-
-- Button events use elapsed time and transitions, without blocking menu delays.
-- Settings share one current-screen buffer: 18 or 24 bytes instead of 40 page
-  buffers. `void render(void)` callbacks write `dashboard_setup_screen`.
-  Integer settings avoid float formatting.
-- Lists are sorted when built. Only the current view is formatted; menu storage
-  has fixed capacity and does not allocate heap memory.
-- C1 renders every 100 ms and retries identical UART screen submissions after
-  500 ms. BH independently retransmits the complete IPC screen every second.
-- UART retains the latest waiting screen, preserves command FIFO and never
-  overwrites an active transfer. A screen may precede a waiting status poll only
-  once, so continuous browsing does not starve status replies.
-- BH prioritizes the latest screen and skips unchanged fragments. CAN queue
-  rejection keeps work pending for retry. Factory text requests a full refresh
-  without resetting progress through the fragments, and radio settle timing does
-  not pause fragment transmission.
-- Native readings refresh only from their corresponding valid CAN frames. UDS
-  issues at most one request every 500 ms, after a 150 ms page-settling interval,
-  cycling through up to four page values. Fault clearing pauses polling; the fault
-  browser uses a separate transaction. Replies must match ECU, DID, profile and page.
-- Readings older than three seconds show `--`. Local performance records and
-  free-memory readings do not expire. Values wider than their field also show
-  `--` instead of a truncated number.
-
-The 100 ms render interval is not a measured dashboard response time. UART still
-requires a gap greater than 250 ms. C1 sends an 18- or 24-character first line
-to BH. BH adds `\rBACCAble beta` and sends 11 or 13 three-character CAN parts
-at intervals of at least 50 ms. Fast browsing can skip intermediate waiting
-screens. Actual two-line rendering, factory-message interaction and Race mask
-behavior still require vehicle testing.
-
-BH replaces unsent content with the latest target and sends only changed
-three-character fragments between full refreshes. Round-robin selection
-prevents frequent changes from starving the end of the screen; rejected CAN
-submissions remain pending. BH learns a media-text context from a complete
-factory `0x090` transfer (`0x05`–`0x09` or observed CarPlay `0x21`) and uses it
-for the menu. Other factory codes, blank controls and incomplete transfers do
-not change the source. Before any such transfer, the configured fallback code
-applies. After a factory transfer BH waits 100 ms, or 250 ms of silence after
-an incomplete transfer, then restarts all menu fragments from zero. A one-second
-maximum deferral prevents continuing radio traffic from hiding the menu forever.
-The full menu is resent independently every second during quiet periods. On
-menu close, BH replays the last complete factory media text if available.
-CAN enqueue acceptance does not confirm on-wire delivery or IPC rendering;
-source ownership and the second-line layout still need vehicle validation.
-
-The ordinary Information menu also exposes `IPC display test`. C1 selects a
-message code (`0x06` USB, `0x09` Bluetooth, or the observed CarPlay-session
-`0x21`) and one of four fixed patterns. It sends a reserved screen payload
-marker over the existing coalesced UART screen channel. BH then constructs
-complete CAN `0x090` messages with 16-bit big-endian character units. This
-avoids passing non-ASCII test text through C1's normal single-byte renderer.
-The patterns probe Unicode glyphs, a 48-character first line, a 48-character
-second line, and two 24-character lines. Repeated UART commands do not restart
-an unfinished transfer. BH retries failed CAN queue submissions, waits for
-factory text to settle, and retransmits the complete selected pattern every
-three seconds. A normal menu screen stops the test. The source code is forced
-only for the active test and never changes the vehicle's audio source. A five-second
-UART command lease releases the test if C1 disappears, restoring the last
-complete factory text when available. The
-experiment does not establish whether the IPC supports surrogate pairs or
-renders every selected glyph; record the actual screen and an independent BH
-TX trace for vehicle acceptance.
-
-## Compatibility
-
-`LARGE_DISPLAY` selects 24 characters; otherwise the width is 18. C1, C2 and BH
-must use matching widths because UART message length also changes.
-`IPC_MY23_IS_INSTALLED` does not replace `LARGE_DISPLAY`. Information shows C1
-version, C2/BH replies and MY23/width settings. A board silent for more than five
-seconds shows `no reply`; older firmware without status replies can do the same.
-
-Menu preferences use an explicitly serialized 80-byte record, type `0x104`, version
-1, in the existing visibility slot. Without that record, the menu imports the
-previous `0x103` visibility record by historical indices. Saving replaces it with
-the new format. Settings, performance and mirrors retain their own records. This
-migration covers the previous branch format, not arbitrary original 3.1.1 data.
-Storage requires the physical Flash capacity described in [architecture](README.md).
-
-## Adding a reading or function
-
-1. Add or reuse a `ParameterDefinition` in `diagnostics/parameter_catalog.c`.
-   For a new native value, add its read in `native_parameters.c` and its actual
-   incoming-frame cache update in `parameter_cache.c`.
-2. Add a `ParameterPage` with `id`, `group`, English `label`, `name` template,
-   `parameter_ids` and `element_count` (1–4; zero keeps the legacy count of two).
-   Labels fit 16 ASCII characters; expanded templates fit the selected 18/24 width.
-   Preserve existing page IDs and table order. IDs currently fit gasoline
-   `0x01..0x40` and diesel `0x81..0xc0`; never reuse an ID for a different reading.
-3. Check capacity before appending: the gasoline catalog fills all 64 slots;
-   diesel uses 60. A 65th page requires catalog/list expansion, a new visibility
-   representation and saved-preference migration. Update counts and tests together.
-   Group 0 is All readings; assign pages to groups 1–6.
-4. Add actions to the enum and `actions` table in `features/menu.c`. Define
-   availability, execution conditions, command and status presentation. Put the
-   device behavior in the appropriate feature module. For configurable values,
-   extend `SetupParam` and keep persisted setting slots stable.
-5. Run host tests, lint and the relevant firmware builds. Check linker sizes after
-   adding text or features: C1 has a 96 KiB program allocation and needs physical
-   128 KiB Flash. Other flavors retain 64 KiB program allocations.
-
-## Validation
-
-See the [integration report](UPSTREAM_SYNC.md) and
-[dated build measurements](UPSTREAM_BUILD_SIZES.md) for validation scope and sizes. Host tests use
-production code with HAL/storage substitutes and cover gestures, lost reports,
-clock wrap, complete and partial display transfers, target replacement, fair fragment
-selection, retries, command ordering, sorting,
-favorites, migration, empty lists, remembered pages, save failure, profile changes,
-late UDS replies, expiry, label/template widths, negative current and setting buffers.
-
-```sh
-make -C tests test
-make -C firmware/baccable FLAVOR=C1 lint
-make -C firmware/baccable -j4 FLAVOR=C1 VERSION=local-test
-make -C firmware/baccable -j4 FLAVOR=C1 BUILD_DIR=build/C1-menu-large \
-  VERSION=local-test EXTRA_CPPFLAGS="-DLARGE_DISPLAY -DIPC_MY23_IS_INSTALLED -DIS_GASOLINE -DLED_STRIP_CONTROLLER_ENABLED"
+```mermaid
+flowchart LR
+    Buttons[Steering-wheel reports on C1] --> Input[Central input FSM]
+    Input --> Menu[Menu and isolated drafts]
+    Menu --> Profile{Saved IPC profile}
+    Profile --> Legacy[Legacy single-line renderer]
+    Profile --> MY23[MY23 two-line renderer]
+    Legacy --> UART[Latest-screen UART channel]
+    MY23 --> UART
+    UART --> BH[BH: source tracking and CAN fragments]
+    BH --> IPC[IPC text field]
 ```
 
-Repeat baseline builds and lint for C2/BH/CAN. A 24-character board set also needs
-C2 and BH built with `-DLARGE_DISPLAY`; the MY23 option is handled on C1. Set `TOOLCHAIN`
-to the ARM compiler prefix if it is outside PATH. Host results do not establish
-physical-device or remote-CI results for these changes.
+`IPC_MY23_IS_INSTALLED` chooses the C1 **default** profile. Saved `MY23 IPC`
+can override it. `LARGE_DISPLAY` independently chooses the legacy 18/24-character
+width. MY23 always has budgets `MY23_L1_VISIBLE = 14` and
+`MY23_L2_VISIBLE = 22`. Those are visible glyph counts, not UTF-8 byte limits.
 
-### Fault-read failures
+The main menu remains Favorites, Readings, Actions, Settings, Information.
+Settings contains Features, Page favorites, Shown pages, Favorite order,
+Sort order, Favorites. Existing catalogs, engine gates and page IDs are retained.
+The [catalog audit](CATALOG_AUDIT.md) describes the legacy reading model.
 
-The fault browser keeps the failure reason visible. Press RES to retry or hold
-RES to leave. All messages fit the standard and large displays.
+## Central button recognizer
 
-| Message | Meaning |
+`features/menu_input.c` owns all RES/distance timing. `0x50` normalizes to `0x90`.
+CC and ACC must both be disabled, with a fresh released report to arm input.
+
+| Input | Timing and behavior |
 | --- | --- |
-| `× Read timeout` | A response or its remaining fragments did not complete within the existing time limits, including repeated pending responses. |
-| `× ECU rejected` | The controller returned a negative response other than response-pending. |
-| `× Invalid reply` | The reader rejected a response length, payload layout or fragment sequence. |
-| `× CAN send failed` | The session request, fault query or flow-control frame was not queued before the read deadline; this does not diagnose a physical CAN fault. |
+| Click | Released after at least 30 ms; deferred until the double-click window expires |
+| Double-click | Two short releases within 280 ms; emits `MENU_BACK`, without an earlier SELECT |
+| Hold | 900 ms of continued reports; emits `MENU_HOLD` once, never SELECT on release |
+| Third rapid click | Consumed during the 280 ms suppression window after a pair |
+| Gentle direction | Immediate peer navigation; repeat after 500 ms, then every 180 ms |
+| Strong direction | Functional-group navigation; no repeat |
+| Report gap | Over 300 ms cancels the gesture/pending click; a release rearms input |
 
-Unrelated or ignored malformed frames still follow the existing filtering rules
-and may ultimately produce a timeout. No new ECU requests or retry rules are added.
+Polling occurs in `menu_process`, so the final click need not wait for another
+button transition. Unsigned elapsed-time comparisons handle tick wrap. Scrolling
+cancels a pending pair, and a hold cancels it too. No menu has a private double
+click timer. `MENU_SELECT`, `MENU_BACK`, `MENU_HOLD` are the shared semantic events.
+A hold opens Favorites when closed. Within the menu, a hold acts only on a shown
+SAVE/APPLY/STORE prompt; it is never an invisible alternate navigation command.
 
-### Feedback and inactivity
+## Draft and confirmation ownership
 
-Simple toggle confirmations last 750 ms; warnings `!` and failure notices `×` last 1800 ms.
-Other request notices retain 1200 ms. Navigation dismisses notices immediately;
-vehicle confirmation rules are unchanged. Diagnostic progress remains driven by
-the diagnostic state, not a cosmetic timer.
+Features and the public `setup_select_page` API share the `setup_stage_*` draft
+workflow. Runtime values,
+USB modes, pedal maps and board configuration remain unchanged while editing.
+Numbers clamp to descriptor bounds; enums move in both directions. Signed trim
+is normalized to its persisted byte representation before dirty comparison.
+Engine and USB drafts include their companion setting bit.
 
-After 30 seconds, idle navigation/information returns to Favorites. Settings and
-editors allow 60 seconds: unfinished drafts/capture are cancelled and committed
-changes are persisted before returning home. The overlay stays visible, and
-NEXT/PREV works without reopening it. Favorites and readings remain live; active
-fault reading/clearing postpones the automatic return. Only ROOT + BACK explicitly
-closes and clears the overlay. A save failure keeps the menu open and requires
-deliberate input to retry; it does not repeatedly attempt automatic writes. Existing record storage
-skips writing unchanged payloads.
+| State/event | Result |
+| --- | --- |
+| Unchanged draft + Back | Return immediately to the Features list |
+| Dirty draft + first Back | Remain on setting, show confirmation |
+| Confirmation + hold | Persist; apply only after success; show saved feedback and remain on setting |
+| Confirmation + Back | Discard; return to list with original live setting |
+| Failed save + hold | Retry the same draft; failure never becomes a committed live value |
+| Separate Back after save | Return; it does not save twice |
+| Editor timeout | Discard unfinished draft and return to Favorites |
 
-Closing retries the blank screen if UART is busy. Reopening cancels that pending
-clear so it cannot erase the new menu. This uses the existing dashboard handover;
-physical radio/display behavior still needs vehicle validation.
+Favorite slots and Sort order use equivalent isolated drafts in the menu
+controller. Mirror Enabled is staged too. Mirror Store position requires a hold
+at `Adjust;HOLD=save`/`HOLD STORE`; queue acceptance is still **not** a BH storage
+acknowledgement. Existing action preconditions are checked again on confirmation.
+Except Read BCM faults and Peak hold, actions first show a prompt, then require
+a hold within three seconds. Another click cannot execute that confirmation.
 
-## Numeric editors, capture and exclusive modes
+The compatibility membership, visibility and page-order editors still commit
+RAM changes when selected and persist on exit. Changed settings and menu
+preferences are independent storage domains. A failed automatic exit shows
+`× Save failed: RES`; SELECT retries the remembered destination, Back cancels the
+exit, and idle never retries silently. Ordinary views idle after 30 s, editors
+after 60 s; live readings stay open and active fault work postpones inactivity.
 
-SELECT enters a numeric draft, NEXT/PREV adjusts by the existing step, SELECT
-accepts and BACK cancels without saving the draft. Idle return also discards an
-unaccepted draft. Shift RPM: 1500–6000/250; Launch Nm: 25–600/25; Pedal trim:
-−10…+10/2. Values clamp at boundaries. Existing in-range saved values are preserved.
+## MY23 view modes and encoding
 
-Park mirror opens Enabled, Store position and Back. Enabling sends only Enable;
-it never captures a position. Enable first, select Store position, adjust the
-mirror, then SELECT explicitly confirms capture. BACK cancels. `Store: queued`
-means UART accepted the original BH store command; the protocol has no persistence
-acknowledgement. Retry rejected sends explicitly. A store never silently enables
-a disabled feature.
+`features/my23_ui.*` defines LIST, EDIT, CONFIRM, PARAMETER and NOTICE modes.
+Lists show `› current` above the next item. A long active title ends with `…`.
+Settings show draft values with `▲▼ CHANGE`; confirmation shows
+`HOLD SAVE•2X DISCARD` and saved feedback `✓ SAVED`. Readings use the larger
+context field for additional values. Ordinary MY23 screens have no fixed footer.
+Legacy uses ASCII/verified Latin-1 glyphs and single-line confirmation wording.
+The renderer translates MY23 control tokens before legacy output.
 
-USB mode cycles OFF → CAN → ELM327 → OFF (without ELM327 support: OFF → CAN → OFF).
-The original two persisted flags remain; CAN wins when loading conflicting legacy
-flags. The second flag is hidden, including in non-ELM builds, so no independent
-switch implies both modes can run together. Stop IBS override before changing USB
-mode: USB activation otherwise disables that experiment. Modes apply after successful automatic settings persistence.
-
-Front brake activation explicitly confirms `Brake+launch? RES`, because the
-existing C2 reply arms Launch Assist. While launch is active, Front brake refuses
-to silently disable it; use the separately named `Disable launch` action first.
-Known RPM, speed, Dyno and read/clear conflicts are shown before SELECT and checked
-again on execution. Dyno confirmation names its ESC reset dependency. Permissions
-for active Dyno/brake/AWD/QV/custom ESC cannot be disabled until their operation is
-released, avoiding hidden stops or resumed requests when permissions return.
-
-## Hidden IPC diagnostics
-
-Build C1 with `EXTRA_CPPFLAGS=-DMENU_DIAGNOSTICS`; no production menu entry is added
-without this flag. Information gains `IPC diag >`. NEXT/PREV cycles raw-byte
-groups labelled in hex; SELECT switches to an A/B refresh pattern; BACK returns.
-The diagnostic test still covers 0x20–0x7E and 0x80–0xFF as raw single bytes.
-The user reports printable ASCII and Latin-1-like 0xA0–0xFF on the tested IPC;
-0x80–0x9F is unsupported/control and must not be used by production renderers.
-Only the selected constants in ui_glyphs.h are adopted. Diagnostic coverage is not
-approval of every candidate on every IPC revision. MY23 and LARGE_DISPLAY remain
-independent settings; validate other physical IPC variants before assuming a match.
-
-
-## Global interaction contract
-
-NEXT/PREV moves between peers or changes the current numeric draft. SELECT uses
-or confirms the current item. BACK cancels an unfinished workflow or returns one
-level. Committed configuration changes save automatically, silently on success;
-a failed exit remains explicit and retryable. Lists have no position prefix.
-
-| View | SELECT | BACK |
+| UART token | IPC BMP code point | Glyph |
 | --- | --- | --- |
-| ROOT | Enter selected section | Close |
-| FAVORITES | No-op | ROOT |
-| GROUPS | Enter readings | ROOT |
-| VALUES | No-op | GROUPS |
-| ACTIONS | Run/confirm selected operation | ROOT |
-| SETTINGS | Enter editor or change sort | ROOT |
-| FEATURES | Use entry / accept numeric draft | Cancel nested draft/capture, otherwise SETTINGS |
-| EDIT FAVORITES / SHOWN PAGES | Toggle membership/visibility | SETTINGS |
-| FAVORITE ORDER | Pick/drop a nonempty item | SETTINGS |
-| INFORMATION | No-op; explicit IPC diagnostic entry opens its screen | ROOT |
-| FAULTS | Restart read if Clear is inactive | Cancel read, ACTIONS |
-| DIAGNOSTICS | Switch test pattern | INFORMATION |
+| 0x80 | 0x203A | › |
+| 0x81 | 0x2022 | • |
+| 0x82 | 0x25B2 | ▲ |
+| 0x83 | 0x25BC | ▼ |
+| 0x84 | 0x2713 | ✓ |
+| 0x85 | 0x00D7 | × |
+| 0x86 | 0x2192 | → |
+| 0x87 | 0x2026 | … |
+| 0xB0 | 0x00B0 | ° |
+| 0xB1 | 0x00B1 | ± |
 
-Park Mirror has its own Enabled / Store position / Back list. BACK from capture
-returns to that list; BACK again returns to Features. The explicitly labelled
-`< Back` row is the sole SELECT-as-return entry. Physical BACK while the menu is
-closed still opens Favorites; the physical button protocol is unchanged.
+The encoder accepts the selected UTF-8 symbols and the existing compact/raw
+Latin-1 vocabulary. Each maps to **one token and one IPC character**, so clipping
+cannot split the selected UTF-8 sequences. This is a bounded BMP vocabulary,
+not support for arbitrary Unicode or surrogate pairs. Legacy diagnostic bytes
+are not translated through the MY23 token table.
 
-The [action plan](../ACTION_PLAN.md) records completed requirements, superseded
-decisions and the remaining hardware validation.
+A screen packet is 38 bytes: board address, profile marker `0x02`, 14 glyph
+tokens for L1, 22 glyph tokens for L2. The reserved `0x01` display-test marker is
+unchanged. Normal command/status/ELM packets retain their legacy fixed size;
+the UART receiver recognizes the longer screen by its board address. The latest
+screen slot coalesces complete packets and never overwrites active TX or command
+FIFO entries. Flash matching C1/C2/BH images: old boards do not understand the
+longer screen packet. The legacy width still needs to match across boards for
+command/status/ELM framing.
 
-## Display recovery audit (2026-09-26)
+BH builds `14 padded glyphs + CR + 22 padded glyphs + two trailing spaces` for
+MY23 and transmits three **16-bit big-endian** character units per CAN 0x090
+frame. L2 always begins at character offset 15. It never depends on L1's text
+length, title, or UTF-8 bytes. Both fields are fully cleared at every submission.
+This removes the firmware source of stale suffixes and moving field offsets;
+physical IPC alignment remains part of the vehicle test. Legacy retains its
+original first-line/CR/footer layout and original 11/13-fragment count.
 
-The requested screen is the IPC text field between the gauges. Menu input is
-recognized on C1 and its text is sent to BH over UART; BH sends CAN ID 0x90.
-C1 repeats visible text at least every 500 ms, so an isolated lost screen command
-is retried. USB CAN does not intentionally suspend the menu; ELM diagnostics does.
-Cruise/ACC eligibility and fresh button reports still gate opening. BH suppresses
-text while `stability_inverted` owns the driving-mode presentation.
+## Atomic Favorite sets
 
-Confirmed refresh defect in beta-13 and beta-14: the full-screen keepalive timer
-used the last accepted fragment, so changing readings could postpone recovery
-indefinitely. It now uses a separate 500 ms full-refresh clock. A new refresh
-starts at fragment zero; repeated refresh requests do not rewind an unfinished
-full refresh. The 50 ms fragment pacing is retained. Host CAN acceptance is not
-IPC acknowledgment, and this is not a guarantee of physical display latency.
+`favorite_parameters.*` uses the existing stable measurement IDs, not newly
+invented composite catalog pages. There are six ordered Favorite screens per
+fuel profile, with five ordered measurement slots each. `0xFF` marks an empty
+slot; slot 1 is always the primary. Clearing it hides that screen. Assigning an
+already selected measurement clears its previous slot. User edits happen only
+under `Settings → Favorites → Favorite N → Slot N`.
 
-The real `body_process` regression corrupts an unchanged prefix in the simulated
-screen and updates the final character every 100 ms. The old body implementation
-never restores the prefix and fails; the candidate restores it. Existing menu
-suite checks ordered full refresh at both widths. These tests do not establish
-that either defect is the cause of this vehicle's intermittent menu opening.
-The beta-14 factory-message completion/250 ms fallback change alone does not
-block every transmit until the final fragment: ordinary sending still runs while
-that message is pending. Do not interpret that change as exclusive ownership of
-the IPC while the radio transmits.
+Full names reuse the compatible source catalog, with explicit native/ECU/raw
+names where needed. Short/tiny labels and units belong to presentation. Common
+labels include OIL/O, OILE/OE, WTR/W, IC, ICI, MA, GEAR/G, RPM/R, SPD/S, BST/B,
+OILP/OP, IBS, SOC and BCM. Other catalog values use initials plus their units.
+The selector identifies the full measurement, source and engine eligibility.
+RPM ID 97 is a UI view of existing 0xFC engine telemetry, with the same freshness
+rules; it does not add a new CAN decoder or diagnostic request.
+
+Secondary packing tries the complete ordered list with short labels, then
+retries with tiny labels if needed. It appends only complete segments that fit
+22 glyphs and stops before the first non-fitting segment. No partial segment,
+trailing bullet, ellipsis, or extra screen is added. Explicit empty and
+engine-incompatible secondary slots are skipped. An incompatible primary hides
+the screen while retaining its saved IDs. NaN, stale values and out-of-range
+formatting use `--`; signs and decimal precision remain meaningful.
+
+UDS polling covers all five slots, one request per 500 ms after the 150 ms page
+settling interval. Native values remain CAN-fed. `parameter_request_begin_id`
+keeps the existing ECU/DID/profile/page matching and timeout checks. Slot five
+updates the cache without indexing the old four-element displayed-value array.
+Changing pages cancels the pending request; unsupported engines never poll their
+saved-but-ineligible measurements.
+
+Menu record `0x105` stores the unchanged serialized 80-byte `0x104` preferences
+followed by a version/activation byte pair and 60 bytes of five-slot IDs (142 B).
+Missing new records import 0x104, then historical 0x103 visibility. Import deduplicates
+repeated measurement IDs from old pages and preserves source/order. Record saves
+keep the newest valid prior format in the other Flash page until the final
+commit halfword, including during format migration. The menu record fits the
+192-byte maximum payload; settings, statistics, addresses and page IDs do not move.
+Downgrading does not export the new sets for an old firmware's menu format.
+
+## Refresh and vehicle boundaries
+
+C1 renders every 100 ms and resubmits unchanged screens after 500 ms. BH retains
+50 ms CAN fragment pacing and a one-second complete reassertion clock. Factory
+text uses the existing 100 ms complete-message guard/250 ms incomplete-message
+settle fallback and bounded deferral. Source codes are learned only from complete
+media messages (0x05–0x09 and observed CarPlay context 0x21); no extra audio-source
+selection is injected. Closing restores the last complete radio text when known.
+The explicit Information → IPC display test keeps its temporary forced source,
+fixed patterns and five-second command lease. USB CAN does not suspend the menu;
+ELM processing can own diagnostics. Race-mask ownership is unchanged.
+
+Run [documented host/ARM checks](../../firmware/baccable/MAKEFILE.md). Host tests
+cover the production packet/render/draft/transport paths, bounds, both legacy
+widths, both compiled IPC defaults, third-click suppression, timer wrap, storage
+failure/migration, fifth-slot UDS, source context, fixed offsets and stale clearing.
+Firmware builds must include legacy, legacy-large, MY23 and MY23-large for every
+flavor, with the full ARM toolchain; inspect Flash/RAM totals.
+
+Vehicle acceptance is separate: open/close repeatedly, browse current/next,
+check both fields after long/short titles, edit and discard/save (including USB),
+use five measurements, compare USB/Bluetooth/CarPlay, change radio tracks rapidly,
+exercise holds and double-clicks, and check responsiveness without flicker.
+Observe the actual IPC and an independent BH TX trace for alignment, timing and
+radio arbitration. A host CAN queue acceptance is not an IPC acknowledgement.

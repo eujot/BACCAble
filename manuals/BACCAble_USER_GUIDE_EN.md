@@ -1,8 +1,8 @@
 # BACCAble — in-car user guide
 
 This guide describes the current dashboard-menu firmware source. The display
-changes described below are awaiting a vehicle test and a new release after
-**v5-beta-17**. It starts after BACCAble has been installed and
+MY23 layout and navigation changes described below are a candidate based on
+**v5-beta-18**, awaiting a vehicle test and a new release. It starts after BACCAble has been installed and
 connected to the vehicle. Installation, wiring and firmware flashing are outside
 its scope. Use a matching C1/C2/BH firmware set.
 
@@ -33,72 +33,65 @@ are supported; a menu entry alone does not establish compatibility.
 
 ## First use
 
-1. With the car stationary, switch on the ignition so the instrument panel and
-   steering-wheel controls are awake. Start the engine when a function requires
-   it. Some readings are only available with the engine running.
-2. Switch **both cruise control (CC) and adaptive cruise control (ACC) off**.
-   Release the steering-wheel buttons before operating the menu.
-3. Hold **RES for about 1.2 seconds**, then release it. The menu opens on the last
-   favorite. An empty list displays `No favorites`.
-4. Hold RES again to return to the main menu. Use gentle up/down presses to find
-   `Settings`, short RES to enter, then enter `Features`.
-5. Find `Engine` and select `2.0 I4`, `2.9 V6` or `2.2 D` to match the engine.
-   This chooses the reading catalog; it does not reconfigure the engine ECU.
-   Existing gasoline installations may initially use I4, so check this on a V6.
-6. Return with a long RES to save accepted settings. Open `Readings` and choose
-   a group, or prepare your own [favorites](#favorites-and-reading-layout).
+1. Switch on the ignition with the car stationary. Start the engine for functions
+   that need it. Some readings are available only with the engine running.
+2. Switch **both CC and ACC off**, then release the steering-wheel buttons.
+3. Hold **RES for about 0.9 seconds**, then release. The menu opens in Favorites.
+4. **Double-click RES** to return to the main menu. Use up/down to find `Settings`,
+   click RES, then enter `Features`.
+5. Select `Engine`. Choose `2.0 I4`, `2.9 V6` or `2.2 D` with clicks or up/down.
+   Double-click to show the save/discard prompt, then hold RES to save. The
+   screen remains on that setting. Double-click again to return to Features.
+6. Check `MY23 IPC` against the installed instrument panel. MY23 uses two lines
+   regardless of the legacy 18/24-character build option. Build and flash a
+   matching C1/C2/BH set; this candidate introduces a longer screen packet.
 
-C1 handles the powertrain bus and dashboard menu, C2 the chassis bus, and BH the
-body bus. Check their version pages under `Information` if a function involving
-another controller does not respond.
-
-Configure the menu while stationary. Functions that alter braking, traction or
-drivetrain behavior require a controlled test environment and suitable vehicle
-equipment. Follow the project's [use restrictions](../README.md#disclaimer).
+C1 handles powertrain CAN and menu input, C2 chassis CAN, and BH body CAN and
+IPC transmission. Check `Information` for board versions. Configure the menu
+while stationary; follow the project's [use restrictions](../README.md#disclaimer).
 
 ## Controls and navigation
 
-The controls are the cruise-control controls on the steering wheel. The ACC
-distance button, where present, has the same menu role as RES.
+RES and the ACC distance button have the same menu role when CC and ACC are off.
 
-| Control | What it does |
+| Gesture | Result |
 | --- | --- |
-| Hold RES for about 1.2 s with the menu closed | Open the last favorite. |
-| Short RES, then release | Enter, toggle, select or confirm the displayed item. Ordinary readings and status pages do not change on a short press. |
-| Hold RES for about 1.2 s in the menu | Go back one level. From the main menu, close the menu. In a numeric edit, cancel the unaccepted number. |
-| Gentle down / up | Next / previous item. Lists wrap around. |
-| Hold gentle down / up | Repeat in browsing and settings lists, starting after about 0.5 s. Actions and a favorite being moved do not auto-repeat. |
-| Stronger down / up | Jump to the next / previous functional group in reading lists, page editors, Features and Actions. In Favorites, move one page. In a numeric edit, adjust the number. |
+| Hold RES for about 0.9 s with the menu closed | Open Favorites. |
+| Click RES and release | Enter/use an item or edit its draft. A reading does not react. |
+| Double-click RES | Request Back. Two short releases must fall within 0.28 s. |
+| Hold RES in a displayed SAVE/APPLY/STORE prompt | Save the setting or confirm that operation. A hold elsewhere has no action. |
+| Gentle down/up | Next/previous item or change the draft. Lists wrap. |
+| Hold gentle down/up | Repeat after 0.5 s, then every 0.18 s; no repeats in Actions or while reordering a page favorite. |
+| Stronger down/up | Jump between functional groups; in a draft, adjust its value. |
 
-A stronger press can first register a gentle step before the group jump. It no
-longer means “skip ten pages.” Releasing RES after a long press does not also
-select the next screen.
-
-If control reports are interrupted for more than 0.3 s, release the control and
-press again. When CC or ACC takes ownership of the buttons, they are unavailable
-for menu navigation.
+A click is resolved after the double-click window, so a single click has a short
+intentional delay. Presses shorter than 30 ms are rejected. A third rapid click
+following a double-click is consumed. Scrolling cancels a pending click pair.
+After a gap over 0.3 s in button reports, release the button and try again.
+Releasing a hold never also clicks. A stronger direction can first register a
+normal item step before its group jump.
 
 ### Returning, inactivity and saving
 
-Long RES returns through the hierarchy, for example:
+Double-click returns one level. With an unchanged setting it returns immediately.
+With a changed draft, the first double-click shows `HOLD SAVE•2X DISCARD` on MY23
+(`Hold save/2x drop` on legacy). Hold RES to persist and apply; the setting stays
+visible with saved feedback. A separate double-click returns. Double-click in
+the confirmation instead to discard and return, keeping the original setting.
+A failed save keeps the draft and confirmation available for another hold.
+A restart loads committed values only. USB mode changes only after a successful
+explicit save; selecting CAN or merely leaving an unsaved draft does not activate it.
 
-`oil reading → Temperatures group → main menu → menu closed`.
+The same draft workflow applies to Features, Favorite slots, mirror Enabled and
+Sort order. There is no Save & Exit item. Live readings stay visible. Other menu
+views return to Favorites after 30 s without input, or 60 s in editors; unfinished
+drafts are discarded. Active fault work postpones this timeout.
 
-Ordinary navigation and Information return to Favorites after about **30 s**
-without input. Settings and editors return after about **60 s**. Live readings
-and Favorites remain displayed. Active fault operations postpone this timeout.
-An unfinished numeric draft is cancelled on timeout; already accepted settings
-are saved when leaving configuration.
-
-There is **no Save & Exit item**. Return from configuration normally to save
-accepted changes. Some functions react as soon as a value is changed; USB mode
-is applied when leaving Features. Cancelling a numeric draft does not undo other
-settings already accepted.
-
-If `× Save failed: RES` appears, short RES retries the pending save/exit. Long RES
-cancels that exit and returns to the current view. The accepted changes remain in
-memory, but are not guaranteed to survive a restart. Navigation is otherwise
-blocked while this message is displayed; waiting does not retry the save.
+The compatibility editors `Page favorites`, `Favorite order` and `Shown pages`
+still persist accepted membership/order/visibility changes when leaving. These
+also save remembered reading positions. If `× Save failed: RES` appears during
+an exit, click to retry that exit or double-click to cancel it and remain in the
+current view. Waiting does not automatically retry.
 
 ## Menu structure
 
@@ -120,10 +113,11 @@ Main menu
 │  │     ├─ Enabled
 │  │     ├─ Store position
 │  │     └─ < Back
-│  ├─ Favorites              Add/remove pages from Favorites
+│  ├─ Page favorites         Compatibility page membership editor
 │  ├─ Shown pages            Show/hide pages in Readings
 │  ├─ Favorite order         Arrange Favorites
-│  └─ Sort order             Grouped or alphabetical reading lists
+│  ├─ Sort order             Grouped or alphabetical reading lists
+│  └─ Favorites              Favorite 1–6 → Slot 1–5 → measurement
 └─ Information               Versions, input status and IPC display test
 ```
 
@@ -133,20 +127,20 @@ The main menu order is fixed. Page availability follows the selected engine,
 
 ## Display symbols and messages
 
-The instrument panel has either 18 or 24 text positions, depending on the
-firmware build. Labels and live screens can differ to make room for values.
-For example, `Batt charge BCM` opens a `Batt BCM SOC` reading.
+MY23 has **14 visible glyphs in line 1 and 22 in line 2**. A list shows the
+current item with `›` above the next item. Editors show a setting and its draft
+value, with `▲▼ CHANGE`. Confirmation and saved feedback use the second line.
+Live Favorites use line 1 for the primary measurement and line 2 for extra
+measurements, separated by `•`. `✓` means saved; `×` means a local failure.
+The legacy profile retains its 18/24-character first line and `BACCAble beta`
+footer. It uses the same button and draft rules, with single-line prompts.
 
-The menu appears on the first text line. A temporary `BACCAble beta` caption
-appears on the smaller second line. BH reuses the last complete media-text
-source observed on the vehicle bus, such as the vehicle USB input or CarPlay,
-instead of switching the display to the Bluetooth icon. Before any media text
-has been observed, BH uses its configured fallback source. It sends the full
-menu again about once per second even when the radio sends no new text. After
-a radio title/artist message, it waits briefly and restarts the menu from its
-first fragment. Closing the menu restores the last complete radio text BH saw;
-new radio text can replace it at any time. Physical IPC behavior still needs
-vehicle verification.
+BH uses the last complete media-text source it observed, such as USB or CarPlay,
+rather than forcing Bluetooth. It resends the full overlay about once per second
+and restarts after radio text settles. Closing restores the last complete radio
+text. Both MY23 fields are cleared and padded independently, so shorter titles
+cannot shift the second line or leave old characters. Physical readability,
+alignment and radio takeover still require the vehicle acceptance test.
 
 | Mark or message | Meaning and response |
 | --- | --- |
@@ -154,7 +148,7 @@ vehicle verification.
 | `ON` / `OFF` in a status | Reported or locally tracked state. This is not necessarily an editable checkbox. |
 | `>` | Enter a submenu or start an action/workflow with RES. |
 | `*` | A number is being edited, or a favorite is selected for moving. |
-| `< Back` | Return from the submenu. Long RES also goes back. |
+| `< Back` | Return from the submenu. Double-click RES also goes back. |
 | `!` | A condition needs attention, for example `! Start engine` or `! Stop the car`. |
 | `?` | The state is unknown or confirmation is missing, for example `? BH no reply`. |
 | `×` | A local operation failed, for example saving settings or sending a request. |
@@ -171,41 +165,43 @@ permits. Lists do not show item counters.
 
 ## Favorites and reading layout
 
-### Add useful pages
+### Configure up to five measurements per favorite
 
-1. Open `Settings → Favorites`.
-2. Browse to a page and press RES. `Ø` means it is in Favorites; press again to
-   remove it.
-3. Select up to **six pages** for the current fuel catalog. Remove an existing
-   favorite before adding another when the list is full.
-4. Return with long RES, then open the main-menu `Favorites` to see live values.
+1. Open `Settings → Favorites` and choose `Favorite 1` through `Favorite 6`.
+2. Click to edit. Choose `Slot 1` through `Slot 5`, click, then browse the
+   measurements with up/down and click to use one. `Empty` clears that slot.
+3. **Slot 1 is the primary measurement**. MY23 puts it in line 1. Slots 2–5
+   appear in line 2 in that exact order. An empty primary hides that favorite.
+   To change order, replace the slots; assigning a measurement already in another
+   slot clears its old position. Editing is available only in Settings.
+4. Double-click for the save prompt. Hold to save, or double-click again to
+   discard. A successful save stays at the selected slot; double-click to leave.
+5. Open main-menu `Favorites` to view live values. On legacy, a configured set
+   shows its primary measurement on the single line.
 
-The Favorites editor always starts with the complete compatible catalog. The
-reading group last used in `Readings` does not restrict this list. Advanced
-pages remain available in the editor; engine compatibility still applies.
+The renderer first tries short labels for all secondary measurements. If they
+do not fit in 22 glyphs, it retries with tiny labels. It then keeps only complete
+segments that fit, in order: no partial value, trailing bullet, or extra page.
+For example, `GEAR 3` may have `R3500•S100•B-0.5bar` below it. RPM is in rpm,
+speed in km/h and pressure in bar; `O`/`OE` are native/ECU oil temperature,
+`W` coolant, `IC` intercooler outlet, `ICI` inlet, `MA` MultiAir and `GT` gearbox.
+A degree on these temperatures means Celsius. RPM uses existing incoming engine
+telemetry; it does not add a new CAN request. `--` still means unavailable/stale.
 
-Gasoline and diesel have separate saved favorite lists. I4 and V6 share the
-gasoline list. An incompatible favorite is temporarily hidden when the engine
-profile changes, but still occupies its saved slot. Select the original profile
-to remove it if necessary.
+Gasoline and diesel retain separate sets. Engine-incompatible saved measurements
+remain stored and are omitted until that profile is selected again. A hidden
+incompatible primary hides the whole favorite. Both engine page catalogs and old
+page IDs remain unchanged. Existing page favorites are imported into sets with
+repeated measurement IDs removed, preserving their original sources and order.
+Saving upgrades the menu preference record. Downgrading to old firmware is not
+an export of the new five-slot configurations.
 
-### Arrange, hide and sort
-
-| Setting | Operation and effect |
-| --- | --- |
-| `Favorite order` | Browse to an item, short RES to select it (`*`), move it with up/down, then short RES to finish. Movement stops at the list ends. Long RES leaves the editor and saves the resulting order, including moves already made. |
-| `Shown pages` | Short RES shows/hides a page in Readings. Hiding it does not remove it from Favorites. |
-| `Sort order` | Short RES switches between functional grouping and A–Z by page label. This affects catalog lists and page editors, not the custom order of Favorites. |
-| `Advanced pages` in Features | Reveals technical and alternative layouts in ordinary browsing. Explicit favorites and page editors can include advanced pages even while this is off. Engine compatibility still applies. |
-| `Auto rotate` in Features | Advances through the current live list every five seconds. A short favorite list makes a useful rotating dashboard. |
-
-Visibility and remembered reading pages are saved separately for gasoline and
-diesel; sort order is shared. An automatically displayed performance result may
-temporarily show a hidden page without changing your saved visibility setting.
-
-With no saved preferences, gasoline starts with Oil/coolant temp, Power / torque,
-Battery V / A and Speed; diesel starts with Oil/coolant temp, Power / torque,
-Battery V / A and DPF load / temp. Existing saved preferences take priority.
+`Page favorites` and `Favorite order` keep the older six-page membership and
+ordering editors. They affect the legacy page list, used until a five-slot set
+has been explicitly saved on legacy. MY23 uses the imported/configured sets.
+`Shown pages` and `Advanced pages` affect ordinary Readings, not explicit set
+selection. `Sort order` changes catalog ordering through its own draft/save
+prompt. `Auto rotate` advances the live list every five seconds.
 
 ## Settings: Features
 
@@ -214,8 +210,10 @@ The group headings below explain stronger up/down jumps; they are not extra
 submenus. For an on/off setting, short RES toggles `O`/`Ø`. For a named choice,
 short RES cycles its values.
 
-For **Launch Nm**, **Shift RPM** and **Pedal trim**, short RES starts an edit (`*`),
-up/down adjusts the draft, and short RES accepts it. Long RES cancels the draft.
+For **Launch Nm**, **Shift RPM** and **Pedal trim**, click to edit and use
+up/down to adjust. Double-click for confirmation, then hold to save or
+double-click again to discard. Switches and named choices use the same explicit
+workflow; their draft does not control the car before successful persistence.
 
 ### Display group
 
@@ -224,7 +222,7 @@ up/down adjusts the draft, and short RES accepts it. Long RES cancels the draft.
 | `LED strip` | Off / on | Drive an installed compatible WS281x LED strip using vehicle data such as accelerator position and gear. This requires the optional hardware. Output pauses while USB owns the shared pin. |
 | `Shift light` | Off / on | Request the instrument-panel shift warning above `Shift RPM`, with compatible Race-mode display support. This does not shift the gearbox. |
 | `Shift RPM` | 1500–6000 RPM, step 250 | Engine-speed threshold for the shift warning. |
-| `MY23 display` | Off / on | Select the newer instrument-panel behavior used by supported display features. It does not change the compiled 18/24-character width. |
+| `MY23 display` | Off / on | Use the MY23 menu layout: 14 glyphs on line 1 and 22 on line 2. OFF retains the legacy single-line layout with the compiled 18/24-character width. |
 | `DPF regen alert` | Off / on | Enable diesel regeneration notifications. See [DPF monitoring](#dpf-monitoring). |
 | `Auto rotate` | Off / on | Rotate live pages every five seconds. |
 | `Advanced pages` | Off / on | Include technical/secondary pages in Readings, subject to profile and manual visibility. |
@@ -271,7 +269,7 @@ up/down adjusts the draft, and short RES accepts it. Long RES cancels the draft.
 | `DTC clear action` | Off / on | Permit the multi-controller `Clear DTCs` action. |
 | `BCM fault reader` | Off / on | Permit `Read BCM faults`, which reads the Body Control Module only. |
 | `Engine profile` (shown as `Engine`) | 2.0 I4 / 2.9 V6 / 2.2 D | Select the engine-specific reading catalog. Switching discards cached measurements and temporarily filters incompatible favorites. |
-| `USB mode` | OFF / CAN / ELM327 | Select normal operation, binary CAN capture, or ELM-compatible diagnostics. ELM327 is offered in builds with that support. Modes are exclusive. Leave Features to apply. |
+| `USB mode` | OFF / CAN / ELM327 | Select normal operation, binary CAN capture, or ELM-compatible diagnostics. ELM327 is offered in builds with that support. Modes are exclusive. Confirm the draft with a double-click, then hold RES at the save prompt to apply. |
 
 Feature permissions and vehicle states are different: enabling `Dyno action`,
 for example, merely makes its action available. Some actions are omitted when
@@ -287,13 +285,14 @@ position feedback may not support this function.
 
 1. Park the car with the mirror controls available. Open
    `Settings → Features → Park mirror`.
-2. Set `Enabled` to `Ø`. Enabling does **not** store the current positions.
-3. Enter `Store position`. The prompt is `> Adjust; RES=save`.
+2. Select `Enabled`, set its draft to ON, double-click for confirmation and
+   hold to save. Enabling does **not** store the current positions.
+3. Enter `Store position`. The prompt is `> Adjust;HOLD=save`.
 4. Use the car's mirror controls to place both mirrors at the desired reversing
-   positions. Let them stop moving, then short RES to request storing them.
+   positions. Let them stop moving, then hold RES at the STORE prompt to request storing them.
 5. `Store: queued` means that the request was queued to BH. There is no storage
    acknowledgement from BH on this screen. Short RES dismisses the result;
-   long RES goes back. If sending was busy, retry while the desired positions
+   double-click RES goes back. If sending was busy, retry while the desired positions
    are still set.
 6. Return the mirrors to their normal driving positions and leave configuration.
    Verify the stored targets during a stationary reversing test.
@@ -375,7 +374,7 @@ pressure or guaranteed drivetrain state.
 - **Brake/launch:** enable `Brake action`, set the desired `Launch Nm`, and enter
   Dyno while stationary. `Brake override` requests front-brake forcing and arms
   launch assist when C2 reports the forced state. The confirmation says
-  `Brake+launch? RES`. Launch assist requests release when reported torque
+  `Brake+launch? HOLD`. Launch assist requests release when reported torque
   reaches the threshold.
 - **Manual release:** if launch assist is armed, first execute `Disable launch`,
   then `Brake override` to request release. **Disable launch only disarms the
@@ -391,7 +390,7 @@ gear-lever **release button** within about one second is the legacy alternative.
 
 Enable `AWD off action` for an AWD vehicle, remain stationary and execute
 `AWD off request`. BACCAble repeats the disabling request until it is cancelled.
-Select the action again and confirm `Stop AWD req? RES` to stop requesting it.
+Select the action again and confirm `Stop AWD req?HOLD` to stop requesting it.
 `AWD req: OFF WAIT` is a request to switch AWD off; it is not a measured
 confirmation that only two wheels are being driven.
 
@@ -439,7 +438,7 @@ first where required. The table follows the action order; unavailable permission
 can remove entries from the list.
 
 For actions other than `Read BCM faults` and `Peak hold`, short RES shows a
-confirmation; press RES again **within three seconds** to execute. Moving away
+confirmation; hold RES **within three seconds** to execute. Moving away
 or returning cancels the confirmation. Conditions are checked again when the
 action executes.
 
@@ -448,7 +447,7 @@ action executes.
 | `QV exhaust req` | QV exhaust; compatible hardware | Request valve open, or release to factory control. WAIT is not a valve-position acknowledgement. |
 | `Press HAS button` | Virtual HAS | Send the simulated HAS button press. `HAS: Request sent` does not mean HAS engaged. |
 | `Toggle ESC/TC` | ESC/TC control; Dyno inactive | Toggle the custom stability/traction-control request. Confirmation can remain unavailable. |
-| `Toggle Dyno mode` | Dyno action; car stationary long enough; no brake override or inverted ESC state | Request Dyno on/off. Enabling asks `Dyno+ESC? RES`. A C2 reply ends the pending board request; verify vehicle state. |
+| `Toggle Dyno mode` | Dyno action; car stationary long enough; no brake override or inverted ESC state | Request Dyno on/off. Enabling asks `Dyno+ESC? HOLD`. A C2 reply ends the pending board request; verify vehicle state. |
 | `Brake override` | Brake action; launch assist disarmed before changing an existing override; stationary and Dyno active to enable | Request forced front brakes plus launch assist, or request normal braking. See the release procedure above. |
 | `Disable launch` | Brake action; launch assist currently armed | Stop torque-triggered brake release. Does not release brake override. |
 | `AWD off request` | AWD off action; stationary to begin | Start repeated AWD-off requests, or explicitly cancel the sequence. No measured drivetrain confirmation. |
@@ -470,7 +469,7 @@ AWD and exhaust requests have no measured-state acknowledgement.
 3. Browse codes with up/down. Codes appear in forms such as `Uxxxx-xx`; the screen
    does not supply a repair description. Up to **20 codes** are displayed. A `+`
    prefix indicates that the response contained more codes than fit in the list.
-4. Short RES starts another read; long RES leaves and cancels an unfinished read.
+4. Short RES starts another read; double-click RES leaves and cancels an unfinished read.
 
 `No faults reported` refers only to this successful BCM read, not the entire
 vehicle. `× CAN send failed`, `× Read timeout`, `× ECU rejected` and
@@ -519,7 +518,7 @@ not toggle their state. The final `IPC display test` entry opens a test submenu.
 | C1 version | Firmware version of the controller managing the menu. |
 | C2 version | Chassis-controller version. `? C2 no reply` means no recent version reply. |
 | BH version | Body-controller version. `? BH no reply` means no recent version reply. |
-| `MY23:ON/OFF …ch` | MY23 preference and compiled display width, 18 or 24 characters. |
+| `MY23:ON/OFF …ch` | Legacy: MY23 preference and compiled 18/24 width. MY23 instead shows `IPC MY23` and `14 / 22 glyphs`. |
 | `Immobilizer: ON/OFF` | Stored BACCAble immobilizer preference, not an editable menu switch. |
 | `Reports:` | Number of steering-wheel input reports observed by the menu. Useful when diagnosing unresponsive controls. |
 | `Gaps:` | Count of interruptions detected in the input report stream. |
@@ -545,7 +544,7 @@ change the vehicle's audio source. Run the same four tests under each code:
 | `Both lines` | `TOP:12345678901234567890` and `BOTTOM:12345678901234567` | Whether both 24-character lines coexist and how each is rendered. |
 
 Short RES or gentle up/down changes to the next/previous test while its pattern
-is on screen. Hold RES to return to the test list; hold it again to return to
+is on screen. Double-click RES to return to the test list; double-click again to return to
 Information. The test ends automatically after about 60 seconds without input.
 BH repeats the selected complete pattern about every three seconds and resumes
 it after radio text. If C1's test commands stop reaching BH, BH releases the
@@ -763,7 +762,8 @@ does not mean a serial capture port should exist in DFU.
    vehicle supplies the CAN traffic. A working USB data hub can be used. Connect
    the cables before activating the mode; eject any mounted BACCAble USB disk
    before changing its role.
-2. Select `Settings → Features → USB mode: CAN`, then leave Features. C1 sends
+2. Select `Settings → Features → USB mode`, select the CAN draft, double-click
+   for confirmation and hold RES to save. C1 sends
    the capture setting to C2 and BH; you do not select it independently in three
    dashboard menus.
 3. Identify the enumerated ports. On macOS they appear as `/dev/cu.usbmodem…`.
@@ -816,7 +816,7 @@ carries menu text; its failure can hide the menu while C1 USB still works.
 In the USB recovery candidate, C1 sends addressed mode requests and waits for
 C2/BH acknowledgements. Allow a few seconds for all three ports. USB initialization
 has at most three attempts; a failure leaves normal menu processing running.
-Select OFF and leave Features, then CAN and leave Features to try again. Install
+Explicitly save OFF, then explicitly save CAN to try again. Install
 all three matching candidate images; old auxiliary firmware lacks this protocol.
 
 With the updated Lab and its optional `usb-status` dependencies installed, run:
@@ -840,7 +840,8 @@ acceptance is still pending.
 
 ### ELM-compatible diagnostics
 
-Select `USB mode: ELM327`, leave Features, then connect a compatible host
+Select the ELM327 draft in `USB mode`, double-click for confirmation, hold to
+save, then connect a compatible host
 diagnostic client to C1's new serial port. This is a bounded ELM-style CAN
 implementation, not a full ELM327 with every protocol. Unsupported commands can
 return `?`; unavailable diagnostic data returns `NO DATA`.
@@ -849,20 +850,20 @@ Normal vehicle-feature processing is suspended during ELM diagnostics, so the
 menu may not remain navigable. Disconnect USB to let the session expire after
 about ten seconds; 120 seconds without a complete ELM command also ends it.
 See [USB diagnostics](../docs/architecture/USB_DIAGNOSTICS.md) for supported
-commands and bus behavior. Use USB mode OFF for ordinary operation when finished.
+commands and bus behavior. Use explicitly save USB mode OFF for ordinary operation when finished.
 
 ## Troubleshooting
 
 | Symptom | Check / next step |
 | --- | --- |
-| RES does not open the menu | Ignition/panel awake; CC and ACC both off; release controls, then hold RES for 1.2 s. Check C1 connection/firmware. ELM diagnostics can temporarily own processing. |
+| RES does not open the menu | Ignition/panel awake; CC and ACC both off; release controls, then hold RES for 0.9 s. Check C1 connection/firmware. ELM diagnostics can temporarily own processing. |
 | Menu skips or stops reacting | Distinguish gentle from strong presses. Release after a stream interruption. Inspect Information's Reports/Gaps/Input age and C2/BH status. |
 | Radio text remains on the display | BH should resend the complete two-line BACCAble message about once per second and restart it after a radio title/artist transfer. It follows the last observed media-text source. If the menu remains absent, check the BH link, matching firmware and the actual BH CAN output; host capture records received frames, not BH's own transmissions. |
 | A page or action is missing | Correct engine profile; Shown pages; Advanced pages; action permission in Features. A hidden favorite may still occupy its saved slot under another profile. |
-| `No favorites` / `No pages` | Add compatible favorites or restore page visibility. Long RES still returns. |
+| `No favorites` / `No pages` | Add compatible favorites or restore page visibility. Double-click RES still returns. |
 | A value shows `--` | Wait for fresh reports, check ignition/engine conditions and ECU compatibility. USB diagnostics can suspend normal queries. A displayed catalog entry is not a guarantee that the ECU implements it. |
 | `Batt BCM SOC --` or `Batt charge --%` | Compare the independent sources using Battery sources. Do not treat missing SOC as 0%, and do not use IBS override as a repair. |
-| Setting reverts after a restart | Leave configuration to save. Resolve `× Save failed: RES`; unsaved RAM changes are not persistent. |
+| Setting reverts after a restart | Use the explicit confirmation and hold to save. Resolve `× Save failed: RES`; unsaved RAM changes are not persistent. |
 | `! Disabled in setup` | Enable the associated permission under Features, then return. |
 | `! Stop the car`, `! Enable Dyno`, `! Release brake`, `! Reset ESC`, `! Disable launch` | Satisfy the specific action condition. For brakes, use the documented disarm/release sequence. |
 | `! Request pending` | Wait for the outstanding request result; do not assume it was executed or cancelled. |
@@ -877,9 +878,9 @@ commands and bus behavior. Use USB mode OFF for ordinary operation when finished
 
 | Older wording or behavior | Current equivalent |
 | --- | --- |
-| Short RES returns to the main menu | Short RES selects; **long RES goes back**. |
+| Short RES returns to the main menu | Short RES selects; **double-click RES goes back**. |
 | Strong press skips ten parameters | Strong press jumps functional groups; Favorites moves one page. |
-| Save & Exit | Automatic save when leaving configuration; explicit retry on save failure. |
+| Save & Exit | Draft confirmation and hold to save; explicit retry on failure. |
 | Flat parameter/function menu | Favorites, Readings, Actions, Settings, Information. |
 | Enabling Park Mirror stores positions | `Park mirror → Enabled` and `Store position` are separate operations. |
 | Generic Battery % / BATTERY | Distinct BCM, engine ECU and native IBS SOC sources; see the battery table. |

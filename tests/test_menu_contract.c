@@ -154,7 +154,8 @@ static void test_unnumbered_list_contract(void) {
     setup_dashboardPageIndex = setup_page_for(23);
     menu_event(MENU_SELECT);
     expect_no_position();
-    menu_event(MENU_SELECT); /* Enable without capture. */
+    menu_event(MENU_SELECT); /* Stage enable without capture. */
+    menu_event(MENU_BACK); menu_event(MENU_HOLD); now += 2000; menu_render();
     menu_event(MENU_NEXT);
     expect_no_position();
     menu_event(MENU_SELECT);
@@ -299,7 +300,7 @@ static void test_workflow_and_immediate_versions(void) {
     expect_no_position();
 
     open_test_action("Dyno:");
-    menu_event(MENU_SELECT); menu_event(MENU_SELECT);
+    menu_event(MENU_SELECT); menu_event(MENU_HOLD);
     now += 1300;
     menu_render();
     assert(strstr(screen, "WAIT"));

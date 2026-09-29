@@ -65,7 +65,7 @@ static void test_pending_action_feedback(void) {
     unsigned before = commands;
     menu_event(MENU_SELECT);
     assert(strstr(screen, "ESC") && commands == before);
-    menu_event(MENU_SELECT);
+    menu_event(MENU_HOLD);
     assert(last_command == C2cmdtoggleDyno && commands == before + 1);
     now += 1300;
     menu_render();
@@ -75,7 +75,7 @@ static void test_pending_action_feedback(void) {
     menu_render();
     assert(strstr(screen, "Dyno: ON") && !strstr(screen, "WAIT"));
     menu_event(MENU_SELECT);
-    menu_event(MENU_SELECT);
+    menu_event(MENU_HOLD);
     now += 10000;
     menu_render();
     assert(strstr(screen, "No confirmation"));
@@ -83,7 +83,7 @@ static void test_pending_action_feedback(void) {
     menu_event(MENU_SELECT);
     uart_busy = true;
     before = commands;
-    menu_event(MENU_SELECT);
+    menu_event(MENU_HOLD);
     assert(commands == before);
     uart_busy = false;
     menu_render();
@@ -91,7 +91,7 @@ static void test_pending_action_feedback(void) {
 
     open_test_action("Press HAS button");
     menu_event(MENU_SELECT);
-    menu_event(MENU_SELECT);
+    menu_event(MENU_HOLD);
     now += 1300;
     menu_render();
     assert(strstr(screen, "WAIT"));
@@ -110,14 +110,14 @@ static void test_conditional_actions(void) {
     assert(!ibs_override_enabled());
     telemetry_state.current_rpm_speed = 401;
     menu_event(MENU_SELECT);
-    menu_event(MENU_SELECT);
+    menu_event(MENU_HOLD);
     assert(ibs_override_enabled());
     ibs_override_enable(false);
 
     open_test_action("Brake req");
     menu_event(MENU_SELECT);
     assert(strstr(screen, "launch"));
-    menu_event(MENU_SELECT);
+    menu_event(MENU_HOLD);
     assert(last_command == C2cmdForceFrontBrake);
     chassis_state.front_brake_forced = chassis_state.launch_assist_enabled = 1;
     menu_action_reply(C1cmdForceFrontBrake);
@@ -125,16 +125,16 @@ static void test_conditional_actions(void) {
     menu_render();
     assert(strstr(screen, "Disable launch"));
     unsigned before = commands;
-    menu_event(MENU_SELECT);
+    menu_event(MENU_HOLD);
     assert(chassis_state.launch_assist_enabled && commands == before);
     menu_event(MENU_NEXT); /* The explicitly named launch-disable action. */
     assert(strstr(screen, "Disable launch"));
     menu_event(MENU_SELECT);
-    menu_event(MENU_SELECT);
+    menu_event(MENU_HOLD);
     assert(!chassis_state.launch_assist_enabled && chassis_state.front_brake_forced);
     menu_event(MENU_PREVIOUS);
     menu_event(MENU_SELECT);
-    menu_event(MENU_SELECT);
+    menu_event(MENU_HOLD);
     assert(last_command == C2cmdNormalFrontBrake);
     chassis_state.front_brake_forced = 0;
     menu_action_reply(C1cmdNormalFrontBrake);
@@ -163,7 +163,7 @@ static void test_fault_action_exclusion(void) {
     assert(!diagnostics_state.clear_faults_request);
     fault_reader_cancel();
     menu_event(MENU_SELECT);
-    menu_event(MENU_SELECT);
+    menu_event(MENU_HOLD);
     assert(diagnostics_state.clear_faults_request == 255);
     diagnostics_state.clear_faults_request = 0;
     now += 1300;
@@ -172,31 +172,30 @@ static void test_fault_action_exclusion(void) {
 }
 
 static void test_numeric_menu_flow(void) {
-    memset(&settings_state, 0, sizeof(settings_state));
-    fresh_menu();
-    to_settings();
-    menu_event(MENU_SELECT);
+    fresh_contract(); to_settings(); menu_event(MENU_SELECT);
     setup_dashboardPageIndex = setup_page_for(5);
     settings_state.shift_threshold = 3500;
     assert(settings_save() == 0 && menu_preferences_save() == 0);
     settings_writes = preference_writes = usb_applies = 0;
     menu_event(MENU_SELECT);
-    assert(strstr(screen, "* Shift RPM"));
     menu_event(MENU_NEXT);
     assert(strstr(screen, "3750") && settings_state.shift_threshold == 3500);
     menu_event(MENU_BACK);
+    assert(setup_in_workflow() && strstr(screen, "Hold save"));
+    menu_event(MENU_BACK);
     assert(!setup_in_workflow() && settings_state.shift_threshold == 3500);
     assert(settings_writes == 0 && preference_writes == 0 && usb_applies == 0);
-    menu_event(MENU_SELECT);
+    menu_event(MENU_SELECT); /* Features. */
+    menu_event(MENU_SELECT); /* Draft. */
     menu_event(MENU_PREVIOUS);
-    menu_event(MENU_SELECT);
+    menu_event(MENU_BACK);
+    menu_event(MENU_HOLD);
     assert(settings_state.shift_threshold == 3250 && !setup_in_workflow());
-    assert(settings_writes == 0); /* Commit changes RAM only. */
-    menu_event(MENU_SELECT);
-    menu_event(MENU_NEXT);
-    now += 60000;
-    menu_process();
-    assert(settings_state.shift_threshold == 3250); /* Idle save discards an unaccepted draft. */
+    assert(settings_writes == 1 && usb_applies == 1);
+    now += 2000; menu_render();
+    menu_event(MENU_SELECT); menu_event(MENU_NEXT);
+    now += 60000; menu_process();
+    assert(settings_state.shift_threshold == 3250);
     assert(settings_writes == 1 && preference_writes == 0 && usb_applies == 1);
     assert(menu_parameters_active() && dashboard_state.baccable_dashboard_menu_visible);
 }
@@ -222,6 +221,8 @@ static void test_permission_guards(void) {
         assert(dashboard_setup_screen[0] == '!');
         *active[i] = 0;
         setup_select_page(page);
+        assert(*(uint8_t *)param->value == 1); /* Draft only. */
+        setup_accept_draft();
         assert(*(uint8_t *)param->value == 0);
     }
 }
@@ -251,14 +252,14 @@ static void test_steering_menu_ownership(void) {
 static void test_request_cancel_and_failure(void) {
     open_test_action("AWD off request");
     menu_event(MENU_SELECT);
-    menu_event(MENU_SELECT);
+    menu_event(MENU_HOLD);
     assert(chassis_state.awd_sequence == 4);
     now += 1300;
     menu_render();
     assert(strstr(screen, "OFF WAIT"));
     menu_event(MENU_SELECT);
     assert(strstr(screen, "Stop AWD"));
-    menu_event(MENU_SELECT);
+    menu_event(MENU_HOLD);
     assert(chassis_state.awd_sequence == 0);
     now += 1300;
     menu_render();
@@ -266,7 +267,7 @@ static void test_request_cancel_and_failure(void) {
 
     open_test_action("Dyno:");
     menu_event(MENU_SELECT);
-    menu_event(MENU_SELECT);
+    menu_event(MENU_HOLD);
     menu_action_reply(C1cmdDynoNotActive); /* Board reports that target was not applied. */
     now += 1300;
     menu_render();

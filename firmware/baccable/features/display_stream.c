@@ -4,7 +4,7 @@
 /* Identify fragments that still need to reach the requested screen. */
 static void update_dirty(DisplayStream *stream) {
     stream->dirty = stream->forced;
-    for (unsigned i = 0; i < DISPLAY_FRAGMENT_COUNT; ++i) {
+    for (unsigned i = 0; i < stream->count; ++i) {
         unsigned offset = i * DISPLAY_FRAGMENT_SIZE;
         if (!(stream->known & (1U << i)) ||
             memcmp(stream->sent + offset, stream->target + offset, DISPLAY_FRAGMENT_SIZE))
@@ -14,6 +14,15 @@ static void update_dirty(DisplayStream *stream) {
 
 /* Replace obsolete waiting content with the latest complete, space-padded screen. */
 void display_stream_submit(DisplayStream *stream, const uint8_t *text) {
+    display_stream_submit_parts(stream, text, DISPLAY_FRAGMENT_COUNT);
+}
+void display_stream_submit_parts(DisplayStream *stream, const uint8_t *text, uint8_t count) {
+    if (!count || count > DISPLAY_FRAGMENT_COUNT) return;
+    if (stream->count != count) {
+        stream->known = stream->forced = 0;
+        stream->cursor = 0;
+    }
+    stream->count = count;
     memcpy(stream->target, text, sizeof(stream->target));
     stream->valid = true;
     update_dirty(stream);
@@ -24,8 +33,8 @@ bool display_stream_peek(DisplayStream *stream, uint8_t *fragment, uint8_t text[
     stream->offering = false;
     if (!stream->valid)
         return false;
-    for (unsigned n = 0; n < DISPLAY_FRAGMENT_COUNT; ++n) {
-        unsigned i = (stream->cursor + n) % DISPLAY_FRAGMENT_COUNT;
+    for (unsigned n = 0; n < stream->count; ++n) {
+        unsigned i = (stream->cursor + n) % stream->count;
         if (!(stream->dirty & (1U << i)))
             continue;
         stream->fragment = i;
@@ -46,7 +55,7 @@ void display_stream_accept(DisplayStream *stream) {
     memcpy(stream->sent + i * DISPLAY_FRAGMENT_SIZE, stream->offered, DISPLAY_FRAGMENT_SIZE);
     stream->known |= 1U << i;
     stream->forced &= (uint16_t)~(1U << i);
-    stream->cursor = (i + 1) % DISPLAY_FRAGMENT_COUNT;
+    stream->cursor = (i + 1) % stream->count;
     stream->offering = false;
     update_dirty(stream);
 }
@@ -63,7 +72,7 @@ void display_stream_refresh(DisplayStream *stream) {
             /* A complete IPC message begins with fragment zero. Once started,
              * subsequent refresh requests must let it reach its final fragment. */
             stream->cursor = 0;
-            stream->forced = (1U << DISPLAY_FRAGMENT_COUNT) - 1U;
+            stream->forced = (1U << stream->count) - 1U;
             update_dirty(stream);
             return;
         }
@@ -75,6 +84,6 @@ void display_stream_restart(DisplayStream *stream) {
     if (!stream->valid)
         return;
     stream->cursor = 0;
-    stream->forced = (1U << DISPLAY_FRAGMENT_COUNT) - 1U;
+    stream->forced = (1U << stream->count) - 1U;
     update_dirty(stream);
 }

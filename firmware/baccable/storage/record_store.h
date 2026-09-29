@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#define RECORD_MAX_PAYLOAD 128
+#define RECORD_MAX_PAYLOAD 192
 #define RECORD_HEADER_SIZE 20
 typedef struct {
     const uint8_t *pages[2];

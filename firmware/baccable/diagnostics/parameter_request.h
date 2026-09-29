@@ -3,5 +3,6 @@
 #include "stm32f0xx_hal.h"
 void parameter_request_cancel(void);
 void parameter_request_begin(void);
+void parameter_request_begin_id(uint8_t id, uint8_t element);
 void parameter_request_receive(const CAN_RxHeaderTypeDef *header, const uint8_t *data);
 #endif

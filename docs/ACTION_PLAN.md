@@ -36,6 +36,53 @@ to automatically flash hardware or publish every future change.
 
 ## Current work
 
+MY23 menu and shared navigation, **2026-09-29**, branch `feat/my23-menu-ux`,
+based on actual local/remote master `d63e608` (CAN dictionary PR #46 merged).
+The owner's local `BACCAble_MY23_Agent_Plan.md` defines this task; it was
+untracked at the start and is preserved, together with unrelated build helpers,
+old firmware bundles and Lab package metadata. One PR contains the candidate;
+no merge, new release, board flash or vehicle verification is authorized here.
+
+Implemented: independent runtime MY23/legacy presentation; 14/22 glyph budgets;
+current/next lists; centralized 30 ms debounce, 280 ms double-click Back and
+900 ms labelled hold; isolated Features/Sort/Favorite drafts with explicit
+save/discard, failure retention and successful-save feedback without automatic
+exit. Read-only setup render descriptors replace the obsolete immediate-mutation
+callbacks; successful persistence runs local effects and restarts board sync.
+The older page-membership/visibility/order editors keep their documented exit
+persistence for compatibility. Six five-slot sets per fuel profile reuse stable
+measurement IDs and import prior composite page favorites without renumbering.
+Source-specific names and compact units distinguish measurements; L2 retries
+short/tiny labels and stops at whole segments. RPM reuses incoming 0xFC telemetry.
+
+BH uses fixed, fully padded L1/CR/L2 fields and selected BMP glyph tokens while
+preserving learned audio sources and existing arbitration/reassertion rules.
+Screen UART frames are 38 bytes; command/status frames retain the compiled
+legacy width. Matching C1/C2/BH images are required. Menu record 0x105 is 142 B;
+record migration preserves the previous valid Flash page until commit. Both
+user guides and the menu/catalog/build guides document these changes. CI now
+checks all four IPC/width combinations inside each firmware-flavor job, without
+multiplying runner/toolchain installation jobs or changing release artifact flags.
+
+Local validation uses Apple Clang with ASan/UBSan (24 host executables), eight
+CI-script tests, menu labels, cppcheck on C1/C2/BH/CAN and the full Arm GNU
+15.2.Rel1 toolchain across 16 flavor/profile combinations. Source snapshot and
+Lab dictionary checks are completed with the PR commits below; no new CAN bit
+layout or historical capture interpretation is inferred from this UI work.
+Build logs/images are kept under ignored repo `tmp/`. Integration is pending
+PR review; CI's pinned compiler is 15.3.Rel1 and must independently pass.
+
+**Hardware acceptance remains open:** MY23 field alignment after long/short
+labels, actual glyphs under USB/Bluetooth/CarPlay, current/next scrolling,
+double-click/third-click/hold timing, successful and failed draft saves,
+five measurements, source arbitration/recovery during radio track changes,
+responsive USB CAN/OFF/re-entry, and legacy normal/large rendering. An independent
+BH TX trace is needed to distinguish CAN enqueue success from IPC display success.
+Host tests do not establish visible alignment, ownership, latency or flicker in
+the car. Use the acceptance procedure in
+[MENU_UX.md](architecture/MENU_UX.md#refresh-and-vehicle-boundaries).
+
+
 CAN session knowledge and iterative analysis, **2026-09-29**, branch
 `feat/lab-can-dictionary`, based on source snapshot `c550e161`: reviewed
 12 owner recordings from September 26–28 (8,446,020 frames, 99 manual events,

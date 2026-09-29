@@ -144,6 +144,9 @@ jobs:
           test -s "build/$FLAVOR/baccable-$FLAVOR.bin"
           test -s "build/$FLAVOR/baccable-$FLAVOR.hex"
           arm-none-eabi-size "build/$FLAVOR/baccable-$FLAVOR.elf"
+      - name: Check independent IPC and display-width profiles
+        if: matrix.flavor != 'CAN' || !contains(inputs.extra_cppflags, '-DDEBUG_MODE')
+        run: bash .github/scripts/build-ui-matrix.sh
       - name: Firmware size and identity
         if: matrix.flavor != 'CAN' || !contains(inputs.extra_cppflags, '-DDEBUG_MODE')
         env:

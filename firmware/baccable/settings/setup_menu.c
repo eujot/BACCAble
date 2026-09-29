@@ -6,6 +6,7 @@
 
 #include "settings/setup_menu.h"
 #include "features/menu.h"
+#include "features/my23_ui.h"
 #include "features/ibs_override.h"
 #include "diagnostics/fault_reader.h"
 
@@ -20,9 +21,12 @@ uint8_t setup_dashboardPageIndex = 0;
 uint8_t dashboard_setup_screen[DASHBOARD_MESSAGE_MAX_LENGTH];
 uint8_t total_pages_in_setup_dashboard_menu = 0;
 
-/* Draft values never enter persisted state until SELECT accepts them. */
-static const SetupParam *editing;
-static int16_t draft;
+/* Draft values remain separate until the explicit save succeeds. */
+static const SetupParam *staged;
+static uint16_t stage_value, stage_original;
+static uint8_t stage_extra, stage_original_extra;
+static bool stage_confirm;
+static void stage_cycle(int direction);
 static bool park_menu;
 static uint8_t park_page;
 static const struct {
@@ -35,19 +39,17 @@ static const struct {
 static uint8_t park_capture;
 
 /* Identify a draft or nested capture workflow before leaving setup. */
-bool setup_in_workflow(void) { return editing != NULL || park_menu; }
+bool setup_in_workflow(void) { return staged != NULL || park_menu; }
 /* Discard unaccepted edits when setup is reset or closes through inactivity. */
 void setup_cancel_edit(void) {
-    editing = NULL;
+    staged = NULL;
+    stage_confirm = false;
     park_menu = false;
     park_page = park_capture = 0;
 }
 /* Return one workflow level without accepting a draft or capturing a position. */
 bool setup_back(void) {
-    if (editing) {
-        editing = NULL;
-        return true;
-    }
+    if (staged) return setup_stage_back();
     if (park_capture) {
         park_capture = 0;
         return true;
@@ -66,13 +68,6 @@ static void setup_park_select(void) {
     } else if (park_capture) {
         uint8_t command[2] = {BhBusID, BHcmdFunctParkMirrorStoreCurPos};
         park_capture = board_uart_send(command, sizeof(command)) ? 2 : 3;
-    } else if (park_entries[park_page].type == UI_ENTRY_TOGGLE) {
-        uint8_t command[2] = {BhBusID, settings_state.park_mirror ? BHcmdFunctParkMirrorDisabled
-                                                               : BHcmdFunctParkMirrorEnabled};
-        if (board_uart_send(command, sizeof(command)))
-            settings_state.park_mirror = !settings_state.park_mirror;
-        else
-            menu_notice(UI_SYMBOL_WARNING " Send busy; retry");
     } else if (park_entries[park_page].type == UI_ENTRY_CAPTURE && settings_state.park_mirror) {
         park_capture = 1;
     } else if (park_entries[park_page].type == UI_ENTRY_ACTION) {
@@ -83,7 +78,7 @@ static void setup_park_select(void) {
 /* Keep enable, capture confirmation and queue feedback visually distinct. */
 static void setup_park_render(char *text, size_t size) {
     if (park_capture == 1)
-        ui_render_action(text, size, "Adjust; RES=save");
+        ui_render_action(text, size, "Adjust;HOLD=save");
     else if (park_capture == 2)
         ui_render_value(text, size, "Store", "queued");
     else if (park_capture == 3)
@@ -220,9 +215,6 @@ static void setup_reset_page_text(uint8_t page) {
         dashboard_setup_screen[col++] = (uint8_t)*text++;
 }
 
-/* Switch an on/off feature preference. */
-static void setup_toggle_bool(const SetupParam *param) { setup_set_value(param, !setup_get_value(param)); }
-
 /* Find a setting by the permanent identity used in saved preferences. */
 const SetupParam *setup_find_by_flash_index(uint8_t flash_index) {
     for (uint8_t i = 0; i < setup_params_count; i++)
@@ -305,6 +297,36 @@ void setup_render_page(uint8_t page_index) {
     if (page_index >= setup_menu_pages_count())
         return;
 
+    if (staged) {
+        char value[24], hint[24];
+        if (staged->entry_type == UI_ENTRY_TOGGLE) snprintf_(value, sizeof(value), "%s", stage_value ? "ON" : "OFF");
+        else if (staged->flash_index == 34) snprintf_(value, sizeof(value), "%s", stage_value ? "CAN" : stage_extra ? "ELM327" : "OFF");
+        else if (staged->flash_index == 16) snprintf_(value, sizeof(value), "%s", stage_value ? "2.2 D" : stage_extra ? "2.9 V6" : "2.0 I4");
+        else if (staged->flash_index == 20) {
+            static const char *const modes[] = {"OFF", "Auto", "Bypass", "A", "N", "D", "R", "Hybrid", "Kids"};
+            snprintf_(value, sizeof(value), "%s", modes[stage_value <= 8 ? stage_value : 0]);
+        } else if (staged->flash_index == 24) {
+            static const char *const modes[] = {"OFF", "RES", "+"};
+            snprintf_(value, sizeof(value), "%s", modes[stage_value <= 2 ? stage_value : 0]);
+        } else if (staged->flash_index == 25 || staged->flash_index == 26) {
+            if (!stage_value) snprintf_(value, sizeof(value), "OFF");
+            else snprintf_(value, sizeof(value), "%u %s%s", stage_value, staged->flash_index == 25 ? "lock" : "unlock", stage_value > 1 ? "s" : "");
+        } else snprintf_(value, sizeof(value), staged->value_type == SETUP_VALUE_INT8_AS_UINT8 ? "%+d" : "%d", staged->value_type == SETUP_VALUE_INT8_AS_UINT8 ? (int8_t)stage_value : (int)stage_value);
+        snprintf_(hint, sizeof(hint), "%s%s%s CHANGE", value, MY23_BULLET, MY23_UP MY23_DOWN);
+        if (settings_state.ipc_my23_is_installed)
+            menu_present_view(stage_confirm ? UI_MODE_CONFIRM : UI_MODE_EDIT, staged->menu_text, stage_confirm ? "HOLD SAVE" MY23_BULLET "2X DISCARD" : hint);
+        else {
+            char text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
+            if (stage_confirm) snprintf_(text, sizeof(text), "Hold save/2x drop");
+            else if (staged->entry_type == UI_ENTRY_NUMBER && staged->value_type == SETUP_VALUE_INT8_AS_UINT8)
+                ui_render_signed_number(text, sizeof(text), staged->menu_text, (int8_t)stage_value, true);
+            else if (staged->entry_type == UI_ENTRY_NUMBER)
+                ui_render_number(text, sizeof(text), staged->menu_text, stage_value, true);
+            else ui_render_value(text, sizeof(text), staged->menu_text, value);
+            menu_present(text);
+        }
+        return;
+    }
     setup_reset_page_text(page_index);
 
     const SetupParam *param = setup_find_by_page(page_index);
@@ -319,11 +341,11 @@ void setup_render_page(uint8_t page_index) {
         setup_park_render(text, sizeof(text));
     else if (param->entry_type == UI_ENTRY_NUMBER && param->value_type == SETUP_VALUE_INT8_AS_UINT8)
         ui_render_signed_number(text, sizeof(text), param->menu_text,
-                                editing == param ? draft : *(int8_t *)param->value, editing == param);
+                                *(int8_t *)param->value, false);
     else if (param->entry_type == UI_ENTRY_NUMBER)
         ui_render_number(text, sizeof(text), param->menu_text,
-                         editing == param ? draft : (param->value_type == SETUP_VALUE_INT8_AS_UINT8
-                             ? *(int8_t *)param->value : setup_get_value(param)), editing == param);
+                         (param->value_type == SETUP_VALUE_INT8_AS_UINT8
+                             ? *(int8_t *)param->value : setup_get_value(param)), false);
     else if (param->entry_type == UI_ENTRY_TOGGLE)
         ui_render_checkbox(text, sizeof(text), param->menu_text, !!setup_get_value(param));
     else if (param->entry_type == UI_ENTRY_SUBMENU)
@@ -339,9 +361,13 @@ void setup_render_page(uint8_t page_index) {
 
 /* Select the next or previous feature setting. */
 void setup_move_page(int8_t delta) {
-    if (editing) {
-        int value = draft + delta * editing->step;
-        draft = value < editing->minimum ? editing->minimum : value > editing->maximum ? editing->maximum : value;
+    if (staged) {
+        if (stage_confirm) return;
+        if (staged->entry_type == UI_ENTRY_NUMBER) {
+            int value = (staged->value_type == SETUP_VALUE_INT8_AS_UINT8 ? (int8_t)stage_value : stage_value) + delta * staged->step;
+            stage_value = (uint16_t)(value < staged->minimum ? staged->minimum : value > staged->maximum ? staged->maximum : value);
+            if (staged->value_type == SETUP_VALUE_INT8_AS_UINT8) stage_value = (uint8_t)stage_value;
+        } else stage_cycle(delta);
         return;
     }
     if (park_menu) {
@@ -362,39 +388,126 @@ void setup_move_page(int8_t delta) {
     setup_dashboardPageIndex = (uint8_t)page;
 }
 
-/* Apply the user's choice to the selected feature setting. */
+/* The public entry point shares the same draft path as physical menu events. */
 void setup_select_page(uint8_t page_index) {
-    const SetupParam *param = setup_find_by_page(page_index);
-    if (!param)
-        return;
-
-    const char *reason = setup_unavailable(param);
-    if (reason) {
-        char text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
-        ui_render_unavailable(text, sizeof(text), reason);
-        menu_notice(text);
-        return;
-    }
-    if (park_menu) {
-        setup_park_select();
-    } else if (editing == param) {
-        setup_set_value(param, (uint16_t)draft);
-        editing = NULL;
-        if (param->action)
-            param->action();
-    } else if (param->entry_type == UI_ENTRY_NUMBER) {
-        editing = param;
-        draft = param->value_type == SETUP_VALUE_INT8_AS_UINT8 ? *(int8_t *)param->value : setup_get_value(param);
-        if (draft < param->minimum) draft = param->minimum;
-        if (draft > param->maximum) draft = param->maximum;
-    } else if (param->entry_type == UI_ENTRY_SUBMENU) {
-        park_menu = true;
-        park_page = park_capture = 0;
-    } else if (param->action) {
-        param->action();
-    } else if (param->value_type == SETUP_VALUE_UINT8 && param->max_value == 1) {
-        setup_toggle_bool(param);
-    }
+    if (page_index >= setup_menu_pages_count()) return;
+    setup_dashboardPageIndex = page_index;
+    setup_stage_select();
 }
 
 #endif /* BACCABLE_C1 */
+
+#if defined(BACCABLE_C1)
+/* Menu drafts are isolated from live vehicle preferences and hardware callbacks. */
+static uint8_t stage_companion(const SetupParam *param) {
+    return param->flash_index == 34 ? settings_state.usb_elm327 :
+           param->flash_index == 16 ? settings_state.gasoline_v6 : 0;
+}
+static void stage_assign(uint16_t value, uint8_t extra) {
+    setup_set_value(staged, value);
+    if (staged->flash_index == 34) settings_state.usb_elm327 = extra;
+    if (staged->flash_index == 16) settings_state.gasoline_v6 = extra;
+}
+void setup_stage_select(void) {
+    if (stage_confirm) return;
+    if (park_menu && !staged) {
+        if (park_capture == 1 || park_capture == 3) return;
+        if (park_page != 0 || park_capture) { setup_park_select(); return; }
+        staged = setup_find_by_page(setup_dashboardPageIndex);
+        if (!staged) return;
+        stage_original = stage_value = settings_state.park_mirror;
+        stage_original_extra = stage_extra = 0;
+        stage_value = !stage_value;
+        return;
+    }
+    if (!staged) {
+        const SetupParam *param = setup_find_by_page(setup_dashboardPageIndex);
+        if (!param) return;
+        if (param->entry_type == UI_ENTRY_SUBMENU) { park_menu = true; park_page = park_capture = 0; return; }
+        const char *reason = setup_unavailable(param);
+        if (reason) { menu_notice(reason); return; }
+        staged = param;
+        stage_original = stage_value = setup_get_value(param);
+        stage_original_extra = stage_extra = stage_companion(param);
+        if (param->entry_type == UI_ENTRY_NUMBER) return;
+    }
+    stage_cycle(1);
+}
+static void stage_cycle(int direction) {
+    unsigned step = direction > 0 ? 1 : 0;
+    if (staged->flash_index == 34) {
+#ifdef ACT_AS_ELM327
+        unsigned choices = 3;
+#else
+        unsigned choices = 2;
+#endif
+        unsigned mode = stage_value ? 1 : stage_extra ? 2 : 0;
+        mode = (mode + choices + (step ? 1 : choices - 1)) % choices;
+        stage_value = mode == 1; stage_extra = mode == 2;
+    } else if (staged->flash_index == 16) {
+        unsigned mode = stage_value ? 2 : stage_extra ? 1 : 0;
+        mode = (mode + (step ? 1 : 2)) % 3;
+        stage_value = mode == 2;
+        stage_extra = mode == 1 || (mode == 2 && (stage_original ? stage_original_extra : 1));
+    } else if (staged->entry_type != UI_ENTRY_NUMBER) {
+        unsigned choices = staged->max_value + 1;
+        stage_value = (stage_value + choices + (step ? 1 : choices - 1)) % choices;
+    }
+}
+
+bool setup_stage_back(void) {
+    if (!staged) return false;
+    if (!stage_confirm && (stage_value != stage_original || stage_extra != stage_original_extra)) {
+        stage_confirm = true;
+        return true;
+    }
+    staged = NULL;
+    stage_confirm = false;
+    return true;
+}
+void setup_stage_save(void) {
+    if (!staged && park_menu && (park_capture == 1 || park_capture == 3)) { setup_park_select(); return; }
+    if (!staged || !stage_confirm) return;
+    /* Conditions may have changed while the draft was being edited. */
+    const char *reason = setup_unavailable(staged);
+    if (reason) { menu_notice(reason); return; }
+    stage_assign(stage_value, stage_extra);
+    if (settings_save()) {
+        stage_assign(stage_original, stage_original_extra);
+        menu_notice(UI_SYMBOL_FAILURE " Save failed");
+        return;
+    }
+    /* Board synchronization/USB apply ran only after successful persistence. */
+    switch (staged->flash_index) {
+    case 2: comfort_state.request_to_disable_start_and_stop = 0; break;
+    case 14: if (!stage_value) chassis_state.stability_inverted = 0; break;
+    case 20: if (!stage_value) pedal_booster_set_map(2); break;
+    case 29: pedal_state.current_schizzaforte_map = '-'; break;
+    case 25: comfort_state.close_windows_request = comfort_state.door_locks_requests_counter = 0; break;
+    case 26: comfort_state.open_windows_request = comfort_state.door_unlocks_requests_counter = 0; break;
+    default: break;
+    }
+    const char *title = staged->menu_text;
+    staged = NULL;
+    stage_confirm = false;
+    menu_notice_saved(title);
+}
+#endif
+
+#if defined(BACCABLE_C1)
+bool setup_stage_active(void) { return staged != NULL; }
+bool setup_present_my23(void) {
+    if (!settings_state.ipc_my23_is_installed) return false;
+    if (staged) return true;
+    if (park_menu) {
+        char text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
+        setup_park_render(text, sizeof(text));
+        menu_present_lines(text, park_capture == 1 ? "HOLD STORE" MY23_BULLET "2X BACK" : "CLICK USE" MY23_BULLET "2X BACK");
+        return true;
+    }
+    const SetupParam *current = setup_find_by_page(setup_dashboardPageIndex);
+    const SetupParam *next = setup_find_by_page((setup_dashboardPageIndex + 1) % setup_menu_pages_count());
+    menu_present_view(UI_MODE_LIST, current ? current->menu_text : "Features", next ? next->menu_text : "");
+    return true;
+}
+#endif

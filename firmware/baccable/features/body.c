@@ -1,6 +1,7 @@
 #include "features/body.h"
 #include "features/display_stream.h"
 #include "features/ipc_display_test.h"
+#include "features/my23_ui.h"
 #include "features/parking_mirrors.h"
 #include "storage/flash_records.h"
 
@@ -15,6 +16,7 @@
 #if defined(BACCABLE_BH)
 
 static DisplayStream screen;
+static bool screen_my23;
 static uint32_t last_full_refresh;
 static uint32_t factory_last_frame_time;
 static uint32_t factory_defer_started;
@@ -47,7 +49,9 @@ static void release_display(void) {
     } else {
         uint8_t blank[DISPLAY_OUTPUT_LENGTH];
         memset(blank, ' ', sizeof(blank));
-        display_stream_submit(&screen, blank);
+        uint8_t count = screen_my23 ? DISPLAY_FRAGMENT_COUNT : DISPLAY_LEGACY_FRAGMENT_COUNT;
+        display_state.telematic_display_info_field_total_frame_number = count - 1;
+        display_stream_submit_parts(&screen, blank, count);
     }
 }
 
@@ -72,15 +76,25 @@ void body_display_submit(const uint8_t *text) {
     uint8_t output[DISPLAY_OUTPUT_LENGTH];
     memset(output, ' ', sizeof(output));
     unsigned length = DASHBOARD_MESSAGE_MAX_LENGTH;
-    while (length && text[length - 1] == ' ')
-        --length;
-    memcpy(output, text, length);
-    output[length] = '\r';
-    memcpy(output + length + 1, DISPLAY_FOOTER, DISPLAY_FOOTER_LENGTH);
+    screen_my23 = text[0] == MY23_PACKET_MARKER;
+    if (text[0] == MY23_PACKET_MARKER) {
+        /* Fixed protocol fields: L2 never shifts with L1's text length. */
+        memcpy(output, text + 1, MY23_L1_VISIBLE);
+        output[MY23_L1_VISIBLE] = '\r';
+        memcpy(output + MY23_L1_VISIBLE + 1, text + 1 + MY23_L1_VISIBLE, MY23_L2_VISIBLE);
+    } else {
+        while (length && text[length - 1] == ' ')
+            --length;
+        memcpy(output, text, length);
+        output[length] = '\r';
+        memcpy(output + length + 1, DISPLAY_FOOTER, DISPLAY_FOOTER_LENGTH);
+    }
     bool opening = !menu_active;
     menu_active = true;
     factory_restore = false;
-    display_stream_submit(&screen, output);
+    uint8_t count = screen_my23 ? DISPLAY_FRAGMENT_COUNT : DISPLAY_LEGACY_FRAGMENT_COUNT;
+    display_state.telematic_display_info_field_total_frame_number = count - 1;
+    display_stream_submit_parts(&screen, output, count);
     if (opening)
         display_stream_restart(&screen);
 }
@@ -239,9 +253,11 @@ void body_process() {
                 data[0] = (data[0] & ~0x07) | ((fragment >> 2) & 0x07);
                 data[1] = ((fragment << 6) & 0xC0) |
                           (display_state.telematic_display_info_field_info_code & 0x3F);
-                data[3] = text[0];
-                data[5] = text[1];
-                data[7] = text[2];
+                for (unsigned i = 0; i < 3; ++i) {
+                    uint16_t cp = screen_my23 ? my23_codepoint(text[i]) : text[i];
+                    data[2 + 2 * i] = cp >> 8;
+                    data[3 + 2 * i] = cp;
+                }
                 if (can_tx(&display_state.telematic_display_info_msg_header, data) == HAL_OK) {
                     display_stream_accept(&screen);
                     display_state.last_sent_telematic_display_info_msg_time = currentTime;
