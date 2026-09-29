@@ -126,11 +126,34 @@ static void test_records(void) {
     assert(STORAGE_RECORDS_START + 6 * STORAGE_PAGE_SIZE == STORAGE_FLASH_END);
 }
 
+static void test_record_format_migration(void) {
+    FakeFlash flash;
+    memset(&flash, 0xff, sizeof(flash));
+    flash.erases = 0;
+    flash.remaining = -1;
+    RecordStorage storage = {.pages = {flash.pages[0], flash.pages[1]}, .erase = erase, .program = program, .context = &flash};
+    uint8_t old[80], next[144], loaded[144];
+    memset(old, 7, sizeof(old)); memset(next, 9, sizeof(next));
+    assert(record_save(&storage, 0x104, old, sizeof(old)));
+    old[0] = 8;
+    assert(record_save(&storage, 0x104, old, sizeof(old)));
+    FakeFlash baseline = flash;
+    for (int failure = 0; failure < 86; ++failure) {
+        flash = baseline; flash.remaining = failure;
+        bool saved = record_save(&storage, 0x105, next, sizeof(next));
+        assert(record_load(&storage, 0x104, loaded, sizeof(old)));
+        assert(!memcmp(loaded, old, sizeof(old)));
+        assert(record_load(&storage, 0x105, loaded, sizeof(next)) == saved);
+        if (saved) assert(!memcmp(loaded, next, sizeof(next)));
+    }
+}
+
 int main(void) {
     const HostTest tests[] = {
         HOST_TEST(test_slcan),
         HOST_TEST(test_uds),
-        HOST_TEST(test_records)
+        HOST_TEST(test_records),
+        HOST_TEST(test_record_format_migration)
     };
     host_tests_run("core", tests, sizeof(tests) / sizeof(tests[0]));
     puts("PASS: SLCAN, UDS, interrupted Flash writes, storage bounds");

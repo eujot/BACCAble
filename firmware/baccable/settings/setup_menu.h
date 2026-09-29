@@ -28,10 +28,9 @@ typedef enum {
 } SetupValueType;
 
 typedef void (*SetupRenderFn)(void);
-typedef void (*SetupActionFn)(void);
 
 // Describes one parameter persisted to flash and optionally shown in setup.
-// Keep setup behavior in this table: storage, defaults, display and action.
+// Keep setup behavior in this table: storage, defaults, display and draft bounds.
 typedef struct {
     uint8_t flash_index;           // 1-based slot (matches settings_read argument)
     uint16_t max_value;            // highest valid persisted value
@@ -42,7 +41,6 @@ typedef struct {
     SetupRenderFn render;          // optional per-page display update
     UiEntryType entry_type;        // shared interaction semantics
     int16_t minimum, maximum, step; // numeric edit range (not flash encoding)
-    SetupActionFn action;          // optional select action; NULL toggles bool
 } SetupParam;
 
 extern const SetupParam setup_params[];
@@ -70,10 +68,15 @@ void setup_render_page(uint8_t page_index);
 void setup_move_page(int8_t delta);
 void setup_move_group(int8_t delta);
 bool setup_back(void);
+bool setup_stage_back(void);
+bool setup_stage_active(void);
+bool setup_present_my23(void);
+void setup_stage_select(void);
+void setup_stage_save(void);
 void setup_cancel_edit(void);
 bool setup_in_workflow(void);
 
-// Apply the selected setting; the menu controller handles saving and returning.
+// Enter/change the selected draft; explicit Back confirmation and Hold save it.
 void setup_select_page(uint8_t page_index);
 
 #endif /* BACCABLE_C1 */

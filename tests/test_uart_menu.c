@@ -11,11 +11,12 @@ USART_TypeDef fake_usart1, fake_usart2;
 uint32_t fake_primask;
 static uint32_t now = 3000, result = HAL_OK;
 static const uint8_t *active;
-static uint8_t expected[UART_BUFFER_SIZE];
+static uint8_t expected[UART_SCREEN_BUFFER_SIZE];
 static unsigned transmissions, received;
+static uint16_t active_size;
 static uint8_t *rx_target;
 static uint16_t rx_remaining;
-static uint8_t received_frame[UART_BUFFER_SIZE];
+static uint8_t received_frame[UART_SCREEN_BUFFER_SIZE];
 extern void HAL_UART_RxCpltCallback(UART_HandleTypeDef *uart);
 uint32_t HAL_GetTick(void) { return now; }
 void HAL_Delay(uint32_t duration) { now += duration; }
@@ -42,10 +43,11 @@ uint32_t HAL_UART_Receive_IT(UART_HandleTypeDef *uart, uint8_t *data, uint16_t s
 }
 uint32_t HAL_UART_Transmit_IT(UART_HandleTypeDef *uart, uint8_t *data, uint16_t size) {
     (void)uart;
-    assert(size == UART_BUFFER_SIZE);
+    assert(size == UART_BUFFER_SIZE || size == UART_SCREEN_BUFFER_SIZE);
     if (result != HAL_OK)
         return result;
     active = data;
+    active_size = size;
     memcpy(expected, data, size);
     ++transmissions;
     return HAL_OK;
@@ -61,7 +63,11 @@ void Error_Handler(uint16_t value) {
     assert(0);
 }
 void board_commands_dispatch(const uint8_t *message) {
+#if defined(BACCABLE_C1)
+    memcpy(received_frame, message, UART_BUFFER_SIZE);
+#else
     memcpy(received_frame, message, sizeof(received_frame));
+#endif
     ++received;
 }
 void usb_modes_poll_queued(uint8_t peer, const uint8_t command[4]) { (void)peer; (void)command; }
@@ -108,6 +114,7 @@ static void test_receive_gap_recovery(void) {
     now = 3000;
     runtime_state.low_consume_is_active = 0;
 }
+#if defined(BACCABLE_C1)
 void parameter_cache_put(uint8_t id, float value, uint32_t when) {
     (void)id;
     (void)value;
@@ -115,13 +122,13 @@ void parameter_cache_put(uint8_t id, float value, uint32_t when) {
 }
 float native_parameter_read(uint8_t id) { return id; }
 static void display(char c) {
-    uint8_t frame[UART_BUFFER_SIZE];
+    uint8_t frame[UART_SCREEN_BUFFER_SIZE];
     memset(frame, c, sizeof(frame));
     frame[0] = BhBusIDparamString;
     assert(board_uart_send(frame, sizeof(frame)));
 }
 static void finish(void) {
-    assert(!memcmp(active, expected, sizeof(expected)));
+    assert(!memcmp(active, expected, active_size));
     HAL_UART_TxCpltCallback(&huart2);
     now += 251;
     runtime_state.all_processors_wakeup_time = now; /* Keep this test independent of background polls. */
@@ -158,7 +165,7 @@ static void test_uart_menu_behavior(void) {
     assert(active[0] == C2BusID && active[1] == C2cmdNormalFrontBrake);
     display('C');
     assert(board_uart_send(command, sizeof(command)));
-    assert(!memcmp(active, expected, sizeof(expected)));
+    assert(!memcmp(active, expected, active_size));
     finish();
     board_uart_process();
     assert(active[0] == C2BusID);
@@ -166,7 +173,7 @@ static void test_uart_menu_behavior(void) {
     board_uart_process();
     assert(active[0] == BhBusIDparamString && active[1] == 'C');
     display('D');
-    assert(!memcmp(active, expected, sizeof(expected)));
+    assert(!memcmp(active, expected, active_size));
     finish();
     result = HAL_BUSY;
     unsigned before = transmissions;
@@ -197,11 +204,47 @@ static void test_uart_menu_behavior(void) {
     puts("PASS: real UART display coalescing, command order, active buffer, HAL_BUSY and IRQ state");
 }
 
+#else
+static void test_full_screen_receive(void) {
+    uart_init();
+    uint8_t screen[UART_SCREEN_BUFFER_SIZE], command[UART_BUFFER_SIZE];
+    memset(screen, 'S', sizeof(screen)); screen[0] = BhBusIDparamString;
+    screen[1] = 2; screen[sizeof(screen) - 1] = 'Z';
+    memset(command, ' ', sizeof(command)); command[0] = C2_Bh_BusID;
+    command[1] = C2_BH_CMD_USB_CAPTURE; command[2] = 1;
+    unsigned before = received;
+    receive_bytes(screen, UART_BUFFER_SIZE); board_uart_process();
+    assert(received == before); /* Do not truncate a screen to legacy width. */
+    receive_bytes(screen + UART_BUFFER_SIZE, sizeof(screen) - UART_BUFFER_SIZE);
+    board_uart_process();
+    assert(received == before + 1 && !memcmp(received_frame, screen, sizeof(screen)));
+    receive_bytes(command, sizeof(command)); board_uart_process();
+    assert(received == before + 2 && !memcmp(received_frame, command, sizeof(command)));
+    for (unsigned i = sizeof(command); i < sizeof(received_frame); ++i) assert(received_frame[i] == ' ');
+    receive_bytes(screen, sizeof(screen) - 1);
+    now += 30; /* An interrupted large frame cannot swallow the next command. */
+    receive_bytes(command, sizeof(command)); board_uart_process();
+    assert(received == before + 3 && !memcmp(received_frame, command, sizeof(command)));
+}
+#endif
+
 int main(void) {
     const HostTest tests[] = {
         HOST_TEST(test_receive_gap_recovery),
+#if defined(BACCABLE_C1)
         HOST_TEST(test_uart_lost_completion),
         HOST_TEST(test_uart_menu_behavior)
+#else
+        HOST_TEST(test_full_screen_receive)
+#endif
     };
-    host_tests_run("uart_menu", tests, sizeof(tests) / sizeof(tests[0]));
+    const char *suite =
+#if defined(BACCABLE_C2)
+        "uart-rx-c2";
+#elif defined(BACCABLE_BH)
+        "uart-rx-bh";
+#else
+        "uart-menu-c1";
+#endif
+    host_tests_run(suite, tests, sizeof(tests) / sizeof(tests[0]));
 }

@@ -8,7 +8,8 @@
 #define ENGINE_NSC_DE_NOX_REGEN 3
 #define ENGINE_NSC_DE_SOX_REGEN 4
 #define ENGINE_SCR_HEATUP_STRATEGY 5
-#define UART_BUFFER_SIZE DASHBOARD_MESSAGE_MAX_LENGTH + 1
+#define UART_BUFFER_SIZE (DASHBOARD_MESSAGE_MAX_LENGTH + 1)
+#define UART_SCREEN_BUFFER_SIZE 38 /* Address + marker + 14/22 glyphs. */
 #define UART1_BUFFER_SIZE 9                        // legth for schizzaforte messages
 #define TIMING__ALL___SERIAL_IGNORE_WINDOW_MS 2000 // msec
 #define TIMING__C2_BH_USB_CONNECT_TO_C1_NOTIFICATION_DELAY_MS                                                \

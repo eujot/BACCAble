@@ -91,6 +91,46 @@ class ReleaseTests(unittest.TestCase):
         self.command('bash', script, 'validate', 'stable', 'v5.0.0', ok=False)
         self.command('bash', script, 'validate', 'beta', 'v5.0.0', ok=False)
 
+class UiMatrixTests(unittest.TestCase):
+    def test_profiles_are_independent_and_preserve_requested_flags(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bindir = root / 'bin'
+            bindir.mkdir()
+            calls = root / 'calls'
+            for tool in ('make', 'arm-none-eabi-size'):
+                stub = bindir / tool
+                stub.write_text('#!/bin/bash\nprintf "%s\\n" "$*" >> "$CALLS"\n')
+                stub.chmod(0o755)
+            env = dict(os.environ, PATH=str(bindir) + ':' + os.environ['PATH'],
+                       CALLS=str(calls), FLAVOR='BH', VERSION='matrix-test',
+                       EXTRA_CPPFLAGS='-DIS_GASOLINE -DIPC_MY23_IS_INSTALLED -DLARGE_DISPLAY',
+                       GITHUB_STEP_SUMMARY='')
+            result = subprocess.run(['bash', str(SCRIPTS / 'build-ui-matrix.sh')],
+                                    cwd=root, env=env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            invocations = [line for line in calls.read_text().splitlines() if line.startswith('-C ')]
+            self.assertEqual(len(invocations), 4)
+            flags = [line.split('EXTRA_CPPFLAGS=', 1)[1].removesuffix(' all').strip() for line in invocations]
+            self.assertEqual(flags, ['-DIS_GASOLINE', '-DIS_GASOLINE -DLARGE_DISPLAY',
+                                    '-DIS_GASOLINE -DIPC_MY23_IS_INSTALLED',
+                                    '-DIS_GASOLINE -DIPC_MY23_IS_INSTALLED -DLARGE_DISPLAY'])
+            self.assertIn('BUILD_DIR=build/BH', invocations[-1])
+            # Exercise the empty base-flag array with the OS Bash (3.2 on macOS).
+            calls.unlink()
+            env['EXTRA_CPPFLAGS'] = ''
+            result = subprocess.run(['/bin/bash', str(SCRIPTS / 'build-ui-matrix.sh')],
+                                    cwd=root, env=env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            invocations = [line for line in calls.read_text().splitlines() if line.startswith('-C ')]
+            flags = [line.split('EXTRA_CPPFLAGS=', 1)[1].removesuffix(' all').strip() for line in invocations]
+            self.assertEqual(flags, ['', '-DLARGE_DISPLAY', '-DIPC_MY23_IS_INSTALLED',
+                                     '-DIPC_MY23_IS_INSTALLED -DLARGE_DISPLAY'])
+            env['EXTRA_CPPFLAGS'] = '-DINTERNAL_OSCILLATOR;echo'
+            result = subprocess.run(['bash', str(SCRIPTS / 'build-ui-matrix.sh')],
+                                    cwd=root, env=env, capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+
 class TestReportTests(unittest.TestCase):
     def test_partial_run_and_escaping(self):
         import runpy

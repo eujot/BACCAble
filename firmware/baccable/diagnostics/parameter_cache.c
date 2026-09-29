@@ -69,6 +69,7 @@ void parameter_cache_observe(uint32_t id, uint8_t length) {
         if (length >= 2) {
             rpm_updated = currentTime;
             rpm_valid = 1;
+            parameter_cache_put(97, telemetry_state.current_rpm_speed, currentTime);
         }
         break;
     case 0xfb:

@@ -1,6 +1,8 @@
 #include "test_report.h"
 #include "features/menu.h"
 #include "features/ui_entry.h"
+#include "features/my23_ui.h"
+#include "features/favorite_parameters.h"
 #include "vehicle/steering_controls.h"
 #include "features/ibs_override.h"
 #include "diagnostics/fault_reader.h"
@@ -29,20 +31,24 @@ DisplayState display_state;
 const char *FW_VERSION = "BACCABLE test";
 static uint32_t now;
 static char screen[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
-static uint8_t old_visibility[30], saved[MENU_PREFS_SIZE];
-static bool have_old, have_saved, fail_save;
+static uint8_t old_visibility[30], saved[MENU_PREFS_SIZE + FAVORITE_STORAGE_SIZE];
+static bool have_old, have_saved, fail_save, have_v1;
+static uint8_t v1_preferences[MENU_PREFS_SIZE];
+static uint8_t screen_packet[UART_SCREEN_BUFFER_SIZE];
 static unsigned commands, queries, blank_screens;
 static unsigned settings_writes, preference_writes, usb_applies;
 static bool usb_needs_apply;
 static uint16_t fail_type;
 static uint8_t last_command;
 static bool uart_busy;
+static uint8_t setup_page_for(uint8_t slot);
 uint32_t HAL_GetTick(void) { return now; }
 uint8_t board_uart_send(const uint8_t *data, size_t size) {
     if (uart_busy)
         return 0;
     if (data[0] == BhBusIDparamString) {
-        assert(size == UART_BUFFER_SIZE);
+        assert(size == UART_SCREEN_BUFFER_SIZE);
+        memcpy(screen_packet, data, sizeof(screen_packet));
         memcpy(screen, data + 1, DASHBOARD_MESSAGE_MAX_LENGTH);
         screen[DASHBOARD_MESSAGE_MAX_LENGTH] = 0;
         bool blank = true;
@@ -79,7 +85,10 @@ bool flash_record_load(unsigned slot, uint16_t type, void *data, size_t size) {
         memcpy(data, old_visibility, size);
         return true;
     }
-    if (type == 0x104 && have_saved) {
+    if (type == 0x104 && have_v1 && size == sizeof(v1_preferences)) {
+        memcpy(data, v1_preferences, size); return true;
+    }
+    if (type == 0x105 && have_saved) {
         assert(size == sizeof(saved));
         memcpy(data, saved, size);
         return true;
@@ -89,10 +98,10 @@ bool flash_record_load(unsigned slot, uint16_t type, void *data, size_t size) {
 bool flash_record_save(unsigned slot, uint16_t type, const void *data, size_t size) {
     (void)slot;
     if (type == 0x101) ++settings_writes;
-    if (type == 0x104) ++preference_writes;
+    if (type == 0x105) ++preference_writes;
     if (fail_save || type == fail_type)
         return false;
-    if (type == 0x104) {
+    if (type == 0x105) {
         assert(size == sizeof(saved));
         memcpy(saved, data, size);
         have_saved = true;
@@ -106,40 +115,27 @@ static void test_input(void) {
         uint32_t start = starts[run];
         MenuInput input = {0};
         assert(menu_input_update(&input, 0x90, true, start) == MENU_NONE);
-        assert(menu_input_update(&input, 0x10, true, start) == MENU_NONE);
-        assert(menu_input_update(&input, 0x90, true, start + 1) == MENU_NONE);
-        for (unsigned t = 101; t < 1200; t += 100)
+        menu_input_update(&input, 0x10, true, start);
+        menu_input_update(&input, 0x90, true, start + 10);
+        for (unsigned t = 110; t < 910; t += 100)
             assert(menu_input_update(&input, 0x90, true, start + t) == MENU_NONE);
-        assert(menu_input_update(&input, 0x90, true, start + 1200) == MENU_NONE);
-        assert(menu_input_update(&input, 0x90, true, start + 1201) == MENU_BACK);
-        assert(menu_input_update(&input, 0x90, true, start + 1300) == MENU_NONE);
-        assert(menu_input_update(&input, 0x10, true, start + 1400) == MENU_NONE);
-
-        /* Releasing just before BACK is still exactly one SELECT. */
-        start += 1500;
-        assert(menu_input_update(&input, 0x50, true, start) == MENU_NONE);
-        for (unsigned t = 100; t < 1200; t += 100)
-            assert(menu_input_update(&input, 0x50, true, start + t) == MENU_NONE);
-        assert(menu_input_update(&input, 0x10, true, start + 1199) == MENU_SELECT);
-        assert(menu_input_update(&input, 0x10, true, start + 1200) == MENU_NONE);
-
-        /* 300 ms gaps are tolerated; 301 ms cancels a lost gesture. */
-        assert(menu_input_update(&input, 0x90, true, start + 1300) == MENU_NONE);
-        assert(menu_input_update(&input, 0x10, true, start + 1600) == MENU_SELECT);
-        assert(menu_input_update(&input, 0x90, true, start + 1700) == MENU_NONE);
-        assert(menu_input_update(&input, 0x10, true, start + 2001) == MENU_NONE);
-        assert(menu_input_update(&input, 0x90, true, start + 2100) == MENU_NONE);
-        assert(menu_input_update(&input, 0x90, false, start + 2200) == MENU_NONE);
-        assert(menu_input_update(&input, 0x10, true, start + 2300) == MENU_NONE);
+        assert(menu_input_update(&input, 0x90, true, start + 910) == MENU_HOLD);
+        assert(menu_input_update(&input, 0x90, true, start + 1010) == MENU_NONE);
+        assert(menu_input_update(&input, 0x10, true, start + 1110) == MENU_NONE);
+        menu_input_update(&input, 0x50, true, start + 1200);
+        assert(menu_input_update(&input, 0x10, true, start + 1300) == MENU_NONE);
+        assert(menu_input_poll(&input, true, start + 1580) == MENU_NONE);
+        assert(menu_input_poll(&input, true, start + 1581) == MENU_SELECT);
+        assert(menu_input_poll(&input, true, start + 1582) == MENU_NONE);
+        menu_input_update(&input, 0x90, true, start + 1600);
+        menu_input_update(&input, 0x10, true, start + 1650);
+        menu_input_update(&input, 0x90, true, start + 1750);
+        assert(menu_input_update(&input, 0x10, true, start + 1800) == MENU_BACK);
+        assert(menu_input_poll(&input, true, start + 2000) == MENU_NONE);
+        menu_input_update(&input, 0x90, true, start + 2100);
+        assert(menu_input_update(&input, 0x10, true, start + 2401) == MENU_NONE);
+        assert(!input.click_pending);
     }
-    MenuInput input = {0};
-    menu_input_update(&input, 0x10, true, 10);
-    assert(menu_input_update(&input, 0x18, true, 20) == MENU_NEXT);
-    assert(menu_input_update(&input, 0x18, true, 30) == MENU_NONE);
-    assert(menu_input_update(&input, 0x20, true, 40) == MENU_NEXT_GROUP);
-    menu_input_update(&input, 0x10, true, 50);
-    assert(menu_input_update(&input, 0x08, true, 60) == MENU_PREVIOUS);
-    assert(menu_input_update(&input, 0x00, true, 70) == MENU_PREVIOUS_GROUP);
 }
 /* Apply queued fragments to a receiver that exposes each fragment immediately. */
 static unsigned drain_display(DisplayStream *stream, uint8_t *visible) {
@@ -281,11 +277,13 @@ static void test_preferences(void) {
 }
 static void fresh_menu(void) {
     settings_state.is_diesel_enabled = 0;
+    settings_state.ipc_my23_is_installed = 0;
     settings_state.gasoline_v6 = 0;
     settings_state.advanced_pages = 0;
     dashboard_state.baccable_dashboard_menu_visible = 0;
     now = 1000;
     have_saved = false;
+    have_v1 = false;
     have_old = false;
     fail_save = false;
     fail_type = 0;
@@ -301,64 +299,49 @@ static void to_settings(void) {
 }
 /* Persistence compares committed domains and retries only the unsuccessful work. */
 static void test_automatic_persistence(void) {
-    fresh_menu();
-    to_settings();
+    fresh_menu(); to_settings();
     assert(settings_save() == 0 && menu_preferences_save() == 0);
     settings_writes = preference_writes = usb_applies = 0;
     runtime_state.instruct_slave_boards_trigger_enabled = 0;
-    menu_event(MENU_SELECT); /* Setup. */
-    menu_event(MENU_BACK); /* Unchanged exit. */
+    menu_event(MENU_SELECT); menu_event(MENU_BACK);
     assert(settings_writes == 0 && preference_writes == 0 && usb_applies == 0);
-    assert(strstr(screen, "Features") && !strstr(screen, "Saved"));
-    menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_NEXT);
-    menu_event(MENU_SELECT); /* Sort changes preferences only. */
-    menu_event(MENU_BACK);
-    assert(settings_writes == 0 && preference_writes == 1 && usb_applies == 0);
-    assert(!runtime_state.instruct_slave_boards_trigger_enabled);
-    menu_event(MENU_BACK); /* Consecutive exit does not write again. */
+    assert(strstr(screen, "Features"));
+    for (unsigned i = 0; i < 4; ++i) menu_event(MENU_NEXT);
+    menu_event(MENU_SELECT); menu_event(MENU_BACK); menu_event(MENU_HOLD);
+    assert(preference_writes == 1 && settings_writes == 0 && usb_applies == 0);
+    menu_event(MENU_BACK); menu_event(MENU_BACK); menu_event(MENU_BACK);
     assert(preference_writes == 1);
 
+    /* Remembered pages remain an independently persisted preference domain. */
     fresh_menu();
-    to_settings();
     assert(settings_save() == 0 && menu_preferences_save() == 0);
     settings_writes = preference_writes = usb_applies = 0;
-    menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_NEXT);
-    menu_event(MENU_SELECT); /* Dirty preferences. */
+    menu_event(MENU_NEXT); to_settings();
     settings_state.shift_indicator_enabled = !settings_state.shift_indicator_enabled;
-    fail_type = 0x104;
+    fail_type = 0x105;
     menu_event(MENU_BACK);
     assert(settings_writes == 1 && preference_writes == 1 && usb_applies == 1);
     assert(strstr(screen, "Save failed"));
-    now += 60001; menu_process();
-    menu_event(MENU_NEXT); /* Error is modal; browsing cannot dismiss it. */
+    now += 60001; menu_process(); menu_event(MENU_NEXT);
     assert(preference_writes == 1 && strstr(screen, "Save failed"));
-    menu_event(MENU_SELECT); /* Still failing. */
-    assert(settings_writes == 1 && preference_writes == 2 && usb_applies == 1);
-    fail_type = 0;
     menu_event(MENU_SELECT);
+    assert(settings_writes == 1 && preference_writes == 2 && usb_applies == 1);
+    fail_type = 0; menu_event(MENU_SELECT);
     assert(preference_writes == 3 && settings_writes == 1 && usb_applies == 1);
-    assert(strstr(screen, "Settings") && !strstr(screen, "Saved"));
-    menu_event(MENU_BACK);
-    assert(preference_writes == 3);
+    menu_event(MENU_BACK); assert(preference_writes == 3);
 
     fresh_menu();
-    to_settings();
     assert(settings_save() == 0 && menu_preferences_save() == 0);
     settings_writes = preference_writes = usb_applies = 0;
+    menu_event(MENU_NEXT); to_settings();
     settings_state.shift_indicator_enabled = !settings_state.shift_indicator_enabled;
-    menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_NEXT);
-    menu_event(MENU_SELECT); /* Preferences must save even when settings fail. */
-    fail_type = 0x101;
-    menu_event(MENU_BACK);
-    assert(strstr(screen, "Save failed") && usb_applies == 0);
-    menu_event(MENU_BACK); /* Cancel exit, retain committed RAM value. */
-    assert(strstr(screen, "Sort"));
-    fail_type = 0;
-    menu_event(MENU_BACK);
+    fail_type = 0x101; menu_event(MENU_BACK);
+    assert(strstr(screen, "Save failed") && usb_applies == 0 && preference_writes == 1);
+    menu_event(MENU_BACK); /* Cancel the pending exit. */
+    fail_type = 0; menu_event(MENU_BACK);
     assert(settings_writes == 2 && preference_writes == 1 && usb_applies == 1);
 }
 
-/* Restart an expired USB session even when CAN is already saved in Flash. */
 static void test_usb_rearm_without_flash_write(void) {
     fresh_menu();
     settings_state.usb_sniffer = 1;
@@ -657,7 +640,7 @@ static void test_repeat_views(void) {
     to_settings();
     menu_button(0x10, true);
     menu_button(0x18, true);
-    assert(strstr(screen, "Favorites"));
+    assert(strstr(screen, "Page favorites"));
     now += 250;
     menu_button(0x18, true);
     now += 250;
@@ -939,17 +922,21 @@ static void test_engine_filters(void) {
     assert(setup_read_flash_value(36, 0) == 0 && setup_read_flash_value(36, 1) == 1);
     assert(setup_read_flash_value(36, 2) == 0);
     fresh_menu();
-    const SetupParam *profile = setup_find_by_flash_index(16);
-    profile->action();
+    uint8_t profile_page = setup_page_for(16);
+    setup_select_page(profile_page);
+    assert(!settings_state.is_diesel_enabled && !settings_state.gasoline_v6);
+    assert(setup_stage_back()); setup_stage_save();
     assert(!settings_state.is_diesel_enabled && settings_state.gasoline_v6);
     expect_setup(16, "Engine: 2.9 V6");
     uint16_t values[SETUP_FLASH_PARAM_BUFFER_SIZE] = {0};
     settings_state.advanced_pages = 1;
     setup_fill_flash_params(values);
     assert(values[15] == 0 && values[35] == 1 && values[36] == 1);
-    profile->action();
+    setup_select_page(profile_page);
+    assert(setup_stage_back()); setup_stage_save();
     assert(settings_state.is_diesel_enabled);
-    profile->action();
+    setup_select_page(profile_page);
+    assert(setup_stage_back()); setup_stage_save();
     assert(!settings_state.is_diesel_enabled && !settings_state.gasoline_v6);
 }
 
@@ -1126,20 +1113,40 @@ static void test_board_sync_retry(void) {
     assert(commands == 7);
 }
 
+static void fresh_contract(void);
+
 #include "test_setup_ui.c"
 #include "test_unified_ui.c"
 #include "test_menu_contract.c"
 #include "test_idle_latin1.c"
+#include "test_my23_ui.c"
 
 int main(void) {
 #ifdef MENU_DIAGNOSTICS
     const char *suite = "menu-debug";
+#elif defined(IPC_MY23_IS_INSTALLED)
+    const char *suite = DASHBOARD_MESSAGE_MAX_LENGTH == 24 ? "menu-my23-24" : "menu-my23-18";
 #elif defined(LARGE_DISPLAY)
     const char *suite = "menu-24";
 #else
     const char *suite = "menu-18";
 #endif
     const HostTest tests[] = {
+        HOST_TEST(test_my23_glyph_budget),
+        HOST_TEST(test_atomic_favorite_selection_identity),
+        HOST_TEST(test_my23_remaining_list_previews),
+        HOST_TEST(test_v6_parameter_label_identity),
+        HOST_TEST(test_page_editor_transactions),
+        HOST_TEST(test_my23_visibility_transaction),
+        HOST_TEST(test_favorite_slot_compact_label),
+        HOST_TEST(test_my23_favorite_duplicate_rollback),
+        HOST_TEST(test_my23_list_and_old_favorite_migration),
+        HOST_TEST(test_fifth_favorite_uds_reply),
+        HOST_TEST(test_double_click_and_noise),
+        HOST_TEST(test_atomic_favorite_packing),
+        HOST_TEST(test_staged_setting_failure_and_discard),
+        HOST_TEST(test_usb_draft_has_no_early_effect),
+        HOST_TEST(test_favorite_slot_draft_flow),
         HOST_TEST(test_setup_ui),
         HOST_TEST(test_shared_renderers),
         HOST_TEST(test_navigation_contract),

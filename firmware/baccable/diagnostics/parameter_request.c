@@ -14,9 +14,6 @@ void parameter_request_cancel(void) { request.active = 0; }
 
 /* Ask the vehicle for the diagnostic value selected on the current screen. */
 void parameter_request_begin(void) {
-    if (request.active && currentTime - request.started < 500)
-        return;
-    request.active = 0;
     if (settings_state.is_diesel_enabled > 1 ||
         dashboard_state.dashboard_page_index >= parameter_page_count ||
         selected_parameter_element >=
@@ -25,6 +22,11 @@ void parameter_request_begin(void) {
         return;
     uint8_t id = parameter_pages[settings_state.is_diesel_enabled][dashboard_state.dashboard_page_index]
                      .parameter_ids[selected_parameter_element];
+    parameter_request_begin_id(id, selected_parameter_element);
+}
+void parameter_request_begin_id(uint8_t id, uint8_t element) {
+    if (request.active && currentTime - request.started < 500) return;
+    request.active = 0;
     if (id >= 100)
         return;
     const ParameterDefinition *parameter = &parameter_definitions[id];
@@ -39,7 +41,7 @@ void parameter_request_begin(void) {
         return;
     request.engine = settings_state.is_diesel_enabled;
     request.page = dashboard_state.dashboard_page_index;
-    request.element = selected_parameter_element;
+    request.element = element;
     request.parameter = id;
     request.started = currentTime;
     request.active = 1;
@@ -63,7 +65,7 @@ void parameter_request_receive(const CAN_RxHeaderTypeDef *header, const uint8_t 
                           parameter->raw_offset, parameter->scale, parameter->scaled_offset, &value))
         return;
     parameter_cache_put(request.parameter, value, currentTime);
-    displayed_parameter_values[request.element] = value;
+    if (request.element < 4) displayed_parameter_values[request.element] = value;
     request.active = 0;
     menu_render();
 }

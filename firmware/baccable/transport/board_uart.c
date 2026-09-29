@@ -8,14 +8,23 @@
 
 extern void board_commands_dispatch(const uint8_t *message);
 #define UART_RX_SLOTS 5
-static uint8_t rx_frames[UART_RX_SLOTS][UART_BUFFER_SIZE];
+#if defined(BACCABLE_BH) || defined(BACCABLE_C2)
+#define UART_RX_FRAME_SIZE UART_SCREEN_BUFFER_SIZE
+#else
+#define UART_RX_FRAME_SIZE UART_BUFFER_SIZE
+#endif
+static uint8_t rx_frames[UART_RX_SLOTS][UART_RX_FRAME_SIZE];
 static volatile uint8_t rx_head, rx_tail;
 #if !defined(ACT_AS_CANABLE)
+#if defined(BACCABLE_C1)
+static uint8_t active_tx[UART_SCREEN_BUFFER_SIZE];
+#else
 static uint8_t active_tx[UART_BUFFER_SIZE];
+#endif
 #endif
 #if defined(BACCABLE_C1)
 static uint8_t active_pedal_tx[UART1_BUFFER_SIZE];
-static uint8_t pending_screen[UART_BUFFER_SIZE];
+static uint8_t pending_screen[UART_SCREEN_BUFFER_SIZE];
 static uint8_t screen_pending;
 static uint8_t screen_overtook_poll;
 #endif
@@ -34,7 +43,9 @@ void board_uart_status(uint8_t out[5]) {
     out[4] = uart_recoveries >> 8;
     __set_PRIMASK(irq);
 }
+#if defined(BACCABLE_C1)
 static volatile uint8_t pedal_response, pedal_response_pending;
+#endif
 #define QUEUE_SIZE 10 // max queue size
 
 typedef struct {
@@ -54,7 +65,7 @@ static uint32_t last_c2_poll_time = 0;
 static uint32_t last_bh_poll_time = 0;
 #endif
 
-static uint8_t board_rx_buffer[UART_BUFFER_SIZE]; // buffer to receive the message from uart
+static uint8_t board_rx_buffer[UART_RX_FRAME_SIZE]; // buffer to receive the message from uart
 
 #if defined(BACCABLE_C1)
 uint32_t last_pedal_tx_time = 0;
@@ -65,7 +76,7 @@ SendQueue *tx_queue_uart1 = &queue_instance_uart1;
 #endif
 
 /* A truncated frame must not consume the next command after an idle gap.
- * At 38400 baud even a 25-byte frame takes less than 7 ms. */
+ * At 38400 baud a 38-byte screen takes less than 10 ms. */
 #define UART_RX_GAP_MS 20U
 static uint8_t board_rx_byte, board_rx_used;
 static uint32_t board_rx_last_time;
@@ -208,7 +219,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
         board_rx_last_time = now;
         if (board_rx_used || (board_rx_byte >= C1BusID && board_rx_byte <= 0x10))
             board_rx_buffer[board_rx_used++] = board_rx_byte;
-        if (board_rx_used == UART_BUFFER_SIZE) {
+        unsigned frame_size = UART_BUFFER_SIZE;
+#if defined(BACCABLE_BH) || defined(BACCABLE_C2)
+        if (board_rx_buffer[0] == BhBusIDparamString) frame_size = UART_SCREEN_BUFFER_SIZE;
+#endif
+        if (board_rx_used == frame_size) {
             bool valid = true;
             if (board_rx_buffer[0] >= 0x0e) {
                 uint8_t checksum = 0;
@@ -221,7 +236,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 #if defined(ACT_AS_CANABLE)
                 status_led_activity();
 #endif
-                memcpy(rx_frames[rx_head], board_rx_buffer, UART_BUFFER_SIZE);
+                memset(rx_frames[rx_head], ' ', UART_RX_FRAME_SIZE);
+                memcpy(rx_frames[rx_head], board_rx_buffer, frame_size);
                 __DMB();
                 rx_head = next;
             } else if (valid) {
@@ -357,7 +373,7 @@ static uint8_t queue_start(SendQueue *queue, UART_HandleTypeDef *uart, uint8_t *
     if (!*active && (queue->count || use_screen)) {
     #if defined(BACCABLE_C1)
         if (use_screen)
-            memcpy(active_buffer, pending_screen, length);
+            { memcpy(active_buffer, pending_screen, UART_SCREEN_BUFFER_SIZE); length = UART_SCREEN_BUFFER_SIZE; }
         else
     #endif
             memcpy(active_buffer, queue->tx_buffer[queue->head], length);
@@ -394,7 +410,7 @@ static uint8_t queue_start(SendQueue *queue, UART_HandleTypeDef *uart, uint8_t *
 /* Queue a board command or replace an older waiting screen update. */
 uint8_t board_uart_send(const uint8_t *data, size_t length) {
 #if defined(BACCABLE_C1)
-    if (data && length && length <= UART_BUFFER_SIZE && data[0] == BhBusIDparamString) {
+    if (data && length && length <= UART_SCREEN_BUFFER_SIZE && data[0] == BhBusIDparamString) {
         uint32_t irq = __get_PRIMASK();
         __disable_irq();
         memset(pending_screen, ' ', sizeof(pending_screen));
@@ -461,7 +477,7 @@ void pedal_uart_process(void) {
 
 /* Process board responses, poll their status and send eligible outgoing messages. */
 void board_uart_process(void) {
-    /* A board frame takes under 7 ms. Recover a lost TX completion without
+    /* A board frame takes under 10 ms. Recover a lost TX completion without
      * touching ordinary transfers or granting an unsolicited auxiliary reply. */
     if (!diagnostic_mode && ((board_tx_active && currentTime - board_tx_started > 50) ||
                              (board_busy && currentTime - board_busy_since > 50))) {

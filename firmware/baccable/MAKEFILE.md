@@ -57,6 +57,8 @@ export BACCABLE_ARM_BIN=/Applications/ArmGNUToolchain/15.2.rel1/arm-none-eabi/bi
 export BACCABLE_ARM_PREFIX="$BACCABLE_ARM_BIN/arm-none-eabi-"
 export PATH="$BACCABLE_ARM_BIN:/opt/homebrew/bin:/usr/bin:/bin:$PATH"
 export BACCABLE_BUILD_VERSION=local-test
+mkdir -p tmp
+export TMPDIR="$PWD/tmp"
 
 "${BACCABLE_ARM_PREFIX}gcc" --version
 "${BACCABLE_ARM_PREFIX}gcc" -mcpu=cortex-m0 -mthumb -print-file-name=nano.specs
@@ -90,19 +92,18 @@ python3 tests/test_menu_labels.py
 python3 .github/scripts/test-ci.py
 ```
 
-`make test` builds and runs 15 native executables: core, transport, both catalog
-widths, both menu widths, menu with hidden diagnostics, UART/menu, standalone menu
-diagnostics, input repeat, C2 engine status, C1 exhaust, upstream diagnostics, C2
-parking and BH parking.
-`test_setup_ui.c`, `test_unified_ui.c`, `test_menu_contract.c` and
-`test_idle_latin1.c` are included by the menu suite, not separate executables.
+`make test` builds and runs 24 native executables, including both legacy menu
+widths, both MY23 compiled defaults, normal/large BH display output, UART,
+USB C2/BH mode recovery and the real ST USB lifecycle under ASan/UBSan.
+`test_setup_ui.c`, `test_unified_ui.c`, `test_menu_contract.c`,
+`test_idle_latin1.c` and `test_my23_ui.c` are included by the menu suite.
 Outputs are under `tests/build`. A compiler/assertion/sanitizer error is a failure;
 an old executable's presence is not a passing result. Use `make -B` for a forced
 host rebuild after changing compiler or host flags; host flags are not tracked
 by the firmware's `build/flags` mechanism.
 
-The label test currently needs its own command; the Makefile/CI does not invoke
-it (P2-05). `test-ci.py` runs seven tests of packaging/tag guards/reporting using
+The label test runs through `make test` and CI; its standalone command is
+useful for a focused check. `test-ci.py` runs eight tests of packaging/tag guards/reporting using
 temporary local repositories and synthetic artifacts; it needs no GitHub login
 and does not publish. These seven tests and a native ASan/UBSan compile/run probe
 passed on this Mac during the environment audit. The full host suite passed after
@@ -166,6 +167,28 @@ Use `EXTRA_CPPFLAGS`, not replacement `CFLAGS`, for custom preprocessor options:
 ```sh
 make -C firmware/baccable FLAVOR=C1 VERSION=local-test EXTRA_CPPFLAGS="-DIS_GASOLINE -DIPC_MY23_IS_INSTALLED" all
 ```
+
+## Independent IPC/display matrix
+
+MY23 is a saved runtime profile with `IPC_MY23_IS_INSTALLED` as its default.
+`LARGE_DISPLAY` independently sets the legacy width. CI builds all four
+combinations for each enabled C1/C2/BH/CAN job using
+`.github/scripts/build-ui-matrix.sh`; release artifacts retain the requested
+flags and default paths. Extra matrix images stay in isolated build directories.
+Run the same check from the repository root with the documented toolchain:
+
+```sh
+for flavor in C1 C2 BH CAN; do
+    FLAVOR="$flavor" VERSION=local-test TOOLCHAIN="$BACCABLE_ARM_PREFIX" \
+        bash .github/scripts/build-ui-matrix.sh || exit 1
+done
+```
+
+Screen packets now have a dedicated 38-byte UART capacity, independent of the
+legacy command/status width. Flash matching images on C1, C2 and BH. The host
+matrix checks gesture boundaries, draft/save/discard, five-slot Favorites,
+glyph budgets, fixed L2 offsets, source preservation and migration failures.
+Vehicle acceptance remains separate; see [MENU_UX.md](../../docs/architecture/MENU_UX.md).
 
 ## Compiler, linker and configuration parameters
 

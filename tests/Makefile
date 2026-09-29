@@ -2,7 +2,7 @@ CC := clang
 FIRMWARE := ../firmware/baccable
 CPPFLAGS := -I$(FIRMWARE)
 CFLAGS := -std=c11 -Wall -Wextra -Werror -g -O1 -fsanitize=address,undefined -fno-omit-frame-pointer
-HEADERS := test_idle_latin1.c test_menu_contract.c test_report.h test_setup_ui.c test_unified_ui.c $(shell find stubs $(FIRMWARE)/app $(FIRMWARE)/protocol $(FIRMWARE)/diagnostics $(FIRMWARE)/storage $(FIRMWARE)/features $(FIRMWARE)/transport $(FIRMWARE)/platform $(FIRMWARE)/USB_DEVICE/App $(FIRMWARE)/third_party/printf -name '*.h')
+HEADERS := test_my23_ui.c test_idle_latin1.c test_menu_contract.c test_report.h test_setup_ui.c test_unified_ui.c $(shell find stubs $(FIRMWARE)/app $(FIRMWARE)/protocol $(FIRMWARE)/diagnostics $(FIRMWARE)/storage $(FIRMWARE)/features $(FIRMWARE)/transport $(FIRMWARE)/platform $(FIRMWARE)/USB_DEVICE/App $(FIRMWARE)/third_party/printf -name '*.h')
 SOURCES := test_core.c $(FIRMWARE)/protocol/slcan_codec.c $(FIRMWARE)/diagnostics/uds_decode.c \
  $(FIRMWARE)/storage/record_store.c
 
@@ -27,6 +27,10 @@ test: build/test_core build/test_transport build/test_catalog build/test_menu bu
 	./build/test_body_display
 	./build/test_body_display_large
 	./build/test_usb_lifecycle
+	./build/test_menu_my23
+	./build/test_menu_my23_large
+	./build/test_uart_rx_c2
+	./build/test_uart_rx_bh
 
 USB_AUX_SOURCES := test_usb_aux.c $(FIRMWARE)/features/usb_modes.c
 build/test_usb_c2: $(USB_AUX_SOURCES) $(HEADERS) Makefile
@@ -71,7 +75,7 @@ build/test_exhaust: test_exhaust.c $(FIRMWARE)/features/exhaust.c $(HEADERS) Mak
 		$(FIRMWARE)/features/exhaust.c -lm -o $@
 
 MENU_SOURCES := test_menu.c $(addprefix $(FIRMWARE)/, features/menu.c features/menu_model.c \
- features/menu_input.c features/ui_entry.c features/menu_diagnostics.c features/display_stream.c features/ibs_override.c features/board_sync.c features/dashboard.c features/dashboard_format.c \
+ features/menu_input.c features/my23_ui.c features/favorite_parameters.c features/ui_entry.c features/menu_diagnostics.c features/display_stream.c features/ibs_override.c features/board_sync.c features/dashboard.c features/dashboard_format.c \
  diagnostics/parameter_cache.c diagnostics/parameter_request.c diagnostics/parameter_catalog.c \
  protocol/checksum.c vehicle/steering_controls.c diagnostics/uds_decode.c diagnostics/fault_reader.c settings/persistence.c settings/setup_menu.c settings/setup_entries.c \
  third_party/printf/printf.c)
@@ -121,7 +125,7 @@ build/test_menu_debug: $(MENU_SOURCES) $(HEADERS) Makefile
 
 test: build/test_menu_debug
 
-BODY_DISPLAY_SOURCES := test_body_display.c $(FIRMWARE)/features/body.c $(FIRMWARE)/features/display_stream.c $(FIRMWARE)/features/ipc_display_test.c $(FIRMWARE)/state/display.c
+BODY_DISPLAY_SOURCES := test_body_display.c $(FIRMWARE)/features/body.c $(FIRMWARE)/features/display_stream.c $(FIRMWARE)/features/my23_ui.c $(FIRMWARE)/features/ipc_display_test.c $(FIRMWARE)/state/display.c
 build/test_body_display: $(BODY_DISPLAY_SOURCES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DBH_FLAVOR=1 $(BODY_DISPLAY_SOURCES) -o $@
@@ -137,3 +141,21 @@ build/test_usb_lifecycle: $(USB_LIFECYCLE_SOURCES) $(shell find usb_lifecycle_st
 	@mkdir -p build
 	$(CC) -Iusb_lifecycle_stubs -I$(USB_STACK)/Core/Inc -I$(USB_STACK)/Class/MSC/Inc -I$(USB_STACK)/Class/CDC/Inc -I$(FIRMWARE)/USB_DEVICE/App $(CPPFLAGS) $(CFLAGS) -Wno-unused-parameter -Wno-missing-field-initializers -DBH_FLAVOR=1 $(USB_LIFECYCLE_SOURCES) -o $@
 test: build/test_usb_lifecycle
+
+# IPC generation and legacy transport width are independent build preferences.
+build/test_menu_my23: $(MENU_SOURCES) $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC1_FLAVOR=1 -DIPC_MY23_IS_INSTALLED -DGIT_VERSION=\"test\" $(MENU_SOURCES) -lm -o $@
+build/test_menu_my23_large: $(MENU_SOURCES) $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC1_FLAVOR=1 -DIPC_MY23_IS_INSTALLED -DLARGE_DISPLAY -DGIT_VERSION=\"test\" $(MENU_SOURCES) -lm -o $@
+test: build/test_menu_my23 build/test_menu_my23_large
+
+# Auxiliary boards consume the complete screen MTU and retain shorter commands.
+build/test_uart_rx_c2: test_uart_menu.c $(FIRMWARE)/transport/board_uart.c $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC2_FLAVOR=1 test_uart_menu.c $(FIRMWARE)/transport/board_uart.c -o $@
+build/test_uart_rx_bh: test_uart_menu.c $(FIRMWARE)/transport/board_uart.c $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DBH_FLAVOR=1 test_uart_menu.c $(FIRMWARE)/transport/board_uart.c -o $@
+test: build/test_uart_rx_c2 build/test_uart_rx_bh

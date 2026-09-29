@@ -1,8 +1,8 @@
 # BACCAble — instrukcja obsługi w samochodzie
 
 Ta instrukcja opisuje menu na zestawie wskaźników i funkcje w bieżącym kodzie
-firmware. Opisane niżej zmiany wyświetlania wymagają jeszcze próby w samochodzie
-i nowego wydania po **v5-beta-17**. Instrukcja dotyczy urządzenia już zamontowanego
+firmware. Opisane niżej zmiany układu MY23 i nawigacji przygotowano na bazie
+**v5-beta-18**. Wymagają jeszcze próby w samochodzie i nowego wydania. Instrukcja dotyczy urządzenia już zamontowanego
 i podłączonego do samochodu. Nie obejmuje montażu, okablowania ani wgrywania
 oprogramowania. Kontrolery C1, C2 i BH powinny mieć pasujący do siebie zestaw
 oprogramowania z tego samego wydania.
@@ -38,77 +38,67 @@ jego sterowników. Sama obecność opcji w menu nie oznacza, że samochód ją o
 
 ## Pierwsze użycie
 
-1. Zatrzymaj samochód i włącz zapłon, aby uruchomić zestaw wskaźników oraz przyciski
-   na kierownicy. Uruchom silnik, jeśli wymaga tego wybrana funkcja. Część odczytów
-   jest dostępna tylko przy pracującym silniku.
-2. Wyłącz **zarówno zwykły tempomat (CC), jak i tempomat adaptacyjny (ACC)**.
-   Przed obsługą menu puść przyciski na kierownicy.
-3. Przytrzymaj **RES przez około 1,2 sekundy**, a następnie puść. Menu otworzy
-   ostatni ulubiony odczyt. Jeśli lista jest pusta, zobaczysz `No favorites`.
-4. Ponownie przytrzymaj RES, aby wrócić do menu głównego. Lekkimi naciśnięciami
-   w górę lub w dół znajdź `Settings`. Naciśnij krótko RES, aby wejść, a następnie
-   otwórz `Features`.
-5. Znajdź `Engine` i wybierz profil pasujący do silnika: `2.0 I4`, `2.9 V6` albo
-   `2.2 D`. Wybór zmienia zestaw odczytów, a nie konfigurację sterownika silnika.
-   Dotychczasowe ustawienia dla benzyny mogą domyślnie wskazywać I4 — sprawdź to,
-   jeśli masz V6.
-6. Wróć długim naciśnięciem RES, aby zapisać zatwierdzone ustawienia. Otwórz
-   `Readings` i wybierz grupę albo przygotuj własne
-   [ulubione odczyty](#ulubione-i-układ-odczytów).
+1. Zatrzymaj samochód i włącz zapłon. Uruchom silnik, jeśli wymaga tego funkcja
+   lub odczyt. Część danych jest dostępna tylko przy pracującym silniku.
+2. Wyłącz **CC i ACC**, a następnie puść przyciski kierownicy.
+3. Przytrzymaj **RES przez około 0,9 sekundy** i puść. Otworzą się Favorites.
+4. **Naciśnij RES dwukrotnie**, aby wrócić do menu głównego. Przyciskami góra/dół
+   wybierz `Settings`, naciśnij RES i otwórz `Features`.
+5. W `Engine` wybierz `2.0 I4`, `2.9 V6` lub `2.2 D` krótkimi naciśnięciami albo
+   góra/dół. Dwuklik pokaże pytanie o zapis. Przytrzymaj RES, aby zapisać.
+   Ustawienie pozostanie na ekranie; osobny dwuklik wróci do listy Features.
+6. Sprawdź `MY23 IPC`. Profil MY23 korzysta z dwóch linii niezależnie od opcji
+   kompilacji 18/24 znaków dla starszego ekranu. Wgraj zgodny zestaw C1/C2/BH;
+   ta poprawka wprowadza dłuższy pakiet przesyłania ekranu.
 
-C1 obsługuje magistralę układu napędowego i menu na zestawie wskaźników,
-C2 — magistralę podwozia, a BH — magistralę nadwozia. Jeśli funkcja korzystająca
-z innego kontrolera nie odpowiada, sprawdź jego wersję w `Information`.
-
-Ustawiaj menu na postoju. Funkcje zmieniające działanie hamulców, kontroli trakcji
-lub napędu wymagają kontrolowanych warunków testowych i odpowiedniego wyposażenia
-pojazdu. Przestrzegaj [ograniczeń użytkowania projektu](../README.md#disclaimer).
+C1 obsługuje CAN układu napędowego i przyciski menu, C2 CAN podwozia, a BH CAN
+nadwozia i wysyłanie tekstu do IPC. Wersje sprawdzisz w `Information`.
+Ustawiaj menu na postoju. Przestrzegaj
+[ograniczeń użytkowania projektu](../README.md#disclaimer).
 
 ## Przyciski i nawigacja
 
-Menu obsługujesz przyciskami tempomatu na kierownicy. Jeśli masz przycisk regulacji
-odstępu ACC, w menu pełni on taką samą funkcję jak RES.
+Przy wyłączonych CC i ACC przycisk odstępu ACC działa w menu tak samo jak RES.
 
-| Sposób naciśnięcia | Działanie |
+| Naciśnięcie | Działanie |
 | --- | --- |
-| Przytrzymanie RES przez około 1,2 s przy zamkniętym menu | Otwiera ostatni ulubiony odczyt. |
-| Krótkie naciśnięcie RES i puszczenie | Otwiera pozycję, zmienia wybór albo zatwierdza. Na zwykłej stronie odczytu lub informacji nie zmienia wyświetlanego stanu. |
-| Przytrzymanie RES przez około 1,2 s w menu | Wraca o jeden poziom. Z menu głównego zamyka menu. Podczas edycji liczby anuluje niezatwierdzoną wartość. |
-| Lekkie naciśnięcie w dół / w górę | Następna / poprzednia pozycja. Po końcu listy przechodzi na jej początek i odwrotnie. |
-| Przytrzymanie lekkiego naciśnięcia w dół / w górę | Powtarza przewijanie list odczytów i ustawień po około 0,5 s. Nie powtarza akcji ani przesuwania wybranego ulubionego odczytu podczas zmiany kolejności. |
-| Mocniejsze naciśnięcie w dół / w górę | Przechodzi do następnej / poprzedniej grupy w odczytach, edytorach list, Features i Actions. W Favorites zmienia stronę o jedną pozycję. Podczas edycji liczby zmienia jej wartość. |
+| Przytrzymanie RES przez około 0,9 s przy zamkniętym menu | Otwiera Favorites. |
+| Krótkie RES i puszczenie | Otwiera lub używa pozycji albo zmienia szkic ustawienia. Strona odczytu nie reaguje. |
+| Dwuklik RES | Powrót. Dwa krótkie puszczenia przycisku muszą nastąpić w odstępie do 0,28 s. |
+| Przytrzymanie RES przy widocznym pytaniu SAVE/APPLY/STORE | Zapisuje ustawienie lub zatwierdza operację. W innych miejscach nic nie wykonuje. |
+| Lekkie dół/góra | Następna/poprzednia pozycja albo zmiana szkicu. Listy zawijają się. |
+| Przytrzymanie lekkiego dół/góra | Powtarza po 0,5 s, następnie co 0,18 s. Bez powtarzania w Actions ani przy przesuwaniu ulubionej strony. |
+| Mocniejsze dół/góra | Zmienia grupę; podczas edycji zmienia wartość szkicu. |
 
-Przy mocniejszym naciśnięciu urządzenie może najpierw rozpoznać lekkie naciśnięcie,
-czyli przesunąć się o jedną pozycję, a dopiero potem przejść do kolejnej grupy.
-Mocniejsze naciśnięcie nie oznacza już „pomiń dziesięć stron”. Puszczenie RES
-po długim przytrzymaniu nie powoduje dodatkowego wyboru pozycji.
-
-Jeśli komunikaty o przyciskach przestaną docierać na ponad 0,3 s, puść przycisk
-i naciśnij go ponownie. Gdy CC lub ACC korzysta z tych przycisków, nie można
-używać ich do nawigacji po menu.
+Pojedyncze naciśnięcie jest wykonywane po zakończeniu okna dwukliku, więc ma
+krótkie celowe opóźnienie. Naciśnięcia krótsze niż 30 ms są pomijane. Trzecie
+szybkie naciśnięcie po dwukliku nie wykonuje dodatkowej akcji. Przewijanie anuluje
+oczekującą parę naciśnięć. Po przerwie ponad 0,3 s w komunikatach o przyciskach
+puść przycisk i spróbuj ponownie. Puszczenie po przytrzymaniu nie wybiera pozycji.
+Mocniejsze naciśnięcie może najpierw wykonać zwykły krok, potem zmianę grupy.
 
 ### Powrót, bezczynność i zapisywanie
 
-Długie naciśnięcia RES cofają przez kolejne poziomy, na przykład:
+Dwuklik cofa o jeden poziom. Bez zmian wraca od razu. Po zmianie szkicu pierwszy
+dwuklik pokazuje `HOLD SAVE•2X DISCARD` na MY23 albo `Hold save/2x drop` na
+starszym ekranie. Przytrzymanie zapisuje i stosuje zmianę; ustawienie zostaje
+na ekranie z potwierdzeniem zapisu. Osobny dwuklik wraca. Dwuklik zamiast
+przytrzymania w ekranie potwierdzenia odrzuca szkic i wraca, zachowując oryginał.
+Błąd zapisu pozostawia szkic i możliwość kolejnej próby przytrzymaniem.
+Po restarcie wczytywane są tylko zapisane wartości. Tryb USB zmienia się dopiero
+po udanym jawnym zapisie. Sam wybór CAN lub wyjście z niezapisanego szkicu
+nie włącza tego trybu.
 
-`odczyt oleju → grupa Temperatures → menu główne → zamknięcie menu`.
+Tak samo edytujesz Features, sloty ulubionych, Enabled lusterek i Sort order.
+Nie ma Save & Exit. Bieżące odczyty pozostają widoczne. Pozostałe widoki wracają
+do Favorites po 30 s bezczynności, a edytory po 60 s. Niedokończone szkice są
+odrzucane. Aktywny odczyt lub kasowanie błędów opóźnia automatyczny powrót.
 
-Po około **30 s** bez naciskania przycisków zwykłe menu i Information wracają
-do Favorites. W ustawieniach i edytorach następuje to po około **60 s**.
-Strony bieżących odczytów oraz Favorites pozostają wyświetlone. Trwający odczyt
-lub kasowanie błędów odsuwa ten automatyczny powrót.
-Niezatwierdzona liczba jest wtedy anulowana, a wcześniej zatwierdzone ustawienia
-są zapisywane przy opuszczaniu konfiguracji.
-
-Nie ma już pozycji **Save & Exit**. Aby zapisać zatwierdzone zmiany, wróć normalnie
-z konfiguracji. Część funkcji reaguje od razu na zmianę ustawienia; tryb USB jest
-włączany przy wyjściu z Features. Anulowanie edycji jednej liczby nie cofa innych
-ustawień, które zostały już zatwierdzone.
-
-Jeśli pojawi się `× Save failed: RES`, krótkie RES ponowi zapis i próbę wyjścia.
-Długie RES anuluje tę próbę wyjścia i pozostawi bieżący widok. Zatwierdzone zmiany
-pozostaną w pamięci roboczej, ale mogą zniknąć po ponownym uruchomieniu.
-Pozostała nawigacja jest zablokowana, dopóki widoczny jest ten komunikat.
+Edytory `Page favorites`, `Favorite order` i `Shown pages` mają takie same
+szkice, potwierdzenie, zapis przytrzymaniem i odrzucanie. Zapis zostawia Cię
+w edytorze; osobny dwuklik wraca do Settings. Bezczynność odrzuca niezapisane
+zmiany. Zapamiętane strony odczytów są zapisywane przy wyjściu ze zwykłych widoków. Przy `× Save failed: RES` krótkie RES ponawia
+zapis i wyjście, a dwuklik anuluje próbę wyjścia i zostawia bieżący widok.
 Samo czekanie nie ponawia zapisu.
 
 ## Układ menu
@@ -131,12 +121,15 @@ Menu główne
 │  │     ├─ Enabled          Włączenie funkcji
 │  │     ├─ Store position   Zapis pozycji
 │  │     └─ < Back           Powrót
-│  ├─ Favorites              Dodawanie i usuwanie ulubionych odczytów
+│  ├─ Favorites              Favorite 1–6 → Slot 1–5 → parametr
 │  ├─ Shown pages            Pokazywanie i ukrywanie stron w Readings
-│  ├─ Favorite order         Kolejność ulubionych
 │  └─ Sort order             Sortowanie według grup albo alfabetycznie
 └─ Information               Wersje, przyciski i test wyświetlacza IPC
 ```
+
+Ten układ Settings dotyczy MY23 oraz każdego profilu po zapisaniu zestawu
+pięciu slotów. Przed pierwszym takim zapisem starszy profil zachowuje kolejność:
+Features, Page favorites, Shown pages, Favorite order, Sort order, Favorites.
 
 Kolejność menu głównego jest stała. Dostępność stron zależy od wybranego silnika
 oraz ustawień `Advanced pages` i `Shown pages`. Grupa bez dostępnych stron może
@@ -145,21 +138,25 @@ domyślnie ukryte.
 
 ## Symbole i komunikaty
 
-Zależnie od wgranej wersji oprogramowania wyświetlacz wykorzystuje 18 lub 24
+Starszy profil, zależnie od kompilacji, wykorzystuje 18 lub 24
 pozycje tekstowe. Nazwa na liście może różnić się od podpisu bieżącego odczytu,
 aby zrobić miejsce na wartości. Na przykład strona `Batt charge BCM` wyświetla
 odczyt podpisany `Batt BCM SOC`.
 
-Menu pojawia się w pierwszej linii tekstu. W mniejszej drugiej linii widnieje
-tymczasowy napis `BACCAble beta`. BH używa źródła ostatniego kompletnego tekstu
-multimediów odebranego z magistrali samochodu, np. USB auta albo CarPlay, więc
-nie przełącza ikony na Bluetooth. Zanim BH odbierze taki tekst, korzysta ze
-źródła zapasowego ustawionego w firmware. Ponawia całe menu mniej więcej raz
-na sekundę, także gdy radio nie wysyła nowych ramek. Po wiadomości z tytułem
-i wykonawcą czeka krótko i zaczyna wysyłanie menu od pierwszego fragmentu.
-Po zamknięciu menu przywraca ostatni kompletny tekst radia, który odebrał;
-nowy tekst radia może go zastąpić. Działanie na ekranie samochodu wymaga jeszcze
-sprawdzenia.
+MY23 ma **14 widocznych znaków w pierwszej linii i 22 w drugiej**. Lista
+pokazuje bieżącą pozycję z `›`, a pod nią następną. Edytor pokazuje ustawienie
+oraz szkic wartości z `▲▼ CHANGE`. Druga linia zawiera również pytanie o zapis
+lub jego wynik. Ulubione mają parametr główny w pierwszej linii i dodatkowe
+odczyty rozdzielone `•` w drugiej. `✓` oznacza udany zapis, `×` lokalny błąd.
+Starszy profil zachowuje pierwszą linię 18/24 znaki i podpis `BACCAble beta`.
+Obsługa przycisków i szkiców jest taka sama, a pytania mieszczą się w jednej linii.
+
+BH używa ostatniego zaobserwowanego kompletnego źródła tekstu multimediów,
+np. USB lub CarPlay, zamiast wymuszać Bluetooth. Powtarza całe menu mniej więcej
+co sekundę i zaczyna ponownie po ustaniu tekstu radia. Zamknięcie przywraca
+ostatni kompletny tekst radia. Oba pola MY23 są osobno czyszczone i dopełniane,
+więc skrócenie tytułu nie przesuwa drugiej linii ani nie zostawia starych znaków.
+Czytelność, wyrównanie i odzyskiwanie ekranu po radiu wymagają próby w samochodzie.
 
 | Symbol lub komunikat | Znaczenie i sposób obsługi |
 | --- | --- |
@@ -167,7 +164,7 @@ sprawdzenia.
 | `ON` / `OFF` w informacji o stanie | Stan zgłoszony przez urządzenie lub śledzony przez BACCAble. Nie zawsze można go zmienić na tej stronie. |
 | `>` | Wejście do podmenu lub uruchomienie operacji przyciskiem RES. |
 | `*` | Trwa edycja liczby albo wybrano ulubioną stronę do przesunięcia. |
-| `< Back` | Powrót z podmenu. Długie RES również cofa. |
+| `< Back` | Powrót z podmenu. Dwuklik RES również cofa. |
 | `!` | Trzeba spełnić warunek lub zwrócić uwagę na problem, np. `! Start engine` — uruchom silnik, `! Stop the car` — zatrzymaj samochód. |
 | `?` | Stan jest nieznany lub brakuje potwierdzenia, np. `? BH no reply` — brak odpowiedzi BH. |
 | `×` | Operacja w urządzeniu nie powiodła się, np. zapis ustawień lub wysłanie polecenia. |
@@ -184,44 +181,55 @@ mieści się na nie miejsce. Listy nie pokazują numeru bieżącej pozycji.
 
 ## Ulubione i układ odczytów
 
-### Dodawanie potrzebnych stron
+### Do pięciu pomiarów w jednym ulubionym widoku
 
-1. Otwórz `Settings → Favorites`.
-2. Znajdź stronę i naciśnij RES. `Ø` oznacza, że jest w ulubionych. Ponowne
-   naciśnięcie usuwa ją z tej listy.
-3. Możesz wybrać maksymalnie **sześć stron** dla bieżącego rodzaju silnika.
-   Gdy lista jest pełna, usuń jedną stronę przed dodaniem kolejnej.
-4. Wróć długim RES, a następnie otwórz `Favorites` w menu głównym, aby oglądać
-   bieżące wartości.
+1. Otwórz `Settings → Favorites` i wybierz `Favorite 1` do `Favorite 6`.
+2. Wejdź krótkim RES. Wybierz `Slot 1` do `Slot 5`, naciśnij RES, znajdź pomiar
+   przyciskami góra/dół i zatwierdź krótkim RES. `Empty` czyści slot.
+3. **Slot 1 jest parametrem głównym**. MY23 pokazuje go w pierwszej linii,
+   a sloty 2–5 w drugiej, w tej kolejności. Pusty slot główny ukrywa cały widok.
+   Kolejność zmieniasz przez zastępowanie slotów. Pomiar już obecny w innym
+   slocie jest z niego usuwany. Edycja jest dostępna wyłącznie w Settings.
+4. Dwuklik otwiera pytanie o zapis. Przytrzymaj, aby zapisać, albo wykonaj
+   następny dwuklik, aby odrzucić. Udany zapis pozostawia wybrany slot na ekranie;
+   osobny dwuklik wraca.
+5. Bieżące wartości zobaczysz w `Favorites` menu głównego. Starszy ekran
+   pokazuje główny parametr zapisanego zestawu w jednej linii.
 
-Edytor Favorites zawsze rozpoczyna od pełnego katalogu stron zgodnych z bieżącym
-profilem. Ostatnia grupa używana w `Readings` nie ogranicza tej listy. Strony
-zaawansowane również są dostępne w edytorze, ale nadal obowiązuje zgodność z
-profilem silnika.
+Po powrocie z innych list pozostaje wybrany ten sam zestaw ulubionych. Tak samo
+działa zmiana filtra silnika, jeśli zestaw nadal jest dostępny. W przeciwnym
+razie wyświetla się pierwszy dostępny zestaw. Wybór jest pamiętany osobno dla
+benzyny i diesla do ponownego uruchomienia urządzenia.
 
-Benzyna i diesel mają oddzielnie zapisane listy ulubionych. I4 i V6 korzystają
-ze wspólnej listy benzynowej. Po zmianie profilu silnika niepasująca strona jest
-tymczasowo ukrywana, ale nadal zajmuje zapisane miejsce. Aby ją usunąć, w razie
-potrzeby wróć do profilu, w którym jest dostępna.
+Renderer najpierw próbuje krótkich etykiet wszystkich dodatkowych pomiarów.
+Jeśli nie mieszczą się w 22 znakach, używa mniejszych skrótów. Następnie zostawia
+kompletne segmenty w ustalonej kolejności: bez urwanej wartości, końcowej kropki
+rozdzielającej i dodatkowej strony. Przykład: `GEAR 3` i `R3500•S100•B-0.5bar`.
+RPM oznacza obr./min, prędkość km/h, a ciśnienie bar. `O`/`OE` to temperatura
+oleju ze źródła natywnego/ECU, `W` płynu chłodzącego, `IC` wyjścia intercoolera,
+`ICI` jego wejścia, `MA` MultiAir, a `GT` skrzyni. Stopień przy tych temperaturach
+oznacza Celsjusza. RPM korzysta z istniejących danych silnika i nie dodaje nowego
+zapytania CAN. `--` nadal oznacza brak aktualnej, poprawnej wartości.
 
-### Kolejność, ukrywanie i sortowanie
+Benzyna i diesel mają osobne zestawy. Pomiar niepasujący do silnika pozostaje
+zapisany i jest pomijany do czasu ponownego wyboru jego profilu. Niepasujący
+parametr główny ukrywa cały widok. Stare katalogi i identyfikatory stron pozostają
+bez zmian. Stare ulubione strony są importowane do zestawów bez powtarzania tego
+samego identyfikatora pomiaru, z zachowaniem źródeł i kolejności. Zapis aktualizuje
+format preferencji menu. Wgranie starszego firmware nie eksportuje nowych zestawów.
 
-| Ustawienie | Obsługa i efekt |
-| --- | --- |
-| `Favorite order` | Znajdź stronę, wybierz ją krótkim RES (`*`), przesuń przyciskami góra/dół i ponownie naciśnij krótko RES, aby zakończyć przesuwanie. Nie można przesunąć strony poza końce listy. Długie RES wychodzi z edytora i zapisuje aktualną kolejność, również przesunięcia już wykonane. |
-| `Shown pages` | Krótkie RES pokazuje lub ukrywa stronę w Readings. Ukrycie nie usuwa jej z Favorites. |
-| `Sort order` | Krótkie RES przełącza sortowanie według grup lub A–Z według angielskiej nazwy strony. Dotyczy list odczytów i edytorów stron, ale nie własnej kolejności ulubionych. |
-| `Advanced pages` w Features | Pokazuje strony techniczne i dodatkowe układy odczytów podczas zwykłego przeglądania. Można je dodawać do ulubionych i wybierać w edytorach również przy wyłączonej opcji. Nadal muszą pasować do profilu silnika. |
-| `Auto rotate` w Features | Co pięć sekund przełącza stronę na bieżącej liście odczytów. Krótka lista ulubionych pozwala wygodnie obserwować kilka parametrów na zmianę. |
-
-Widoczność stron i ostatnio oglądane odczyty są zapisywane oddzielnie dla benzyny
-i diesla; sposób sortowania jest wspólny. Automatyczny ekran wyniku pomiaru osiągów
-może chwilowo pokazać ukrytą stronę, nie zmieniając jej zapisanej widoczności.
-
-Jeśli nie ma zapisanych preferencji, benzyna zaczyna od Oil/coolant temp,
-Power / torque, Battery V / A i Speed. Diesel zaczyna od Oil/coolant temp,
-Power / torque, Battery V / A i DPF load / temp. Wcześniej zapisane preferencje
-mają pierwszeństwo.
+`Page favorites` i `Favorite order` są dostępne tylko w starszym profilu przed
+pierwszym zapisem zestawu slotów. Zatwierdzone zmiany aktualizują starszą listę
+stron i zestawy importowane z tej listy. Błąd zapisu lub odrzucenie nie zmieniają
+żadnej z nich. MY23 i profile z zapisanymi zestawami mają tylko edytor
+`Favorites`, aby nie było drugiej opcji zmieniającej inną listę. Kolejność
+parametrów ustalasz przez zawartość slotów. Pusty Slot 1 ukrywa cały zestaw;
+sloty 2–5 nie przesuwają się automatycznie na pozycję główną. Na MY23 listy slotów, wyboru pomiaru,
+testów IPC i Shown pages pokazują bieżącą oraz następną pozycję, także po
+przejściu z końca listy na początek.
+`Shown pages` i `Advanced pages` dotyczą zwykłych Readings, a nie jawnego wyboru
+pomiaru do zestawu. `Sort order` ma własny szkic i potwierdzenie zapisu.
+`Auto rotate` zmienia bieżący widok co pięć sekund.
 
 ## Ustawienia: Features
 
@@ -230,9 +238,10 @@ Poniższe nagłówki grup wyjaśniają działanie mocniejszych naciśnięć gór
 są dodatkowymi podmenu. Przy ustawieniu włącz/wyłącz krótkie RES zmienia `O`/`Ø`.
 Przy liście nazwanych wartości krótkie RES wybiera kolejną wartość.
 
-Dla **Launch Nm**, **Shift RPM** i **Pedal trim** krótkie RES rozpoczyna edycję
-(`*`), góra/dół zmienia liczbę, a kolejne krótkie RES ją zatwierdza.
-Długie RES anuluje niezatwierdzoną zmianę.
+Dla **Launch Nm**, **Shift RPM** i **Pedal trim** krótkie RES rozpoczyna edycję,
+a góra/dół zmienia szkic. Dwuklik otwiera potwierdzenie; przytrzymanie zapisuje,
+a kolejny dwuklik odrzuca. Przełączniki i nazwane wartości działają tak samo.
+Szkic nie steruje samochodem przed udanym zapisem.
 
 ### Grupa wyświetlania
 
@@ -241,7 +250,7 @@ Długie RES anuluje niezatwierdzoną zmianę.
 | `LED strip` | Wyłączona / włączona | Steruje zamontowaną, zgodną listwą LED WS281x na podstawie danych samochodu, np. położenia pedału przyspieszenia i biegu. Wymaga dodatkowego sprzętu. Sterowanie listwą jest wstrzymywane, gdy USB korzysta ze wspólnego wyprowadzenia. |
 | `Shift light` | Wyłączona / włączona | Wysyła polecenie pokazania sygnału zmiany biegu po przekroczeniu Shift RPM. Wymaga zgodnej obsługi wskazania w trybie Race. Nie zmienia biegu za kierowcę. |
 | `Shift RPM` | 1500–6000 obr./min, co 250 | Próg obrotów silnika dla sygnału zmiany biegu. |
-| `MY23 display` | Wyłączona / włączona | Wybiera sposób obsługi nowszego zestawu wskaźników dla obsługiwanych funkcji wyświetlania. Nie zmienia szerokości 18/24 znaków ustalonej przy budowaniu oprogramowania. |
+| `MY23 display` | Wyłączona / włączona | Włącza układ MY23: 14 znaków w pierwszej linii i 22 w drugiej. OFF zachowuje starszy układ jednej linii z szerokością 18/24 znaków wybraną przy kompilacji. |
 | `DPF regen alert` | Wyłączona / włączona | Włącza powiadomienia o regeneracji DPF w dieslu. Zobacz [obserwowanie DPF](#obserwowanie-dpf). |
 | `Auto rotate` | Wyłączona / włączona | Automatycznie zmienia stronę bieżących odczytów co pięć sekund. |
 | `Advanced pages` | Wyłączona / włączona | Dodaje techniczne i dodatkowe strony do Readings, z uwzględnieniem profilu silnika i ustawionej widoczności. |
@@ -288,7 +297,7 @@ Długie RES anuluje niezatwierdzoną zmianę.
 | `DTC clear action` | Wyłączona / włączona | Udostępnia `Clear DTCs`, czyli wysyłanie poleceń kasowania błędów do wielu sterowników. |
 | `BCM fault reader` | Wyłączona / włączona | Udostępnia `Read BCM faults`, czyli odczyt błędów wyłącznie sterownika nadwozia BCM. |
 | `Engine profile` (wyświetlane jako `Engine`) | 2.0 I4 / 2.9 V6 / 2.2 D | Wybiera zestaw odczytów dla silnika. Zmiana usuwa pomiary przechowywane chwilowo w pamięci i tymczasowo ukrywa niepasujące ulubione. |
-| `USB mode` | OFF / CAN / ELM327 | Wybiera zwykłą pracę, binarne przechwytywanie CAN albo diagnostykę zgodną z częścią funkcji ELM327. ELM327 jest dostępny w wersjach z jego obsługą. Jednocześnie działa tylko jeden tryb. Wyjdź z Features, aby zastosować zmianę. |
+| `USB mode` | OFF / CAN / ELM327 | Wybiera zwykłą pracę, binarne przechwytywanie CAN albo diagnostykę zgodną z częścią funkcji ELM327. ELM327 jest dostępny w wersjach z jego obsługą. Jednocześnie działa tylko jeden tryb. Wykonaj dwuklik, a przy pytaniu o zapis przytrzymaj RES, aby zapisać i zastosować zmianę. |
 
 Udostępnienie funkcji i jej rzeczywiste włączenie w samochodzie to różne rzeczy.
 Na przykład `Dyno action` pozwala dopiero wybrać odpowiednią akcję. Część akcji
@@ -304,14 +313,15 @@ elektryczne bez takiej informacji mogą nie obsługiwać tej funkcji.
 
 1. Zatrzymaj samochód w warunkach pozwalających używać regulacji lusterek.
    Otwórz `Settings → Features → Park mirror`.
-2. Ustaw `Enabled` na `Ø`. Samo włączenie **nie zapisuje** bieżących pozycji.
-3. Wejdź w `Store position`. Pojawi się `> Adjust; RES=save` — ustaw lusterka,
-   a potem naciśnij RES, aby je zapisać.
+2. Wybierz `Enabled`, ustaw szkic ON, wykonaj dwuklik i przytrzymaj RES,
+   aby zapisać. Samo włączenie **nie zapisuje** bieżących pozycji.
+3. Wejdź w `Store position`. Pojawi się `> Adjust;HOLD=save` — ustaw lusterka,
+   a potem przytrzymaj RES przy pytaniu STORE, aby zlecić zapis.
 4. Przyciskami samochodu ustaw oba lusterka tak, jak chcesz używać ich podczas
-   cofania. Poczekaj, aż przestaną się poruszać, i krótko naciśnij RES.
+   cofania. Poczekaj, aż przestaną się poruszać, i przytrzymaj RES przy pytaniu STORE.
 5. `Store: queued` oznacza, że polecenie trafiło do kolejki wysyłania do BH.
    Ten ekran nie otrzymuje od BH potwierdzenia zapisu. Krótkie RES zamyka
-   komunikat, a długie RES cofa. Jeśli wysłanie było niemożliwe z powodu zajętości,
+   komunikat, a dwuklik RES cofa. Jeśli wysłanie było niemożliwe z powodu zajętości,
    ponów próbę, pozostawiając lusterka w pozycjach do zapisania.
 6. Przywróć normalne pozycje lusterek do jazdy i wyjdź z konfiguracji.
    Sprawdź zapisane pozycje na postoju, wybierając bieg wsteczny.
@@ -397,7 +407,7 @@ ciśnienia hamowania ani pewne potwierdzenie stanu napędu.
 - **Hamulce i start:** włącz `Brake action`, ustaw `Launch Nm` i na postoju
   uruchom Dyno. `Brake override` wysyła polecenie wymuszenia przednich hamulców.
   Gdy C2 zgłosi ten stan, zostaje uzbrojone wspomaganie startu. Potwierdzenie
-  brzmi `Brake+launch? RES`. Wspomaganie startu wysyła polecenie zwolnienia
+  brzmi `Brake+launch? HOLD`. Wspomaganie startu wysyła polecenie zwolnienia
   hamulców po osiągnięciu ustawionego momentu obrotowego.
 - **Ręczne zwolnienie:** jeśli wspomaganie startu jest uzbrojone, najpierw
   wykonaj `Disable launch`, a potem `Brake override`, aby wysłać polecenie
@@ -415,7 +425,7 @@ a nie pewność, że klapy są zamknięte.
 
 W samochodzie z AWD włącz `AWD off action`, pozostań na postoju i wykonaj
 `AWD off request`. BACCAble powtarza polecenie wyłączenia AWD aż do anulowania.
-Wybierz akcję ponownie i potwierdź `Stop AWD req? RES`, aby zakończyć wysyłanie.
+Wybierz akcję ponownie i potwierdź `Stop AWD req?HOLD`, aby zakończyć wysyłanie.
 `AWD req: OFF WAIT` oznacza polecenie wyłączenia AWD. Nie jest pomiarowym
 potwierdzeniem, że napędzane są już tylko dwa koła.
 
@@ -465,7 +475,7 @@ jej ustawienie w Features. Tabela zachowuje kolejność akcji. Pozycje, których
 ustawienia są wyłączone, mogą być pominięte na liście.
 
 Z wyjątkiem `Read BCM faults` i `Peak hold` krótkie RES najpierw wyświetla
-potwierdzenie. Aby wykonać akcję, naciśnij RES ponownie **w ciągu trzech sekund**.
+potwierdzenie. Aby wykonać akcję, przytrzymaj RES **w ciągu trzech sekund**.
 Przejście do innej pozycji lub powrót anuluje potwierdzenie. Przy wykonaniu
 urządzenie ponownie sprawdza wymagane warunki.
 
@@ -474,7 +484,7 @@ urządzenie ponownie sprawdza wymagane warunki.
 | `QV exhaust req` | QV exhaust; zgodny sprzęt | Wysyła polecenie otwarcia klap lub przywrócenia fabrycznego sterowania. WAIT nie potwierdza położenia klap. |
 | `Press HAS button` | Virtual HAS | Wysyła symulowane naciśnięcie przycisku HAS. `HAS: Request sent` nie oznacza, że HAS się włączył. |
 | `Toggle ESC/TC` | ESC/TC control; Dyno nieaktywny | Przełącza polecenie zmiany działania stabilizacji i kontroli trakcji. Potwierdzenie może pozostać niedostępne. |
-| `Toggle Dyno mode` | Dyno action; odpowiednio długi postój; brak wymuszonego hamowania i zmienionego stanu ESC | Wysyła polecenie włączenia/wyłączenia Dyno. Przy włączaniu pojawia się `Dyno+ESC? RES`. Odpowiedź C2 kończy oczekiwanie na kontroler; sprawdź stan samochodu. |
+| `Toggle Dyno mode` | Dyno action; odpowiednio długi postój; brak wymuszonego hamowania i zmienionego stanu ESC | Wysyła polecenie włączenia/wyłączenia Dyno. Przy włączaniu pojawia się `Dyno+ESC? HOLD`. Odpowiedź C2 kończy oczekiwanie na kontroler; sprawdź stan samochodu. |
 | `Brake override` | Brake action; przed zmianą istniejącego wymuszenia trzeba wyłączyć wspomaganie startu; do włączenia wymagane są postój i aktywny Dyno | Wysyła polecenie wymuszenia przednich hamulców ze wspomaganiem startu albo przywrócenia normalnej pracy hamulców. Zobacz opisaną wyżej procedurę zwalniania. |
 | `Disable launch` | Brake action; wspomaganie startu uzbrojone | Wyłącza zwolnienie hamulców wyzwalane momentem obrotowym. Nie zwalnia wymuszonego hamowania. |
 | `AWD off request` | AWD off action; postój przy uruchamianiu | Rozpoczyna powtarzanie polecenia wyłączenia AWD albo anuluje jego wysyłanie. Nie daje pomiarowego potwierdzenia stanu napędu. |
@@ -499,7 +509,7 @@ pomiaru ich rzeczywistego stanu.
    Ekran nie podaje opisu naprawy. Pokazuje maksymalnie **20 kodów**.
    Znak `+` przed kodem oznacza, że odpowiedź zawierała więcej błędów,
    niż mieści się na liście.
-4. Krótkie RES rozpoczyna kolejny odczyt. Długie RES wychodzi i przerywa
+4. Krótkie RES rozpoczyna kolejny odczyt. Dwuklik RES wychodzi i przerywa
    niezakończony odczyt.
 
 `No faults reported` oznacza brak błędów w tej poprawnie odebranej odpowiedzi BCM,
@@ -556,7 +566,7 @@ otwiera podmenu testowe.
 | Wersja C1 | Wersja oprogramowania kontrolera obsługującego menu. |
 | Wersja C2 | Wersja kontrolera podwozia. `? C2 no reply` oznacza brak aktualnej odpowiedzi z wersją. |
 | Wersja BH | Wersja kontrolera nadwozia. `? BH no reply` oznacza brak aktualnej odpowiedzi z wersją. |
-| `MY23:ON/OFF …ch` | Ustawienie MY23 i szerokość wyświetlania ustalona w oprogramowaniu: 18 lub 24 znaki. |
+| `MY23:ON/OFF …ch` | Starszy profil: ustawienie MY23 i szerokość 18/24 znaki. MY23 pokazuje `IPC MY23` oraz `14 / 22 glyphs`. |
 | `Immobilizer: ON/OFF` | Zapisane ustawienie immobilizera BACCAble. Nie można go przełączyć na tej stronie. |
 | `Reports:` | Liczba komunikatów o przyciskach kierownicy odebranych przez menu. Pomaga sprawdzić, dlaczego przyciski nie reagują. |
 | `Gaps:` | Liczba wykrytych przerw w docieraniu komunikatów o przyciskach. |
@@ -583,7 +593,7 @@ a nie rzeczywiste źródło dźwięku. Uruchom te same cztery próby dla każdeg
 | `Both lines` | `TOP:12345678901234567890` oraz `BOTTOM:12345678901234567` | Czy obie linie po 24 znaki są wyświetlane jednocześnie i jak wyglądają. |
 
 Gdy wzorzec jest na ekranie, krótkie RES lub lekkie góra/dół przełącza próbę.
-Przytrzymanie RES wraca do listy testów; kolejne wraca do Information. Po około
+Dwuklik RES wraca do listy testów; kolejny dwuklik wraca do Information. Po około
 60 sekundach bez naciskania przycisków test kończy się automatycznie. BH ponawia
 cały wybrany wzorzec mniej więcej co trzy sekundy i wznawia go po tekście radia.
 Jeśli polecenia testowe z C1 przestaną docierać do BH, BH zakończy test po pięciu
@@ -813,7 +823,8 @@ powinien istnieć port szeregowy do przechwytywania CAN.
    sprawnego huba USB przesyłającego dane. Podłącz przewody przed włączeniem
    trybu. Jeśli komputer ma zamontowany dysk USB BACCAble, najpierw bezpiecznie
    go wysuń.
-2. Wybierz `Settings → Features → USB mode: CAN`, a następnie wyjdź z Features.
+2. Wybierz `Settings → Features → USB mode`, wybierz szkic CAN, wykonaj dwuklik
+   dla potwierdzenia i przytrzymaj RES, aby zapisać.
    C1 przekazuje ustawienie przechwytywania do C2 i BH. Nie trzeba wybierać
    tego trybu oddzielnie w trzech menu.
 3. Rozpoznaj porty widoczne w systemie. W macOS mają postać `/dev/cu.usbmodem…`.
@@ -872,8 +883,7 @@ przenosi też tekst menu: jego awaria może ukryć menu, chociaż USB C1 nadal d
 W wersji testowej z poprawką USB C1 wysyła polecenia oddzielnie do C2 i BH i czeka
 na ich potwierdzenia. Pojawienie się wszystkich portów może potrwać kilka sekund.
 Uruchomienie USB ma najwyżej trzy próby; błąd nie zatrzymuje zwykłej obsługi menu.
-Aby spróbować ponownie, wybierz OFF i wyjdź z Features, a następnie wybierz CAN
-i ponownie wyjdź z Features. Wgraj wszystkie trzy obrazy z tego samego zestawu;
+Aby spróbować ponownie, jawnie zapisz OFF, a następnie jawnie zapisz CAN. Wgraj wszystkie trzy obrazy z tego samego zestawu;
 starszy firmware C2/BH nie obsługuje nowego protokołu.
 
 Po zaktualizowaniu Lab i zainstalowaniu opcjonalnych zależności `usb-status` uruchom:
@@ -898,7 +908,8 @@ Działanie tej wersji testowej w samochodzie wymaga jeszcze potwierdzenia.
 
 ### Diagnostyka zgodna z ELM
 
-Wybierz `USB mode: ELM327`, wyjdź z Features i połącz zgodny program
+W `USB mode` wybierz szkic ELM327, wykonaj dwuklik i przytrzymaj, aby zapisać.
+Następnie połącz zgodny program
 diagnostyczny z nowym portem szeregowym C1. Oprogramowanie obsługuje ograniczony
 zestaw funkcji CAN w stylu ELM. Nie jest pełnym ELM327 obsługującym wszystkie
 protokoły. Nieobsługiwane polecenie może zwrócić `?`, a niedostępne dane —
@@ -915,21 +926,21 @@ Po zakończeniu używaj USB mode OFF do zwykłej pracy.
 
 | Objaw | Co sprawdzić lub zrobić |
 | --- | --- |
-| RES nie otwiera menu | Włączony zapłon i aktywny zestaw wskaźników; CC i ACC wyłączone. Puść przyciski, a potem przytrzymaj RES przez 1,2 s. Sprawdź połączenie i oprogramowanie C1. Diagnostyka ELM może chwilowo wstrzymywać obsługę menu. |
+| RES nie otwiera menu | Włączony zapłon i aktywny zestaw wskaźników; CC i ACC wyłączone. Puść przyciski, a potem przytrzymaj RES przez 0,9 s. Sprawdź połączenie i oprogramowanie C1. Diagnostyka ELM może chwilowo wstrzymywać obsługę menu. |
 | Menu przeskakuje albo przestaje reagować | Rozróżniaj lekkie i mocne naciśnięcia. Po przerwie w komunikacji puść przycisk. W Information sprawdź Reports/Gaps/Input age oraz stan C2/BH. |
 | Na wyświetlaczu zostaje tekst radia | BH powinien ponawiać cały dwuliniowy komunikat BACCAble mniej więcej raz na sekundę i zaczynać go od początku po wiadomości radia. Używa źródła ostatniego odebranego tekstu multimediów. Jeśli menu nadal nie widać, sprawdź łącze BH, zgodność firmware i ramki nadawane przez BH; capture na komputerze zapisuje ramki odebrane, nie własną transmisję BH. |
 | Brakuje strony lub akcji | Sprawdź profil silnika, Shown pages, Advanced pages oraz ustawienie udostępniające akcję w Features. Ukryta strona z innego profilu może nadal zajmować miejsce w ulubionych. |
-| `No favorites` / `No pages` | Dodaj zgodne ulubione lub przywróć widoczność stron. Długie RES nadal pozwala wrócić. |
+| `No favorites` / `No pages` | Dodaj zgodne ulubione lub przywróć widoczność stron. Dwuklik RES nadal pozwala wrócić. |
 | Odczyt pokazuje `--` | Poczekaj na aktualne dane, sprawdź stan zapłonu/silnika i obsługę przez ECU. Diagnostyka USB może wstrzymywać zwykłe zapytania. Obecność strony nie gwarantuje, że sterownik obsługuje jej parametr. |
 | `Batt BCM SOC --` lub `Batt charge --%` | Porównaj niezależne źródła na Battery sources. Nie traktuj braku SOC jak 0% i nie używaj IBS override jako naprawy odczytu. |
-| Ustawienie wraca do poprzedniej wartości po restarcie | Wyjdź z konfiguracji, aby zapisać. Rozwiąż problem `× Save failed: RES`. Zmiany pozostawione tylko w pamięci roboczej nie są trwałe. |
+| Ustawienie wraca do poprzedniej wartości po restarcie | Użyj potwierdzenia i przytrzymania, aby zapisać. Rozwiąż problem `× Save failed: RES`. Zmiany pozostawione tylko w pamięci roboczej nie są trwałe. |
 | `! Disabled in setup` | Włącz odpowiednie ustawienie w Features i wróć. |
 | `! Stop the car`, `! Enable Dyno`, `! Release brake`, `! Reset ESC`, `! Disable launch` | Spełnij wskazany warunek: zatrzymaj auto, włącz Dyno, zwolnij wymuszone hamowanie, przywróć normalny stan ESC albo wyłącz wspomaganie startu. Przy hamulcach stosuj opisaną procedurę wyłączenia wspomagania i zwolnienia. |
 | `! Request pending` | Poczekaj na wynik oczekującego polecenia. Nie zakładaj, że już wykonano je albo anulowano. |
 | `? C2 no reply` / `? BH no reply` | Sprawdź zasilanie, zgodność oprogramowania i połączenie między kontrolerami. Brak aktualnej odpowiedzi z wersją nie dowodzi zatrzymania całej magistrali CAN. |
 | Lusterko nie opuszcza się | Sprawdź obsługę informacji o pozycji, zapis celu, Enabled, pracujący silnik, wsteczny i kierunkowskaz po właściwej stronie. Sprawdź też BH. Samo `Store: queued` nie potwierdza zapisu. |
 | Pedal mode się zmienia, ale reakcja pedału nie | Sprawdź zgodność kontrolera pedału i komunikację. Porównaj odczyt Pedal map z wybranym ustawieniem. |
-| Brak portu USB CAN | Wyjdź z DFU, uruchom zgodne oprogramowanie aplikacji, podłącz przewód danych i zastosuj CAN, wychodząc z Features. Sprawdź, czy nie upłynął czas oczekiwania. Działające DFU potwierdza tylko połączenie USB bootloadera. |
+| Brak portu USB CAN | Wyjdź z DFU, uruchom zgodne oprogramowanie aplikacji, podłącz przewód danych i zapisz CAN dwuklikiem i przytrzymaniem przy pytaniu o zapis. Sprawdź, czy nie upłynął czas oczekiwania. Działające DFU potwierdza tylko połączenie USB bootloadera. |
 | Pojawiają się tylko dwa z trzech portów | Ustal brakujący kontroler po nazwie produktu/numerze seryjnym albo podłączając pojedynczo. Sprawdź jego przewód, oprogramowanie i limit czasu trybu CAN. Ponownie zastosuj tryb z podłączonymi wszystkimi potrzebnymi przewodami. |
 | Ramki się zapisują, ale sygnały są nieznane | Przechwytywanie nie nazywa automatycznie sygnałów. Porównuj zmiany ramek z zapisanymi czynnościami i powtarzanymi próbami. Zachowaj oryginalną sesję. |
 
@@ -937,9 +948,9 @@ Po zakończeniu używaj USB mode OFF do zwykłej pracy.
 
 | Starsza nazwa lub sposób działania | Obecny odpowiednik |
 | --- | --- |
-| Krótkie RES wraca do menu głównego | Krótkie RES wybiera; **długie RES cofa**. |
+| Krótkie RES wraca do menu głównego | Krótkie RES wybiera; **dwuklik RES cofa**. |
 | Mocne naciśnięcie pomija dziesięć parametrów | Mocne naciśnięcie zmienia grupę; w Favorites przesuwa o jedną stronę. |
-| Save & Exit | Zapis automatyczny przy wyjściu z konfiguracji; ręczne ponowienie przy błędzie zapisu. |
+| Save & Exit | Szkic, potwierdzenie i przytrzymanie, aby zapisać; jawne ponowienie po błędzie. |
 | Jedna płaska lista parametrów i funkcji | Favorites, Readings, Actions, Settings, Information. |
 | Włączenie Park Mirror zapisuje pozycje | `Park mirror → Enabled` i `Store position` to osobne operacje. |
 | Ogólne Battery % / BATTERY | Oddzielne źródła SOC: BCM, sterownik silnika i IBS. Zobacz tabelę źródeł akumulatora. |

@@ -17,8 +17,9 @@ proof that every ECU supports every inherited diagnostic request.
 The legacy fuel selector stays in settings slot 16; slot 36 adds gasoline V6
 capability, and slot 37 adds Advanced pages. Unused zero-filled, erased or invalid
 new slots default to zero. Existing diesel remains diesel; existing gasoline
-defaults to I4, so V6 owners must select V6 once. The 40-slot settings record and
-80-byte menu preferences are unchanged.
+defaults to I4, so V6 owners must select V6 once. The 40-slot settings record is unchanged. MY23 UI imports the 80-byte
+menu preferences into a 142-byte record retaining that original serialization
+and adding five-slot Favorite sets; see [the menu guide](MENU_UX.md).
 
 Engine filtering applies to readings, editors, Favorites and automatic page entry.
 Incompatible Favorites remain saved and return with the corresponding profile.
