@@ -16,11 +16,13 @@ _Static_assert(DASHBOARD_MESSAGE_MAX_LENGTH % DISPLAY_FRAGMENT_SIZE == 0 && DISP
 typedef struct {
     uint8_t sent[DISPLAY_OUTPUT_LENGTH];
     uint8_t target[DISPLAY_OUTPUT_LENGTH];
+    uint8_t active[DISPLAY_OUTPUT_LENGTH];
     uint8_t offered[DISPLAY_FRAGMENT_SIZE];
     uint16_t known, forced, dirty;
     uint8_t cursor, fragment, count;
-    bool valid, offering;
+    bool valid, offering, full, transferring;
 } DisplayStream;
+void display_stream_set_full(DisplayStream *stream, bool full);
 void display_stream_submit(DisplayStream *stream, const uint8_t *text);
 void display_stream_submit_parts(DisplayStream *stream, const uint8_t *text, uint8_t count);
 bool display_stream_peek(DisplayStream *stream, uint8_t *fragment, uint8_t text[3]);

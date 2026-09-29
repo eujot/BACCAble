@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "dictionary_version": "2026-09-29.1",
+  "dictionary_version": "2026-09-29.2",
   "vehicle": {
     "model": "Alfa Romeo Giulia (owner-reported)",
     "model_year": null,
@@ -8,7 +8,7 @@
     "vin": null,
     "scope": "This checkout and these sessions only; not a universal Alfa Romeo or cross-model DBC."
   },
-  "firmware_source_commit": "d79c4145f6ca3801461bdabc3d879564b1c69e92",
+  "firmware_source_commit": "d0d0217e7d6138ce894a119668338dfc33ddbd88",
   "source_sha256": {
     "firmware/baccable/vehicle/display_frames.c": "4289f68814aa56f0d67b57ae362eb581e2e6cc3731cc593790d5794f71060a6e",
     "firmware/baccable/vehicle/telemetry_frames.c": "83ef051370d33eb44ca25b213242e05f60523a9c45b40339b41bde33e0234aa1",
@@ -34,10 +34,10 @@
     "firmware/baccable/diagnostics/parameter_catalog.c": "df4e0c9beb1044eb0c3627455f80666b4a5edf912aa677623ec4d36b168151b3",
     "firmware/baccable/diagnostics/parameter_cache.c": "23f1168387fdb8aabc0d552282aefefd31624e2bf441d83cedfcd503f834e0d0",
     "docs/architecture/REFERENCE_SIGNALS.md": "fb8188e6938df5e74e23682b02e065f79db95c059e0999d2b325d07a9c94e6cf",
-    "firmware/baccable/features/body.c": "88282ff5b0e389a30808612c73ee9e03b75ae2e9e93cd89c8972f105445e8e39",
+    "firmware/baccable/features/body.c": "475316be9eb47bc2c23a9a2b6297a45856e0a1c5193d2fba4a68f0b3b61999f0",
     "firmware/baccable/features/ipc_display_test.c": "af47a187e2e3a85965e12afb4a3b83c3d2754ffde648d81a046ee26af66b8e9c",
     "firmware/baccable/features/my23_ui.c": "6e5c772adfe061fc10c37e84908886858ac483b45b97aae207d6c2bb4b3814f2",
-    "firmware/baccable/features/display_stream.c": "a160b72e764d53932764c57ead89b9f986c1b27b5545443f48a00a0809d8bfd5"
+    "firmware/baccable/features/display_stream.c": "0f77e502c6298392fe61b50981dae6c98d0b5c52bf1103e68220082e62fb9884"
   },
   "byte_convention": "Zero-based byte indexes; bit 0 is LSB. Parts are concatenated in listed most-significant-first order; physical = raw * scale + offset.",
   "capture_limits": [
@@ -176,7 +176,7 @@
           "origin": "implementation"
         }
       ],
-      "note": "Transport length is last index + 1. Source context is the last observed text context, not a guaranteed live audio-source selector. UTF-16BE-compatible packing; IPC glyph/surrogate support is not established. The MY23 UI candidate transmits selected BMP glyphs as 14 padded characters, CR, 22 padded characters and two trailing spaces (13 fragments); legacy remains variable-length L1 plus its footer. Factory text field lengths remain variable. These captured sessions contain RX, not this candidate's BH TX, so they do not prove its visible alignment.",
+      "note": "Transport length is last index + 1. Source context is the last observed text context, not a guaranteed live audio-source selector. UTF-16BE-compatible packing; IPC glyph/surrogate support is not established. The MY23 UI candidate transmits selected BMP glyphs as 14 padded characters, CR, 22 padded characters and two trailing spaces (13 fragments); legacy remains variable-length L1 plus its footer. Factory text field lengths remain variable. These captured sessions contain RX, not this candidate's BH TX, so they do not prove its visible alignment. Current firmware defaults to immutable complete screen passes (Full); RAM-only Delta retains changed-fragment transmission. Menu fragment pacing is 50 ms by default, with temporary 20/10 ms choices and a five-second BH lease. These implementation options do not change the frame bit layout or establish timing/visibility in historical RX captures.",
       "exact_dlc": 8,
       "source_context_labels": {
         "0x06": {

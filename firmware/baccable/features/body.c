@@ -5,7 +5,7 @@
 #include "features/parking_mirrors.h"
 #include "storage/flash_records.h"
 
-/* Preserve the established IPC pacing while avoiding redundant text fragments. */
+/* Safe default pacing; faster intervals are temporary vehicle-test options. */
 #define DISPLAY_FRAGMENT_INTERVAL_MS 50U
 #define DISPLAY_KEEPALIVE_INTERVAL_MS 1000U
 #define DISPLAY_FACTORY_SETTLE_MS 250U
@@ -16,6 +16,28 @@
 #if defined(BACCABLE_BH)
 
 static DisplayStream screen;
+static uint8_t display_pace, display_method;
+static uint32_t display_options_updated;
+static bool display_options_leased;
+static const uint8_t display_intervals[] = {50, 20, 10};
+
+static void reset_screen(void) {
+    display_stream_reset(&screen);
+    display_stream_set_full(&screen, display_method == 0);
+}
+void body_display_options(uint8_t pace, uint8_t method) {
+    if (pace >= 3 || method >= 2) return;
+    bool changed = pace != display_pace || method != display_method;
+    display_pace = pace;
+    display_method = method;
+    display_options_updated = currentTime;
+    display_options_leased = pace || method;
+    if (changed) {
+        display_stream_set_full(&screen, method == 0);
+        display_stream_restart(&screen);
+    }
+}
+
 static bool screen_my23;
 static uint32_t last_full_refresh;
 static uint32_t factory_last_frame_time;
@@ -42,7 +64,7 @@ static bool audio_text_code(uint8_t info_code) {
 static void release_display(void) {
     menu_active = false;
     factory_interrupted = false;
-    display_stream_reset(&screen);
+    reset_screen();
     if (factory_saved_valid) {
         factory_restore = true;
         factory_restore_index = 0;
@@ -63,7 +85,7 @@ void body_display_submit(const uint8_t *text) {
         if (ipc_display_test_select(text[1], text[2], currentTime)) {
             menu_active = false;
             factory_restore = false;
-            display_stream_reset(&screen);
+            reset_screen();
         }
         return;
     }
@@ -76,7 +98,9 @@ void body_display_submit(const uint8_t *text) {
     uint8_t output[DISPLAY_OUTPUT_LENGTH];
     memset(output, ' ', sizeof(output));
     unsigned length = DASHBOARD_MESSAGE_MAX_LENGTH;
-    screen_my23 = text[0] == MY23_PACKET_MARKER;
+    bool new_profile = text[0] == MY23_PACKET_MARKER;
+    if (screen_my23 != new_profile) reset_screen();
+    screen_my23 = new_profile;
     if (text[0] == MY23_PACKET_MARKER) {
         /* Fixed protocol fields: L2 never shifts with L1's text length. */
         memcpy(output, text + 1, MY23_L1_VISIBLE);
@@ -152,6 +176,9 @@ void body_display_factory_frame(const uint8_t data[8], uint8_t dlc) {
 
 /* Prepare body-bus features and restore saved mirror positions. */
 void body_init() {
+    display_pace = display_method = 0;
+    display_options_leased = false;
+    reset_screen();
     // let's open the can bus because we may need data
     can_set_bitrate(CAN_BITRATE_125K); // set can speed to 125kpbs
     can_enable();                      // enable can port
@@ -186,8 +213,10 @@ void body_init() {
 
 /* Update dashboard content, mirrors and enabled body-bus functions. */
 void body_process() {
+    if (display_options_leased && currentTime - display_options_updated >= 5000U)
+        body_display_options(0, 0);
     if (chassis_state.stability_inverted) {
-        display_stream_reset(&screen);
+        reset_screen();
         ipc_display_test_stop();
         menu_active = false;
         factory_interrupted = false;
@@ -229,7 +258,7 @@ void body_process() {
                 goto done;
         }
         if (!factory_restore && currentTime - display_state.last_sent_telematic_display_info_msg_time >=
-            DISPLAY_FRAGMENT_INTERVAL_MS) {
+            (ipc_display_test_active() ? DISPLAY_FRAGMENT_INTERVAL_MS : display_intervals[display_pace])) {
             if (ipc_display_test_active()) {
                 uint8_t test_frame[8];
                 ipc_display_test_refresh(currentTime);

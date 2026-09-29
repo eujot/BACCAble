@@ -226,9 +226,9 @@ static void expect_my23_list(const char *first, const char *next) {
 }
 static void test_my23_remaining_list_previews(void) {
     fresh_contract(); to_settings(); settings_state.ipc_my23_is_installed = 1; menu_render();
-    const char *entries[] = {"Features", "Favorites", "Shown pages", "Sort order"};
-    for (unsigned i = 0; i < 4; ++i) {
-        expect_my23_list(entries[i], entries[(i+1)%4]); menu_event(MENU_NEXT);
+    const char *entries[] = {"Features", "Favorites", "Shown pages", "Sort order", "BACCAble IPC"};
+    for (unsigned i = 0; i < 5; ++i) {
+        expect_my23_list(entries[i], entries[(i+1)%5]); menu_event(MENU_NEXT);
     }
     menu_event(MENU_NEXT); menu_event(MENU_SELECT); menu_event(MENU_SELECT);
     const char *slots[] = {"Slot 1" MY23_BULLET "OIL", "Slot 2" MY23_BULLET "WTR", "Slot 3" MY23_BULLET "Empty", "Slot 4" MY23_BULLET "Empty", "Slot 5" MY23_BULLET "Empty"};
@@ -375,4 +375,31 @@ static void test_atomic_favorite_selection_identity(void) {
     assert(!memcmp(selected, screen_packet, sizeof(selected)));
     menu_event(MENU_NEXT);
     assert(!memcmp(screen_packet + 2, "SPD", 3));
+}
+
+static void test_ipc_options_are_volatile(void) {
+    for (unsigned profile = 0; profile < 2; ++profile) {
+        fresh_contract(); to_settings();
+        settings_state.ipc_my23_is_installed = profile;
+        menu_event(MENU_PREVIOUS); menu_event(MENU_SELECT);
+        assert(strstr(screen, "Safe 50ms"));
+        unsigned writes = settings_writes + preference_writes;
+        uart_busy = true; menu_event(MENU_SELECT); uart_busy = false;
+        now += 2000; menu_render(); assert(strstr(screen, "Safe 50ms"));
+        menu_event(MENU_SELECT);
+        assert(last_command == BH_CMD_IPC_OPTIONS && last_ipc_pace == 1 && last_ipc_method == 0);
+        menu_event(MENU_SELECT); assert(last_ipc_pace == 2);
+        menu_event(MENU_NEXT); menu_event(MENU_SELECT); assert(last_ipc_method == 1);
+        now += 1000; menu_process(); assert(last_ipc_pace == 2 && last_ipc_method == 1);
+        assert(settings_writes + preference_writes == writes);
+        menu_init(); menu_event(MENU_BACK);
+        /* menu_init keeps visible state; BACK above returns to root. */
+        menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_SELECT);
+        menu_event(MENU_PREVIOUS); menu_event(MENU_SELECT);
+        assert(strstr(screen, "Safe 50ms"));
+        menu_event(MENU_SELECT); menu_event(MENU_NEXT); menu_event(MENU_SELECT);
+        menu_event(MENU_NEXT); menu_event(MENU_SELECT);
+        assert(last_ipc_pace == 0 && last_ipc_method == 0);
+        assert(settings_writes + preference_writes == writes);
+    }
 }

@@ -40,6 +40,7 @@ static unsigned settings_writes, preference_writes, usb_applies;
 static bool usb_needs_apply;
 static uint16_t fail_type;
 static uint8_t last_command;
+static uint8_t last_ipc_pace, last_ipc_method;
 static bool uart_busy;
 static uint8_t setup_page_for(uint8_t slot);
 uint32_t HAL_GetTick(void) { return now; }
@@ -57,6 +58,10 @@ uint8_t board_uart_send(const uint8_t *data, size_t size) {
     } else {
         ++commands;
         last_command = size > 1 ? data[1] : 0;
+        if (data[0] == BhBusID && last_command == BH_CMD_IPC_OPTIONS) {
+            assert(size == 4);
+            last_ipc_pace = data[2]; last_ipc_method = data[3];
+        }
     }
     return 1;
 }
@@ -1133,6 +1138,7 @@ int main(void) {
 #endif
     const HostTest tests[] = {
         HOST_TEST(test_my23_glyph_budget),
+        HOST_TEST(test_ipc_options_are_volatile),
         HOST_TEST(test_atomic_favorite_selection_identity),
         HOST_TEST(test_my23_remaining_list_previews),
         HOST_TEST(test_v6_parameter_label_identity),
