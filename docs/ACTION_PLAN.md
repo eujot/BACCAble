@@ -88,6 +88,82 @@ the car. Use the acceptance procedure in
 [MENU_UX.md](architecture/MENU_UX.md#refresh-and-vehicle-boundaries).
 
 
+### MY23 plan re-audit: incomplete contract, 2026-09-29
+
+Reviewed all 25 sections of the owner's untracked `BACCAble_MY23_Agent_Plan.md`
+against PR #47, implementation `d79c414` and documentation `ccfa10e`. This audit
+supersedes any interpretation of the implementation summary as full completion.
+The candidate has not been merged or hardware accepted. Firmware was not changed
+by this review. The existing host suite was rerun: 296 passing scenarios across
+24 executables, with Apple Clang ASan/UBSan. Additional probes compiled against
+the production menu/setup/formatter sources reproduced the gaps below; source,
+executable and output are under ignored repo `tmp/my23_audit_*` and
+`tmp/my23-audit-probe.log`. These exploratory probes are not committed regression
+tests. The earlier 16-profile ARM builds and successful PR CI are prior evidence;
+this documentation-only audit did not rebuild firmware.
+
+| Plan section | Code/verification status | Evidence or remaining work |
+| --- | --- | --- |
+| 1. Display strategy | Implemented | Shared controller; independent runtime IPC profile and legacy width. |
+| 2. Visible layout | Partial | 14/22 budgets exist, but generic views still use static `2X BACK` instead of contextual L2. |
+| 3. List behavior | Partial | Root, groups, Settings, Features and Favorite sets have current/next; slot/picker, compatibility editors and IPC test lists do not. |
+| 4. UI modes | Partial | Modes and render paths exist; not all applicable views use their specified contents. |
+| 5. Input model | Implemented | Central FSM, 30/280/900 ms timing, cancellation, suppression and boundary tests. Vehicle timing is unaccepted. |
+| 6. Back/save/discard | Partial | Features save closes the draft; next Back skips the Features list. Compatibility editors mutate live preferences and save on exit without discard. |
+| 7. Labelled holds | Implemented in code | Save/apply/store prompts exist; physical legibility remains acceptance work. |
+| 8. Legacy | Partial | Single-line rendering and central gestures retained; universal draft workflow has the same compatibility-editor exceptions. |
+| 9. Atomic measurements | Implemented with compatibility | Atomic Favorites reuse stable measurement IDs; old composite pages remain as permitted by gradual migration. |
+| 10. IDs/persistence | Partial | Old IDs and 0x103/0x104 migration preserved and tested; legacy favorite edits no longer update the imported MY23 sets. |
+| 11. Full/short/tiny labels | Partial | Common labels explicit; generated fallback wrongly uses the non-V6 name for V6-only IDs 19/20. |
+| 12. Five-slot Favorites | Implemented | Six ordered five-slot sets per fuel profile, slot 1 primary; isolated persistence with failure rollback. |
+| 13. Favorites editing | Partial | Editing confined to Settings; slot/picker browsing does not provide the required current/next presentation. |
+| 14. Favorite rendering | Implemented in code | Primary on L1, other measurements on L2, supported enums and units; V6 label bug still applies. |
+| 15. Packing | Implemented | Short-to-tiny retry, ordered whole segments, 22-token budget, no trailing bullet/partial segment; boundary tests. |
+| 16. UTF width | Implemented for selected vocabulary | Selected ten symbols map to one token/code point; encoding/clipping/bounds tested. Token-string strlen here counts glyphs, not raw UTF-8 bytes. |
+| 17. Separator | Implemented | Bullet used for compact MY23 separation. |
+| 18. Alignment | Partial, hardware unverified | Fixed padded fields and GEAR/short-replacement regression tests; physical shifted-L2 cause/fix not yet confirmed. |
+| 19. Final screens | Partial | Save feedback appears, then Features list replaces the setting editor; slot previews and some contextual L2 screens differ. |
+| 20. Mandatory tests | Partial | Existing 296 scenarios pass but miss save-then-Back parent, V6-only labels, legacy/atomic favorite consistency and all-list preview contracts. One save test asserts the incorrect draft closure. |
+| 21. Matrix | Verified in prior build/CI | Four independent IPC/width profiles across C1/C2/BH/CAN; no new firmware changes in this audit. |
+| 22. Vehicle acceptance | Not performed | All 17 MY23 acceptance items remain open; no alignment, source recovery, flicker or latency claim. |
+| 23. Phased implementation | Partial | Two broad implementation/documentation commits, not the recommended small phase sequence; vehicle phase missing. |
+| 24. Non-negotiable contract | Not fully satisfied | Sections 2/3/6/11/13/20 and physical acceptance remain incomplete. |
+| 25. Preparation | Mostly satisfied | Instructions, Git, IDs, encoding/input/transport and tests inspected; unrelated files preserved; small-commit recommendation not followed. |
+
+Required corrections before treating the MY23 plan as complete:
+
+1. Keep a successfully saved Features draft open, update its original value and
+   dirty state, return to the same editor after feedback, and have a separate
+   Back return exactly one level to Features. The probe prints `stage=0` and a
+   LIST packet after save; next Back renders Settings (`Features` / `Page favorites`).
+   `settings/setup_menu.c:491` clears `staged`; existing
+   `tests/test_my23_ui.c:90` incorrectly expects this. Update both guides' current
+   claim that save remains in the setting editor when fixing the behavior.
+2. Apply isolated save/discard semantics to Page favorites, Shown pages and
+   Favorite order, or remove the competing legacy editors from the MY23 workflow
+   while preserving stored IDs and legacy compatibility. Explicitly define how
+   legacy page selections and atomic sets interact. The production probe shows
+   a saved Page favorites edit changes legacy membership but leaves all 60 atomic
+   slot bytes unchanged, so MY23 live Favorites do not reflect that editor.
+3. Render all remaining list/slot/picker views with useful current/next context
+   and uncluttered names. `FAV_SLOTS` currently repeats the selected parameter on
+   both lines; the compatibility and IPC-test views fall through the generic
+   `2X BACK` footer. Audit long notices too: generic rendering clips L1 to 14
+   glyphs without moving the useful remainder into L2.
+4. Fix source-aware fallback parameter labels, preferably explicit catalog
+   metadata for all supported measurements. IDs 19 (`Ignition cyl 5`) and 20
+   (`Ignition cyl 6`) both format as `E 1.0°`: source lookup falls back to V6,
+   but name lookup still passes `v6=false` and abbreviates `Empty`.
+5. Add permanent failing-then-passing regressions for those confirmed gaps and
+   complete per-view gesture/render checks. UART submission is one complete
+   screen packet; CAN output remains a sequence of fragments, so rapid-refresh
+   visual consistency still needs a TX trace and vehicle acceptance, not just
+   an assertion that both fields were built together.
+6. Execute and record every section-22 vehicle check with matching C1/C2/BH
+   images. Maintain the small Flash/RAM headroom recorded above when correcting
+   the candidate. No new beta is justified by this audit alone.
+
+
 CAN session knowledge and iterative analysis, **2026-09-29**, branch
 `feat/lab-can-dictionary`, based on source snapshot `c550e161`: reviewed
 12 owner recordings from September 26–28 (8,446,020 frames, 99 manual events,
