@@ -183,6 +183,10 @@ permits. Lists do not show item counters.
 5. Open main-menu `Favorites` to view live values. On legacy, a configured set
    shows its primary measurement on the single line.
 
+Returning from other lists keeps the selected Favorite, as does engine filtering
+if that set remains available. Otherwise the first available set is selected.
+This selection is remembered separately for gasoline and diesel until restart.
+
 The renderer first tries short labels for all secondary measurements. If they
 do not fit in 22 glyphs, it retries with tiny labels. It then keeps only complete
 segments that fit, in order: no partial value, trailing bullet, or extra page.

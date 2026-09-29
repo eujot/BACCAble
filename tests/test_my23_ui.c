@@ -349,3 +349,30 @@ static void test_my23_favorite_duplicate_rollback(void) {
     expect_my23_list("Slot 1" MY23_BULLET "OIL","Slot 2" MY23_BULLET "WTR");
     assert(!memcmp(original,saved,sizeof(saved)));
 }
+
+/* Other lists and engine filtering must not replace the selected Favorite. */
+static void test_atomic_favorite_selection_identity(void) {
+    fresh_contract();
+    assert(menu_preferences_save() == 0);
+    saved[MENU_PREFS_SIZE] = saved[MENU_PREFS_SIZE + 1] = 1;
+    memset(saved + MENU_PREFS_SIZE + 2, FAVORITE_EMPTY, FAVORITE_STORAGE_SIZE - 2);
+    saved[MENU_PREFS_SIZE + 2] = 32; /* MultiAir: hidden on V6. */
+    saved[MENU_PREFS_SIZE + 2 + FAVORITE_MAX_PARAMS] = 6; /* Gear. */
+    saved[MENU_PREFS_SIZE + 2 + 2 * FAVORITE_MAX_PARAMS] = 7; /* Speed. */
+    settings_state.ipc_my23_is_installed = 1;
+    menu_init(); menu_render();
+    menu_event(MENU_NEXT);
+    uint8_t selected[UART_SCREEN_BUFFER_SIZE];
+    memcpy(selected, screen_packet, sizeof(selected));
+    assert(!memcmp(screen_packet + 2, "GEAR", 4));
+    menu_event(MENU_BACK); menu_event(MENU_NEXT); menu_event(MENU_SELECT);
+    menu_event(MENU_SELECT); /* First reading of the remembered group. */
+    menu_event(MENU_BACK); menu_event(MENU_BACK); menu_event(MENU_PREVIOUS);
+    menu_event(MENU_SELECT);
+    assert(!memcmp(selected, screen_packet, sizeof(selected)));
+    settings_state.gasoline_v6 = 1;
+    menu_engine_changed(); menu_render();
+    assert(!memcmp(selected, screen_packet, sizeof(selected)));
+    menu_event(MENU_NEXT);
+    assert(!memcmp(screen_packet + 2, "SPD", 3));
+}

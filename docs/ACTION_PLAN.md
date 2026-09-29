@@ -88,6 +88,25 @@ the car. Use the acceptance procedure in
 [MENU_UX.md](architecture/MENU_UX.md#refresh-and-vehicle-boundaries).
 
 
+### MY23 focused PR follow-up, 2026-09-29
+
+Budget-limited review of PR #47 after `9e5a4e8`, focused on the plan's stable
+Favorites/list selection contract. Confirmed a shared-cursor bug: browsing
+Readings replaced the atomic Favorite selection, and filtering an earlier set
+could move the cursor to another set. A regression failed on the previous code.
+Live Favorites now retain a set ID per fuel profile separately from list cursors;
+filtering restores that ID when eligible, otherwise the first available set.
+This is RAM-only state; saved settings and migration formats are unchanged.
+Both user guides and MENU_UX document the behavior.
+
+Validation: 281 passing scenarios across all five menu test executables with
+Apple Clang ASan/UBSan, including the new cross-list/filtering regression.
+C1 MY23/LARGE_DISPLAY compiles with full Arm GNU 15.2.Rel1: 94,452 bytes Flash,
+15,528 bytes static RAM including reserved heap/stack. `git diff --check` passes.
+Logs: `tmp/my23-quick-audit.log`, `tmp/my23-quick-arm.log`. This incremental
+review does not replace the earlier full matrix or the pending vehicle tests.
+Previously packaged `tmp/my23-9e5a4e8.zip` does not include this correction.
+
 ### MY23 audit corrections, 2026-09-29
 
 Follow-up on `feat/my23-menu-ux` / PR #47, based on audit commit `3d94322`.

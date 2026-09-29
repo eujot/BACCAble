@@ -155,6 +155,11 @@ slot; slot 1 is always the primary. Clearing it hides that screen. Assigning an
 already selected measurement clears its previous slot. User edits happen only
 under `Settings → Favorites → Favorite N → Slot N`.
 
+Live atomic Favorites retain a separate set ID per fuel profile in RAM. Other
+lists cannot overwrite this selection; filtering restores the same eligible
+set by ID, falling back to the first available set. Startup selects the first
+available set. The EEPROM record and legacy remembered page IDs are unchanged.
+
 Full names reuse the compatible source catalog, with explicit native/ECU/raw
 names where needed. Short/tiny labels and units belong to presentation. Common
 labels include OIL/O, OILE/OE, WTR/W, IC, ICI, MA, GEAR/G, RPM/R, SPD/S, BST/B,

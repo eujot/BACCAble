@@ -1133,6 +1133,7 @@ int main(void) {
 #endif
     const HostTest tests[] = {
         HOST_TEST(test_my23_glyph_budget),
+        HOST_TEST(test_atomic_favorite_selection_identity),
         HOST_TEST(test_my23_remaining_list_previews),
         HOST_TEST(test_v6_parameter_label_identity),
         HOST_TEST(test_page_editor_transactions),

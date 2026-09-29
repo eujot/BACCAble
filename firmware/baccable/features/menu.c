@@ -103,6 +103,8 @@ static MenuPreferences preferences, editor_draft;
 static bool editor_confirm;
 static FavoriteParameters favorites[2][FAVORITE_SET_COUNT];
 static FavoriteParameters favorite_draft;
+/* Stable set identities; reading/editor lists share a separate cursor. */
+static uint8_t selected_favorite[2];
 static uint8_t favorite_set, favorite_slot, favorite_pick;
 static bool favorite_confirm, atomic_favorites, sort_draft, sort_confirm;
 #define MENU_STORAGE_SIZE (MENU_PREFS_SIZE + FAVORITE_STORAGE_SIZE)
@@ -466,6 +468,7 @@ void menu_init(void) {
     menu_diagnostics_reset();
 #endif
     view = FAVORITES;
+    memset(selected_favorite, 0, sizeof(selected_favorite));
     root = 0;
     group = 1;
     function = 0;
@@ -541,6 +544,7 @@ static void select_page(void) {
     }
     uint8_t index = list[selection];
     if (view == FAVORITES && (atomic_favorites || settings_state.ipc_my23_is_installed)) {
+        selected_favorite[engine] = index;
         dashboard_state.dashboard_page_index = 0;
         parameter_request_cancel();
         parameter_peak_reset();
@@ -573,7 +577,9 @@ static void build_pages(uint16_t selected) {
         list_count = 0;
         for (unsigned i = 0; i < FAVORITE_SET_COUNT; ++i)
             if (favorite_parameter_supported(engine, gasoline_v6, favorites[engine][i].params[0])) list[list_count++] = i;
-        if (selection >= list_count) selection = 0;
+        selection = 0;
+        for (unsigned i = 0; i < list_count; ++i)
+            if (list[i] == selected_favorite[engine]) selection = i;
         select_page();
         return;
     }

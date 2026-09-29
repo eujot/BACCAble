@@ -196,6 +196,11 @@ mieści się na nie miejsce. Listy nie pokazują numeru bieżącej pozycji.
 5. Bieżące wartości zobaczysz w `Favorites` menu głównego. Starszy ekran
    pokazuje główny parametr zapisanego zestawu w jednej linii.
 
+Po powrocie z innych list pozostaje wybrany ten sam zestaw ulubionych. Tak samo
+działa zmiana filtra silnika, jeśli zestaw nadal jest dostępny. W przeciwnym
+razie wyświetla się pierwszy dostępny zestaw. Wybór jest pamiętany osobno dla
+benzyny i diesla do ponownego uruchomienia urządzenia.
+
 Renderer najpierw próbuje krótkich etykiet wszystkich dodatkowych pomiarów.
 Jeśli nie mieszczą się w 22 znakach, używa mniejszych skrótów. Następnie zostawia
 kompletne segmenty w ustalonej kolejności: bez urwanej wartości, końcowej kropki
