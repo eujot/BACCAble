@@ -36,11 +36,14 @@ to automatically flash hardware or publish every future change.
 
 ## Release status, 2026-09-29
 
-Preparing `v5-beta-19` from merged master commit `6c2c830` (PR #47). Release
-notes are in [v5-beta-19.md](releases/v5-beta-19.md). The beta workflow builds
-and verifies C1/C2/BH/CAN with the pinned CI toolchain before publishing. No
-vehicle acceptance is implied by publishing; MY23 display and button behavior
-remain on the hardware checklist below.
+Released `v5-beta-19` from master commit `d071cfc` after PR #47. The beta
+workflow completed successfully (run 36594882707): host tests, Lab tests,
+menu labels, release-script tests, cppcheck, and all four firmware flavor builds
+passed. C1/C2/BH/CAN images plus `BUILD_INFO.json` and `SHA256SUMS` are attached
+to the [GitHub release](https://github.com/eujot/BACCAble/releases/tag/v5-beta-19).
+Notes are maintained in [v5-beta-19.md](releases/v5-beta-19.md). Vehicle
+acceptance is still open; publication does not confirm MY23 screen appearance,
+button timing or behavior in the car.
 
 ## Current work
 

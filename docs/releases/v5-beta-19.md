@@ -17,7 +17,7 @@ in PR #47. Build identity is recorded in the attached `BUILD_INFO.json` and
 - Lists show the current and next item, and the menu uses distinct short and
   tiny parameter labels to fit the display.
 - CI exercises legacy/MY23 and normal/large-display builds for C1, C2, BH and
-  CAN. Firmware source is commit `6c2c830` (master after PR #47).
+  CAN. Firmware source is commit `d071cfc` (master after PR #47 and this notes update).
 
 ## Installation and limits
 
