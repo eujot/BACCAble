@@ -290,5 +290,5 @@ int main(void) {
         HOST_TEST(test_bounded_radio_deferral_and_can_retry),
         HOST_TEST(test_utf_and_line_lengths_under_each_source),
     };
-    host_tests_run("body_display", tests, sizeof(tests) / sizeof(tests[0]));
+    host_tests_run(DASHBOARD_MESSAGE_MAX_LENGTH == 24 ? "body-display-24" : "body-display-18", tests, sizeof(tests) / sizeof(tests[0]));
 }

@@ -238,5 +238,13 @@ int main(void) {
         HOST_TEST(test_full_screen_receive)
 #endif
     };
-    host_tests_run("uart_menu", tests, sizeof(tests) / sizeof(tests[0]));
+    const char *suite =
+#if defined(BACCABLE_C2)
+        "uart-rx-c2";
+#elif defined(BACCABLE_BH)
+        "uart-rx-bh";
+#else
+        "uart-menu-c1";
+#endif
+    host_tests_run(suite, tests, sizeof(tests) / sizeof(tests[0]));
 }

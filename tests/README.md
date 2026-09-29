@@ -9,7 +9,8 @@ and fail CI. The cases run in their existing order, once per executable.
 
 In GitHub, open **Actions → workflow run → Summary → Host regression scenarios**.
 The table lists scenario results and distinguishes 18/24-character menu/catalog
-builds and C2/BH parking builds. Download the **host-test-log** artifact and open
+builds, independently compiled MY23 defaults, normal/large BH display output
+and C1/C2/BH UART suites. Download the **host-test-log** artifact and open
 `host-tests.html` for an offline table and expandable full build/test log.
 
 - **PASS**: the case returned successfully.
@@ -48,3 +49,18 @@ The IPC display experiment also checks source-specific `0x090` headers,
 16-bit glyph bytes, complete ordered transfers, 48-character line rulers and
 normal-menu recovery after the diagnostic screen. It also checks radio-text
 interruption, CAN queue retry and the command lease that releases a stale test.
+
+### MY23 menu and shared input
+
+The full target executes 24 binaries, including `test_menu_my23` and
+`test_menu_my23_large` independently of legacy width, plus dedicated C2/BH
+screen-reception builds. Keep a single `test` recipe in the Makefile; later
+rules may append prerequisites but must not replace its execution list.
+MY23/debug/legacy suites have separate report identities so cases do not mask
+one another. Tests cover the selected BMP vocabulary, 14/22 glyph budgets,
+whole-segment short/tiny packing for one through five measurements, isolated
+drafts, flash-save failure and record-format migration interruptions. BH output
+checks fixed L2 offsets, shorter replacement clearing and learned source context.
+UART tests distinguish 38-byte screens from shorter commands, verify the final
+screen byte and recovery after interrupted frames. These are software checks;
+physical alignment, menu latency and IPC arbitration remain vehicle acceptance.

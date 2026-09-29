@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "dictionary_version": "2026-09-28.1",
+  "dictionary_version": "2026-09-29.1",
   "vehicle": {
     "model": "Alfa Romeo Giulia (owner-reported)",
     "model_year": null,
@@ -8,7 +8,7 @@
     "vin": null,
     "scope": "This checkout and these sessions only; not a universal Alfa Romeo or cross-model DBC."
   },
-  "firmware_source_commit": "c550e1619856c60ba64761c48f1bbe6011ebed45",
+  "firmware_source_commit": "d79c4145f6ca3801461bdabc3d879564b1c69e92",
   "source_sha256": {
     "firmware/baccable/vehicle/display_frames.c": "4289f68814aa56f0d67b57ae362eb581e2e6cc3731cc593790d5794f71060a6e",
     "firmware/baccable/vehicle/telemetry_frames.c": "83ef051370d33eb44ca25b213242e05f60523a9c45b40339b41bde33e0234aa1",
@@ -19,7 +19,7 @@
     "firmware/baccable/vehicle/start_stop_status.c": "cae7578c5e0515316f19d6e8ef0528f0d2a7faa29fa56b59090752c428c3337d",
     "firmware/baccable/vehicle/shift_indicator.c": "2bd1d998325d152c0653b120554e724d1efcbe7e03a09bf03e2453cc626058fd",
     "firmware/baccable/vehicle/steering_controls.c": "a83dbd391f0266b3f0586812a15316587bdbce3fbb595d3c37995aa0d84bb7ba",
-    "firmware/baccable/features/menu_input.c": "633f609294cebe8741988f036d45272327cc138bc49dd1e5f71161bd590cf3d9",
+    "firmware/baccable/features/menu_input.c": "573949572201141040055b2382d223b873c7338e3164bb01c138ec0faddf82ce",
     "firmware/baccable/protocol/checksum.c": "74759417a6edd56e3b230502710a056dc0d0be535b15912bf7250afeedd06946",
     "firmware/baccable/vehicle/lighting_frames.c": "733078f1af48d86ce8d44eed4d506802378915b81950d905a77a7de01b5ccb48",
     "firmware/baccable/vehicle/drive_mode.c": "252ca98214224f112ff5627004b3f2eaf0f4d8764c58fd459d69111696753942",
@@ -28,14 +28,16 @@
     "firmware/baccable/features/ibs_override.c": "20a5fbd5c5d4837d1f64786e513d26c7a6f726d32a44f1dfad7abc25314a45d6",
     "firmware/baccable/features/usb_modes.c": "25501a4ac4b3ca52a3884c25c66b27928c44db91f19b79ca13eb2218e0cce7f1",
     "firmware/baccable/diagnostics/uds_decode.c": "25ab4028b943ba1e6bb825019be4208fb4a4739742a314aa8942e9b2708efae4",
-    "firmware/baccable/diagnostics/parameter_request.c": "cc73854028e70dcb8c686b9c835817c22b372a9b5d5c228f83e4267b9662ee5d",
+    "firmware/baccable/diagnostics/parameter_request.c": "0834f28d0936442d0c8b113359c825b148c8870e1f3c059e1ef1d2ca30353cd8",
     "firmware/baccable/app/main.c": "6ab26f74fea5f8c579f38d5ddbffe27ff46555f7f09f638e009e94e372a8e330",
     "firmware/baccable/vehicle/standard_frames.c": "43936ed4b2f77ffe3c518da38869afdce7ed0e2610a0528e639bd9751891bbd7",
     "firmware/baccable/diagnostics/parameter_catalog.c": "df4e0c9beb1044eb0c3627455f80666b4a5edf912aa677623ec4d36b168151b3",
-    "firmware/baccable/diagnostics/parameter_cache.c": "39bfd3ed78ded85bdd67eeaf019287c10528f05b624426815c39d500a8aaf876",
+    "firmware/baccable/diagnostics/parameter_cache.c": "23f1168387fdb8aabc0d552282aefefd31624e2bf441d83cedfcd503f834e0d0",
     "docs/architecture/REFERENCE_SIGNALS.md": "fb8188e6938df5e74e23682b02e065f79db95c059e0999d2b325d07a9c94e6cf",
-    "firmware/baccable/features/body.c": "362364f4bebe4eb787e8db1637e9e92c772f424fb81773e00582a4047e762299",
-    "firmware/baccable/features/ipc_display_test.c": "af47a187e2e3a85965e12afb4a3b83c3d2754ffde648d81a046ee26af66b8e9c"
+    "firmware/baccable/features/body.c": "88282ff5b0e389a30808612c73ee9e03b75ae2e9e93cd89c8972f105445e8e39",
+    "firmware/baccable/features/ipc_display_test.c": "af47a187e2e3a85965e12afb4a3b83c3d2754ffde648d81a046ee26af66b8e9c",
+    "firmware/baccable/features/my23_ui.c": "6e5c772adfe061fc10c37e84908886858ac483b45b97aae207d6c2bb4b3814f2",
+    "firmware/baccable/features/display_stream.c": "a160b72e764d53932764c57ead89b9f986c1b27b5545443f48a00a0809d8bfd5"
   },
   "byte_convention": "Zero-based byte indexes; bit 0 is LSB. Parts are concatenated in listed most-significant-first order; physical = raw * scale + offset.",
   "capture_limits": [
@@ -62,6 +64,10 @@
         {
           "path": "firmware/baccable/features/ipc_display_test.c",
           "symbol": "ipc_display_test_peek"
+        },
+        {
+          "path": "firmware/baccable/features/my23_ui.c",
+          "symbol": "my23_codepoint"
         }
       ],
       "signals": [
@@ -170,7 +176,7 @@
           "origin": "implementation"
         }
       ],
-      "note": "Transport length is last index + 1. Source context is the last observed text context, not a guaranteed live audio-source selector. UTF-16BE-compatible packing; IPC glyph/surrogate support is not established.",
+      "note": "Transport length is last index + 1. Source context is the last observed text context, not a guaranteed live audio-source selector. UTF-16BE-compatible packing; IPC glyph/surrogate support is not established. The MY23 UI candidate transmits selected BMP glyphs as 14 padded characters, CR, 22 padded characters and two trailing spaces (13 fragments); legacy remains variable-length L1 plus its footer. Factory text field lengths remain variable. These captured sessions contain RX, not this candidate's BH TX, so they do not prove its visible alignment.",
       "exact_dlc": 8,
       "source_context_labels": {
         "0x06": {
@@ -2520,7 +2526,7 @@
           "origin": "implementation"
         }
       ],
-      "note": "0x50 is normalized to 0x90 only by the menu input recognizer. BACK requires release arming, continued reports, >=1200 ms hold, and CC/ACC/menu gating. RX does not prove the action reached the menu.",
+      "note": "0x50 is normalized to 0x90 only by the menu input recognizer. In this MY23 UI candidate, released clicks >=30 ms form BACK pairs within 280 ms; a continuous >=900 ms hold opens the closed menu or executes a displayed SAVE/APPLY/STORE prompt. Release arming, stream freshness and CC/ACC gates still apply. Earlier recordings used the legacy >=1200 ms hold-BACK behavior; retained CAN-derived hold markers describe those recordings. RX does not prove that the menu acted or appeared.",
       "exact_dlc": 3,
       "observations": [
         {
@@ -4365,7 +4371,7 @@
           "origin": "implementation"
         }
       ],
-      "note": "0x50 is normalized to 0x90 only by the menu input recognizer. BACK requires release arming, continued reports, >=1200 ms hold, and CC/ACC/menu gating. RX does not prove the action reached the menu.",
+      "note": "0x50 is normalized to 0x90 only by the menu input recognizer. In this MY23 UI candidate, released clicks >=30 ms form BACK pairs within 280 ms; a continuous >=900 ms hold opens the closed menu or executes a displayed SAVE/APPLY/STORE prompt. Release arming, stream freshness and CC/ACC gates still apply. Earlier recordings used the legacy >=1200 ms hold-BACK behavior; retained CAN-derived hold markers describe those recordings. RX does not prove that the menu acted or appeared.",
       "exact_dlc": 3,
       "observations": [
         {

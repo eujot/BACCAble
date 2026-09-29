@@ -144,7 +144,14 @@ class KnowledgeTests(unittest.TestCase):
         spec = importlib.util.spec_from_file_location('attach',root/'scripts/attach_dictionary_evidence.py')
         attach = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(attach)
-        partial = {**evidence,'sessions':evidence['sessions'][-1:]}
+        # Historical reports keep their original version. Exercise both guards
+        # independently of later firmware/dictionary snapshot updates.
+        mismatched = {**evidence, 'dictionary_version': 'different-snapshot'}
+        with self.assertRaisesRegex(ValueError, 'source versions differ'):
+            attach.attach(copy.deepcopy(self.catalog), mismatched, 'unused')
+        partial = {**evidence, 'sessions': evidence['sessions'][-1:],
+                   'dictionary_version': self.catalog['dictionary_version'],
+                   'firmware_source_commit': self.catalog['firmware_source_commit']}
         with self.assertRaisesRegex(ValueError,'discard previous session evidence'):
             attach.attach(copy.deepcopy(self.catalog),partial,'unused')
 

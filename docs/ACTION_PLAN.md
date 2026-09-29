@@ -66,10 +66,15 @@ multiplying runner/toolchain installation jobs or changing release artifact flag
 
 Local validation uses Apple Clang with ASan/UBSan (24 host executables), eight
 CI-script tests, menu labels, cppcheck on C1/C2/BH/CAN and the full Arm GNU
-15.2.Rel1 toolchain across 16 flavor/profile combinations. Source snapshot and
-Lab dictionary checks are completed with the PR commits below; no new CAN bit
-layout or historical capture interpretation is inferred from this UI work.
-Build logs/images are kept under ignored repo `tmp/`. Integration is pending
+15.2.Rel1 toolchain across 16 flavor/profile combinations. There are 296 passing host scenarios and 46 passing Lab tests. The dictionary
+snapshot `2026-09-29.1` references implementation commit
+`d79c4145f6ca3801461bdabc3d879564b1c69e92`; original session ledgers/markers
+remain unchanged. No new CAN bit layout or historical capture interpretation is
+inferred from this UI work. Identified images use version `my23-d79c414`.
+C1 peaks at 97,724 / 98,304 Flash bytes and 15,472 / 16,384 static RAM bytes
+across the matrix; headroom is small, without changing the linker reservations.
+Build logs/images and checksums/compiler/flags/source identity in
+`tmp/my23-build-manifest.json` stay under ignored repo `tmp/`. Integration is pending
 PR review; CI's pinned compiler is 15.3.Rel1 and must independently pass.
 
 **Hardware acceptance remains open:** MY23 field alignment after long/short

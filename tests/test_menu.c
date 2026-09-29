@@ -1124,6 +1124,8 @@ static void fresh_contract(void);
 int main(void) {
 #ifdef MENU_DIAGNOSTICS
     const char *suite = "menu-debug";
+#elif defined(IPC_MY23_IS_INSTALLED)
+    const char *suite = DASHBOARD_MESSAGE_MAX_LENGTH == 24 ? "menu-my23-24" : "menu-my23-18";
 #elif defined(LARGE_DISPLAY)
     const char *suite = "menu-24";
 #else
