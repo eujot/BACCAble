@@ -134,9 +134,10 @@ The main menu order is fixed. Page availability follows the selected engine,
 MY23 has **14 visible glyphs in line 1 and 22 in line 2**. A list shows the
 current item with `›` above the next item. Editors show a setting and its draft
 value, with `▲▼ CHANGE`. Confirmation and saved feedback use the second line.
-Live Favorites show one readable measurement on each line. Readings show the
-current value and a preview of the next page; single-value pages shorten their
-label when needed to keep the value visible. `✓` means saved; `×` means a local failure.
+Live Favorites show one readable measurement on each line. Single-value Readings
+show the current value and a preview of the next page; a longer label shortens
+when needed to keep its value visible. Two-value Readings use one line per value.
+`✓` means saved; `×` means a local failure.
 The legacy profile retains its 18/24-character first line and `BACCAble beta`
 footer. It uses the same button and draft rules, with single-line prompts.
 
@@ -197,9 +198,10 @@ stale. `Gear --` includes the raw `0xF` unavailable code; it is not gear 15.
 Only the first two saved slots are shown and editable in this revision. Earlier
 five-slot records retain slots 3–5 in storage for compatibility, but those slots
 are not displayed or polled. Saving Slots 1–2 does not erase the other stored IDs.
-In MY23 Readings, line 1 retains familiar reading names and values; longer
-single-value names shorten to keep the value visible. Line 2 previews the next
-reading page. The Information status pages likewise
+In MY23 Readings, a single-value page previews the next reading on line 2.
+Two-value pages show both current measurements, one per line, rather than that
+preview. Pages with three or four measurements wrap their catalog text across
+both lines. The Information status pages likewise
 preview the next page; multiple fault codes show the following code on line 2.
 
 Gasoline and diesel retain separate sets. Engine-incompatible saved measurements

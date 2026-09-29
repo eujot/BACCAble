@@ -47,7 +47,8 @@ bool favorite_parameter_supported(uint8_t engine, bool v6, uint8_t id) {
 /* Keep the labels recognizable even when the first IPC line has only 14 glyphs. */
 const char *favorite_parameter_label(uint8_t engine, bool v6, uint8_t id, bool compact) {
     static const struct { uint8_t id; const char *full, *compact; } names[] = {
-        {0, "Oil pressure", "Oil bar"}, {29, "Oil press ECU", "Oil ECU"},
+        {1, "Power", "Power"}, {2, "Torque", "Torque"},
+        {0, "Oil pressure", "Oil P"}, {29, "Oil press ECU", "Oil ECU"},
         {5, "Oil temp", "Oil temp"}, {30, "Oil temp ECU", "Oil ECU"},
         {42, "Coolant temp", "Coolant"}, {68, "Coolant ECU", "Coolant"},
         {22, "Intercooler out", "IC outlet"}, {23, "Intercooler in", "IC inlet"},
@@ -56,7 +57,8 @@ const char *favorite_parameter_label(uint8_t engine, bool v6, uint8_t id, bool c
         {7, "Speed", "Speed"}, {97, "Engine RPM", "RPM"},
         {3, "IBS SOC", "IBS SOC"}, {21, "Battery SOC", "Batt SOC"},
         {34, "BCM SOC", "BCM SOC"}, {35, "Battery V", "Batt V"},
-        {4, "Battery A", "Batt A"}, {8, "DPF regen", "DPF"},
+        {4, "Battery A", "Batt A"}, {28, "Oil volume", "Oil L"},
+        {31, "Oil quality", "Oil qual"}, {8, "DPF regen", "DPF"},
         {9, "0-100 last", "0-100"}, {10, "100-200 last", "100-200"},
         {11, "0-100 best", "Best 0-100"}, {12, "100-200 best", "Best 100-200"}
     };

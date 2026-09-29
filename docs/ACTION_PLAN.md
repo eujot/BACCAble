@@ -55,7 +55,7 @@ stationary reading showed `Gear 15`. On branch `fix/my23-readability` from
 `origin/master` `23db240`, implementation commit `14eba38`, the candidate now shows exactly two Favorite
 measurements with readable labels (one per line), restricts the visible editor
 and live polling to Slots 1–2, and preserves historical Slots 3–5 in storage.
-Readings show the current named value and next-page preview; single-value labels
+Single-value Readings show the current named value and next-page preview; their labels
 shorten before the value is lost. Information status and fault lists also use L2
 for the next entry when available. Both user guides and MENU_UX track the change.
 
@@ -70,6 +70,17 @@ reserved heap/stack. `git diff --check` passes. Hardware acceptance is pending:
 verify the two Favorite lines, Readings page previews, long-name legibility and
 unavailable gear display in the car. The branch is pushed to origin; PR creation
 is pending GitHub CLI authentication. This candidate is not a new release.
+
+The owner's follow-up identified a remaining paired-Readings defect: both
+values were available but the MY23 preview occupied L2, so the second value
+could be clipped from L1. The current branch now uses L1/L2 for the two values;
+only single-value pages preview the next reading. Three/four-value catalog text
+wraps onto L2 when needed. A focused host regression covers paired oil/coolant
+and four-cylinder misfire pages. Full validation and vehicle acceptance for this
+follow-up are distinct: all 24 native host executables pass, the four C1 UI
+profiles build with Arm GNU 15.2.Rel1, and the largest image uses
+95,192 / 98,304 Flash bytes and 15,520 / 16,384 static RAM bytes. The two-line
+appearance and refresh of multi-value pages still need a vehicle test.
 
 MY23 menu and shared navigation, **2026-09-29**, branch `feat/my23-menu-ux`,
 based on actual local/remote master `d63e608` (CAN dictionary PR #46 merged).

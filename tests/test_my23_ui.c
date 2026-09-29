@@ -48,6 +48,32 @@ static void test_my23_readings_preview_and_unavailable_gear(void) {
     parameter_cache_put(42, 88, now);
     menu_show_parameter((uint8_t)coolant); menu_render();
     assert(screen_packet[2] == 0x80 && !memcmp(screen_packet + 4, "Coolant 88\xb0", 11));
+    int pair = menu_page_index(0, 0x04); /* Oil and coolant must both be visible. */
+    assert(pair >= 0);
+    parameter_cache_put(5, 101, now);
+    menu_show_parameter((uint8_t)pair); menu_render();
+    assert(!memcmp(screen_packet + 2, "Oil temp 101\xb0", 13));
+    assert(!memcmp(screen_packet + 16, "Coolant temp 88\xb0", 16));
+    int four = menu_page_index(0, 0x37);
+    assert(four >= 0);
+    for (unsigned i = 0; i < 4; ++i) parameter_cache_put(91 + i, i + 1, now);
+    menu_show_parameter((uint8_t)four); menu_render();
+    char expected[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
+    const float counts[] = {1, 2, 3, 4};
+    dashboard_format_values(parameter_pages[0][four].name, counts,
+                            parameter_pages[0][four].parameter_ids, expected);
+    unsigned used = 0;
+    for (unsigned line = 0; line < 2; ++line) {
+        const unsigned start = line ? 16 : 2, length = line ? 22 : 14;
+        for (unsigned i = 0; i < length; ++i) {
+            char glyph = screen_packet[start + i];
+            if (glyph == ' ') continue;
+            while (expected[used] == ' ') ++used;
+            assert(glyph == expected[used++]);
+        }
+    }
+    while (expected[used] == ' ') ++used;
+    assert(!expected[used]); /* No current value was lost to the preview. */
     menu_event(MENU_BACK); menu_event(MENU_BACK); /* Return to root. */
     menu_event(MENU_PREVIOUS); menu_event(MENU_SELECT); /* Information. */
     for (unsigned i = 0; i < 5; ++i) menu_event(MENU_NEXT);

@@ -105,9 +105,10 @@ above the next item. Slot labels use compact readable names, with only the two v
 Long generic notices continue onto L2 instead of replacing useful text with a
 static Back footer. A long active title ends with `…`.
 Settings show draft values with `▲▼ CHANGE`; confirmation shows
-`HOLD SAVE•2X DISCARD` and saved feedback `✓ SAVED`. Readings show the current
-value on L1 and preview the next page on L2. Single-value pages shorten a long
-name before losing the value; multi-value pages retain the catalog template.
+`HOLD SAVE•2X DISCARD` and saved feedback `✓ SAVED`. Single-value Readings show
+the current value on L1 and preview the next page on L2. Two-value pages use
+one line per value; larger composites wrap the catalog text across both lines.
+Single-value pages shorten a long name before losing the value.
 Ordinary MY23 screens have no fixed footer.
 Legacy uses ASCII/verified Latin-1 glyphs and single-line confirmation wording.
 The renderer translates MY23 control tokens before legacy output.
@@ -154,8 +155,9 @@ The owner confirmed MY23 menu operation in the car but found the packed Favorite
 initials unreadable. Favorite screens now show exactly one named value on each
 line. Only Slots 1–2 are presented in the editor and live UDS polling; IDs in
 historical Slots 3–5 remain stored in the same record without being erased.
-Readings restore recognizable names and values on L1 and preview the next
-eligible page on L2. Information status pages preview the next status, and fault
+Single-value Readings restore recognizable names and values on L1 and preview
+the next eligible page on L2. Multi-value readings dedicate L2 to current data.
+Information status pages preview the next status, and fault
 lists show the next code. Short one-off notices and empty-state messages remain
 single-line where a second item would be misleading.
 

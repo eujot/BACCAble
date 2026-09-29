@@ -147,8 +147,9 @@ MY23 ma **14 widocznych znaków w pierwszej linii i 22 w drugiej**. Lista
 pokazuje bieżącą pozycję z `›`, a pod nią następną. Edytor pokazuje ustawienie
 oraz szkic wartości z `▲▼ CHANGE`. Druga linia zawiera również pytanie o zapis
 lub jego wynik. Ulubione pokazują po jednym nazwanym pomiarze w każdej linii.
-Readings pokazuje bieżący odczyt i zapowiedź następnej strony; przy dłuższej
-nazwie jednego pomiaru skraca ją tak, by wartość pozostała widoczna.
+Strona Readings z jednym pomiarem pokazuje odczyt i zapowiedź następnej strony;
+przy dłuższej nazwie skraca ją tak, by wartość pozostała widoczna. Strona z
+dwoma pomiarami pokazuje po jednym w każdej linii.
 `✓` oznacza udany zapis, `×` lokalny błąd.
 Starszy profil zachowuje pierwszą linię 18/24 znaki i podpis `BACCAble beta`.
 Obsługa przycisków i szkiców jest taka sama, a pytania mieszczą się w jednej linii.
@@ -213,8 +214,10 @@ CAN. `--` oznacza brak aktualnej wartości. `Gear --` obejmuje surowy kod
 Wyświetlane i edytowane są tylko Slot 1 i Slot 2. Wcześniejsze rekordy pięciu
 slotów zachowują w pamięci miejsca 3–5 dla zgodności, ale nie są one pokazywane
 ani odpytywane. Zapis dwóch widocznych slotów nie usuwa pozostałych ID.
-W MY23 Readings pierwsza linia zachowuje znaną nazwę i wartość odczytu, a druga
-zapowiada następną stronę. Strony statusu Information też
+W MY23 Readings strona z jednym pomiarem zapowiada następny odczyt w drugiej
+linii. Strona z dwoma pomiarami wykorzystuje obie linie na ich nazwy i wartości;
+strony z trzema lub czterema pomiarami przenoszą tekst katalogu między liniami.
+Strony statusu Information też
 zapowiadają kolejną pozycję; przy wielu kodach usterek druga linia pokazuje
 następny kod.
 

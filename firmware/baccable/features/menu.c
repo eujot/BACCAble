@@ -823,7 +823,16 @@ void menu_render(void) {
         if (settings_state.ipc_my23_is_installed) {
             const ParameterPage *page = &parameter_pages[engine][list[selection]];
             const ParameterPage *next = &parameter_pages[engine][list[wrap(selection, list_count, 1)]];
-            if (page->parameter_ids[0] == page->parameter_ids[1]) {
+            unsigned count = parameter_page_elements(page);
+            if (count == 2 && page->parameter_ids[0] != page->parameter_ids[1]) {
+                FavoriteParameters reading = {{page->parameter_ids[0], page->parameter_ids[1],
+                                               FAVORITE_EMPTY, FAVORITE_EMPTY, FAVORITE_EMPTY}};
+                char first[15], second[23];
+                favorite_parameters_render(engine, &reading, currentTime, first, second);
+                menu_present_lines(first, second);
+                return;
+            }
+            if (count == 2 && page->parameter_ids[0] == page->parameter_ids[1]) {
                 FavoriteParameters reading = {{page->parameter_ids[0], FAVORITE_EMPTY,
                                                FAVORITE_EMPTY, FAVORITE_EMPTY, FAVORITE_EMPTY}};
                 char first[15], unused[23];
@@ -831,6 +840,16 @@ void menu_render(void) {
                 snprintf_(text, sizeof(text), "%s", first);
             } else {
                 dashboard_format_values(page->name, displayed_parameter_values, page->parameter_ids, text);
+                if (strlen(text) > MY23_L1_VISIBLE) {
+                    char first[15];
+                    unsigned split = MY23_L1_VISIBLE;
+                    while (split > MY23_L1_VISIBLE / 2 && text[split] != ' ') --split;
+                    if (text[split] != ' ') split = MY23_L1_VISIBLE;
+                    memcpy(first, text, split);
+                    first[split] = 0;
+                    menu_present_lines(first, text + split + (text[split] == ' '));
+                    return;
+                }
             }
             menu_present_view(strlen(text) <= MY23_L1_VISIBLE - 2 ? UI_MODE_LIST : UI_MODE_PARAMETER,
                               text, next->label);
