@@ -72,6 +72,11 @@ CAN retry, pace selection, invalid input, lease fallback, initialization reset,
 both menu profiles, UART busy and no Flash writes. Maximum Flash/static RAM:
 C1 94,804/15,536 B; C2 29,104/12,416 B; BH 32,752/13,260 B; CAN 25,200/7,032 B.
 Logs remain under repo tmp (`ipc-tests.log`, `ipc-arm-matrix.log`, `ipc-lint.log`).
+PR #48 initially failed Lab source-snapshot checks because the tracked body and
+stream hashes still described beta 19. Dictionary 2026-09-29.2 now references
+implementation d0d0217, records Full/Delta pacing in the 0x090 description and
+refreshes those two hashes and the rendered catalog. CAN layouts and historical
+capture evidence are unchanged; all 46 Lab tests pass after the refresh.
 
 Both user guides contain the same controls and comparison procedure. Pending
 vehicle acceptance: compare Safe/Quick/Fast + Full, optionally Delta, using the
