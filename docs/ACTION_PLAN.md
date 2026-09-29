@@ -34,6 +34,14 @@ bounded changes and existing modules/tests. No model-specific workflow, mandator
 PR count or broad rewrite is needed. This handoff is a backlog, not an instruction
 to automatically flash hardware or publish every future change.
 
+## Release status, 2026-09-29
+
+Preparing `v5-beta-19` from merged master commit `6c2c830` (PR #47). Release
+notes are in [v5-beta-19.md](releases/v5-beta-19.md). The beta workflow builds
+and verifies C1/C2/BH/CAN with the pinned CI toolchain before publishing. No
+vehicle acceptance is implied by publishing; MY23 display and button behavior
+remain on the hardware checklist below.
+
 ## Current work
 
 MY23 menu and shared navigation, **2026-09-29**, branch `feat/my23-menu-ux`,
