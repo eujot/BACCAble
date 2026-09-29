@@ -32,7 +32,7 @@ static void test_my23_readings_preview_and_unavailable_gear(void) {
     assert(gear >= 0);
     parameter_cache_put(6, 15, now); /* 0xF from CAN means unavailable. */
     menu_show_parameter((uint8_t)gear); menu_render();
-    assert(screen_packet[2] == 0x80 && !memcmp(screen_packet + 4, "Gear --", 7));
+    assert(!memcmp(screen_packet + 2, "Gear -", 6));
     MenuPreferences prefs;
     menu_preferences_default(&prefs);
     uint8_t pages[64];
@@ -47,13 +47,13 @@ static void test_my23_readings_preview_and_unavailable_gear(void) {
     assert(coolant >= 0);
     parameter_cache_put(42, 88, now);
     menu_show_parameter((uint8_t)coolant); menu_render();
-    assert(screen_packet[2] == 0x80 && !memcmp(screen_packet + 4, "Coolant 88\xb0", 11));
+    assert(!memcmp(screen_packet + 2, "Coolant temp", 12));
     int pair = menu_page_index(0, 0x04); /* Oil and coolant must both be visible. */
     assert(pair >= 0);
     parameter_cache_put(5, 101, now);
     menu_show_parameter((uint8_t)pair); menu_render();
-    assert(!memcmp(screen_packet + 2, "Oil temp 101\xb0", 13));
-    assert(!memcmp(screen_packet + 16, "Coolant temp 88\xb0", 16));
+    assert(!memcmp(screen_packet + 2, "Oil", 3));
+    assert(screen_packet[16] != ' '); /* The next page, never a split value. */
     int four = menu_page_index(0, 0x37);
     assert(four >= 0);
     for (unsigned i = 0; i < 4; ++i) parameter_cache_put(91 + i, i + 1, now);
@@ -62,18 +62,14 @@ static void test_my23_readings_preview_and_unavailable_gear(void) {
     const float counts[] = {1, 2, 3, 4};
     dashboard_format_values(parameter_pages[0][four].name, counts,
                             parameter_pages[0][four].parameter_ids, expected);
-    unsigned used = 0;
-    for (unsigned line = 0; line < 2; ++line) {
-        const unsigned start = line ? 16 : 2, length = line ? 22 : 14;
-        for (unsigned i = 0; i < length; ++i) {
-            char glyph = screen_packet[start + i];
-            if (glyph == ' ') continue;
-            while (expected[used] == ' ') ++used;
-            assert(glyph == expected[used++]);
-        }
-    }
-    while (expected[used] == ' ') ++used;
-    assert(!expected[used]); /* No current value was lost to the preview. */
+    assert(!memcmp(screen_packet + 2, expected, MY23_L1_VISIBLE));
+    count = menu_page_list_filtered(&prefs, 0, parameter_pages[0][four].group,
+                                    false, false, false, false, pages);
+    selected = 0;
+    while (selected < count && pages[selected] != four) ++selected;
+    assert(selected < count && count > 1);
+    next = parameter_pages[0][pages[(selected + 1) % count]].label;
+    assert(!memcmp(screen_packet + 16, next, strlen(next) < 22 ? strlen(next) : 22));
     menu_event(MENU_BACK); menu_event(MENU_BACK); /* Return to root. */
     menu_event(MENU_PREVIOUS); menu_event(MENU_SELECT); /* Information. */
     for (unsigned i = 0; i < 5; ++i) menu_event(MENU_NEXT);
@@ -120,6 +116,46 @@ static void test_atomic_favorite_packing(void) {
     assert(!favorite_parameter_supported(0, true, 32));
     assert(!favorite_parameter_supported(1, false, 32));
     assert(favorite_parameter_supported(0, false, 97));
+}
+static void test_whole_page_favorites_and_beta19_migration(void) {
+    fresh_contract();
+    assert(menu_preferences_save() == 0);
+    saved[MENU_PREFS_SIZE] = 2;
+    saved[MENU_PREFS_SIZE + 1] = 1;
+    memset(saved + MENU_PREFS_SIZE + 2, FAVORITE_EMPTY, FAVORITE_STORAGE_SIZE - 2);
+    saved[MENU_PREFS_SIZE + 2] = 0x04; /* Oil/coolant is one complete reading. */
+    saved[MENU_PREFS_SIZE + 3] = 0x07; /* Battery V/A is another reading. */
+    settings_state.ipc_my23_is_installed = 1;
+    menu_init();
+    parameter_cache_put(5, 101, now); parameter_cache_put(42, 88, now);
+    parameter_cache_put(35, 12.5f, now); parameter_cache_put(4, -2, now);
+    menu_render();
+    float oil_coolant[] = {101, 88}, battery[] = {12.5f, -2};
+    char first[DASHBOARD_MESSAGE_MAX_LENGTH + 1], second[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
+    int oil_page = menu_page_index(0, 0x04), battery_page = menu_page_index(0, 0x07);
+    assert(oil_page >= 0 && battery_page >= 0);
+    dashboard_format_values(parameter_pages[0][oil_page].name, oil_coolant,
+                            parameter_pages[0][oil_page].parameter_ids, first);
+    dashboard_format_values(parameter_pages[0][battery_page].name, battery,
+                            parameter_pages[0][battery_page].parameter_ids, second);
+    uint8_t expected[MY23_PACKET_SIZE];
+    my23_packet(expected, first, second);
+    assert(!memcmp(screen_packet + 1, expected, sizeof(expected)));
+    assert(saved[MENU_PREFS_SIZE + 2] == 0x04 && saved[MENU_PREFS_SIZE + 3] == 0x07);
+
+    /* Beta 19 stored atomic measurement IDs; loading maps each to a page. */
+    saved[MENU_PREFS_SIZE] = 1;
+    saved[MENU_PREFS_SIZE + 2] = 5;
+    saved[MENU_PREFS_SIZE + 3] = 42;
+    saved[MENU_PREFS_SIZE + 4] = 22; /* Historical hidden slot stays untouched. */
+    saved[MENU_PREFS_SIZE + 2 + FAVORITE_MAX_PARAMS] = 97; /* Legacy RPM survives. */
+    dashboard_state.baccable_dashboard_menu_visible = 0;
+    menu_init(); menu_event(MENU_HOLD);
+    assert(menu_preferences_save() == 0);
+    assert(saved[MENU_PREFS_SIZE] == 2);
+    assert(saved[MENU_PREFS_SIZE + 2] != 5 && saved[MENU_PREFS_SIZE + 3] != 42);
+    assert(saved[MENU_PREFS_SIZE + 4] == 22);
+    assert(saved[MENU_PREFS_SIZE + 2 + FAVORITE_MAX_PARAMS] == 0xfe);
 }
 static void test_staged_setting_failure_and_discard(void) {
     for (unsigned profile = 0; profile < 2; ++profile) {
@@ -236,7 +272,7 @@ static void test_my23_list_and_old_favorite_migration(void) {
     dashboard_state.baccable_dashboard_menu_visible = 0;
     menu_init(); menu_event(MENU_HOLD);
     assert(screen_packet[1] == MY23_PACKET_MARKER);
-    assert(!memcmp(screen_packet + 2, "Oil ECU --", 7));
+    assert(screen_packet[2] == 'O');
     menu_event(MENU_BACK); /* Root/current + next. */
     assert(screen_packet[2] == 0x80 && !memcmp(screen_packet + 4, "Favorites", 9));
     assert(!memcmp(screen_packet + 16, "Readings", 8));
@@ -248,10 +284,10 @@ static void test_my23_list_and_old_favorite_migration(void) {
     MenuPreferences restored;
     assert(menu_preferences_decode(&restored, saved));
     assert(restored.favorites[0][0] == 0x39);
-    assert(saved[82] == 30 && saved[83] == 42 && saved[84] == 23 && saved[85] == 22 && saved[86] == FAVORITE_EMPTY);
+    assert(saved[80] == 2 && saved[82] == 0x39 && saved[83] == FAVORITE_EMPTY);
     dashboard_state.baccable_dashboard_menu_visible = 0;
     menu_init(); menu_event(MENU_HOLD);
-    assert(!memcmp(screen_packet + 2, "Oil ECU --", 7));
+    assert(!memcmp(screen_packet + 2, "O", 1));
     settings_state.ipc_my23_is_installed = 0;
     menu_present("Gear");
     assert(screen_packet[1] == 'G'); /* Legacy receives ordinary text, never MY23 tokens. */
@@ -280,12 +316,12 @@ static void test_my23_remaining_list_previews(void) {
         expect_my23_list(entries[i], entries[(i+1)%4]); menu_event(MENU_NEXT);
     }
     menu_event(MENU_NEXT); menu_event(MENU_SELECT); menu_event(MENU_SELECT);
-    const char *slots[] = {"S1 Oil temp", "S2 Coolant"};
+    const char *slots[] = {"S1 Oil/coolant temp", "S2 Empty"};
     for (unsigned i=0;i<2;++i) { expect_my23_list(slots[i],slots[(i+1)%2]); menu_event(MENU_NEXT); }
     menu_event(MENU_SELECT);
-    expect_my23_list("Oil temp native", "Gear");
-    for (unsigned i=0;i<101 && memcmp(screen_packet+4,"Empty",5);++i) menu_event(MENU_PREVIOUS);
-    expect_my23_list("Empty", "Oil press native");
+    expect_my23_list("Oil/coolant temp", "Oil level/qual.");
+    for (unsigned i=0;i<70 && memcmp(screen_packet+4,"Empty",5);++i) menu_event(MENU_PREVIOUS);
+    expect_my23_list("Empty", "Power / torque");
     menu_event(MENU_BACK); menu_event(MENU_BACK); menu_event(MENU_BACK); menu_event(MENU_BACK);
     menu_event(MENU_NEXT); menu_event(MENU_SELECT); /* Information. */
     for(unsigned i=0;i<9;++i) menu_event(MENU_NEXT);
@@ -331,7 +367,7 @@ static void test_page_editor_transactions(void) {
         for(unsigned f=0;f<FAVORITE_SET_COUNT;++f) {
             int index=menu_page_index(0,committed.favorites[0][f]);
             if(index<0) assert(saved[82+f*5]==FAVORITE_EMPTY);
-            else assert(saved[82+f*5]==parameter_pages[0][index].parameter_ids[0]);
+            else assert(saved[82+f*5]==parameter_pages[0][index].id);
         }
         memcpy(original,saved,sizeof(saved));
         menu_event(MENU_SELECT); menu_event(MENU_SELECT); if(editor==3) menu_event(MENU_NEXT);
@@ -371,13 +407,13 @@ static void test_my23_visibility_transaction(void) {
 static void test_favorite_slot_compact_label(void) {
     fresh_contract(); to_settings(); settings_state.ipc_my23_is_installed=1;
     menu_event(MENU_NEXT); menu_event(MENU_SELECT); menu_event(MENU_SELECT); menu_event(MENU_SELECT);
-    /* Oil native ID 5 -> Gear, Speed, then last/best timers; diesel DPF is skipped. */
-    for (unsigned i=0;i<5;++i) menu_event(MENU_NEXT);
+    /* Page 0x04 -> 0x05, without flattening Oil/coolant into two IDs. */
+    menu_event(MENU_NEXT);
     menu_event(MENU_SELECT);
-    expect_my23_list("S1 Best 0-100","S2 Coolant");
+    expect_my23_list("S1 Oil level/qual.","S2 Empty");
     menu_event(MENU_BACK); menu_event(MENU_BACK); /* Discard preserves imported primary. */
     menu_event(MENU_SELECT);
-    expect_my23_list("S1 Oil temp","S2 Coolant");
+    expect_my23_list("S1 Oil/coolant temp","S2 Empty");
 }
 static void test_my23_favorite_duplicate_rollback(void) {
     fresh_contract(); to_settings(); settings_state.ipc_my23_is_installed=1;
@@ -385,17 +421,17 @@ static void test_my23_favorite_duplicate_rollback(void) {
     uint8_t original[sizeof(saved)]; memcpy(original,saved,sizeof(saved));
     menu_event(MENU_NEXT); menu_event(MENU_SELECT); menu_event(MENU_SELECT);
     menu_event(MENU_NEXT); menu_event(MENU_SELECT); /* Slot 2 picker. */
-    for (unsigned i=0;i<101 && memcmp(screen_packet+4,"Oil temp na",11);++i) menu_event(MENU_PREVIOUS);
-    assert(!memcmp(screen_packet+4,"Oil temp na",11));
+    for (unsigned i=0;i<70 && memcmp(screen_packet+4,"Oil/coolant",11);++i) menu_event(MENU_PREVIOUS);
+    assert(!memcmp(screen_packet+4,"Oil/coolant",11));
     menu_event(MENU_SELECT); /* Move primary to Slot 2 only in the draft. */
-    expect_my23_list("S2 Oil temp","S1 Empty");
+    expect_my23_list("S2 Oil/coolant temp","S1 Empty");
     menu_event(MENU_PREVIOUS);
-    expect_my23_list("S1 Empty","S2 Oil temp");
+    expect_my23_list("S1 Empty","S2 Oil/coolant temp");
     menu_event(MENU_BACK); fail_save=true; menu_event(MENU_HOLD);
     assert(!memcmp(original,saved,sizeof(saved)));
     fail_save=false; menu_event(MENU_BACK); /* Discard failed draft. */
     menu_event(MENU_SELECT);
-    expect_my23_list("S1 Oil temp","S2 Coolant");
+    expect_my23_list("S1 Oil/coolant temp","S2 Empty");
     assert(!memcmp(original,saved,sizeof(saved)));
 }
 
@@ -403,11 +439,11 @@ static void test_my23_favorite_duplicate_rollback(void) {
 static void test_atomic_favorite_selection_identity(void) {
     fresh_contract();
     assert(menu_preferences_save() == 0);
-    saved[MENU_PREFS_SIZE] = saved[MENU_PREFS_SIZE + 1] = 1;
+    saved[MENU_PREFS_SIZE] = 2; saved[MENU_PREFS_SIZE + 1] = 1;
     memset(saved + MENU_PREFS_SIZE + 2, FAVORITE_EMPTY, FAVORITE_STORAGE_SIZE - 2);
-    saved[MENU_PREFS_SIZE + 2] = 32; /* MultiAir: hidden on V6. */
-    saved[MENU_PREFS_SIZE + 2 + FAVORITE_MAX_PARAMS] = 6; /* Gear. */
-    saved[MENU_PREFS_SIZE + 2 + 2 * FAVORITE_MAX_PARAMS] = 7; /* Speed. */
+    saved[MENU_PREFS_SIZE + 2] = 0x14; /* MultiAir: hidden on V6. */
+    saved[MENU_PREFS_SIZE + 2 + FAVORITE_MAX_PARAMS] = 0x1a; /* Gear. */
+    saved[MENU_PREFS_SIZE + 2 + 2 * FAVORITE_MAX_PARAMS] = 0x28; /* Speed. */
     settings_state.ipc_my23_is_installed = 1;
     menu_init(); menu_render();
     menu_event(MENU_NEXT);

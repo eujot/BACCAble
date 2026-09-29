@@ -121,7 +121,7 @@ Menu główne
 │  │     ├─ Enabled          Włączenie funkcji
 │  │     ├─ Store position   Zapis pozycji
 │  │     └─ < Back           Powrót
-│  ├─ Favorites              Favorite 1–6 → Slot 1–2 → parametr
+│  ├─ Favorites              Favorite 1–6 → Slot 1–2 → strona odczytów
 │  ├─ Shown pages            Pokazywanie i ukrywanie stron w Readings
 │  └─ Sort order             Sortowanie według grup albo alfabetycznie
 └─ Information               Wersje, przyciski i test wyświetlacza IPC
@@ -146,10 +146,9 @@ odczyt podpisany `Batt BCM SOC`.
 MY23 ma **14 widocznych znaków w pierwszej linii i 22 w drugiej**. Lista
 pokazuje bieżącą pozycję z `›`, a pod nią następną. Edytor pokazuje ustawienie
 oraz szkic wartości z `▲▼ CHANGE`. Druga linia zawiera również pytanie o zapis
-lub jego wynik. Ulubione pokazują po jednym nazwanym pomiarze w każdej linii.
-Strona Readings z jednym pomiarem pokazuje odczyt i zapowiedź następnej strony;
-przy dłuższej nazwie skraca ją tak, by wartość pozostała widoczna. Strona z
-dwoma pomiarami pokazuje po jednym w każdej linii.
+lub jego wynik. Ulubione pokazują po jednej wybranej stronie odczytów w każdej
+linii. Readings pokazuje bieżącą stronę w pierwszej linii, a nazwę następnej
+strony w drugiej.
 `✓` oznacza udany zapis, `×` lokalny błąd.
 Starszy profil zachowuje pierwszą linię 18/24 znaki i podpis `BACCAble beta`.
 Obsługa przycisków i szkiców jest taka sama, a pytania mieszczą się w jednej linii.
@@ -184,61 +183,63 @@ mieści się na nie miejsce. Listy nie pokazują numeru bieżącej pozycji.
 
 ## Ulubione i układ odczytów
 
-### Dwa widoczne pomiary w jednym ulubionym widoku
+### Dwie strony odczytów w jednym ulubionym widoku
 
 1. Otwórz `Settings → Favorites` i wybierz `Favorite 1` do `Favorite 6`.
-2. Wejdź krótkim RES. Wybierz `Slot 1` lub `Slot 2`, naciśnij RES, znajdź pomiar
-   przyciskami góra/dół i zatwierdź krótkim RES. `Empty` czyści slot.
-3. **Slot 1 jest parametrem głównym**. MY23 pokazuje go w pierwszej linii,
+2. Wejdź krótkim RES. Wybierz `Slot 1` lub `Slot 2`, naciśnij RES, znajdź stronę
+   z katalogu Readings przyciskami góra/dół i zatwierdź krótkim RES. `Empty` czyści slot.
+3. **Slot 1 jest główną stroną odczytów**. MY23 pokazuje ją w pierwszej linii,
    a Slot 2 w drugiej. Pusty slot główny ukrywa cały widok.
-   Kolejność zmieniasz przez zastępowanie slotów. Pomiar już obecny w innym
+   Kolejność zmieniasz przez zastępowanie slotów. Strona już obecna w innym
    slocie jest z niego usuwany. Edycja jest dostępna wyłącznie w Settings.
 4. Dwuklik otwiera pytanie o zapis. Przytrzymaj, aby zapisać, albo wykonaj
    następny dwuklik, aby odrzucić. Udany zapis pozostawia wybrany slot na ekranie;
    osobny dwuklik wraca.
 5. Bieżące wartości zobaczysz w `Favorites` menu głównego. Starszy ekran
-   pokazuje główny parametr zapisanego zestawu w jednej linii.
+   pokazuje główną stronę zapisanego zestawu w jednej linii.
 
 Po powrocie z innych list pozostaje wybrany ten sam zestaw ulubionych. Tak samo
 działa zmiana filtra silnika, jeśli zestaw nadal jest dostępny. W przeciwnym
 razie wyświetla się pierwszy dostępny zestaw. Wybór jest pamiętany osobno dla
 benzyny i diesla do ponownego uruchomienia urządzenia.
 
-W każdej linii jest jeden parametr z czytelną nazwą i wartością, np.
-`Oil temp 101°` nad `Coolant temp 88°`. Dłuższa nazwa może mieć zrozumiałą
-krótszą wersję, np. `IC outlet` albo `Batt SOC`. Stopień oznacza Celsjusza.
-RPM korzysta z istniejących danych silnika i nie powoduje dodatkowego zapytania
-CAN. `--` oznacza brak aktualnej wartości. `Gear --` obejmuje surowy kod
+Każdy slot zachowuje wcześniejszy format wybranej strony katalogu. Na przykład
+`Oil/coolant temp` zawiera dwa odczyty w jednej linii i po dodaniu do ulubionych
+pozostaje jednym slotem. `--` oznacza brak aktualnej wartości. `Gear -` obejmuje surowy kod
 `0xF` („brak informacji”); nie jest to piętnasty bieg.
 
 Wyświetlane i edytowane są tylko Slot 1 i Slot 2. Wcześniejsze rekordy pięciu
 slotów zachowują w pamięci miejsca 3–5 dla zgodności, ale nie są one pokazywane
 ani odpytywane. Zapis dwóch widocznych slotów nie usuwa pozostałych ID.
-W MY23 Readings strona z jednym pomiarem zapowiada następny odczyt w drugiej
-linii. Strona z dwoma pomiarami wykorzystuje obie linie na ich nazwy i wartości;
-strony z trzema lub czterema pomiarami przenoszą tekst katalogu między liniami.
+W MY23 każda strona Readings zachowuje format katalogu w pierwszej linii, także
+gdy zawiera dwa, trzy albo cztery pomiary. Druga linia zapowiada następną stronę.
+Górne pole MY23 mieści najwyżej 14 znaków. Dłuższy tekst katalogu zostanie tam
+ucięty; jego reszta nie zmieści się równocześnie z zapowiedzią następnej strony.
 Strony statusu Information też
 zapowiadają kolejną pozycję; przy wielu kodach usterek druga linia pokazuje
 następny kod.
 
-Benzyna i diesel mają osobne zestawy. Pomiar niepasujący do silnika pozostaje
+Benzyna i diesel mają osobne zestawy. Strona niepasująca do silnika pozostaje
 zapisany i jest pomijany do czasu ponownego wyboru jego profilu. Niepasujący
-parametr główny ukrywa cały widok. Stare katalogi i identyfikatory stron pozostają
-bez zmian. Stare ulubione strony są importowane do zestawów bez powtarzania tego
-samego identyfikatora pomiaru, z zachowaniem źródeł i kolejności. Zapis aktualizuje
-format preferencji menu. Wgranie starszego firmware nie eksportuje nowych zestawów.
+główna strona ukrywa cały widok. Stare katalogi i identyfikatory stron pozostają
+bez zmian. Stare ulubione strony są importowane jako całe strony do Slotu 1.
+Atomowe identyfikatory pomiarów z beta 19 są w pamięci zamieniane na strony:
+najpierw wybierana jest strona z tym jednym pomiarem, a gdy jej nie ma, pierwsza
+strona, która go zawiera. Przed zapisem sprawdź wynik konwersji; dawny dodatkowy
+RPM pozostaje jako strona zgodności, lecz nowe wybory pochodzą z katalogu Readings. Zapis aktualizuje
+format preferencji. Starsze firmware nie odtworzy tego układu automatycznie.
 
 `Page favorites` i `Favorite order` są dostępne tylko w starszym profilu przed
 pierwszym zapisem zestawu ulubionych. Zatwierdzone zmiany aktualizują starszą listę
 stron i zestawy importowane z tej listy. Błąd zapisu lub odrzucenie nie zmieniają
 żadnej z nich. MY23 i profile z zapisanymi zestawami mają tylko edytor
 `Favorites`, aby nie było drugiej opcji zmieniającej inną listę. Kolejność
-parametrów ustalasz przez zawartość slotów. Pusty Slot 1 ukrywa cały zestaw;
-Slot 2 nie przesuwa się automatycznie na pozycję główną. Na MY23 listy slotów, wyboru pomiaru,
+stron ustalasz przez zawartość slotów. Pusty Slot 1 ukrywa cały zestaw;
+Slot 2 nie przesuwa się automatycznie na pozycję główną. Na MY23 listy slotów, wyboru strony,
 testów IPC i Shown pages pokazują bieżącą oraz następną pozycję, także po
 przejściu z końca listy na początek.
 `Shown pages` i `Advanced pages` dotyczą zwykłych Readings, a nie jawnego wyboru
-pomiaru do zestawu. `Sort order` ma własny szkic i potwierdzenie zapisu.
+strony do zestawu. `Sort order` ma własny szkic i potwierdzenie zapisu.
 `Auto rotate` zmienia bieżący widok co pięć sekund.
 
 ## Ustawienia: Features

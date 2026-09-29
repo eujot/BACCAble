@@ -115,7 +115,7 @@ Main menu
 │  │     ├─ Enabled
 │  │     ├─ Store position
 │  │     └─ < Back
-│  ├─ Favorites              Favorite 1–6 → Slot 1–2 → measurement
+│  ├─ Favorites              Favorite 1–6 → Slot 1–2 → reading page
 │  ├─ Shown pages            Show/hide pages in Readings
 │  └─ Sort order             Grouped or alphabetical reading lists
 └─ Information               Versions, input status and IPC display test
@@ -134,9 +134,8 @@ The main menu order is fixed. Page availability follows the selected engine,
 MY23 has **14 visible glyphs in line 1 and 22 in line 2**. A list shows the
 current item with `›` above the next item. Editors show a setting and its draft
 value, with `▲▼ CHANGE`. Confirmation and saved feedback use the second line.
-Live Favorites show one readable measurement on each line. Single-value Readings
-show the current value and a preview of the next page; a longer label shortens
-when needed to keep its value visible. Two-value Readings use one line per value.
+Live Favorites show one complete selected reading page on each line. Readings
+show one page in the first line and preview the next page in the second line.
 `✓` means saved; `×` means a local failure.
 The legacy profile retains its 18/24-character first line and `BACCAble beta`
 footer. It uses the same button and draft rules, with single-line prompts.
@@ -171,55 +170,56 @@ permits. Lists do not show item counters.
 
 ## Favorites and reading layout
 
-### Configure two visible measurements per favorite
+### Configure two reading pages per favorite
 
 1. Open `Settings → Favorites` and choose `Favorite 1` through `Favorite 6`.
 2. Click to edit. Choose `Slot 1` or `Slot 2`, click, then browse the
-   measurements with up/down and click to use one. `Empty` clears that slot.
-3. **Slot 1 is the primary measurement**. MY23 puts it in line 1. Slot 2
+   same catalog pages as in Readings with up/down and click to use one. `Empty` clears that slot.
+3. **Slot 1 is the primary reading page**. MY23 puts it in line 1. Slot 2
    appears in line 2. An empty primary hides that favorite.
-   To change order, replace the slots; assigning a measurement already in another
+   To change order, replace the slots; assigning a page already in another
    slot clears its old position. Editing is available only in Settings.
 4. Double-click for the save prompt. Hold to save, or double-click again to
    discard. A successful save stays at the selected slot; double-click to leave.
 5. Open main-menu `Favorites` to view live values. On legacy, a configured set
-   shows its primary measurement on the single line.
+   shows its primary page on the single line.
 
 Returning from other lists keeps the selected Favorite, as does engine filtering
 if that set remains available. Otherwise the first available set is selected.
 This selection is remembered separately for gasoline and diesel until restart.
 
-Each line uses a recognizable name and one value, such as `Oil temp 101°` over
-`Coolant temp 88°`. A longer name may use a clear shorter form, for example
-`IC outlet` or `Batt SOC`. A degree means Celsius. RPM uses existing incoming
-engine telemetry; it does not add a new CAN request. `--` means unavailable or
-stale. `Gear --` includes the raw `0xF` unavailable code; it is not gear 15.
+Each slot uses the selected page's original catalog format. A page such as
+`Oil/coolant temp` contains two values in one line; it remains one slot when
+added to Favorites. `--` means unavailable or stale. `Gear -` includes the raw
+`0xF` unavailable code; it is not gear 15.
 
 Only the first two saved slots are shown and editable in this revision. Earlier
 five-slot records retain slots 3–5 in storage for compatibility, but those slots
-are not displayed or polled. Saving Slots 1–2 does not erase the other stored IDs.
-In MY23 Readings, a single-value page previews the next reading on line 2.
-Two-value pages show both current measurements, one per line, rather than that
-preview. Pages with three or four measurements wrap their catalog text across
-both lines. The Information status pages likewise
+are not displayed or polled. Saving Slots 1–2 does not erase those old IDs.
+Every MY23 Readings page keeps its catalog format on line 1, whether it contains
+one, two, three or four values. Line 2 previews the next page. The Information status pages likewise
 preview the next page; multiple fault codes show the following code on line 2.
+The upper MY23 field shows at most 14 glyphs: a longer catalog line is clipped
+there, and its remaining text cannot also occupy the next-page preview.
 
-Gasoline and diesel retain separate sets. Engine-incompatible saved measurements
+Gasoline and diesel retain separate sets. Engine-incompatible saved pages
 remain stored and are omitted until that profile is selected again. A hidden
 incompatible primary hides the whole favorite. Both engine page catalogs and old
-page IDs remain unchanged. Existing page favorites are imported into sets with
-repeated measurement IDs removed, preserving their original sources and order.
-Saving upgrades the menu preference record. Downgrading to old firmware is not
-an export of the new five-slot configurations.
+page IDs remain unchanged. Existing page favorites import as whole pages in
+Slot 1. Beta-19 atomic measurement IDs convert to catalog page IDs in memory:
+a dedicated page is preferred, otherwise the first page containing that value.
+Check the converted choices before saving; the old extra RPM value is retained
+as a compatibility page, while new choices browse the Readings catalog. Saving upgrades the menu preference
+record. Downgrading to old firmware does not convert it back.
 
 `Page favorites` and `Favorite order` are offered only on legacy before the
 first atomic Favorite save. Their committed edits update both the old page list and
 its imported sets; failed saves and discarded drafts update neither. MY23 and
 profiles using saved atomic sets offer only `Favorites`, so there is no second
-editor changing a different list. Slot contents determine parameter order.
+editor changing a different list. Slot contents determine page order.
 Empty Slot 1 hides that Favorite;
 Slot 2 does not move automatically into the primary position.
-Slot browsing and measurement selection show current/next on MY23, including
+Slot browsing and page selection show current/next on MY23, including
 wraparound; IPC display-test lists and Shown pages do the same.
 `Shown pages` and `Advanced pages` affect ordinary Readings, not explicit set
 selection. `Sort order` changes catalog ordering through its own draft/save

@@ -155,18 +155,32 @@ static uint8_t setting_move(uint8_t current, int direction) {
     static const uint8_t previous[] = {4, 0, 5, 0, 2, 0};
     return direction < 0 ? previous[current] : next[current];
 }
-static uint8_t next_parameter(uint8_t id, int direction) {
-    for (unsigned i = 0; i < 101; ++i) {
-        if (direction > 0) { ++id; if (id == 100) id = FAVORITE_EMPTY; }
-        else { --id; if (id == 254) id = 99; }
-        if (id == FAVORITE_EMPTY || favorite_parameter_supported(engine, gasoline_v6, id)) break;
+static const ParameterPage *favorite_page(uint8_t profile, bool v6, uint8_t id) {
+    static const ParameterPage legacy_rpm = {
+        .id = 0xfe, .group = 1, .parameter_ids = {97, 97},
+        .label = "Engine RPM", .name = "RPM $4.0f"};
+    if (id == legacy_rpm.id) return &legacy_rpm; /* Preserve beta-19 Favorites. */
+    int index = menu_page_index(profile, id);
+    return index >= 0 && menu_page_supported(profile, index, v6) ? &parameter_pages[profile][index] : NULL;
+}
+static const char *favorite_page_label(uint8_t id) {
+    const ParameterPage *page = favorite_page(engine, gasoline_v6, id);
+    return page ? page->label : "Empty";
+}
+static uint8_t next_favorite_page(uint8_t id, int direction) {
+    unsigned count = menu_page_count(engine);
+    int current = menu_page_index(engine, id);
+    unsigned index = current >= 0 ? (unsigned)current : count;
+    for (unsigned i = 0; i <= count; ++i) {
+        index = wrap(index, count + 1, direction);
+        if (index == count || menu_page_supported(engine, index, gasoline_v6))
+            return index == count ? FAVORITE_EMPTY : parameter_pages[engine][index].id;
     }
-    return id;
+    return FAVORITE_EMPTY;
 }
 static void slot_text(char *out, size_t size, unsigned slot) {
     uint8_t id = favorite_draft.params[slot];
-    const char *label = id == FAVORITE_EMPTY ? "Empty" : favorite_parameter_label(engine, gasoline_v6, id, true);
-    snprintf_(out, size, "S%u %s", slot + 1, label);
+    snprintf_(out, size, "S%u %s", slot + 1, favorite_page_label(id));
 }
 
 
@@ -395,7 +409,7 @@ void menu_notice_saved(const char *title) {
 uint8_t menu_preferences_save(void) {
     uint8_t data[MENU_STORAGE_SIZE];
     menu_preferences_encode(&preferences, data);
-    data[MENU_PREFS_SIZE] = 1;
+    data[MENU_PREFS_SIZE] = 2; /* Favorite slots contain catalog page IDs. */
     data[MENU_PREFS_SIZE + 1] = atomic_favorites;
     memcpy(data + MENU_PREFS_SIZE + 2, favorites, sizeof(favorites));
     if (preferences_saved && !memcmp(data, saved_preferences, sizeof(data)))
@@ -423,15 +437,10 @@ void menu_engine_changed(void) {
         build_pages(view == FAVORITES ? preferences.last_favorite[engine] : preferences.last[engine][group]);
 }
 
-/* Import each atomic ID once, without changing existing composite page IDs. */
+/* Import the saved catalog page without flattening its measurements. */
 static __attribute__((noinline)) void favorite_from_page(FavoriteParameters *favorite, const ParameterPage *page) {
     memset(favorite, FAVORITE_EMPTY, sizeof(*favorite));
-    unsigned n = 0;
-    for (unsigned j = 0; j < parameter_page_elements(page); ++j) {
-        bool duplicate = false;
-        for (unsigned k = 0; k < n; ++k) duplicate |= favorite->params[k] == page->parameter_ids[j];
-        if (!duplicate) favorite->params[n++] = page->parameter_ids[j];
-    }
+    favorite->params[0] = page->id;
 }
 static void import_page_favorites(void) {
     memset(favorites, FAVORITE_EMPTY, sizeof(favorites));
@@ -441,13 +450,36 @@ static void import_page_favorites(void) {
             if (index >= 0) favorite_from_page(&favorites[e][f], &parameter_pages[e][index]);
         }
 }
-static __attribute__((noinline)) void present_favorite(const FavoriteParameters *original) {
-    FavoriteParameters visible = *original;
-    if (!favorite_parameter_supported(engine, gasoline_v6, visible.params[1]))
-        visible.params[1] = FAVORITE_EMPTY;
-    char first[15], second[23];
-    favorite_parameters_render(engine, &visible, currentTime, first, second);
+static void format_favorite_page(uint8_t id, char out[DASHBOARD_MESSAGE_MAX_LENGTH + 1]) {
+    const ParameterPage *page = favorite_page(engine, gasoline_v6, id);
+    out[0] = 0;
+    if (!page) return;
+    float values[4] = {NAN, NAN, NAN, NAN};
+    for (unsigned i = 0; i < parameter_page_elements(page); ++i)
+        values[i] = parameter_cache_get(page->parameter_ids[i], currentTime);
+    dashboard_format_values(page->name, values, page->parameter_ids, out);
+}
+static __attribute__((noinline)) void present_favorite(const FavoriteParameters *favorite) {
+    char first[DASHBOARD_MESSAGE_MAX_LENGTH + 1], second[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
+    format_favorite_page(favorite->params[0], first);
+    format_favorite_page(favorite->params[1], second);
     menu_present_lines(first, second);
+}
+/* Convert beta-19 atomic measurement IDs to their dedicated catalog pages. */
+static uint8_t page_for_old_measurement(uint8_t profile, uint8_t id) {
+    if (id == FAVORITE_EMPTY) return id;
+    if (id == 97) return 0xfe;
+    for (unsigned i = 0; i < menu_page_count(profile); ++i) {
+        const ParameterPage *page = &parameter_pages[profile][i];
+        if (page->parameter_ids[0] == id && page->parameter_ids[1] == id)
+            return page->id;
+    }
+    for (unsigned i = 0; i < menu_page_count(profile); ++i) {
+        const ParameterPage *page = &parameter_pages[profile][i];
+        for (unsigned j = 0; j < parameter_page_elements(page); ++j)
+            if (page->parameter_ids[j] == id) return page->id;
+    }
+    return FAVORITE_EMPTY;
 }
 
 /* Restore the user's menu layout or start with useful defaults. */
@@ -493,14 +525,18 @@ void menu_init(void) {
         preferences_saved = new_record;
     }
     memset(favorites, FAVORITE_EMPTY, sizeof(favorites));
-    atomic_favorites = new_record && data[MENU_PREFS_SIZE] == 1 && data[MENU_PREFS_SIZE + 1] == 1;
-    if (new_record && data[MENU_PREFS_SIZE] == 1) {
+    uint8_t favorite_version = new_record ? data[MENU_PREFS_SIZE] : 0;
+    atomic_favorites = (favorite_version == 1 || favorite_version == 2) && data[MENU_PREFS_SIZE + 1] == 1;
+    if (favorite_version == 1 || favorite_version == 2) {
         memcpy(favorites, data + MENU_PREFS_SIZE + 2, sizeof(favorites));
         for (unsigned e = 0; e < 2; ++e)
             for (unsigned f = 0; f < FAVORITE_SET_COUNT; ++f)
-                for (unsigned j = 0; j < FAVORITE_MAX_PARAMS; ++j)
-                    if (favorites[e][f].params[j] >= 100 && favorites[e][f].params[j] != FAVORITE_EMPTY)
-                        favorites[e][f].params[j] = FAVORITE_EMPTY;
+                for (unsigned j = 0; j < FAVORITE_VISIBLE_PARAMS; ++j) {
+                    uint8_t *id = &favorites[e][f].params[j];
+                    if (favorite_version == 1) *id = page_for_old_measurement(e, *id);
+                    else if (*id != FAVORITE_EMPTY && menu_page_index(e, *id) < 0 && *id != 0xfe)
+                        *id = FAVORITE_EMPTY;
+                }
     }
     if (!atomic_favorites) import_page_favorites();
     editor_confirm = false;
@@ -567,7 +603,7 @@ static void build_pages(uint16_t selected) {
     if (view == FAVORITES && (atomic_favorites || settings_state.ipc_my23_is_installed)) {
         list_count = 0;
         for (unsigned i = 0; i < FAVORITE_SET_COUNT; ++i)
-            if (favorite_parameter_supported(engine, gasoline_v6, favorites[engine][i].params[0])) list[list_count++] = i;
+            if (favorite_page(engine, gasoline_v6, favorites[engine][i].params[0])) list[list_count++] = i;
         selection = 0;
         for (unsigned i = 0; i < list_count; ++i)
             if (list[i] == selected_favorite[engine]) selection = i;
@@ -823,36 +859,8 @@ void menu_render(void) {
         if (settings_state.ipc_my23_is_installed) {
             const ParameterPage *page = &parameter_pages[engine][list[selection]];
             const ParameterPage *next = &parameter_pages[engine][list[wrap(selection, list_count, 1)]];
-            unsigned count = parameter_page_elements(page);
-            if (count == 2 && page->parameter_ids[0] != page->parameter_ids[1]) {
-                FavoriteParameters reading = {{page->parameter_ids[0], page->parameter_ids[1],
-                                               FAVORITE_EMPTY, FAVORITE_EMPTY, FAVORITE_EMPTY}};
-                char first[15], second[23];
-                favorite_parameters_render(engine, &reading, currentTime, first, second);
-                menu_present_lines(first, second);
-                return;
-            }
-            if (count == 2 && page->parameter_ids[0] == page->parameter_ids[1]) {
-                FavoriteParameters reading = {{page->parameter_ids[0], FAVORITE_EMPTY,
-                                               FAVORITE_EMPTY, FAVORITE_EMPTY, FAVORITE_EMPTY}};
-                char first[15], unused[23];
-                favorite_parameters_render(engine, &reading, currentTime, first, unused);
-                snprintf_(text, sizeof(text), "%s", first);
-            } else {
-                dashboard_format_values(page->name, displayed_parameter_values, page->parameter_ids, text);
-                if (strlen(text) > MY23_L1_VISIBLE) {
-                    char first[15];
-                    unsigned split = MY23_L1_VISIBLE;
-                    while (split > MY23_L1_VISIBLE / 2 && text[split] != ' ') --split;
-                    if (text[split] != ' ') split = MY23_L1_VISIBLE;
-                    memcpy(first, text, split);
-                    first[split] = 0;
-                    menu_present_lines(first, text + split + (text[split] == ' '));
-                    return;
-                }
-            }
-            menu_present_view(strlen(text) <= MY23_L1_VISIBLE - 2 ? UI_MODE_LIST : UI_MODE_PARAMETER,
-                              text, next->label);
+            dashboard_format_values(page->name, displayed_parameter_values, page->parameter_ids, text);
+            menu_present_lines(text, next->label);
             return;
         }
         dashboard_send_values();
@@ -934,8 +942,8 @@ void menu_render(void) {
         return;
     }
     case FAV_PICK:
-        menu_present_view(UI_MODE_LIST, favorite_parameter_name(engine, gasoline_v6, favorite_pick),
-                          favorite_parameter_name(engine, gasoline_v6, next_parameter(favorite_pick, 1)));
+        menu_present_view(UI_MODE_LIST, favorite_page_label(favorite_pick),
+                          favorite_page_label(next_favorite_page(favorite_pick, 1)));
         return;
     case FAULTS:
         fault_reader_text(fault_index, text, sizeof(text));
@@ -1204,7 +1212,7 @@ void menu_event(MenuEvent event) {
         case SORT_EDIT: if (!sort_confirm) sort_draft = !sort_draft; break;
         case FAV_SETS: favorite_set = wrap(favorite_set, FAVORITE_SET_COUNT, direction); break;
         case FAV_SLOTS: if (!favorite_confirm) favorite_slot = wrap(favorite_slot, FAVORITE_VISIBLE_PARAMS, direction); break;
-        case FAV_PICK: favorite_pick = next_parameter(favorite_pick, direction); break;
+        case FAV_PICK: favorite_pick = next_favorite_page(favorite_pick, direction); break;
         case ROOT:
             root = wrap(root, sizeof(roots) / sizeof(roots[0]), direction);
             break;
@@ -1446,12 +1454,26 @@ void menu_process(void) {
     if (menu_parameters_active() && view == FAVORITES && (atomic_favorites || settings_state.ipc_my23_is_installed) &&
         !diagnostics_state.clear_faults_request && currentTime - page_changed >= 150 && currentTime - last_query >= 500) {
         const FavoriteParameters *favorite = &favorites[engine][list[selection]];
-        for (unsigned i = 0; i < FAVORITE_VISIBLE_PARAMS; ++i) {
-            unsigned slot = (selected_parameter_element + i) % FAVORITE_VISIBLE_PARAMS;
-            uint8_t id = favorite->params[slot];
-            if (id < 100 && favorite_parameter_supported(engine, gasoline_v6, id) && parameter_definitions[id].request_id > 255) {
-                parameter_request_begin_id(id, slot);
-                selected_parameter_element = (slot + 1) % FAVORITE_VISIBLE_PARAMS;
+        unsigned total = 0;
+        for (unsigned slot = 0; slot < FAVORITE_VISIBLE_PARAMS; ++slot) {
+            const ParameterPage *page = favorite_page(engine, gasoline_v6, favorite->params[slot]);
+            if (page) total += parameter_page_elements(page);
+        }
+        for (unsigned i = 0; i < total; ++i) {
+            unsigned position = (selected_parameter_element + i) % total;
+            unsigned element = position;
+            const ParameterPage *page = NULL;
+            for (unsigned slot = 0; slot < FAVORITE_VISIBLE_PARAMS; ++slot) {
+                const ParameterPage *candidate = favorite_page(engine, gasoline_v6, favorite->params[slot]);
+                if (!candidate) continue;
+                if (element < parameter_page_elements(candidate)) { page = candidate; break; }
+                element -= parameter_page_elements(candidate);
+            }
+            if (!page) break;
+            uint8_t id = page->parameter_ids[element];
+            if (id < 100 && parameter_definitions[id].request_id > 255) {
+                parameter_request_begin_id(id, 255); /* Favorites render directly from the ID cache. */
+                selected_parameter_element = (position + 1) % total;
                 break;
             }
         }

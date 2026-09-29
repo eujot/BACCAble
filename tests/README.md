@@ -58,7 +58,8 @@ screen-reception builds. Keep a single `test` recipe in the Makefile; later
 rules may append prerequisites but must not replace its execution list.
 MY23/debug/legacy suites have separate report identities so cases do not mask
 one another. Tests cover the selected BMP vocabulary, 14/22 glyph budgets,
-two readable Favorite lines, single-value previews, paired Readings, unavailable gear values, isolated
+two whole-page Favorite lines, Readings previews with multi-value pages,
+version-1 measurement-to-page migration, unavailable gear values, isolated
 drafts, flash-save failure and record-format migration interruptions. BH output
 checks fixed L2 offsets, shorter replacement clearing and learned source context.
 UART tests distinguish 38-byte screens from shorter commands, verify the final

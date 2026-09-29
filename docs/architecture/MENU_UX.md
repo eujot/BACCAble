@@ -101,14 +101,15 @@ after 60 s; live readings stay open and active fault work postpones inactivity.
 
 `features/my23_ui.*` defines LIST, EDIT, CONFIRM, PARAMETER and NOTICE modes.
 Lists, including slot/picker, page-editor and IPC-test views, show `› current`
-above the next item. Slot labels use compact readable names, with only the two visible slots selectable.
+above the next item. Slot labels use the catalog page names, with only the two
+visible slots selectable.
 Long generic notices continue onto L2 instead of replacing useful text with a
 static Back footer. A long active title ends with `…`.
 Settings show draft values with `▲▼ CHANGE`; confirmation shows
-`HOLD SAVE•2X DISCARD` and saved feedback `✓ SAVED`. Single-value Readings show
-the current value on L1 and preview the next page on L2. Two-value pages use
-one line per value; larger composites wrap the catalog text across both lines.
-Single-value pages shorten a long name before losing the value.
+`HOLD SAVE•2X DISCARD` and saved feedback `✓ SAVED`. Every Reading uses its
+catalog template on L1, including multi-value pages; L2 previews the next page.
+The 14-glyph upper field clips a longer catalog line. No formatter can display
+more than 14 glyphs there while also retaining the next-page preview.
 Ordinary MY23 screens have no fixed footer.
 Legacy uses ASCII/verified Latin-1 glyphs and single-line confirmation wording.
 The renderer translates MY23 control tokens before legacy output.
@@ -152,28 +153,29 @@ original first-line/CR/footer layout and original 11/13-fragment count.
 ## Vehicle readability correction after beta 19
 
 The owner confirmed MY23 menu operation in the car but found the packed Favorite
-initials unreadable. Favorite screens now show exactly one named value on each
-line. Only Slots 1–2 are presented in the editor and live UDS polling; IDs in
+initials unreadable. The clarified contract is two complete catalog pages per
+Favorite, one page on each line. Each page retains its original one-to-four-value
+template. Only Slots 1–2 are presented in the editor and live UDS polling; IDs in
 historical Slots 3–5 remain stored in the same record without being erased.
-Single-value Readings restore recognizable names and values on L1 and preview
-the next eligible page on L2. Multi-value readings dedicate L2 to current data.
+Readings retain the catalog template on L1 and preview the next eligible page
+on L2, regardless of the current page's measurement count.
 Information status pages preview the next status, and fault
 lists show the next code. Short one-off notices and empty-state messages remain
 single-line where a second item would be misleading.
 
 The reported `Gear 15` was the CAN 0x2EF nibble `0xF` (unavailable), which the
-new atomic formatter had incorrectly printed as a decimal. It now renders `--`
-like the prior enum formatter's unknown marker. This does not alter the raw CAN
-state used by parking logic, stored measurement IDs or the CAN dictionary layout.
+beta-19 atomic formatter had printed as a decimal. Both Readings and Favorites
+now use the catalog enum formatter, which displays the unknown marker `-`.
+Raw CAN state and the CAN dictionary layout are unchanged.
 
 ## Atomic Favorite sets
 
-`favorite_parameters.*` uses the existing stable measurement IDs, not newly
-invented composite catalog pages. There are six ordered Favorite screens per
-fuel profile, with five stored measurement IDs each for migration, but only slots 1 and 2
-are visible, editable and polled after the vehicle readability review. `0xFF` marks an empty
-slot; slot 1 is always the primary. Clearing it hides that screen. Assigning an
-already selected measurement clears its previous slot. User edits happen only
+Favorites use the existing stable **catalog page IDs**, including composite pages.
+There are six ordered Favorite screens per fuel profile, with two visible page
+slots. The physical record keeps five bytes per screen for migration; Slots 3–5
+stay stored but inactive. `0xFF` marks an empty slot; Slot 1 is primary. Clearing
+it hides that screen. Assigning an already selected page clears its other slot.
+User edits happen only
 under `Settings → Favorites → Favorite N → Slot N`.
 
 Live atomic Favorites retain a separate set ID per fuel profile in RAM. Other
@@ -181,30 +183,32 @@ lists cannot overwrite this selection; filtering restores the same eligible
 set by ID, falling back to the first available set. Startup selects the first
 available set. The EEPROM record and legacy remembered page IDs are unchanged.
 
-Full names reuse the compatible source catalog, with explicit native/ECU/raw
-names where needed. Readable labels and units belong to presentation. Examples are Oil temp,
-Coolant temp, IC outlet, Gear, Engine RPM and Battery SOC. The 14-glyph primary
-line uses clear shorter names where needed.
-The selector identifies the full measurement, source and engine eligibility.
-RPM ID 97 is a UI view of existing 0xFC engine telemetry, with the same freshness
-rules; it does not add a new CAN decoder or diagnostic request.
+The selector displays each eligible page's catalog label. The live view uses the
+same `dashboard_format_values` template as Readings; a composite remains one
+line in its slot. The catalog and engine eligibility control which pages can be
+chosen. Beta-19 atomic measurement IDs are converted in RAM to a dedicated page
+when present, otherwise the first page containing that ID. ID 97 (extra RPM)
+uses a reserved compatibility page so that old selections survive; new selections
+still browse the ordinary Readings catalog only.
 
-Each MY23 Favorite shows one parameter on each line. Empty or engine-incompatible
-Slot 2 leaves L2 empty; stored Slots 3–5 remain untouched and inactive. An incompatible primary hides
-the screen while retaining its saved IDs. NaN, stale values and out-of-range
-formatting use `--`; signs and decimal precision remain meaningful.
+Each MY23 Favorite shows one selected page on each line. Empty or
+engine-incompatible Slot 2 leaves L2 empty. An incompatible primary hides the
+screen while retaining its saved ID. The catalog formatter handles stale and
+out-of-range values, signs, precision and enum fallback as in Readings.
 
-UDS polling covers the two visible slots, one request per 500 ms after the 150 ms page
-settling interval. Native values remain CAN-fed. `parameter_request_begin_id`
-keeps the existing ECU/DID/profile/page matching and timeout checks. The old fifth-slot cache implementation remains for compatible stored records,
-but hidden slots are not requested by the live Favorite.
+UDS polling covers every measurement in the two selected pages, one request per
+500 ms after the 150 ms page settling interval. Native values remain CAN-fed.
+`parameter_request_begin_id` keeps the ECU/DID/profile/page matching and timeout
+checks. Hidden Slots 3–5 are not requested by the live Favorite.
 Changing pages cancels the pending request; unsupported engines never poll their
-saved-but-ineligible measurements.
+saved-but-ineligible pages.
 
 Menu record `0x105` stores the unchanged serialized 80-byte `0x104` preferences
 followed by a version/activation byte pair and 60 bytes of five-slot IDs (142 B).
-Missing new records import 0x104, then historical 0x103 visibility. Import deduplicates
-repeated measurement IDs from old pages and preserves source/order. Record saves
+Version 1 held atomic measurement IDs; version 2 holds catalog page IDs in the
+first two slots. Version-1 IDs convert in RAM on load; saving commits version 2.
+Missing new records import 0x104, then historical 0x103 visibility. Imported
+page favorites retain their original page identity in Slot 1. Record saves
 keep the newest valid prior format in the other Flash page until the final
 commit halfword, including during format migration. The menu record fits the
 192-byte maximum payload; settings, statistics, addresses and page IDs do not move.
@@ -231,7 +235,7 @@ flavor, with the full ARM toolchain; inspect Flash/RAM totals.
 
 Vehicle acceptance is separate: open/close repeatedly, browse current/next,
 check both fields after long/short titles, edit and discard/save (including USB),
-use the two visible measurements, compare USB/Bluetooth/CarPlay, change radio tracks rapidly,
+use the two visible reading pages, compare USB/Bluetooth/CarPlay, change radio tracks rapidly,
 exercise holds and double-clicks, and check responsiveness without flicker.
 Observe the actual IPC and an independent BH TX trace for alignment, timing and
 radio arbitration. A host CAN queue acceptance is not an IPC acknowledgement.

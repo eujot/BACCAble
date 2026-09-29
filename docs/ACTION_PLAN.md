@@ -49,38 +49,29 @@ button timing or behavior in the car.
 
 ### MY23 readability follow-up after the owner's beta 19 car test, 2026-09-29
 
-The owner confirmed that the MY23 menu generally works in the car, but packed
-Favorite abbreviations are unreadable, Readings waste the second line, and one
-stationary reading showed `Gear 15`. On branch `fix/my23-readability` from
-`origin/master` `23db240`, implementation commit `14eba38`, the candidate now shows exactly two Favorite
-measurements with readable labels (one per line), restricts the visible editor
-and live polling to Slots 1–2, and preserves historical Slots 3–5 in storage.
-Single-value Readings show the current named value and next-page preview; their labels
-shorten before the value is lost. Information status and fault lists also use L2
-for the next entry when available. Both user guides and MENU_UX track the change.
+The owner confirmed MY23 menu operation but rejected the packed Favorite
+abbreviations and reported `Gear 15`. The first two commits on branch
+`fix/my23-readability` (`14eba38`, `17577e6`) incorrectly flattened catalog
+pages into individual measurements. The clarified requirement is to keep every
+Readings page in its original one-line catalog format, whether it contains one,
+two, three or four measurements, and preview the next page on L2. A Favorite
+must select two complete catalog pages, one per line. The current branch revision
+implements that contract and changes Favorite storage to version 2
+page IDs. Version-1 atomic measurement IDs convert in RAM on load (including a
+reserved compatibility page for extra RPM); older page
+favorites import their original page ID into Slot 1. Hidden Slots 3–5 remain
+stored but inactive. C1 polls every measurement in the two selected pages.
 
-CAN 0x2EF uses gear nibble `0xF` for unavailable data. The beta 19 atomic
-Favorite formatter printed it as decimal 15; the candidate shows `Gear --`.
-The pre-existing catalog formatter already showed a missing marker for this
-value. Raw telemetry and CAN decoding stay unchanged. Validation: all 24 native
+CAN 0x2EF nibble `0xF` means unavailable gear. Both Readings and Favorites now
+use the catalog enum formatter (`Gear -`) instead of printing decimal 15. The
+14-glyph upper MY23 field necessarily clips a longer catalog line when L2 holds
+the next-page preview; this is an explicit hardware/layout limit to review in
+the car. Both user guides and MENU_UX document the corrected behavior. All 24
 host executables pass with Apple Clang ASan/UBSan; all four C1 UI profiles build
-with the full Arm GNU 15.2.Rel1 toolchain. The largest C1 image uses
-94,944 / 98,304 Flash bytes and 15,520 / 16,384 static RAM bytes, including
-reserved heap/stack. `git diff --check` passes. Hardware acceptance is pending:
-verify the two Favorite lines, Readings page previews, long-name legibility and
-unavailable gear display in the car. The branch is pushed to origin; PR creation
-is pending GitHub CLI authentication. This candidate is not a new release.
-
-The owner's follow-up identified a remaining paired-Readings defect: both
-values were available but the MY23 preview occupied L2, so the second value
-could be clipped from L1. The current branch now uses L1/L2 for the two values;
-only single-value pages preview the next reading. Three/four-value catalog text
-wraps onto L2 when needed. A focused host regression covers paired oil/coolant
-and four-cylinder misfire pages. Full validation and vehicle acceptance for this
-follow-up are distinct: all 24 native host executables pass, the four C1 UI
-profiles build with Arm GNU 15.2.Rel1, and the largest image uses
-95,192 / 98,304 Flash bytes and 15,520 / 16,384 static RAM bytes. The two-line
-appearance and refresh of multi-value pages still need a vehicle test.
+with Arm GNU 15.2.Rel1. The largest image uses 92,688 / 98,304 Flash bytes and
+15,528 / 16,384 static RAM bytes, including reserved heap/stack. Vehicle display
+acceptance remains open. This candidate is neither merged nor released.
+PR creation remains pending GitHub CLI authentication.
 
 MY23 menu and shared navigation, **2026-09-29**, branch `feat/my23-menu-ux`,
 based on actual local/remote master `d63e608` (CAN dictionary PR #46 merged).
