@@ -27,6 +27,8 @@ static void setup_accept_draft(void) {
     assert(setup_stage_active());
     assert(setup_back()); /* First Back requests confirmation. */
     setup_stage_save();
+    assert(setup_stage_active()); /* Saving stays on the setting. */
+    assert(setup_stage_back()); /* A separate Back leaves the clean editor. */
     assert(!setup_stage_active());
 }
 static void test_setup_ui(void) {

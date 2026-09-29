@@ -13,7 +13,7 @@ for flag in ${EXTRA_CPPFLAGS:-}; do
     esac
 done
 for profile in legacy legacy-large my23 my23-large; do
-    flags="${base_flags[*]}"
+    flags="${base_flags[*]-}"
     case "$profile" in
         legacy-large) flags="$flags -DLARGE_DISPLAY";;
         my23) flags="$flags -DIPC_MY23_IS_INSTALLED";;

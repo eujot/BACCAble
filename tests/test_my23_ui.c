@@ -90,9 +90,15 @@ static void test_staged_setting_failure_and_discard(void) {
         assert(settings_state.shift_threshold == 3500 && setup_stage_active());
         fail_save = false;
         menu_event(MENU_HOLD);
-        assert(settings_state.shift_threshold == 3750 && !setup_stage_active());
+        assert(settings_state.shift_threshold == 3750 && setup_stage_active());
         assert(settings_writes == before + 2);
         now += 2000; menu_render();
+        menu_event(MENU_BACK); /* Return only to Features, not Settings. */
+        assert(!setup_stage_active());
+        if (profile) {
+            assert(screen_packet[2] == 0x80);
+            assert(!memcmp(screen_packet + 4, "Shift RPM", 9));
+        }
         menu_event(MENU_SELECT); menu_event(MENU_PREVIOUS);
         menu_event(MENU_BACK); menu_event(MENU_BACK); /* Explicit discard. */
         assert(settings_state.shift_threshold == 3750 && !setup_stage_active());
@@ -210,4 +216,136 @@ static void test_fifth_favorite_uds_reply(void) {
     CAN_RxHeaderTypeDef header = {.IDE = CAN_ID_EXT, .ExtId = p->response_id, .DLC = 8};
     parameter_request_receive(&header, reply);
     assert(isfinite(parameter_cache_get(33, now)));
+}
+
+/* Every atomic browsing level presents current + next, including wrapping. */
+static void expect_my23_list(const char *first, const char *next) {
+    uint8_t expected[MY23_PACKET_SIZE];
+    my23_packet_mode(expected, UI_MODE_LIST, first, next);
+    assert(!memcmp(screen_packet + 1, expected, sizeof(expected)));
+}
+static void test_my23_remaining_list_previews(void) {
+    fresh_contract(); to_settings(); settings_state.ipc_my23_is_installed = 1; menu_render();
+    const char *entries[] = {"Features", "Favorites", "Shown pages", "Sort order"};
+    for (unsigned i = 0; i < 4; ++i) {
+        expect_my23_list(entries[i], entries[(i+1)%4]); menu_event(MENU_NEXT);
+    }
+    menu_event(MENU_NEXT); menu_event(MENU_SELECT); menu_event(MENU_SELECT);
+    const char *slots[] = {"Slot 1" MY23_BULLET "OIL", "Slot 2" MY23_BULLET "WTR", "Slot 3" MY23_BULLET "Empty", "Slot 4" MY23_BULLET "Empty", "Slot 5" MY23_BULLET "Empty"};
+    for (unsigned i=0;i<5;++i) { expect_my23_list(slots[i],slots[(i+1)%5]); menu_event(MENU_NEXT); }
+    menu_event(MENU_SELECT);
+    expect_my23_list("Oil temp native", "Gear");
+    for (unsigned i=0;i<101 && memcmp(screen_packet+4,"Empty",5);++i) menu_event(MENU_PREVIOUS);
+    expect_my23_list("Empty", "Oil press native");
+    menu_event(MENU_BACK); menu_event(MENU_BACK); menu_event(MENU_BACK); menu_event(MENU_BACK);
+    menu_event(MENU_NEXT); menu_event(MENU_SELECT); /* Information. */
+    for(unsigned i=0;i<9;++i) menu_event(MENU_NEXT);
+    menu_event(MENU_SELECT); /* IPC test source/pattern list. */
+    expect_my23_list(MY23_SAVED "USB source", "Bluetooth source");
+    menu_event(MENU_PREVIOUS); expect_my23_list("Both lines", "USB source");
+    menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_NEXT);
+    expect_my23_list("UTF glyphs", "Line 1 length");
+    menu_present("12345678901234›•▲▼✓×°±→…");
+    assert(!memcmp(screen_packet+2,"12345678901234",14));
+    const uint8_t symbols[] = {0x80,0x81,0x82,0x83,0x84,0x85,0xb0,0xb1,0x86,0x87};
+    assert(!memcmp(screen_packet+16,symbols,sizeof(symbols)));
+}
+static void test_v6_parameter_label_identity(void) {
+    char fifth[40],sixth[40];
+    favorite_parameter_segment(0,19,1,false,fifth,sizeof(fifth));
+    favorite_parameter_segment(0,20,1,false,sixth,sizeof(sixth));
+    assert(!strcmp(fifth,"IC5 1.0\xb0") && !strcmp(sixth,"IC6 1.0\xb0"));
+    favorite_parameter_segment(0,19,1,true,fifth,sizeof(fifth));
+    favorite_parameter_segment(0,20,1,true,sixth,sizeof(sixth));
+    assert(!strcmp(fifth,"I51.0\xb0") && !strcmp(sixth,"I61.0\xb0"));
+}
+/* Compatibility page editors must never expose or persist an unaccepted draft. */
+static void test_page_editor_transactions(void) {
+    for (unsigned editor=1;editor<=3;++editor) {
+        fresh_contract(); to_settings(); assert(menu_preferences_save()==0);
+        uint8_t original[sizeof(saved)]; memcpy(original,saved,sizeof(saved));
+        for(unsigned i=0;i<editor;++i) menu_event(MENU_NEXT);
+        menu_event(MENU_SELECT); menu_event(MENU_SELECT);
+        if (editor==3) menu_event(MENU_NEXT);
+        assert(menu_preferences_save()==0 && !memcmp(original,saved,sizeof(saved)));
+        unsigned writes=preference_writes;
+        menu_event(MENU_BACK); /* Dirty prompt. */
+        assert(strstr(screen,"Hold save"));
+        menu_event(MENU_NEXT); /* Confirmation locks editing. */
+        fail_save=true; menu_event(MENU_HOLD);
+        assert(preference_writes==writes+1 && !memcmp(original,saved,sizeof(saved)));
+        fail_save=false; menu_event(MENU_HOLD);
+        assert(preference_writes==writes+2 && memcmp(original,saved,sizeof(saved)));
+        now+=2000; menu_render(); menu_event(MENU_BACK); /* Clean editor -> Settings. */
+        assert(strstr(screen, editor==1 ? "Page favorites" : editor==2 ? "Shown pages" : "Favorite order"));
+        MenuPreferences committed; assert(menu_preferences_decode(&committed,saved));
+        for(unsigned f=0;f<FAVORITE_SET_COUNT;++f) {
+            int index=menu_page_index(0,committed.favorites[0][f]);
+            if(index<0) assert(saved[82+f*5]==FAVORITE_EMPTY);
+            else assert(saved[82+f*5]==parameter_pages[0][index].parameter_ids[0]);
+        }
+        memcpy(original,saved,sizeof(saved));
+        menu_event(MENU_SELECT); menu_event(MENU_SELECT); if(editor==3) menu_event(MENU_NEXT);
+        menu_event(MENU_BACK); menu_event(MENU_BACK); /* Explicit discard. */
+        assert(menu_preferences_save()==0 && !memcmp(original,saved,sizeof(saved)));
+        menu_event(MENU_SELECT); menu_event(MENU_SELECT); if(editor==3) menu_event(MENU_NEXT);
+        now+=60001; menu_process(); /* Timeout discards too. */
+        assert(menu_parameters_active() && !memcmp(original,saved,sizeof(saved)));
+    }
+}
+static void test_my23_visibility_transaction(void) {
+    fresh_contract(); to_settings(); settings_state.ipc_my23_is_installed=1;
+    assert(menu_preferences_save()==0);
+    MenuPreferences original; assert(menu_preferences_decode(&original,saved));
+    menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_SELECT);
+    assert(screen_packet[2]==0x80 && screen_packet[4]==0x84);
+    uint8_t preview[22]; memcpy(preview,screen_packet+16,22);
+    menu_event(MENU_SELECT); /* Hide only in the draft. */
+    assert(screen_packet[4]==0x85 && !memcmp(preview,screen_packet+16,22));
+    assert(menu_preferences_save()==0);
+    MenuPreferences live; assert(menu_preferences_decode(&live,saved));
+    assert(!memcmp(original.hidden,live.hidden,sizeof(live.hidden)));
+    menu_event(MENU_BACK);
+    assert(!memcmp(screen_packet+16,"HOLD SAVE",9));
+    menu_event(MENU_BACK); /* Discard. */
+    expect_my23_list("Shown pages","Sort order");
+    menu_event(MENU_SELECT); assert(screen_packet[4]==0x84);
+    menu_event(MENU_SELECT); menu_event(MENU_BACK); menu_event(MENU_HOLD);
+    now+=2000; menu_render();
+    assert(screen_packet[4]==0x85 && !memcmp(preview,screen_packet+16,22));
+    menu_event(MENU_BACK); expect_my23_list("Shown pages","Sort order");
+    dashboard_state.baccable_dashboard_menu_visible=0; menu_init(); menu_event(MENU_HOLD);
+    assert(menu_preferences_save()==0 && menu_preferences_decode(&live,saved));
+    assert(memcmp(original.hidden,live.hidden,sizeof(live.hidden)));
+}
+
+static void test_favorite_slot_compact_label(void) {
+    fresh_contract(); to_settings(); settings_state.ipc_my23_is_installed=1;
+    menu_event(MENU_NEXT); menu_event(MENU_SELECT); menu_event(MENU_SELECT); menu_event(MENU_SELECT);
+    /* Oil native ID 5 -> Gear, Speed, then last/best timers; diesel DPF is skipped. */
+    for (unsigned i=0;i<5;++i) menu_event(MENU_NEXT);
+    menu_event(MENU_SELECT);
+    expect_my23_list("Slot 1" MY23_BULLET "B1","Slot 2" MY23_BULLET "WTR");
+    menu_event(MENU_BACK); menu_event(MENU_BACK); /* Discard preserves imported primary. */
+    menu_event(MENU_SELECT);
+    expect_my23_list("Slot 1" MY23_BULLET "OIL","Slot 2" MY23_BULLET "WTR");
+}
+static void test_my23_favorite_duplicate_rollback(void) {
+    fresh_contract(); to_settings(); settings_state.ipc_my23_is_installed=1;
+    assert(menu_preferences_save()==0);
+    uint8_t original[sizeof(saved)]; memcpy(original,saved,sizeof(saved));
+    menu_event(MENU_NEXT); menu_event(MENU_SELECT); menu_event(MENU_SELECT);
+    menu_event(MENU_NEXT); menu_event(MENU_SELECT); /* Slot 2 picker. */
+    for (unsigned i=0;i<101 && memcmp(screen_packet+4,"Oil temp na",11);++i) menu_event(MENU_PREVIOUS);
+    assert(!memcmp(screen_packet+4,"Oil temp na",11));
+    menu_event(MENU_SELECT); /* Move primary to Slot 2 only in the draft. */
+    expect_my23_list("Slot 2" MY23_BULLET "OIL","Slot 3" MY23_BULLET "Empty");
+    menu_event(MENU_PREVIOUS);
+    expect_my23_list("Slot 1" MY23_BULLET "Empty","Slot 2" MY23_BULLET "OIL");
+    menu_event(MENU_BACK); fail_save=true; menu_event(MENU_HOLD);
+    assert(!memcmp(original,saved,sizeof(saved)));
+    fail_save=false; menu_event(MENU_BACK); /* Discard failed draft. */
+    menu_event(MENU_SELECT);
+    expect_my23_list("Slot 1" MY23_BULLET "OIL","Slot 2" MY23_BULLET "WTR");
+    assert(!memcmp(original,saved,sizeof(saved)));
 }

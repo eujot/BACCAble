@@ -78,7 +78,7 @@ void favorite_parameter_segment(uint8_t engine, uint8_t id, float value, bool ti
         unsigned element;
         const ParameterPage *page = source_page(engine, false, id, &element);
         if (!page) page = source_page(engine, true, id, &element);
-        const char *name = favorite_parameter_name(engine, false, id);
+        const char *name = page ? page->label : "Empty";
         unsigned n = 0;
         bool word = true;
         while (*name && n < 4) {

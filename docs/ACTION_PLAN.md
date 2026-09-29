@@ -88,6 +88,52 @@ the car. Use the acceptance procedure in
 [MENU_UX.md](architecture/MENU_UX.md#refresh-and-vehicle-boundaries).
 
 
+### MY23 audit corrections, 2026-09-29
+
+Follow-up on `feat/my23-menu-ux` / PR #47, based on audit commit `3d94322`.
+This entry supersedes the pre-fix gaps in the dated audit below; that table is
+retained as evidence of why the corrections were required.
+
+Features save now updates the original draft values and stays in the same
+editor after feedback. A separate Back returns exactly one level to Features.
+Page-membership, visibility and page-order editors use isolated preference
+drafts, locked confirmation, explicit hold-save and discard; failed saves
+restore live preferences while retaining the draft, and timeout discards.
+Committed legacy membership/order changes regenerate imported atomic sets in
+the same record. MY23, and legacy after the first five-slot save, expose a single
+Favorites editor: Settings is Features, Favorites, Shown pages, Sort order.
+The old membership/order entries remain accessible only before legacy switches
+to atomic sets. Existing IDs, record layout and migration stay unchanged.
+
+MY23 slot and measurement-picker lists, Shown pages and IPC-test lists now show
+current/next, including wraparound. Slot labels use short/tiny names so that the
+active marker and slot number fit together. Empty Slot 1 hides the set; duplicate
+assignment moves the measurement only in the draft. Full measurement names stay
+in the picker; V6-only ignition corrections now retain cylinder 5/6 in compact
+labels. Generic long notices continue onto L2 instead of discarding their useful
+suffix for a static Back footer. Both user guides and MENU_UX describe the same
+behavior and conditional legacy menu.
+
+C1 initially exceeded its unchanged 96 KiB application allocation. Link-map
+inspection showed decorative LED `rand()` pulling newlib heap/assert/stdio
+support. Caller-owned `rand_r()` state removes that dependency path and retains
+the same RGB channel ranges; the specific decorative random sequence changes.
+No linker/storage reservations or firmware optimization flags were changed.
+The matrix script also handles an empty base-flag array under macOS Bash 3.2;
+its native-shell regression covers all four default flag combinations.
+
+Regression validation: 326 passing host scenarios / 24 executables with Apple
+Clang ASan/UBSan, including success-then-Back, legacy page transactions and
+import consistency, MY23 visibility, every added list preview/wrap, V6 names,
+compact timer labels and duplicate-slot failure/discard. Eight CI-script tests
+pass, along with 46 Lab unittest cases. All 16-profile Arm GNU 15.2.Rel1 builds
+and C1/C2/BH/CAN cppcheck pass. C1 peaks at 94,560 / 98,304 Flash bytes
+(3,744 free) and 15,520 / 16,384 static RAM bytes (864 free, including the
+existing heap/stack reservations). Build logs stay in repo tmp. No vehicle test
+or new release has been performed. Alignment, glyph legibility, actual gesture
+latency, flicker and radio/USB/CarPlay takeover remain the section-22 hardware
+acceptance checklist, not evidence supplied by these software tests.
+
 ### MY23 plan re-audit: incomplete contract, 2026-09-29
 
 Reviewed all 25 sections of the owner's untracked `BACCAble_MY23_Agent_Plan.md`

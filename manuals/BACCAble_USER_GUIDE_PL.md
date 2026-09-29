@@ -94,9 +94,10 @@ Nie ma Save & Exit. Bieżące odczyty pozostają widoczne. Pozostałe widoki wra
 do Favorites po 30 s bezczynności, a edytory po 60 s. Niedokończone szkice są
 odrzucane. Aktywny odczyt lub kasowanie błędów opóźnia automatyczny powrót.
 
-Edytory zgodności `Page favorites`, `Favorite order` i `Shown pages` nadal
-zapisują zatwierdzone zmiany list przy wyjściu. Wtedy zapisywane są również
-zapamiętane strony odczytów. Przy `× Save failed: RES` krótkie RES ponawia
+Edytory `Page favorites`, `Favorite order` i `Shown pages` mają takie same
+szkice, potwierdzenie, zapis przytrzymaniem i odrzucanie. Zapis zostawia Cię
+w edytorze; osobny dwuklik wraca do Settings. Bezczynność odrzuca niezapisane
+zmiany. Zapamiętane strony odczytów są zapisywane przy wyjściu ze zwykłych widoków. Przy `× Save failed: RES` krótkie RES ponawia
 zapis i wyjście, a dwuklik anuluje próbę wyjścia i zostawia bieżący widok.
 Samo czekanie nie ponawia zapisu.
 
@@ -120,13 +121,15 @@ Menu główne
 │  │     ├─ Enabled          Włączenie funkcji
 │  │     ├─ Store position   Zapis pozycji
 │  │     └─ < Back           Powrót
-│  ├─ Page favorites         Starszy edytor ulubionych stron
+│  ├─ Favorites              Favorite 1–6 → Slot 1–5 → parametr
 │  ├─ Shown pages            Pokazywanie i ukrywanie stron w Readings
-│  ├─ Favorite order         Kolejność ulubionych
-│  ├─ Sort order             Sortowanie według grup albo alfabetycznie
-│  └─ Favorites              Favorite 1–6 → Slot 1–5 → parametr
+│  └─ Sort order             Sortowanie według grup albo alfabetycznie
 └─ Information               Wersje, przyciski i test wyświetlacza IPC
 ```
+
+Ten układ Settings dotyczy MY23 oraz każdego profilu po zapisaniu zestawu
+pięciu slotów. Przed pierwszym takim zapisem starszy profil zachowuje kolejność:
+Features, Page favorites, Shown pages, Favorite order, Sort order, Favorites.
 
 Kolejność menu głównego jest stała. Dostępność stron zależy od wybranego silnika
 oraz ustawień `Advanced pages` i `Shown pages`. Grupa bez dostępnych stron może
@@ -210,9 +213,15 @@ bez zmian. Stare ulubione strony są importowane do zestawów bez powtarzania te
 samego identyfikatora pomiaru, z zachowaniem źródeł i kolejności. Zapis aktualizuje
 format preferencji menu. Wgranie starszego firmware nie eksportuje nowych zestawów.
 
-`Page favorites` i `Favorite order` zachowują starsze edytory listy sześciu
-ulubionych stron. Na starszym ekranie ta lista działa do pierwszego jawnego
-zapisu zestawu slotów. MY23 używa zestawów zaimportowanych lub skonfigurowanych.
+`Page favorites` i `Favorite order` są dostępne tylko w starszym profilu przed
+pierwszym zapisem zestawu slotów. Zatwierdzone zmiany aktualizują starszą listę
+stron i zestawy importowane z tej listy. Błąd zapisu lub odrzucenie nie zmieniają
+żadnej z nich. MY23 i profile z zapisanymi zestawami mają tylko edytor
+`Favorites`, aby nie było drugiej opcji zmieniającej inną listę. Kolejność
+parametrów ustalasz przez zawartość slotów. Pusty Slot 1 ukrywa cały zestaw;
+sloty 2–5 nie przesuwają się automatycznie na pozycję główną. Na MY23 listy slotów, wyboru pomiaru,
+testów IPC i Shown pages pokazują bieżącą oraz następną pozycję, także po
+przejściu z końca listy na początek.
 `Shown pages` i `Advanced pages` dotyczą zwykłych Readings, a nie jawnego wyboru
 pomiaru do zestawu. `Sort order` ma własny szkic i potwierdzenie zapisu.
 `Auto rotate` zmienia bieżący widok co pięć sekund.

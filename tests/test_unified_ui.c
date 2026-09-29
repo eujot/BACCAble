@@ -190,7 +190,7 @@ static void test_numeric_menu_flow(void) {
     menu_event(MENU_PREVIOUS);
     menu_event(MENU_BACK);
     menu_event(MENU_HOLD);
-    assert(settings_state.shift_threshold == 3250 && !setup_in_workflow());
+    assert(settings_state.shift_threshold == 3250 && setup_in_workflow());
     assert(settings_writes == 1 && usb_applies == 1);
     now += 2000; menu_render();
     menu_event(MENU_SELECT); menu_event(MENU_NEXT);

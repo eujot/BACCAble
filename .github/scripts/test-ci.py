@@ -116,6 +116,16 @@ class UiMatrixTests(unittest.TestCase):
                                     '-DIS_GASOLINE -DIPC_MY23_IS_INSTALLED',
                                     '-DIS_GASOLINE -DIPC_MY23_IS_INSTALLED -DLARGE_DISPLAY'])
             self.assertIn('BUILD_DIR=build/BH', invocations[-1])
+            # Exercise the empty base-flag array with the OS Bash (3.2 on macOS).
+            calls.unlink()
+            env['EXTRA_CPPFLAGS'] = ''
+            result = subprocess.run(['/bin/bash', str(SCRIPTS / 'build-ui-matrix.sh')],
+                                    cwd=root, env=env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            invocations = [line for line in calls.read_text().splitlines() if line.startswith('-C ')]
+            flags = [line.split('EXTRA_CPPFLAGS=', 1)[1].removesuffix(' all').strip() for line in invocations]
+            self.assertEqual(flags, ['', '-DLARGE_DISPLAY', '-DIPC_MY23_IS_INSTALLED',
+                                     '-DIPC_MY23_IS_INSTALLED -DLARGE_DISPLAY'])
             env['EXTRA_CPPFLAGS'] = '-DINTERNAL_OSCILLATOR;echo'
             result = subprocess.run(['bash', str(SCRIPTS / 'build-ui-matrix.sh')],
                                     cwd=root, env=env, capture_output=True, text=True)

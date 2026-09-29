@@ -487,10 +487,10 @@ void setup_stage_save(void) {
     case 26: comfort_state.open_windows_request = comfort_state.door_unlocks_requests_counter = 0; break;
     default: break;
     }
-    const char *title = staged->menu_text;
-    staged = NULL;
+    stage_original = stage_value;
+    stage_original_extra = stage_extra;
     stage_confirm = false;
-    menu_notice_saved(title);
+    menu_notice_saved(staged->menu_text);
 }
 #endif
 

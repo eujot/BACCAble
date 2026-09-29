@@ -87,9 +87,11 @@ Sort order. There is no Save & Exit item. Live readings stay visible. Other menu
 views return to Favorites after 30 s without input, or 60 s in editors; unfinished
 drafts are discarded. Active fault work postpones this timeout.
 
-The compatibility editors `Page favorites`, `Favorite order` and `Shown pages`
-still persist accepted membership/order/visibility changes when leaving. These
-also save remembered reading positions. If `× Save failed: RES` appears during
+The page editors `Page favorites`, `Favorite order` and `Shown pages` use the
+same draft, confirmation, hold-to-save and discard rules. Saving stays in the
+editor; a separate double-click returns to Settings. Timeout discards unfinished
+changes. Remembered reading positions are persisted when leaving ordinary views.
+If `× Save failed: RES` appears during
 an exit, click to retry that exit or double-click to cancel it and remain in the
 current view. Waiting does not automatically retry.
 
@@ -113,13 +115,15 @@ Main menu
 │  │     ├─ Enabled
 │  │     ├─ Store position
 │  │     └─ < Back
-│  ├─ Page favorites         Compatibility page membership editor
+│  ├─ Favorites              Favorite 1–6 → Slot 1–5 → measurement
 │  ├─ Shown pages            Show/hide pages in Readings
-│  ├─ Favorite order         Arrange Favorites
-│  ├─ Sort order             Grouped or alphabetical reading lists
-│  └─ Favorites              Favorite 1–6 → Slot 1–5 → measurement
+│  └─ Sort order             Grouped or alphabetical reading lists
 └─ Information               Versions, input status and IPC display test
 ```
+
+This Settings layout applies to MY23 and to any profile after a five-slot set
+has been saved. Before that first save, legacy Settings retains Features,
+Page favorites, Shown pages, Favorite order, Sort order, Favorites.
 
 The main menu order is fixed. Page availability follows the selected engine,
 `Advanced pages` and `Shown pages`. A group without eligible pages may show
@@ -196,9 +200,15 @@ repeated measurement IDs removed, preserving their original sources and order.
 Saving upgrades the menu preference record. Downgrading to old firmware is not
 an export of the new five-slot configurations.
 
-`Page favorites` and `Favorite order` keep the older six-page membership and
-ordering editors. They affect the legacy page list, used until a five-slot set
-has been explicitly saved on legacy. MY23 uses the imported/configured sets.
+`Page favorites` and `Favorite order` are offered only on legacy before the
+first five-slot save. Their committed edits update both the old page list and
+its imported sets; failed saves and discarded drafts update neither. MY23 and
+profiles using saved five-slot sets offer only `Favorites`, so there is no second
+editor changing a different list. Slot contents determine parameter order.
+Empty Slot 1 hides that Favorite;
+Slots 2–5 do not move automatically into the primary position.
+Slot browsing and measurement selection show current/next on MY23, including
+wraparound; IPC display-test lists and Shown pages do the same.
 `Shown pages` and `Advanced pages` affect ordinary Readings, not explicit set
 selection. `Sort order` changes catalog ordering through its own draft/save
 prompt. `Auto rotate` advances the live list every five seconds.

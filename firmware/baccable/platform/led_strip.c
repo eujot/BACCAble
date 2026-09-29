@@ -296,13 +296,17 @@ void setItalianFlag() {
     }
 }
 
+/* Caller-owned RNG state avoids newlib rand() pulling heap/assert/stdio support
+ * into the small C1 image. The decorative pattern keeps the same channel ranges. */
+static unsigned led_random_seed = 1;
+
 /* Select a randomized decorative color pattern. */
 void setCrazyFlag() {
     uint8_t i, crazyRed, crazyGreen, crazyBlue;
     for (i = 0; i < 46; i++) {
-        crazyRed = (uint8_t)(rand() % 255);
-        crazyGreen = (uint8_t)(rand() % 255);
-        crazyBlue = (uint8_t)(rand() % 64);          // less blue
+        crazyRed = (uint8_t)(rand_r(&led_random_seed) % 255);
+        crazyGreen = (uint8_t)(rand_r(&led_random_seed) % 255);
+        crazyBlue = (uint8_t)(rand_r(&led_random_seed) % 64);          // less blue
         Set_LED(i, crazyRed, crazyGreen, crazyBlue); // random color
     }
 }

@@ -156,6 +156,7 @@ static void test_unnumbered_list_contract(void) {
     expect_no_position();
     menu_event(MENU_SELECT); /* Stage enable without capture. */
     menu_event(MENU_BACK); menu_event(MENU_HOLD); now += 2000; menu_render();
+    menu_event(MENU_BACK); /* Leave the saved Enabled editor. */
     menu_event(MENU_NEXT);
     expect_no_position();
     menu_event(MENU_SELECT);

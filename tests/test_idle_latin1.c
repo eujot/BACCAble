@@ -61,6 +61,7 @@ static void test_idle_commit_and_capture(void) {
     setup_dashboardPageIndex = setup_page_for(23);
     menu_event(MENU_SELECT); menu_event(MENU_SELECT); /* Stage Enabled. */
     menu_event(MENU_BACK); menu_event(MENU_HOLD); now += 2000; menu_render();
+    menu_event(MENU_BACK); /* Leave the saved Enabled editor. */
     menu_event(MENU_NEXT); menu_event(MENU_SELECT); /* Unconfirmed Store position. */
     assert(strstr(screen, "Adjust") && setup_in_workflow());
     unsigned before = commands;

@@ -33,8 +33,9 @@ width. MY23 always has budgets `MY23_L1_VISIBLE = 14` and
 `MY23_L2_VISIBLE = 22`. Those are visible glyph counts, not UTF-8 byte limits.
 
 The main menu remains Favorites, Readings, Actions, Settings, Information.
-Settings contains Features, Page favorites, Shown pages, Favorite order,
-Sort order, Favorites. Existing catalogs, engine gates and page IDs are retained.
+MY23/atomic Settings contains Features, Favorites, Shown pages, Sort order.
+Legacy before its first five-slot save retains Features, Page favorites,
+Shown pages, Favorite order, Sort order, Favorites. Existing catalogs, engine gates and page IDs are retained.
 The [catalog audit](CATALOG_AUDIT.md) describes the legacy reading model.
 
 ## Central button recognizer
@@ -85,9 +86,13 @@ acknowledgement. Existing action preconditions are checked again on confirmation
 Except Read BCM faults and Peak hold, actions first show a prompt, then require
 a hold within three seconds. Another click cannot execute that confirmation.
 
-The compatibility membership, visibility and page-order editors still commit
-RAM changes when selected and persist on exit. Changed settings and menu
-preferences are independent storage domains. A failed automatic exit shows
+Membership, visibility and page-order editors use isolated MenuPreferences
+drafts and explicit confirmation/save/discard. Confirmation locks editing. A
+failed save rolls back live preferences and imported sets while retaining the
+draft. A successful save stays in the editor. Legacy membership/order editors
+are hidden whenever MY23 or atomic sets own live Favorites; before that switch,
+committed legacy edits regenerate imported sets in the same storage transaction.
+Changed settings and menu preferences are independent storage domains. A failed automatic exit shows
 `× Save failed: RES`; SELECT retries the remembered destination, Back cancels the
 exit, and idle never retries silently. Ordinary views idle after 30 s, editors
 after 60 s; live readings stay open and active fault work postpones inactivity.
@@ -95,7 +100,10 @@ after 60 s; live readings stay open and active fault work postpones inactivity.
 ## MY23 view modes and encoding
 
 `features/my23_ui.*` defines LIST, EDIT, CONFIRM, PARAMETER and NOTICE modes.
-Lists show `› current` above the next item. A long active title ends with `…`.
+Lists, including slot/picker, page-editor and IPC-test views, show `› current`
+above the next item. Slot labels use short/tiny source-aware measurement names.
+Long generic notices continue onto L2 instead of replacing useful text with a
+static Back footer. A long active title ends with `…`.
 Settings show draft values with `▲▼ CHANGE`; confirmation shows
 `HOLD SAVE•2X DISCARD` and saved feedback `✓ SAVED`. Readings use the larger
 context field for additional values. Ordinary MY23 screens have no fixed footer.
