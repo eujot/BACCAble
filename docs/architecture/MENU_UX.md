@@ -101,12 +101,14 @@ after 60 s; live readings stay open and active fault work postpones inactivity.
 
 `features/my23_ui.*` defines LIST, EDIT, CONFIRM, PARAMETER and NOTICE modes.
 Lists, including slot/picker, page-editor and IPC-test views, show `› current`
-above the next item. Slot labels use short/tiny source-aware measurement names.
+above the next item. Slot labels use compact readable names, with only the two visible slots selectable.
 Long generic notices continue onto L2 instead of replacing useful text with a
 static Back footer. A long active title ends with `…`.
 Settings show draft values with `▲▼ CHANGE`; confirmation shows
-`HOLD SAVE•2X DISCARD` and saved feedback `✓ SAVED`. Readings use the larger
-context field for additional values. Ordinary MY23 screens have no fixed footer.
+`HOLD SAVE•2X DISCARD` and saved feedback `✓ SAVED`. Readings show the current
+value on L1 and preview the next page on L2. Single-value pages shorten a long
+name before losing the value; multi-value pages retain the catalog template.
+Ordinary MY23 screens have no fixed footer.
 Legacy uses ASCII/verified Latin-1 glyphs and single-line confirmation wording.
 The renderer translates MY23 control tokens before legacy output.
 
@@ -146,11 +148,28 @@ This removes the firmware source of stale suffixes and moving field offsets;
 physical IPC alignment remains part of the vehicle test. Legacy retains its
 original first-line/CR/footer layout and original 11/13-fragment count.
 
+## Vehicle readability correction after beta 19
+
+The owner confirmed MY23 menu operation in the car but found the packed Favorite
+initials unreadable. Favorite screens now show exactly one named value on each
+line. Only Slots 1–2 are presented in the editor and live UDS polling; IDs in
+historical Slots 3–5 remain stored in the same record without being erased.
+Readings restore recognizable names and values on L1 and preview the next
+eligible page on L2. Information status pages preview the next status, and fault
+lists show the next code. Short one-off notices and empty-state messages remain
+single-line where a second item would be misleading.
+
+The reported `Gear 15` was the CAN 0x2EF nibble `0xF` (unavailable), which the
+new atomic formatter had incorrectly printed as a decimal. It now renders `--`
+like the prior enum formatter's unknown marker. This does not alter the raw CAN
+state used by parking logic, stored measurement IDs or the CAN dictionary layout.
+
 ## Atomic Favorite sets
 
 `favorite_parameters.*` uses the existing stable measurement IDs, not newly
 invented composite catalog pages. There are six ordered Favorite screens per
-fuel profile, with five ordered measurement slots each. `0xFF` marks an empty
+fuel profile, with five stored measurement IDs each for migration, but only slots 1 and 2
+are visible, editable and polled after the vehicle readability review. `0xFF` marks an empty
 slot; slot 1 is always the primary. Clearing it hides that screen. Assigning an
 already selected measurement clears its previous slot. User edits happen only
 under `Settings → Favorites → Favorite N → Slot N`.
@@ -161,25 +180,22 @@ set by ID, falling back to the first available set. Startup selects the first
 available set. The EEPROM record and legacy remembered page IDs are unchanged.
 
 Full names reuse the compatible source catalog, with explicit native/ECU/raw
-names where needed. Short/tiny labels and units belong to presentation. Common
-labels include OIL/O, OILE/OE, WTR/W, IC, ICI, MA, GEAR/G, RPM/R, SPD/S, BST/B,
-OILP/OP, IBS, SOC and BCM. Other catalog values use initials plus their units.
+names where needed. Readable labels and units belong to presentation. Examples are Oil temp,
+Coolant temp, IC outlet, Gear, Engine RPM and Battery SOC. The 14-glyph primary
+line uses clear shorter names where needed.
 The selector identifies the full measurement, source and engine eligibility.
 RPM ID 97 is a UI view of existing 0xFC engine telemetry, with the same freshness
 rules; it does not add a new CAN decoder or diagnostic request.
 
-Secondary packing tries the complete ordered list with short labels, then
-retries with tiny labels if needed. It appends only complete segments that fit
-22 glyphs and stops before the first non-fitting segment. No partial segment,
-trailing bullet, ellipsis, or extra screen is added. Explicit empty and
-engine-incompatible secondary slots are skipped. An incompatible primary hides
+Each MY23 Favorite shows one parameter on each line. Empty or engine-incompatible
+Slot 2 leaves L2 empty; stored Slots 3–5 remain untouched and inactive. An incompatible primary hides
 the screen while retaining its saved IDs. NaN, stale values and out-of-range
 formatting use `--`; signs and decimal precision remain meaningful.
 
-UDS polling covers all five slots, one request per 500 ms after the 150 ms page
+UDS polling covers the two visible slots, one request per 500 ms after the 150 ms page
 settling interval. Native values remain CAN-fed. `parameter_request_begin_id`
-keeps the existing ECU/DID/profile/page matching and timeout checks. Slot five
-updates the cache without indexing the old four-element displayed-value array.
+keeps the existing ECU/DID/profile/page matching and timeout checks. The old fifth-slot cache implementation remains for compatible stored records,
+but hidden slots are not requested by the live Favorite.
 Changing pages cancels the pending request; unsupported engines never poll their
 saved-but-ineligible measurements.
 
@@ -213,7 +229,7 @@ flavor, with the full ARM toolchain; inspect Flash/RAM totals.
 
 Vehicle acceptance is separate: open/close repeatedly, browse current/next,
 check both fields after long/short titles, edit and discard/save (including USB),
-use five measurements, compare USB/Bluetooth/CarPlay, change radio tracks rapidly,
+use the two visible measurements, compare USB/Bluetooth/CarPlay, change radio tracks rapidly,
 exercise holds and double-clicks, and check responsiveness without flicker.
 Observe the actual IPC and an independent BH TX trace for alignment, timing and
 radio arbitration. A host CAN queue acceptance is not an IPC acknowledgement.

@@ -47,6 +47,29 @@ button timing or behavior in the car.
 
 ## Current work
 
+### MY23 readability follow-up after the owner's beta 19 car test, 2026-09-29
+
+The owner confirmed that the MY23 menu generally works in the car, but packed
+Favorite abbreviations are unreadable, Readings waste the second line, and one
+stationary reading showed `Gear 15`. On branch `fix/my23-readability` from
+`origin/master` `23db240`, the candidate now shows exactly two Favorite
+measurements with readable labels (one per line), restricts the visible editor
+and live polling to Slots 1–2, and preserves historical Slots 3–5 in storage.
+Readings show the current named value and next-page preview; single-value labels
+shorten before the value is lost. Information status and fault lists also use L2
+for the next entry when available. Both user guides and MENU_UX track the change.
+
+CAN 0x2EF uses gear nibble `0xF` for unavailable data. The beta 19 atomic
+Favorite formatter printed it as decimal 15; the candidate shows `Gear --`.
+The pre-existing catalog formatter already showed a missing marker for this
+value. Raw telemetry and CAN decoding stay unchanged. Validation: all 24 native
+host executables pass with Apple Clang ASan/UBSan; all four C1 UI profiles build
+with the full Arm GNU 15.2.Rel1 toolchain. The largest C1 image uses
+94,944 / 98,304 Flash bytes and 15,520 / 16,384 static RAM bytes, including
+reserved heap/stack. `git diff --check` passes. Hardware acceptance is pending:
+verify the two Favorite lines, Readings page previews, long-name legibility and
+unavailable gear display in the car. This candidate is not a new release.
+
 MY23 menu and shared navigation, **2026-09-29**, branch `feat/my23-menu-ux`,
 based on actual local/remote master `d63e608` (CAN dictionary PR #46 merged).
 The owner's local `BACCAble_MY23_Agent_Plan.md` defines this task; it was

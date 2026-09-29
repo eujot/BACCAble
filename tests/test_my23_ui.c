@@ -20,10 +20,46 @@ static void test_my23_glyph_budget(void) {
     my23_packet(packet, "12345678901234EXTRA", "1234567890123456789012EXTRA");
     assert(!memcmp(packet + 1, "12345678901234", 14));
     assert(!memcmp(packet + 15, "1234567890123456789012", 22));
-    my23_packet(packet, "GEAR", "RPM 3500");
+    my23_packet(packet, "Gear", "RPM 3500");
     assert(packet[5] == ' ' && !memcmp(packet + 15, "RPM 3500", 8));
     for (unsigned i = 5; i < 15; ++i) assert(packet[i] == ' ');
 }
+/* MY23 Readings keeps the old value text and previews the next eligible page. */
+static void test_my23_readings_preview_and_unavailable_gear(void) {
+    fresh_contract();
+    settings_state.ipc_my23_is_installed = 1;
+    int gear = menu_page_index(0, 0x1a);
+    assert(gear >= 0);
+    parameter_cache_put(6, 15, now); /* 0xF from CAN means unavailable. */
+    menu_show_parameter((uint8_t)gear); menu_render();
+    assert(screen_packet[2] == 0x80 && !memcmp(screen_packet + 4, "Gear --", 7));
+    MenuPreferences prefs;
+    menu_preferences_default(&prefs);
+    uint8_t pages[64];
+    unsigned count = menu_page_list_filtered(&prefs, 0, parameter_pages[0][gear].group,
+                                             false, false, false, false, pages);
+    unsigned selected = 0;
+    while (selected < count && pages[selected] != gear) ++selected;
+    assert(selected < count && count > 1);
+    const char *next = parameter_pages[0][pages[(selected + 1) % count]].label;
+    assert(!memcmp(screen_packet + 16, next, strlen(next) < 22 ? strlen(next) : 22));
+    int coolant = menu_page_index(0, 0x20);
+    assert(coolant >= 0);
+    parameter_cache_put(42, 88, now);
+    menu_show_parameter((uint8_t)coolant); menu_render();
+    assert(screen_packet[2] == 0x80 && !memcmp(screen_packet + 4, "Coolant 88\xb0", 11));
+    menu_event(MENU_BACK); menu_event(MENU_BACK); /* Return to root. */
+    menu_event(MENU_PREVIOUS); menu_event(MENU_SELECT); /* Information. */
+    for (unsigned i = 0; i < 5; ++i) menu_event(MENU_NEXT);
+    assert(!memcmp(screen_packet + 16, "Gaps", 4));
+    for (unsigned i = 0; i < 4; ++i) menu_event(MENU_NEXT);
+#ifdef MENU_DIAGNOSTICS
+    assert(!memcmp(screen_packet + 16, "IPC diag", 8));
+    menu_event(MENU_NEXT);
+#endif
+    assert(!memcmp(screen_packet + 16, "C1 firmware", 11));
+}
+
 static void test_atomic_favorite_packing(void) {
     FavoriteParameters favorite = {{6, 97, 7, 25, FAVORITE_EMPTY}};
     parameter_cache_reset(); parameter_peak_enable(false);
@@ -31,42 +67,29 @@ static void test_atomic_favorite_packing(void) {
     parameter_cache_put(7, 100, now); parameter_cache_put(25, -0.5f, now);
     char first[15], second[23];
     favorite_parameters_render(0, &favorite, now, first, second);
-    assert(!strcmp(first, "GEAR 3"));
-    assert(!strcmp(second, "R3500" MY23_BULLET "S100" MY23_BULLET "B-0.5bar"));
-    assert(strlen(second) <= 22 && (uint8_t)second[strlen(second)-1] != 0x81);
+    assert(!strcmp(first, "Gear 3"));
+    assert(!strcmp(second, "Engine RPM 3500"));
     favorite = (FavoriteParameters){{5, 42, 22, 32, 33}};
     const uint8_t ids[] = {5, 42, 22, 32, 33};
     const float values[] = {101, 88, 42, 76, 90};
     for (unsigned i = 0; i < 5; ++i) parameter_cache_put(ids[i], values[i], now);
     favorite_parameters_render(0, &favorite, now, first, second);
-    assert(!strcmp(first, "OIL 101\xb0"));
-    assert(!strcmp(second, "W88\xb0" MY23_BULLET "IC42\xb0" MY23_BULLET "MA76\xb0" MY23_BULLET "GT90\xb0"));
-    assert(strlen(second) == 22);
-    /* Every supported set size has a complete primary and ordered whole segments. */
-    const char *expected_lines[] = {"", "WTR 88\xb0", "WTR 88\xb0" MY23_BULLET "IC 42\xb0",
-                                  "WTR 88\xb0" MY23_BULLET "IC 42\xb0" MY23_BULLET "MA 76\xb0",
-                                  "W88\xb0" MY23_BULLET "IC42\xb0" MY23_BULLET "MA76\xb0" MY23_BULLET "GT90\xb0"};
-    for (unsigned count = 1; count <= FAVORITE_MAX_PARAMS; ++count) {
-        FavoriteParameters subset = favorite;
-        for (unsigned i = count; i < FAVORITE_MAX_PARAMS; ++i) subset.params[i] = FAVORITE_EMPTY;
-        favorite_parameters_render(0, &subset, now, first, second);
-        assert(!strcmp(first, "OIL 101\xb0") && !strcmp(second, expected_lines[count - 1]));
-    }
-    parameter_cache_put(42, 8, now);
+    assert(!strcmp(first, "Oil temp 101\xb0"));
+    assert(!strcmp(second, "Coolant temp 88\xb0"));
+    /* Historical slots 3–5 stay stored but never crowd the two visible values. */
+    favorite.params[2] = favorite.params[3] = favorite.params[4] = FAVORITE_EMPTY;
     favorite_parameters_render(0, &favorite, now, first, second);
-    assert(strlen(second) == 21);
-    parameter_cache_put(42, 888, now); /* The 23-glyph candidate omits only the last segment. */
-    favorite_parameters_render(0, &favorite, now, first, second);
-    assert(!strstr(second, "GT") && strstr(second, "MA76"));
-    assert(strcmp(favorite_parameter_name(0, false, 9), favorite_parameter_name(0, false, 11)));
-    parameter_cache_put(42, -150, now);
-    favorite_parameters_render(0, &favorite, now, first, second);
-    assert(strlen(second) <= 22 && !strstr(second, "GT"));
+    assert(!strcmp(second, "Coolant temp 88\xb0"));
     favorite.params[1] = FAVORITE_EMPTY;
     favorite_parameters_render(0, &favorite, now, first, second);
-    assert(second[0] != (char)0x81 && second[strlen(second)-1] != (char)0x81);
+    assert(!second[0]);
+    favorite.params[1] = 42;
     favorite_parameters_render(0, &favorite, now + 3001, first, second);
-    assert(strstr(first, "--") && strstr(second, "--"));
+    assert(!strcmp(first, "Oil temp --") && !strcmp(second, "Coolant temp --"));
+    parameter_cache_put(6, 15, now); /* Raw 0xF means unavailable, not gear 15. */
+    favorite.params[0] = 6;
+    favorite_parameters_render(0, &favorite, now, first, second);
+    assert(!strcmp(first, "Gear --"));
     assert(favorite_parameter_supported(0, false, 32));
     assert(!favorite_parameter_supported(0, true, 32));
     assert(!favorite_parameter_supported(1, false, 32));
@@ -137,7 +160,7 @@ static void test_favorite_slot_draft_flow(void) {
     fail_save = false; menu_event(MENU_HOLD);
     assert(preference_writes == writes + 2);
     now += 2000; menu_render();
-    assert(strstr(screen, "Slot 2")); /* Successful save stays at selected slot. */
+    assert(strstr(screen, "S2 ")); /* Successful save stays at selected slot. */
     menu_event(MENU_BACK);
     assert(strstr(screen, "Favorite 1"));
     menu_event(MENU_BACK); menu_event(MENU_BACK);
@@ -187,7 +210,7 @@ static void test_my23_list_and_old_favorite_migration(void) {
     dashboard_state.baccable_dashboard_menu_visible = 0;
     menu_init(); menu_event(MENU_HOLD);
     assert(screen_packet[1] == MY23_PACKET_MARKER);
-    assert(!memcmp(screen_packet + 2, "OILE --", 7));
+    assert(!memcmp(screen_packet + 2, "Oil ECU --", 7));
     menu_event(MENU_BACK); /* Root/current + next. */
     assert(screen_packet[2] == 0x80 && !memcmp(screen_packet + 4, "Favorites", 9));
     assert(!memcmp(screen_packet + 16, "Readings", 8));
@@ -202,9 +225,9 @@ static void test_my23_list_and_old_favorite_migration(void) {
     assert(saved[82] == 30 && saved[83] == 42 && saved[84] == 23 && saved[85] == 22 && saved[86] == FAVORITE_EMPTY);
     dashboard_state.baccable_dashboard_menu_visible = 0;
     menu_init(); menu_event(MENU_HOLD);
-    assert(!memcmp(screen_packet + 2, "OILE --", 7));
+    assert(!memcmp(screen_packet + 2, "Oil ECU --", 7));
     settings_state.ipc_my23_is_installed = 0;
-    menu_present("GEAR");
+    menu_present("Gear");
     assert(screen_packet[1] == 'G'); /* Legacy receives ordinary text, never MY23 tokens. */
 }
 static void test_fifth_favorite_uds_reply(void) {
@@ -231,8 +254,8 @@ static void test_my23_remaining_list_previews(void) {
         expect_my23_list(entries[i], entries[(i+1)%4]); menu_event(MENU_NEXT);
     }
     menu_event(MENU_NEXT); menu_event(MENU_SELECT); menu_event(MENU_SELECT);
-    const char *slots[] = {"Slot 1" MY23_BULLET "OIL", "Slot 2" MY23_BULLET "WTR", "Slot 3" MY23_BULLET "Empty", "Slot 4" MY23_BULLET "Empty", "Slot 5" MY23_BULLET "Empty"};
-    for (unsigned i=0;i<5;++i) { expect_my23_list(slots[i],slots[(i+1)%5]); menu_event(MENU_NEXT); }
+    const char *slots[] = {"S1 Oil temp", "S2 Coolant"};
+    for (unsigned i=0;i<2;++i) { expect_my23_list(slots[i],slots[(i+1)%2]); menu_event(MENU_NEXT); }
     menu_event(MENU_SELECT);
     expect_my23_list("Oil temp native", "Gear");
     for (unsigned i=0;i<101 && memcmp(screen_packet+4,"Empty",5);++i) menu_event(MENU_PREVIOUS);
@@ -325,10 +348,10 @@ static void test_favorite_slot_compact_label(void) {
     /* Oil native ID 5 -> Gear, Speed, then last/best timers; diesel DPF is skipped. */
     for (unsigned i=0;i<5;++i) menu_event(MENU_NEXT);
     menu_event(MENU_SELECT);
-    expect_my23_list("Slot 1" MY23_BULLET "B1","Slot 2" MY23_BULLET "WTR");
+    expect_my23_list("S1 Best 0-100","S2 Coolant");
     menu_event(MENU_BACK); menu_event(MENU_BACK); /* Discard preserves imported primary. */
     menu_event(MENU_SELECT);
-    expect_my23_list("Slot 1" MY23_BULLET "OIL","Slot 2" MY23_BULLET "WTR");
+    expect_my23_list("S1 Oil temp","S2 Coolant");
 }
 static void test_my23_favorite_duplicate_rollback(void) {
     fresh_contract(); to_settings(); settings_state.ipc_my23_is_installed=1;
@@ -339,14 +362,14 @@ static void test_my23_favorite_duplicate_rollback(void) {
     for (unsigned i=0;i<101 && memcmp(screen_packet+4,"Oil temp na",11);++i) menu_event(MENU_PREVIOUS);
     assert(!memcmp(screen_packet+4,"Oil temp na",11));
     menu_event(MENU_SELECT); /* Move primary to Slot 2 only in the draft. */
-    expect_my23_list("Slot 2" MY23_BULLET "OIL","Slot 3" MY23_BULLET "Empty");
+    expect_my23_list("S2 Oil temp","S1 Empty");
     menu_event(MENU_PREVIOUS);
-    expect_my23_list("Slot 1" MY23_BULLET "Empty","Slot 2" MY23_BULLET "OIL");
+    expect_my23_list("S1 Empty","S2 Oil temp");
     menu_event(MENU_BACK); fail_save=true; menu_event(MENU_HOLD);
     assert(!memcmp(original,saved,sizeof(saved)));
     fail_save=false; menu_event(MENU_BACK); /* Discard failed draft. */
     menu_event(MENU_SELECT);
-    expect_my23_list("Slot 1" MY23_BULLET "OIL","Slot 2" MY23_BULLET "WTR");
+    expect_my23_list("S1 Oil temp","S2 Coolant");
     assert(!memcmp(original,saved,sizeof(saved)));
 }
 
@@ -364,7 +387,7 @@ static void test_atomic_favorite_selection_identity(void) {
     menu_event(MENU_NEXT);
     uint8_t selected[UART_SCREEN_BUFFER_SIZE];
     memcpy(selected, screen_packet, sizeof(selected));
-    assert(!memcmp(screen_packet + 2, "GEAR", 4));
+    assert(!memcmp(screen_packet + 2, "Gear", 4));
     menu_event(MENU_BACK); menu_event(MENU_NEXT); menu_event(MENU_SELECT);
     menu_event(MENU_SELECT); /* First reading of the remembered group. */
     menu_event(MENU_BACK); menu_event(MENU_BACK); menu_event(MENU_PREVIOUS);
@@ -374,5 +397,5 @@ static void test_atomic_favorite_selection_identity(void) {
     menu_engine_changed(); menu_render();
     assert(!memcmp(selected, screen_packet, sizeof(selected)));
     menu_event(MENU_NEXT);
-    assert(!memcmp(screen_packet + 2, "SPD", 3));
+    assert(!memcmp(screen_packet + 2, "Speed", 3));
 }

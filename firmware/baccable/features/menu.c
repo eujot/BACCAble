@@ -164,18 +164,9 @@ static uint8_t next_parameter(uint8_t id, int direction) {
     return id;
 }
 static void slot_text(char *out, size_t size, unsigned slot) {
-    char label[40];
     uint8_t id = favorite_draft.params[slot];
-    if (id == FAVORITE_EMPTY) snprintf_(label, sizeof(label), "Empty");
-    else {
-        for (unsigned tiny=0;tiny<2;++tiny) {
-            favorite_parameter_segment(engine,id,NAN,tiny,label,sizeof(label));
-            char *value = strstr(label,"--");
-            if (value) { if (value > label && value[-1] == ' ') --value; *value = 0; }
-            if (strlen(label) <= MY23_L1_VISIBLE - 9) break;
-        }
-    }
-    snprintf_(out, size, "Slot %u%s%s", slot + 1, MY23_BULLET, label);
+    const char *label = id == FAVORITE_EMPTY ? "Empty" : favorite_parameter_label(engine, gasoline_v6, id, true);
+    snprintf_(out, size, "S%u %s", slot + 1, label);
 }
 
 
@@ -452,8 +443,8 @@ static void import_page_favorites(void) {
 }
 static __attribute__((noinline)) void present_favorite(const FavoriteParameters *original) {
     FavoriteParameters visible = *original;
-    for (unsigned i = 1; i < FAVORITE_MAX_PARAMS; ++i)
-        if (!favorite_parameter_supported(engine, gasoline_v6, visible.params[i])) visible.params[i] = FAVORITE_EMPTY;
+    if (!favorite_parameter_supported(engine, gasoline_v6, visible.params[1]))
+        visible.params[1] = FAVORITE_EMPTY;
     char first[15], second[23];
     favorite_parameters_render(engine, &visible, currentTime, first, second);
     menu_present_lines(first, second);
@@ -830,9 +821,19 @@ void menu_render(void) {
         }
         menu_parameters_refresh();
         if (settings_state.ipc_my23_is_installed) {
-            FavoriteParameters readings;
-            favorite_from_page(&readings, &parameter_pages[engine][list[selection]]);
-            present_favorite(&readings);
+            const ParameterPage *page = &parameter_pages[engine][list[selection]];
+            const ParameterPage *next = &parameter_pages[engine][list[wrap(selection, list_count, 1)]];
+            if (page->parameter_ids[0] == page->parameter_ids[1]) {
+                FavoriteParameters reading = {{page->parameter_ids[0], FAVORITE_EMPTY,
+                                               FAVORITE_EMPTY, FAVORITE_EMPTY, FAVORITE_EMPTY}};
+                char first[15], unused[23];
+                favorite_parameters_render(engine, &reading, currentTime, first, unused);
+                snprintf_(text, sizeof(text), "%s", first);
+            } else {
+                dashboard_format_values(page->name, displayed_parameter_values, page->parameter_ids, text);
+            }
+            menu_present_view(strlen(text) <= MY23_L1_VISIBLE - 2 ? UI_MODE_LIST : UI_MODE_PARAMETER,
+                              text, next->label);
             return;
         }
         dashboard_send_values();
@@ -907,7 +908,7 @@ void menu_render(void) {
     case FAV_SLOTS: {
         char next[40] = {0};
         slot_text(text, sizeof(text), favorite_slot);
-        slot_text(next, sizeof(next), wrap(favorite_slot, FAVORITE_MAX_PARAMS, 1));
+        slot_text(next, sizeof(next), wrap(favorite_slot, FAVORITE_VISIBLE_PARAMS, 1));
         menu_present_view(favorite_confirm ? UI_MODE_CONFIRM : UI_MODE_LIST, text,
                           favorite_confirm ? "HOLD SAVE" MY23_BULLET "2X DISCARD" : next);
         if (favorite_confirm && !settings_state.ipc_my23_is_installed) menu_present("Hold save/2x drop");
@@ -919,6 +920,14 @@ void menu_render(void) {
         return;
     case FAULTS:
         fault_reader_text(fault_index, text, sizeof(text));
+        if (settings_state.ipc_my23_is_installed) {
+            char next[24];
+            if (fault_reader_count() > 1) {
+                fault_reader_text(wrap(fault_index, fault_reader_count(), 1), next, sizeof(next));
+                menu_present_view(UI_MODE_LIST, text, next);
+            } else menu_present_lines(text, "2X Back");
+            return;
+        }
         break;
 #ifdef MENU_DIAGNOSTICS
     case DIAGNOSTICS:
@@ -938,14 +947,11 @@ void menu_render(void) {
 #ifdef MENU_DIAGNOSTICS
         if (info == 10) {
             ui_render_action(text, sizeof(text), "IPC diag");
-            break;
-        }
+        } else
 #endif
         if (info == 9) {
             ui_render_action(text, sizeof(text), "IPC display test");
-            break;
-        }
-        if (info == 5)
+        } else if (info == 5)
             snprintf_(text, sizeof(text), "Reports:%lu", (unsigned long)input.reports_seen);
         else if (info == 6)
             snprintf_(text, sizeof(text), "Gaps:%lu", (unsigned long)input.stream_gaps);
@@ -971,6 +977,13 @@ void menu_render(void) {
                 ui_render_value(text, sizeof(text), peer ? "BH" : "C2", peer_versions[peer]);
             else
                 snprintf_(text, sizeof(text), UI_SYMBOL_UNKNOWN " %s no reply", peer ? "BH" : "C2");
+        }
+        if (settings_state.ipc_my23_is_installed) {
+            static const char *const next_info[] = {"C1 firmware", "C2 firmware", "BH firmware",
+                "IPC MY23", "Immobilizer", "Reports", "Gaps", "Max gap", "Input age",
+                "IPC display test", "IPC diag"};
+            menu_present_view(UI_MODE_LIST, text, next_info[(info + 1) % INFO_PAGES]);
+            return;
         }
         break;
     case IPC_TEST_MENU: {
@@ -1171,7 +1184,7 @@ void menu_event(MenuEvent event) {
         switch (view) {
         case SORT_EDIT: if (!sort_confirm) sort_draft = !sort_draft; break;
         case FAV_SETS: favorite_set = wrap(favorite_set, FAVORITE_SET_COUNT, direction); break;
-        case FAV_SLOTS: if (!favorite_confirm) favorite_slot = wrap(favorite_slot, FAVORITE_MAX_PARAMS, direction); break;
+        case FAV_SLOTS: if (!favorite_confirm) favorite_slot = wrap(favorite_slot, FAVORITE_VISIBLE_PARAMS, direction); break;
         case FAV_PICK: favorite_pick = next_parameter(favorite_pick, direction); break;
         case ROOT:
             root = wrap(root, sizeof(roots) / sizeof(roots[0]), direction);
@@ -1238,7 +1251,7 @@ void menu_event(MenuEvent event) {
             if (!favorite_confirm) { favorite_pick = favorite_draft.params[favorite_slot]; view = FAV_PICK; } break;
         case FAV_PICK:
             /* A measurement appears once; replacing slots changes the configured order. */
-            for (unsigned i = 0; i < FAVORITE_MAX_PARAMS; ++i)
+            for (unsigned i = 0; i < FAVORITE_VISIBLE_PARAMS; ++i)
                 if (i != favorite_slot && favorite_draft.params[i] == favorite_pick) favorite_draft.params[i] = FAVORITE_EMPTY;
             favorite_draft.params[favorite_slot] = favorite_pick;
             view = FAV_SLOTS; break;
@@ -1414,12 +1427,12 @@ void menu_process(void) {
     if (menu_parameters_active() && view == FAVORITES && (atomic_favorites || settings_state.ipc_my23_is_installed) &&
         !diagnostics_state.clear_faults_request && currentTime - page_changed >= 150 && currentTime - last_query >= 500) {
         const FavoriteParameters *favorite = &favorites[engine][list[selection]];
-        for (unsigned i = 0; i < FAVORITE_MAX_PARAMS; ++i) {
-            unsigned slot = (selected_parameter_element + i) % FAVORITE_MAX_PARAMS;
+        for (unsigned i = 0; i < FAVORITE_VISIBLE_PARAMS; ++i) {
+            unsigned slot = (selected_parameter_element + i) % FAVORITE_VISIBLE_PARAMS;
             uint8_t id = favorite->params[slot];
             if (id < 100 && favorite_parameter_supported(engine, gasoline_v6, id) && parameter_definitions[id].request_id > 255) {
                 parameter_request_begin_id(id, slot);
-                selected_parameter_element = (slot + 1) % FAVORITE_MAX_PARAMS;
+                selected_parameter_element = (slot + 1) % FAVORITE_VISIBLE_PARAMS;
                 break;
             }
         }
