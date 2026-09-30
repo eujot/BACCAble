@@ -139,10 +139,10 @@ static void format_segment(uint8_t engine, uint8_t id, float value, bool tiny,
     else if (id == 6 && value >= 0 && value < 11 && value == (unsigned)value)
         snprintf_(number, sizeof(number), "%c", gear_symbols[(unsigned)value]);
     else if (id == 6) { snprintf_(number, sizeof(number), "--"); unit = ""; }
-    else if (id == 8) snprintf_(number, sizeof(number), "%s", value >= 0 && value < 7 ? regeneration_labels[(unsigned)value] : "?");
+    else if (id == 8) snprintf_(number, sizeof(number), "%s", value >= 0 && value < 7 && value == (unsigned)value ? regeneration_labels[(unsigned)value] : "?");
     else if (id == 13) snprintf_(number, sizeof(number), "%s", value == 0 ? "ON" : value == 1 ? "OFF" : "?");
     else if (id == 15) snprintf_(number, sizeof(number), "%s", value == 0 ? "N" : value == 8 ? "D" : value == 16 ? "A" : value == 48 ? "R" : "?");
-    else if (id == 17) snprintf_(number, sizeof(number), "%c", value >= 32 && value <= 126 ? (char)value : '?');
+    else if (id == 17) snprintf_(number, sizeof(number), "%c", value >= 32 && value <= 126 && value == (unsigned)value ? (char)value : '?');
     else if ((id == 9 || id == 11) && value > 20) { snprintf_(number, sizeof(number), "MISS"); unit = ""; }
     else if ((id == 10 || id == 12) && value > 40) { snprintf_(number, sizeof(number), "MISS"); unit = ""; }
     else if ((id == 9 && statistics_state.statistics_0_100_started) || (id == 10 && statistics_state.statistics_100_200_started)) { snprintf_(number, sizeof(number), "RUN"); unit = ""; }

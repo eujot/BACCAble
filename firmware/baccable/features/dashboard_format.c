@@ -11,14 +11,18 @@ static void append_text(char *output, size_t *length, const char *text) {
 
 /* Choose a known status label or the unavailable fallback. */
 static unsigned enum_index(float value, unsigned fallback) {
-    return isfinite(value) && value >= 0 && value < fallback ? (unsigned)value : fallback;
+    return isfinite(value) && value >= 0 && value < fallback && value == (unsigned)value
+               ? (unsigned)value
+               : fallback;
 }
 
 /* Describe a reported gear, regeneration, drive mode or pedal-map status. */
 static const char *enum_text(uint32_t id, float value, char symbol[2]) {
     switch (id) {
     case 0x17:
-        symbol[0] = value >= 0 && value < 11 ? gear_symbols[(unsigned)value] : '-';
+        symbol[0] = isfinite(value) && value >= 0 && value < 11 && value == (unsigned)value
+                        ? gear_symbols[(unsigned)value]
+                        : '-';
         return symbol;
     case 0x19:
         return regeneration_labels[enum_index(value, 7)];

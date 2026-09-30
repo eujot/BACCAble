@@ -94,6 +94,15 @@ static void test_my23_readings_preview_and_unavailable_gear(void) {
     parameter_cache_put(6, 15, now); /* 0xF from CAN means unavailable. */
     menu_show_parameter((uint8_t)gear); menu_render();
     assert(!memcmp(screen_packet + 2, "Gear -", 6));
+    const uint8_t gear_id[] = {6};
+    const float fractional_enum[] = {1.5f};
+    char enum_text[40];
+    dashboard_format_values("Gear $enum", fractional_enum, gear_id, enum_text);
+    assert(!strcmp(enum_text, "Gear -"));
+    dashboard_format_values("Regen $enum", fractional_enum, (const uint8_t[]){8}, enum_text);
+    assert(enum_text[6] == '?');
+    dashboard_format_values("Belt $enum", fractional_enum, (const uint8_t[]){13}, enum_text);
+    assert(!strcmp(enum_text, "Belt --"));
     MenuPreferences prefs;
     menu_preferences_default(&prefs);
     uint8_t pages[64];
@@ -174,6 +183,10 @@ static void test_atomic_favorite_packing(void) {
     favorite.params[0] = 6;
     favorite_parameters_render(0, &favorite, now, first, second);
     assert(!strcmp(first, "Gear --"));
+    favorite_parameter_segment(0, 8, 1.5f, false, first, sizeof(first));
+    assert(strstr(first, "?"));
+    favorite_parameter_segment(0, 17, 65.5f, false, first, sizeof(first));
+    assert(strstr(first, "?"));
     assert(favorite_parameter_supported(0, false, 32));
     assert(!favorite_parameter_supported(0, true, 32));
     assert(!favorite_parameter_supported(1, false, 32));

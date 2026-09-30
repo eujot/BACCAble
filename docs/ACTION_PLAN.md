@@ -87,6 +87,28 @@ reassertion and factory arbitration remain. No new beta or hardware flash.
 
 ## Current work
 
+### Gear 15 root cause and enum-rendering audit, 2026-09-30
+
+The beta-19 source (`d071cfc`) decoded CAN gear nibble `0xF` as the integer 15
+in `native_parameter_read()`. That raw value is intentionally retained as an
+unavailable sentinel. The display regression was in
+`favorite_parameter_segment()`: its special case rendered only valid gear
+indices, but invalid gear values then fell through to the generic floating
+point formatter. This produced the literal `Gear 15`. Commit `14eba38` added an
+explicit `id == 6` unavailable branch, rendering `--`; the dashboard formatter
+already rendered out-of-range gear as `-`. So the root cause was an incomplete
+enum branch in the MY23 Favorites/Readings renderer, not a change to CAN decoding.
+
+The same audit found enum values with valid-range checks but no integer check:
+fractional gear/regeneration/seatbelt values could be truncated to a neighboring
+label, and the Favorite regeneration/pedal-character formatters had the same
+issue. These now use an unavailable marker unless the value is finite, in range
+and integral. Exact-value DNA and seatbelt mappings already fell back safely.
+Regression cases cover gear 15 and fractional enum/character values in both
+dashboard and Favorite formatters. The full Apple Clang ASan/UBSan host suite
+passes. No other enum-to-index/character conversion in the menu display paths
+silently falls through to numeric rendering after this audit.
+
 ### MY23 catalog readings fit 16 columns, 2026-09-29
 
 The user's follow-up found that clipping longer beta-18 catalog templates
