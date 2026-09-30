@@ -45,6 +45,15 @@ Notes are maintained in [v5-beta-19.md](releases/v5-beta-19.md). Vehicle
 acceptance is still open; publication does not confirm MY23 screen appearance,
 button timing or behavior in the car.
 
+## Release status, 2026-09-30
+
+PR #49 is merged to master at `5cf2509`. Beta `v5-beta-20` release notes cover
+the MY23 16-column Readings/Favorites fixes, enum validation, dense Favorite
+polling, and the temporary IPC refresh controls merged in PR #48. The beta
+workflow must pass shared host tests, static analysis and all firmware builds
+before publishing artifacts. Vehicle acceptance remains open; a successful
+workflow does not verify screen rendering or CAN behavior in a car.
+
 ## Temporary IPC refresh controls, 2026-09-29
 
 Implemented on `fix/ipc-refresh-controls`, based on released master `23db240`.
