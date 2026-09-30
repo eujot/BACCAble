@@ -49,10 +49,15 @@ button timing or behavior in the car.
 
 PR #49 is merged to master at `5cf2509`. Beta `v5-beta-20` release notes cover
 the MY23 16-column Readings/Favorites fixes, enum validation, dense Favorite
-polling, and the temporary IPC refresh controls merged in PR #48. The beta
-workflow must pass shared host tests, static analysis and all firmware builds
-before publishing artifacts. Vehicle acceptance remains open; a successful
-workflow does not verify screen rendering or CAN behavior in a car.
+polling, and the temporary IPC refresh controls merged in PR #48. Release
+`v5-beta-20` was built from `1708d8b` after the shared host tests, Lab tests,
+menu and release-script checks, cppcheck, and all C1/C2/BH/CAN firmware builds
+passed in [workflow 36765272225](https://github.com/eujot/BACCAble/actions/runs/36765272225).
+The [release](https://github.com/eujot/BACCAble/releases/tag/v5-beta-20)
+contains all four role images, build identity and checksums. Vehicle acceptance
+remains open; a successful workflow does not verify screen rendering or CAN
+behavior in a car. Notes are maintained in
+[v5-beta-20.md](releases/v5-beta-20.md).
 
 ## Temporary IPC refresh controls, 2026-09-29
 
