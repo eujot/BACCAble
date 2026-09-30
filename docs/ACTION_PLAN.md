@@ -63,7 +63,8 @@ full-width numeric fields and the compact outputs. All four UI profiles build
 for C1, C2 and BH with Arm GNU 15.2.Rel1; the largest C1 image uses
 93,924 / 98,304 Flash bytes and
 15,528 / 16,384 static RAM bytes, including reserved heap/stack. Vehicle
-readability remains unverified.
+readability remains unverified. The change is open for review in
+[PR #49](https://github.com/eujot/BACCAble/pull/49); it is not merged or released.
 
 ### MY23 measured 16-column correction, 2026-09-29
 
