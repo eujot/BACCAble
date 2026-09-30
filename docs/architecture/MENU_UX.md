@@ -29,7 +29,7 @@ flowchart LR
 
 `IPC_MY23_IS_INSTALLED` chooses the C1 **default** profile. Saved `MY23 IPC`
 can override it. `LARGE_DISPLAY` independently chooses the legacy 18/24-character
-width. MY23 always has budgets `MY23_L1_VISIBLE = 14` and
+width. MY23 always has budgets `MY23_L1_VISIBLE = 16` and
 `MY23_L2_VISIBLE = 22`. Those are visible glyph counts, not UTF-8 byte limits.
 
 The main menu remains Favorites, Readings, Actions, Settings, Information.
@@ -101,12 +101,24 @@ after 60 s; live readings stay open and active fault work postpones inactivity.
 
 `features/my23_ui.*` defines LIST, EDIT, CONFIRM, PARAMETER and NOTICE modes.
 Lists, including slot/picker, page-editor and IPC-test views, show `› current`
-above the next item. Slot labels use short/tiny source-aware measurement names.
+above the next item. Slot labels use the catalog page names, with only the two
+visible slots selectable.
 Long generic notices continue onto L2 instead of replacing useful text with a
 static Back footer. A long active title ends with `…`.
 Settings show draft values with `▲▼ CHANGE`; confirmation shows
-`HOLD SAVE•2X DISCARD` and saved feedback `✓ SAVED`. Readings use the larger
-context field for additional values. Ordinary MY23 screens have no fixed footer.
+`HOLD SAVE•2X DISCARD` and saved feedback `✓ SAVED`. Every Reading keeps its
+catalog measurements on L1, including multi-value pages; L2 previews the next
+page. `dashboard_format_my23_page()` selects compact templates only in MY23,
+then removes numeric padding. Tests cover both catalogs and both compiled legacy
+widths: formatted MY23 pages fit 16 glyphs, including four-value and status
+pages. Legacy continues using the original catalog templates. The same MY23
+formatter supplies both visible Favorite slots.
+Favorite polling deduplicates UDS IDs across both pages at one request per
+500 ms. Its diagnostic cache age is max(3000 ms, (unique count + 1) * 500 ms),
+bounded to 4500 ms for eight values. Native values and ordinary Readings retain
+3000 ms. This avoids expiration during a healthy full cycle without increasing
+bus traffic or indefinitely retaining missing responses.
+Ordinary MY23 screens have no fixed footer.
 Legacy uses ASCII/verified Latin-1 glyphs and single-line confirmation wording.
 The renderer translates MY23 control tokens before legacy output.
 
@@ -129,7 +141,7 @@ cannot split the selected UTF-8 sequences. This is a bounded BMP vocabulary,
 not support for arbitrary Unicode or surrogate pairs. Legacy diagnostic bytes
 are not translated through the MY23 token table.
 
-A screen packet is 38 bytes: board address, profile marker `0x02`, 14 glyph
+A screen packet is 40 bytes: board address, profile marker `0x02`, 16 glyph
 tokens for L1, 22 glyph tokens for L2. The reserved `0x01` display-test marker is
 unchanged. Normal command/status/ELM packets retain their legacy fixed size;
 the UART receiver recognizes the longer screen by its board address. The latest
@@ -138,21 +150,48 @@ FIFO entries. Flash matching C1/C2/BH images: old boards do not understand the
 longer screen packet. The legacy width still needs to match across boards for
 command/status/ELM framing.
 
-BH builds `14 padded glyphs + CR + 22 padded glyphs + two trailing spaces` for
+BH builds `16 padded glyphs + CR + 22 padded glyphs` for
 MY23 and transmits three **16-bit big-endian** character units per CAN 0x090
-frame. L2 always begins at character offset 15. It never depends on L1's text
+frame. L2 always begins at character offset 17. It never depends on L1's text
 length, title, or UTF-8 bytes. Both fields are fully cleared at every submission.
 This removes the firmware source of stale suffixes and moving field offsets;
 physical IPC alignment remains part of the vehicle test. Legacy retains its
 original first-line/CR/footer layout and original 11/13-fragment count.
 
+The owner measured 16 visible upper glyphs after beta 19. The earlier 14-glyph
+boundary placed CR at offset 14 and L2 at 15, two character positions before
+the measured boundary. The 16-glyph boundary places CR at 16 and L2 at 17.
+The resulting 39-character CAN payload still uses 13 three-character fragments;
+only the shared board UART screen packet grows by two bytes. This is a concrete
+candidate for the observed left-shifted L2, pending an in-car display check.
+
+## Vehicle readability correction after beta 19
+
+The owner confirmed MY23 menu operation in the car but found the packed Favorite
+initials unreadable. The clarified contract is two complete catalog pages per
+Favorite, one page on each line. Each page retains its original one-to-four-value
+measurement set; MY23 uses the compact templates described above. Only Slots 1–2
+are presented in the editor and live UDS polling; IDs in
+historical Slots 3–5 remain stored in the same record without being erased.
+Readings retain the catalog measurement set on L1 and preview the next eligible page
+on L2, regardless of the current page's measurement count.
+Information status pages preview the next status, and fault
+lists show the next code. Short one-off notices and empty-state messages remain
+single-line where a second item would be misleading.
+
+The reported `Gear 15` was the CAN 0x2EF nibble `0xF` (unavailable), which the
+beta-19 atomic formatter had printed as a decimal. Both Readings and Favorites
+now use the catalog enum formatter, which displays the unknown marker `-`.
+Raw CAN state and the CAN dictionary layout are unchanged.
+
 ## Atomic Favorite sets
 
-`favorite_parameters.*` uses the existing stable measurement IDs, not newly
-invented composite catalog pages. There are six ordered Favorite screens per
-fuel profile, with five ordered measurement slots each. `0xFF` marks an empty
-slot; slot 1 is always the primary. Clearing it hides that screen. Assigning an
-already selected measurement clears its previous slot. User edits happen only
+Favorites use the existing stable **catalog page IDs**, including composite pages.
+There are six ordered Favorite screens per fuel profile, with two visible page
+slots. The physical record keeps five bytes per screen for migration; Slots 3–5
+stay stored but inactive. `0xFF` marks an empty slot; Slot 1 is primary. Clearing
+it hides that screen. Assigning an already selected page clears its other slot.
+User edits happen only
 under `Settings → Favorites → Favorite N → Slot N`.
 
 Live atomic Favorites retain a separate set ID per fuel profile in RAM. Other
@@ -160,33 +199,32 @@ lists cannot overwrite this selection; filtering restores the same eligible
 set by ID, falling back to the first available set. Startup selects the first
 available set. The EEPROM record and legacy remembered page IDs are unchanged.
 
-Full names reuse the compatible source catalog, with explicit native/ECU/raw
-names where needed. Short/tiny labels and units belong to presentation. Common
-labels include OIL/O, OILE/OE, WTR/W, IC, ICI, MA, GEAR/G, RPM/R, SPD/S, BST/B,
-OILP/OP, IBS, SOC and BCM. Other catalog values use initials plus their units.
-The selector identifies the full measurement, source and engine eligibility.
-RPM ID 97 is a UI view of existing 0xFC engine telemetry, with the same freshness
-rules; it does not add a new CAN decoder or diagnostic request.
+The selector displays each eligible page's catalog label. The live view uses the
+same `dashboard_format_my23_page()` formatting as Readings; a composite remains one
+line in its slot. The catalog and engine eligibility control which pages can be
+chosen. Beta-19 atomic measurement IDs are converted in RAM to a dedicated page
+when present, otherwise the first page containing that ID. ID 97 (extra RPM)
+uses a reserved compatibility page so that old selections survive; new selections
+still browse the ordinary Readings catalog only.
 
-Secondary packing tries the complete ordered list with short labels, then
-retries with tiny labels if needed. It appends only complete segments that fit
-22 glyphs and stops before the first non-fitting segment. No partial segment,
-trailing bullet, ellipsis, or extra screen is added. Explicit empty and
-engine-incompatible secondary slots are skipped. An incompatible primary hides
-the screen while retaining its saved IDs. NaN, stale values and out-of-range
-formatting use `--`; signs and decimal precision remain meaningful.
+Each MY23 Favorite shows one selected page on each line. Empty or
+engine-incompatible Slot 2 leaves L2 empty. An incompatible primary hides the
+screen while retaining its saved ID. The catalog formatter handles stale and
+out-of-range values, signs, precision and enum fallback as in Readings.
 
-UDS polling covers all five slots, one request per 500 ms after the 150 ms page
-settling interval. Native values remain CAN-fed. `parameter_request_begin_id`
-keeps the existing ECU/DID/profile/page matching and timeout checks. Slot five
-updates the cache without indexing the old four-element displayed-value array.
+UDS polling covers every measurement in the two selected pages, one request per
+500 ms after the 150 ms page settling interval. Native values remain CAN-fed.
+`parameter_request_begin_id` keeps the ECU/DID/profile/page matching and timeout
+checks. Hidden Slots 3–5 are not requested by the live Favorite.
 Changing pages cancels the pending request; unsupported engines never poll their
-saved-but-ineligible measurements.
+saved-but-ineligible pages.
 
 Menu record `0x105` stores the unchanged serialized 80-byte `0x104` preferences
 followed by a version/activation byte pair and 60 bytes of five-slot IDs (142 B).
-Missing new records import 0x104, then historical 0x103 visibility. Import deduplicates
-repeated measurement IDs from old pages and preserves source/order. Record saves
+Version 1 held atomic measurement IDs; version 2 holds catalog page IDs in the
+first two slots. Version-1 IDs convert in RAM on load; saving commits version 2.
+Missing new records import 0x104, then historical 0x103 visibility. Imported
+page favorites retain their original page identity in Slot 1. Record saves
 keep the newest valid prior format in the other Flash page until the final
 commit halfword, including during format migration. The menu record fits the
 192-byte maximum payload; settings, statistics, addresses and page IDs do not move.
@@ -237,7 +275,7 @@ flavor, with the full ARM toolchain; inspect Flash/RAM totals.
 
 Vehicle acceptance is separate: open/close repeatedly, browse current/next,
 check both fields after long/short titles, edit and discard/save (including USB),
-use five measurements, compare USB/Bluetooth/CarPlay, change radio tracks rapidly,
+use the two visible reading pages, compare USB/Bluetooth/CarPlay, change radio tracks rapidly,
 exercise holds and double-clicks, and check responsiveness without flicker.
 Observe the actual IPC and an independent BH TX trace for alignment, timing and
 radio arbitration. A host CAN queue acceptance is not an IPC acknowledgement.

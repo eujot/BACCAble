@@ -172,27 +172,32 @@ static uint8_t setting_move(uint8_t current, int direction) {
     static const uint8_t previous[] = {6, 0, 5, 0, 2, 0, 4};
     return direction < 0 ? previous[current] : next[current];
 }
-static uint8_t next_parameter(uint8_t id, int direction) {
-    for (unsigned i = 0; i < 101; ++i) {
-        if (direction > 0) { ++id; if (id == 100) id = FAVORITE_EMPTY; }
-        else { --id; if (id == 254) id = 99; }
-        if (id == FAVORITE_EMPTY || favorite_parameter_supported(engine, gasoline_v6, id)) break;
+static const ParameterPage *favorite_page(uint8_t profile, bool v6, uint8_t id) {
+    static const ParameterPage legacy_rpm = {
+        .id = 0xfe, .group = 1, .parameter_ids = {97, 97},
+        .label = "Engine RPM", .name = "RPM $4.0f"};
+    if (id == legacy_rpm.id) return &legacy_rpm; /* Preserve beta-19 Favorites. */
+    int index = menu_page_index(profile, id);
+    return index >= 0 && menu_page_supported(profile, index, v6) ? &parameter_pages[profile][index] : NULL;
+}
+static const char *favorite_page_label(uint8_t id) {
+    const ParameterPage *page = favorite_page(engine, gasoline_v6, id);
+    return page ? page->label : "Empty";
+}
+static uint8_t next_favorite_page(uint8_t id, int direction) {
+    unsigned count = menu_page_count(engine);
+    int current = menu_page_index(engine, id);
+    unsigned index = current >= 0 ? (unsigned)current : count;
+    for (unsigned i = 0; i <= count; ++i) {
+        index = wrap(index, count + 1, direction);
+        if (index == count || menu_page_supported(engine, index, gasoline_v6))
+            return index == count ? FAVORITE_EMPTY : parameter_pages[engine][index].id;
     }
-    return id;
+    return FAVORITE_EMPTY;
 }
 static void slot_text(char *out, size_t size, unsigned slot) {
-    char label[40];
     uint8_t id = favorite_draft.params[slot];
-    if (id == FAVORITE_EMPTY) snprintf_(label, sizeof(label), "Empty");
-    else {
-        for (unsigned tiny=0;tiny<2;++tiny) {
-            favorite_parameter_segment(engine,id,NAN,tiny,label,sizeof(label));
-            char *value = strstr(label,"--");
-            if (value) { if (value > label && value[-1] == ' ') --value; *value = 0; }
-            if (strlen(label) <= MY23_L1_VISIBLE - 9) break;
-        }
-    }
-    snprintf_(out, size, "Slot %u%s%s", slot + 1, MY23_BULLET, label);
+    snprintf_(out, size, "S%u %s", slot + 1, favorite_page_label(id));
 }
 
 
@@ -421,7 +426,7 @@ void menu_notice_saved(const char *title) {
 uint8_t menu_preferences_save(void) {
     uint8_t data[MENU_STORAGE_SIZE];
     menu_preferences_encode(&preferences, data);
-    data[MENU_PREFS_SIZE] = 1;
+    data[MENU_PREFS_SIZE] = 2; /* Favorite slots contain catalog page IDs. */
     data[MENU_PREFS_SIZE + 1] = atomic_favorites;
     memcpy(data + MENU_PREFS_SIZE + 2, favorites, sizeof(favorites));
     if (preferences_saved && !memcmp(data, saved_preferences, sizeof(data)))
@@ -449,15 +454,10 @@ void menu_engine_changed(void) {
         build_pages(view == FAVORITES ? preferences.last_favorite[engine] : preferences.last[engine][group]);
 }
 
-/* Import each atomic ID once, without changing existing composite page IDs. */
+/* Import the saved catalog page without flattening its measurements. */
 static __attribute__((noinline)) void favorite_from_page(FavoriteParameters *favorite, const ParameterPage *page) {
     memset(favorite, FAVORITE_EMPTY, sizeof(*favorite));
-    unsigned n = 0;
-    for (unsigned j = 0; j < parameter_page_elements(page); ++j) {
-        bool duplicate = false;
-        for (unsigned k = 0; k < n; ++k) duplicate |= favorite->params[k] == page->parameter_ids[j];
-        if (!duplicate) favorite->params[n++] = page->parameter_ids[j];
-    }
+    favorite->params[0] = page->id;
 }
 static void import_page_favorites(void) {
     memset(favorites, FAVORITE_EMPTY, sizeof(favorites));
@@ -467,13 +467,59 @@ static void import_page_favorites(void) {
             if (index >= 0) favorite_from_page(&favorites[e][f], &parameter_pages[e][index]);
         }
 }
-static __attribute__((noinline)) void present_favorite(const FavoriteParameters *original) {
-    FavoriteParameters visible = *original;
-    for (unsigned i = 1; i < FAVORITE_MAX_PARAMS; ++i)
-        if (!favorite_parameter_supported(engine, gasoline_v6, visible.params[i])) visible.params[i] = FAVORITE_EMPTY;
-    char first[15], second[23];
-    favorite_parameters_render(engine, &visible, currentTime, first, second);
+/* Poll each diagnostic once even when both pages contain it. At most eight IDs. */
+static unsigned favorite_queries(const FavoriteParameters *favorite, uint8_t ids[8]) {
+    unsigned count = 0;
+    for (unsigned slot = 0; slot < FAVORITE_VISIBLE_PARAMS; ++slot) {
+        const ParameterPage *page = favorite_page(engine, gasoline_v6, favorite->params[slot]);
+        if (!page) continue;
+        for (unsigned i = 0; i < parameter_page_elements(page); ++i) {
+            uint8_t id = page->parameter_ids[i];
+            if (id >= 100 || parameter_definitions[id].request_id <= 255) continue;
+            unsigned j = 0;
+            while (j < count && ids[j] != id) ++j;
+            if (j == count) ids[count++] = id;
+        }
+    }
+    return count;
+}
+static void format_favorite_page(uint8_t id, uint32_t max_age, char out[DASHBOARD_MESSAGE_MAX_LENGTH + 1]) {
+    const ParameterPage *page = favorite_page(engine, gasoline_v6, id);
+    out[0] = 0;
+    if (!page) return;
+    float values[4] = {NAN, NAN, NAN, NAN};
+    for (unsigned i = 0; i < parameter_page_elements(page); ++i)
+        values[i] = parameter_cache_get_max_age(page->parameter_ids[i], currentTime,
+            parameter_definitions[page->parameter_ids[i]].request_id > 255 ? max_age : 3000U);
+    if (settings_state.ipc_my23_is_installed)
+        dashboard_format_my23_page(page, values, out);
+    else
+        dashboard_format_values(page->name, values, page->parameter_ids, out);
+}
+static __attribute__((noinline)) void present_favorite(const FavoriteParameters *favorite) {
+    char first[DASHBOARD_MESSAGE_MAX_LENGTH + 1], second[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
+    uint8_t ids[8];
+    uint32_t max_age = (favorite_queries(favorite, ids) + 1U) * 500U;
+    if (max_age < 3000U) max_age = 3000U;
+    format_favorite_page(favorite->params[0], max_age, first);
+    format_favorite_page(favorite->params[1], max_age, second);
     menu_present_lines(first, second);
+}
+/* Convert beta-19 atomic measurement IDs to their dedicated catalog pages. */
+static uint8_t page_for_old_measurement(uint8_t profile, uint8_t id) {
+    if (id == FAVORITE_EMPTY) return id;
+    if (id == 97) return 0xfe;
+    for (unsigned i = 0; i < menu_page_count(profile); ++i) {
+        const ParameterPage *page = &parameter_pages[profile][i];
+        if (page->parameter_ids[0] == id && page->parameter_ids[1] == id)
+            return page->id;
+    }
+    for (unsigned i = 0; i < menu_page_count(profile); ++i) {
+        const ParameterPage *page = &parameter_pages[profile][i];
+        for (unsigned j = 0; j < parameter_page_elements(page); ++j)
+            if (page->parameter_ids[j] == id) return page->id;
+    }
+    return FAVORITE_EMPTY;
 }
 
 /* Restore the user's menu layout or start with useful defaults. */
@@ -521,14 +567,18 @@ void menu_init(void) {
         preferences_saved = new_record;
     }
     memset(favorites, FAVORITE_EMPTY, sizeof(favorites));
-    atomic_favorites = new_record && data[MENU_PREFS_SIZE] == 1 && data[MENU_PREFS_SIZE + 1] == 1;
-    if (new_record && data[MENU_PREFS_SIZE] == 1) {
+    uint8_t favorite_version = new_record ? data[MENU_PREFS_SIZE] : 0;
+    atomic_favorites = (favorite_version == 1 || favorite_version == 2) && data[MENU_PREFS_SIZE + 1] == 1;
+    if (favorite_version == 1 || favorite_version == 2) {
         memcpy(favorites, data + MENU_PREFS_SIZE + 2, sizeof(favorites));
         for (unsigned e = 0; e < 2; ++e)
             for (unsigned f = 0; f < FAVORITE_SET_COUNT; ++f)
-                for (unsigned j = 0; j < FAVORITE_MAX_PARAMS; ++j)
-                    if (favorites[e][f].params[j] >= 100 && favorites[e][f].params[j] != FAVORITE_EMPTY)
-                        favorites[e][f].params[j] = FAVORITE_EMPTY;
+                for (unsigned j = 0; j < FAVORITE_VISIBLE_PARAMS; ++j) {
+                    uint8_t *id = &favorites[e][f].params[j];
+                    if (favorite_version == 1) *id = page_for_old_measurement(e, *id);
+                    else if (*id != FAVORITE_EMPTY && menu_page_index(e, *id) < 0 && *id != 0xfe)
+                        *id = FAVORITE_EMPTY;
+                }
     }
     if (!atomic_favorites) import_page_favorites();
     editor_confirm = false;
@@ -595,7 +645,7 @@ static void build_pages(uint16_t selected) {
     if (view == FAVORITES && (atomic_favorites || settings_state.ipc_my23_is_installed)) {
         list_count = 0;
         for (unsigned i = 0; i < FAVORITE_SET_COUNT; ++i)
-            if (favorite_parameter_supported(engine, gasoline_v6, favorites[engine][i].params[0])) list[list_count++] = i;
+            if (favorite_page(engine, gasoline_v6, favorites[engine][i].params[0])) list[list_count++] = i;
         selection = 0;
         for (unsigned i = 0; i < list_count; ++i)
             if (list[i] == selected_favorite[engine]) selection = i;
@@ -849,9 +899,10 @@ void menu_render(void) {
         }
         menu_parameters_refresh();
         if (settings_state.ipc_my23_is_installed) {
-            FavoriteParameters readings;
-            favorite_from_page(&readings, &parameter_pages[engine][list[selection]]);
-            present_favorite(&readings);
+            const ParameterPage *page = &parameter_pages[engine][list[selection]];
+            const ParameterPage *next = &parameter_pages[engine][list[wrap(selection, list_count, 1)]];
+            dashboard_format_my23_page(page, displayed_parameter_values, text);
+            menu_present_lines(text, next->label);
             return;
         }
         dashboard_send_values();
@@ -933,18 +984,26 @@ void menu_render(void) {
     case FAV_SLOTS: {
         char next[40] = {0};
         slot_text(text, sizeof(text), favorite_slot);
-        slot_text(next, sizeof(next), wrap(favorite_slot, FAVORITE_MAX_PARAMS, 1));
+        slot_text(next, sizeof(next), wrap(favorite_slot, FAVORITE_VISIBLE_PARAMS, 1));
         menu_present_view(favorite_confirm ? UI_MODE_CONFIRM : UI_MODE_LIST, text,
                           favorite_confirm ? "HOLD SAVE" MY23_BULLET "2X DISCARD" : next);
         if (favorite_confirm && !settings_state.ipc_my23_is_installed) menu_present("Hold save/2x drop");
         return;
     }
     case FAV_PICK:
-        menu_present_view(UI_MODE_LIST, favorite_parameter_name(engine, gasoline_v6, favorite_pick),
-                          favorite_parameter_name(engine, gasoline_v6, next_parameter(favorite_pick, 1)));
+        menu_present_view(UI_MODE_LIST, favorite_page_label(favorite_pick),
+                          favorite_page_label(next_favorite_page(favorite_pick, 1)));
         return;
     case FAULTS:
         fault_reader_text(fault_index, text, sizeof(text));
+        if (settings_state.ipc_my23_is_installed) {
+            char next[24];
+            if (fault_reader_count() > 1) {
+                fault_reader_text(wrap(fault_index, fault_reader_count(), 1), next, sizeof(next));
+                menu_present_view(UI_MODE_LIST, text, next);
+            } else menu_present_lines(text, "2X Back");
+            return;
+        }
         break;
 #ifdef MENU_DIAGNOSTICS
     case DIAGNOSTICS:
@@ -957,21 +1016,18 @@ void menu_render(void) {
             else if (info == 1 || info == 2) {
                 unsigned peer = info - 1;
                 menu_present_lines(peer ? "BH firmware" : "C2 firmware", peer_seen[peer] && currentTime - peer_updated[peer] <= 5000 ? peer_versions[peer] : "No reply");
-            } else if (info == 3) menu_present_lines("IPC MY23", "14 / 22 glyphs");
+            } else if (info == 3) menu_present_lines("IPC MY23", "16 / 22 glyphs");
             else menu_present_lines("Immobilizer", security_state.immobilizer_enabled ? "ON" : "OFF");
             return;
         }
 #ifdef MENU_DIAGNOSTICS
         if (info == 10) {
             ui_render_action(text, sizeof(text), "IPC diag");
-            break;
-        }
+        } else
 #endif
         if (info == 9) {
             ui_render_action(text, sizeof(text), "IPC display test");
-            break;
-        }
-        if (info == 5)
+        } else if (info == 5)
             snprintf_(text, sizeof(text), "Reports:%lu", (unsigned long)input.reports_seen);
         else if (info == 6)
             snprintf_(text, sizeof(text), "Gaps:%lu", (unsigned long)input.stream_gaps);
@@ -997,6 +1053,13 @@ void menu_render(void) {
                 ui_render_value(text, sizeof(text), peer ? "BH" : "C2", peer_versions[peer]);
             else
                 snprintf_(text, sizeof(text), UI_SYMBOL_UNKNOWN " %s no reply", peer ? "BH" : "C2");
+        }
+        if (settings_state.ipc_my23_is_installed) {
+            static const char *const next_info[] = {"C1 firmware", "C2 firmware", "BH firmware",
+                "IPC MY23", "Immobilizer", "Reports", "Gaps", "Max gap", "Input age",
+                "IPC display test", "IPC diag"};
+            menu_present_view(UI_MODE_LIST, text, next_info[(info + 1) % INFO_PAGES]);
+            return;
         }
         break;
     case IPC_TEST_MENU: {
@@ -1197,8 +1260,8 @@ void menu_event(MenuEvent event) {
         switch (view) {
         case SORT_EDIT: if (!sort_confirm) sort_draft = !sort_draft; break;
         case FAV_SETS: favorite_set = wrap(favorite_set, FAVORITE_SET_COUNT, direction); break;
-        case FAV_SLOTS: if (!favorite_confirm) favorite_slot = wrap(favorite_slot, FAVORITE_MAX_PARAMS, direction); break;
-        case FAV_PICK: favorite_pick = next_parameter(favorite_pick, direction); break;
+        case FAV_SLOTS: if (!favorite_confirm) favorite_slot = wrap(favorite_slot, FAVORITE_VISIBLE_PARAMS, direction); break;
+        case FAV_PICK: favorite_pick = next_favorite_page(favorite_pick, direction); break;
         case ROOT:
             root = wrap(root, sizeof(roots) / sizeof(roots[0]), direction);
             break;
@@ -1267,7 +1330,7 @@ void menu_event(MenuEvent event) {
             if (!favorite_confirm) { favorite_pick = favorite_draft.params[favorite_slot]; view = FAV_PICK; } break;
         case FAV_PICK:
             /* A measurement appears once; replacing slots changes the configured order. */
-            for (unsigned i = 0; i < FAVORITE_MAX_PARAMS; ++i)
+            for (unsigned i = 0; i < FAVORITE_VISIBLE_PARAMS; ++i)
                 if (i != favorite_slot && favorite_draft.params[i] == favorite_pick) favorite_draft.params[i] = FAVORITE_EMPTY;
             favorite_draft.params[favorite_slot] = favorite_pick;
             view = FAV_SLOTS; break;
@@ -1461,14 +1524,12 @@ void menu_process(void) {
     if (menu_parameters_active() && view == FAVORITES && (atomic_favorites || settings_state.ipc_my23_is_installed) &&
         !diagnostics_state.clear_faults_request && currentTime - page_changed >= 150 && currentTime - last_query >= 500) {
         const FavoriteParameters *favorite = &favorites[engine][list[selection]];
-        for (unsigned i = 0; i < FAVORITE_MAX_PARAMS; ++i) {
-            unsigned slot = (selected_parameter_element + i) % FAVORITE_MAX_PARAMS;
-            uint8_t id = favorite->params[slot];
-            if (id < 100 && favorite_parameter_supported(engine, gasoline_v6, id) && parameter_definitions[id].request_id > 255) {
-                parameter_request_begin_id(id, slot);
-                selected_parameter_element = (slot + 1) % FAVORITE_MAX_PARAMS;
-                break;
-            }
+        uint8_t ids[8];
+        unsigned total = favorite_queries(favorite, ids);
+        if (total) {
+            unsigned position = selected_parameter_element % total;
+            parameter_request_begin_id(ids[position], 255);
+            selected_parameter_element = (position + 1) % total;
         }
         last_query = currentTime;
     } else if (menu_parameters_active() && !diagnostics_state.clear_faults_request &&

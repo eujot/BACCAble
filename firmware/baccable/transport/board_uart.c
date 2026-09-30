@@ -76,7 +76,7 @@ SendQueue *tx_queue_uart1 = &queue_instance_uart1;
 #endif
 
 /* A truncated frame must not consume the next command after an idle gap.
- * At 38400 baud a 38-byte screen takes less than 10 ms. */
+ * At 38400 baud a 40-byte screen takes about 11 ms. */
 #define UART_RX_GAP_MS 20U
 static uint8_t board_rx_byte, board_rx_used;
 static uint32_t board_rx_last_time;

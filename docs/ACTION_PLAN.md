@@ -1,6 +1,6 @@
 # BACCAble action plan and agent handoff
 
-Last updated: **2026-09-29** (dated verification boundaries below). This is the single source of planned work,
+Last updated: **2026-09-30** (dated verification boundaries below). This is the single source of planned work,
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
@@ -86,6 +86,115 @@ but cannot guarantee atomic physical screen replacement. The existing one-second
 reassertion and factory arbitration remain. No new beta or hardware flash.
 
 ## Current work
+
+### PR #49 follow-up review, 2026-09-30
+
+Two complete Favorite pages can contain eight UDS values. The 500 ms request
+cadence then needs four seconds, exceeding the three-second cache age and
+causing avoidable `--` gaps. Favorites now deduplicate diagnostic IDs across
+both rows and give diagnostic readings one complete poll cycle plus 500 ms
+of reply margin (minimum 3 s, maximum 4.5 s). Native CAN readings and ordinary
+Readings keep the three-second age. Query traffic remains bounded to two per
+second. A small stack array replaces repeated page lookup inside the polling
+loop. Tests cover eight distinct values, five unique values shared by two
+pages, expiration after missing replies, and unchanged ordinary cache freshness.
+The host suite passes with ASan/UBSan; C1's four-profile ARM matrix passes
+with Arm GNU 15.2.Rel1. Vehicle behavior remains unverified.
+
+The merge also left Lab's source hashes and IPC note describing the old 14+22
+layout. Dictionary 2026-09-30.1 now references implementation `b3506a2` and
+refreshes the source snapshot and generated dictionary for 16+CR+22; all 46
+Lab tests pass. Historical capture evidence is unchanged. Both manuals document dense Favorite
+refresh behavior. No further conflict in the Full/Delta display code was found
+in this focused review.
+
+### Gear 15 root cause and enum-rendering audit, 2026-09-30
+
+The beta-19 source (`d071cfc`) decoded CAN gear nibble `0xF` as the integer 15
+in `native_parameter_read()`. That raw value is intentionally retained as an
+unavailable sentinel. The display regression was in
+`favorite_parameter_segment()`: its special case rendered only valid gear
+indices, but invalid gear values then fell through to the generic floating
+point formatter. This produced the literal `Gear 15`. Commit `14eba38` added an
+explicit `id == 6` unavailable branch, rendering `--`; the dashboard formatter
+already rendered out-of-range gear as `-`. So the root cause was an incomplete
+enum branch in the MY23 Favorites/Readings renderer, not a change to CAN decoding.
+
+The same audit found enum values with valid-range checks but no integer check:
+fractional gear/regeneration/seatbelt values could be truncated to a neighboring
+label, and the Favorite regeneration/pedal-character formatters had the same
+issue. These now use an unavailable marker unless the value is finite, in range
+and integral. Exact-value DNA and seatbelt mappings already fell back safely.
+Regression cases cover gear 15 and fractional enum/character values in both
+dashboard and Favorite formatters. The full Apple Clang ASan/UBSan host suite
+passes. No other enum-to-index/character conversion in the menu display paths
+silently falls through to numeric rendering after this audit.
+
+### MY23 catalog readings fit 16 columns, 2026-09-29
+
+The user's follow-up found that clipping longer beta-18 catalog templates
+could hide whole readings or cut a Best time midway. On branch
+`fix/my23-readability`, MY23 Readings and both visible Favorite slots now use
+shared compact templates with repeated spaces removed. The legacy 18/24-column
+formats are unchanged. All page measurements remain on the same line;
+`Oil 35.0mm Q 80%`, `B 100-200 8.54s` and four temperatures fit in 16 glyphs.
+The formatter retains `--` for a number that exceeds its declared field width.
+An enum conversion found by the display tests now checks its range before
+converting float to an integer/character. All 24 Apple Clang ASan/UBSan host
+executables pass. Tests cover both engine catalogs, both compiled legacy widths,
+full-width numeric fields and the compact outputs. All four UI profiles build
+for C1, C2 and BH with Arm GNU 15.2.Rel1; the largest C1 image uses
+93,924 / 98,304 Flash bytes and
+15,528 / 16,384 static RAM bytes, including reserved heap/stack. Vehicle
+readability remains unverified. The change is open for review in
+[PR #49](https://github.com/eujot/BACCAble/pull/49). The branch has been
+updated with master, including PR #48's temporary IPC refresh controls. The
+merge resolution preserves both feature sets; host tests and the full
+C1/C2/BH/CAN UI build matrix passed before pushing the conflict fix.
+No release or vehicle acceptance is implied by this integration update.
+
+### MY23 measured 16-column correction, 2026-09-29
+
+On `fix/my23-readability`, the owner measured 16 visible glyphs on the upper
+MY23 field and reported that L2 sometimes appeared shifted left in beta 19.
+The candidate changes the L1 budget from 14 to 16, moves the fixed CR/L2
+boundary two characters to the right, and increases matching C1/C2/BH screen
+UART packets from 38 to 40 bytes. The 39-character BH CAN output and its 13
+fragments remain unchanged. The later MY23 compact-format change above ensures
+catalog readings fit the physical 16-glyph L1 limit.
+The blank-screen check now tests both MY23 fields instead of treating the marker
+as visible content. The English and Polish guides and menu guide describe the
+new limit. All 24 Apple Clang ASan/UBSan host executables pass, and all four
+UI profiles build for C1, C2 and BH with Arm GNU 15.2.Rel1. Tests cover the
+complete 16/22-character packet and L2 offset;
+vehicle alignment must still be checked after flashing matching three-board
+images. No release or merge has been made for this branch.
+
+### MY23 readability follow-up after the owner's beta 19 car test, 2026-09-29
+
+The owner confirmed MY23 menu operation but rejected the packed Favorite
+abbreviations and reported `Gear 15`. The first two commits on branch
+`fix/my23-readability` (`14eba38`, `17577e6`) incorrectly flattened catalog
+pages into individual measurements. The clarified requirement is to keep every
+Readings page in its original one-line catalog format, whether it contains one,
+two, three or four measurements, and preview the next page on L2. A Favorite
+must select two complete catalog pages, one per line. Commit `2857f93` on the branch
+implements that contract and changes Favorite storage to version 2
+page IDs. Version-1 atomic measurement IDs convert in RAM on load (including a
+reserved compatibility page for extra RPM); older page
+favorites import their original page ID into Slot 1. Hidden Slots 3–5 remain
+stored but inactive. C1 polls every measurement in the two selected pages.
+
+CAN 0x2EF nibble `0xF` means unavailable gear. Both Readings and Favorites now
+use the catalog enum formatter (`Gear -`) instead of printing decimal 15. The
+14-glyph upper MY23 field necessarily clips a longer catalog line when L2 holds
+the next-page preview; this is an explicit hardware/layout limit to review in
+the car. Both user guides and MENU_UX document the corrected behavior. All 24
+host executables pass with Apple Clang ASan/UBSan; all four C1 UI profiles build
+with Arm GNU 15.2.Rel1. The largest image uses 92,688 / 98,304 Flash bytes and
+15,528 / 16,384 static RAM bytes, including reserved heap/stack. Vehicle display
+acceptance remains open. This candidate is neither merged nor released.
+PR creation remains pending GitHub CLI authentication.
 
 MY23 menu and shared navigation, **2026-09-29**, branch `feat/my23-menu-ux`,
 based on actual local/remote master `d63e608` (CAN dictionary PR #46 merged).

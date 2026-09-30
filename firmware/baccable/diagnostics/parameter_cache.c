@@ -48,9 +48,13 @@ void parameter_cache_put(uint8_t id, float value, uint32_t now) {
 
 /* Return the latest usable reading, or mark it unavailable when it is stale. */
 float parameter_cache_get(uint8_t id, uint32_t now) {
+    return parameter_cache_get_max_age(id, now, 3000U);
+}
+
+float parameter_cache_get_max_age(uint8_t id, uint32_t now, uint32_t max_age) {
     if (id == 11 || id == 12 || id == 16)
         return native_parameter_read(id);
-    if (id >= 100 || !(valid[id / 8] & (1U << (id % 8))) || now - updated[id] > 3000)
+    if (id >= 100 || !(valid[id / 8] & (1U << (id % 8))) || now - updated[id] > max_age)
         return NAN;
     /* Status enums and run statistics stay live even while numerical readings are held. */
     return hold && (peak_valid[id / 8] & (1U << (id % 8))) && id != 6 && id != 8 && id != 9 && id != 10 &&

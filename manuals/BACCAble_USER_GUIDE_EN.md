@@ -2,7 +2,7 @@
 
 This guide describes the current dashboard-menu firmware source. The display
 MY23 layout and navigation changes described below are a candidate based on
-**v5-beta-18**, awaiting a vehicle test and a new release. It starts after BACCAble has been installed and
+**v5-beta-19** and the pending readability correction. It starts after BACCAble has been installed and
 connected to the vehicle. Installation, wiring and firmware flashing are outside
 its scope. Use a matching C1/C2/BH firmware set.
 
@@ -116,14 +116,14 @@ Main menu
 │  │     ├─ Enabled
 │  │     ├─ Store position
 │  │     └─ < Back
-│  ├─ Favorites              Favorite 1–6 → Slot 1–5 → measurement
+│  ├─ Favorites              Favorite 1–6 → Slot 1–2 → reading page
 │  ├─ Shown pages            Show/hide pages in Readings
 │  ├─ Sort order             Grouped or alphabetical reading lists
 │  └─ BACCAble IPC           Temporary refresh experiments
 └─ Information               Versions, input status and IPC display test
 ```
 
-This Settings layout applies to MY23 and to any profile after a five-slot set
+This Settings layout applies to MY23 and to any profile after an atomic Favorite set
 has been saved. Before that first save, legacy Settings retains Features,
 Page favorites, Shown pages, Favorite order, Sort order, Favorites, BACCAble IPC.
 
@@ -133,11 +133,12 @@ The main menu order is fixed. Page availability follows the selected engine,
 
 ## Display symbols and messages
 
-MY23 has **14 visible glyphs in line 1 and 22 in line 2**. A list shows the
+MY23 has **16 visible glyphs in line 1 and 22 in line 2**. A list shows the
 current item with `›` above the next item. Editors show a setting and its draft
 value, with `▲▼ CHANGE`. Confirmation and saved feedback use the second line.
-Live Favorites use line 1 for the primary measurement and line 2 for extra
-measurements, separated by `•`. `✓` means saved; `×` means a local failure.
+Live Favorites show one complete selected reading page on each line. Readings
+show one page in the first line and preview the next page in the second line.
+`✓` means saved; `×` means a local failure.
 The legacy profile retains its 18/24-character first line and `BACCAble beta`
 footer. It uses the same button and draft rules, with single-line prompts.
 
@@ -210,49 +211,63 @@ If behavior worsens, select Reset safe or completely power down the device.
 
 ## Favorites and reading layout
 
-### Configure up to five measurements per favorite
+Favorites poll each diagnostic value once per cycle, even if it appears on both lines. Dense pairs of pages can take up to four seconds to refresh all eight values; they remain visible for that cycle and show `--` if replies stop. Native CAN readings retain their usual freshness limit.
+
+### Configure two reading pages per favorite
 
 1. Open `Settings → Favorites` and choose `Favorite 1` through `Favorite 6`.
-2. Click to edit. Choose `Slot 1` through `Slot 5`, click, then browse the
-   measurements with up/down and click to use one. `Empty` clears that slot.
-3. **Slot 1 is the primary measurement**. MY23 puts it in line 1. Slots 2–5
-   appear in line 2 in that exact order. An empty primary hides that favorite.
-   To change order, replace the slots; assigning a measurement already in another
+2. Click to edit. Choose `Slot 1` or `Slot 2`, click, then browse the
+   same catalog pages as in Readings with up/down and click to use one. `Empty` clears that slot.
+3. **Slot 1 is the primary reading page**. MY23 puts it in line 1. Slot 2
+   appears in line 2. An empty primary hides that favorite.
+   To change order, replace the slots; assigning a page already in another
    slot clears its old position. Editing is available only in Settings.
 4. Double-click for the save prompt. Hold to save, or double-click again to
    discard. A successful save stays at the selected slot; double-click to leave.
 5. Open main-menu `Favorites` to view live values. On legacy, a configured set
-   shows its primary measurement on the single line.
+   shows its primary page on the single line.
 
 Returning from other lists keeps the selected Favorite, as does engine filtering
 if that set remains available. Otherwise the first available set is selected.
 This selection is remembered separately for gasoline and diesel until restart.
 
-The renderer first tries short labels for all secondary measurements. If they
-do not fit in 22 glyphs, it retries with tiny labels. It then keeps only complete
-segments that fit, in order: no partial value, trailing bullet, or extra page.
-For example, `GEAR 3` may have `R3500•S100•B-0.5bar` below it. RPM is in rpm,
-speed in km/h and pressure in bar; `O`/`OE` are native/ECU oil temperature,
-`W` coolant, `IC` intercooler outlet, `ICI` inlet, `MA` MultiAir and `GT` gearbox.
-A degree on these temperatures means Celsius. RPM uses existing incoming engine
-telemetry; it does not add a new CAN request. `--` still means unavailable/stale.
+Each slot uses the selected page's measurements. MY23 removes numeric padding
+and uses a shorter caption where necessary; legacy keeps the catalog format. A page such as
+`Oil/coolant temp` contains two values in one line; it remains one slot when
+added to Favorites. `--` means unavailable or stale. `Gear -` includes the raw
+`0xF` unavailable code; it is not gear 15.
 
-Gasoline and diesel retain separate sets. Engine-incompatible saved measurements
+Only the first two saved slots are shown and editable in this revision. Earlier
+five-slot records retain slots 3–5 in storage for compatibility, but those slots
+are not displayed or polled. Saving Slots 1–2 does not erase those old IDs.
+Every MY23 Readings page keeps all of its measurements on line 1, whether it
+contains one, two, three or four values. Its compact format removes extra spaces
+and shortens long captions to fit 16 glyphs; the same format is used in MY23
+Favorites. Line 2 previews the next page. Information status pages likewise
+preview the next page; multiple fault codes show the following code on line 2.
+For example, `Oil 35.0mm Q 80%` fits exactly. `B 100-200 8.54s` means the
+best 100–200 km/h run. The four-temperature page uses `O` for oil, `W` for
+coolant, `I` for intercooler inlet and `X` for intercooler outlet. A number too
+wide for its field appears as `--` rather than a partial number.
+
+Gasoline and diesel retain separate sets. Engine-incompatible saved pages
 remain stored and are omitted until that profile is selected again. A hidden
 incompatible primary hides the whole favorite. Both engine page catalogs and old
-page IDs remain unchanged. Existing page favorites are imported into sets with
-repeated measurement IDs removed, preserving their original sources and order.
-Saving upgrades the menu preference record. Downgrading to old firmware is not
-an export of the new five-slot configurations.
+page IDs remain unchanged. Existing page favorites import as whole pages in
+Slot 1. Beta-19 atomic measurement IDs convert to catalog page IDs in memory:
+a dedicated page is preferred, otherwise the first page containing that value.
+Check the converted choices before saving; the old extra RPM value is retained
+as a compatibility page, while new choices browse the Readings catalog. Saving upgrades the menu preference
+record. Downgrading to old firmware does not convert it back.
 
 `Page favorites` and `Favorite order` are offered only on legacy before the
-first five-slot save. Their committed edits update both the old page list and
+first atomic Favorite save. Their committed edits update both the old page list and
 its imported sets; failed saves and discarded drafts update neither. MY23 and
-profiles using saved five-slot sets offer only `Favorites`, so there is no second
-editor changing a different list. Slot contents determine parameter order.
+profiles using saved atomic sets offer only `Favorites`, so there is no second
+editor changing a different list. Slot contents determine page order.
 Empty Slot 1 hides that Favorite;
-Slots 2–5 do not move automatically into the primary position.
-Slot browsing and measurement selection show current/next on MY23, including
+Slot 2 does not move automatically into the primary position.
+Slot browsing and page selection show current/next on MY23, including
 wraparound; IPC display-test lists and Shown pages do the same.
 `Shown pages` and `Advanced pages` affect ordinary Readings, not explicit set
 selection. `Sort order` changes catalog ordering through its own draft/save
@@ -277,7 +292,7 @@ workflow; their draft does not control the car before successful persistence.
 | `LED strip` | Off / on | Drive an installed compatible WS281x LED strip using vehicle data such as accelerator position and gear. This requires the optional hardware. Output pauses while USB owns the shared pin. |
 | `Shift light` | Off / on | Request the instrument-panel shift warning above `Shift RPM`, with compatible Race-mode display support. This does not shift the gearbox. |
 | `Shift RPM` | 1500–6000 RPM, step 250 | Engine-speed threshold for the shift warning. |
-| `MY23 display` | Off / on | Use the MY23 menu layout: 14 glyphs on line 1 and 22 on line 2. OFF retains the legacy single-line layout with the compiled 18/24-character width. |
+| `MY23 display` | Off / on | Use the MY23 menu layout: 16 glyphs on line 1 and 22 on line 2. OFF retains the legacy single-line layout with the compiled 18/24-character width. |
 | `DPF regen alert` | Off / on | Enable diesel regeneration notifications. See [DPF monitoring](#dpf-monitoring). |
 | `Auto rotate` | Off / on | Rotate live pages every five seconds. |
 | `Advanced pages` | Off / on | Include technical/secondary pages in Readings, subject to profile and manual visibility. |
@@ -573,7 +588,7 @@ not toggle their state. The final `IPC display test` entry opens a test submenu.
 | C1 version | Firmware version of the controller managing the menu. |
 | C2 version | Chassis-controller version. `? C2 no reply` means no recent version reply. |
 | BH version | Body-controller version. `? BH no reply` means no recent version reply. |
-| `MY23:ON/OFF …ch` | Legacy: MY23 preference and compiled 18/24 width. MY23 instead shows `IPC MY23` and `14 / 22 glyphs`. |
+| `MY23:ON/OFF …ch` | Legacy: MY23 preference and compiled 18/24 width. MY23 instead shows `IPC MY23` and `16 / 22 glyphs`. |
 | `Immobilizer: ON/OFF` | Stored BACCAble immobilizer preference, not an editable menu switch. |
 | `Reports:` | Number of steering-wheel input reports observed by the menu. Useful when diagnosing unresponsive controls. |
 | `Gaps:` | Count of interruptions detected in the input report stream. |

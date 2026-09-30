@@ -57,10 +57,12 @@ The full target executes 24 binaries, including `test_menu_my23` and
 screen-reception builds. Keep a single `test` recipe in the Makefile; later
 rules may append prerequisites but must not replace its execution list.
 MY23/debug/legacy suites have separate report identities so cases do not mask
-one another. Tests cover the selected BMP vocabulary, 14/22 glyph budgets,
-whole-segment short/tiny packing for one through five measurements, isolated
+one another. Tests cover the selected BMP vocabulary, 16/22 glyph budgets,
+two whole-page Favorite lines, bounded 16-glyph compact Readings across both
+catalogs and compiled widths, previews with multi-value pages,
+version-1 measurement-to-page migration, unavailable gear values, isolated
 drafts, flash-save failure and record-format migration interruptions. BH output
 checks fixed L2 offsets, shorter replacement clearing and learned source context.
-UART tests distinguish 38-byte screens from shorter commands, verify the final
+UART tests distinguish 40-byte screens from shorter commands, verify the final
 screen byte and recovery after interrupted frames. These are software checks;
 physical alignment, menu latency and IPC arbitration remain vehicle acceptance.

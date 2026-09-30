@@ -122,7 +122,7 @@ Menu główne
 │  │     ├─ Enabled          Włączenie funkcji
 │  │     ├─ Store position   Zapis pozycji
 │  │     └─ < Back           Powrót
-│  ├─ Favorites              Favorite 1–6 → Slot 1–5 → parametr
+│  ├─ Favorites              Favorite 1–6 → Slot 1–2 → strona odczytów
 │  ├─ Shown pages            Pokazywanie i ukrywanie stron w Readings
 │  ├─ Sort order             Sortowanie według grup albo alfabetycznie
 │  └─ BACCAble IPC           Tymczasowe próby odświeżania
@@ -130,8 +130,9 @@ Menu główne
 ```
 
 Ten układ Settings dotyczy MY23 oraz każdego profilu po zapisaniu zestawu
-pięciu slotów. Przed pierwszym takim zapisem starszy profil zachowuje kolejność:
-Features, Page favorites, Shown pages, Favorite order, Sort order, Favorites, BACCAble IPC.
+dwu slotów ulubionych. Przed pierwszym takim zapisem starszy profil zachowuje
+kolejność: Features, Page favorites, Shown pages, Favorite order, Sort order,
+Favorites, BACCAble IPC.
 
 Kolejność menu głównego jest stała. Dostępność stron zależy od wybranego silnika
 oraz ustawień `Advanced pages` i `Shown pages`. Grupa bez dostępnych stron może
@@ -145,11 +146,13 @@ pozycje tekstowe. Nazwa na liście może różnić się od podpisu bieżącego o
 aby zrobić miejsce na wartości. Na przykład strona `Batt charge BCM` wyświetla
 odczyt podpisany `Batt BCM SOC`.
 
-MY23 ma **14 widocznych znaków w pierwszej linii i 22 w drugiej**. Lista
+MY23 ma **16 widocznych znaków w pierwszej linii i 22 w drugiej**. Lista
 pokazuje bieżącą pozycję z `›`, a pod nią następną. Edytor pokazuje ustawienie
 oraz szkic wartości z `▲▼ CHANGE`. Druga linia zawiera również pytanie o zapis
-lub jego wynik. Ulubione mają parametr główny w pierwszej linii i dodatkowe
-odczyty rozdzielone `•` w drugiej. `✓` oznacza udany zapis, `×` lokalny błąd.
+lub jego wynik. Ulubione pokazują po jednej wybranej stronie odczytów w każdej
+linii. Readings pokazuje bieżącą stronę w pierwszej linii, a nazwę następnej
+strony w drugiej.
+`✓` oznacza udany zapis, `×` lokalny błąd.
 Starszy profil zachowuje pierwszą linię 18/24 znaki i podpis `BACCAble beta`.
 Obsługa przycisków i szkiców jest taka sama, a pytania mieszczą się w jednej linii.
 
@@ -223,54 +226,72 @@ Delta. Jeśli działanie się pogorszy, wybierz Reset safe lub odłącz całe za
 
 ## Ulubione i układ odczytów
 
-### Do pięciu pomiarów w jednym ulubionym widoku
+Ulubione odpytują każdy parametr diagnostyczny raz na cykl, nawet jeśli występuje w obu liniach. Przy ośmiu pomiarach odświeżenie całego zestawu może trwać cztery sekundy. Wartości pozostają widoczne przez ten czas, a po utracie odpowiedzi pojawia się `--`. Odczyty przychodzące bezpośrednio z CAN zachowują dotychczasowy czas ważności.
+
+### Dwie strony odczytów w jednym ulubionym widoku
 
 1. Otwórz `Settings → Favorites` i wybierz `Favorite 1` do `Favorite 6`.
-2. Wejdź krótkim RES. Wybierz `Slot 1` do `Slot 5`, naciśnij RES, znajdź pomiar
-   przyciskami góra/dół i zatwierdź krótkim RES. `Empty` czyści slot.
-3. **Slot 1 jest parametrem głównym**. MY23 pokazuje go w pierwszej linii,
-   a sloty 2–5 w drugiej, w tej kolejności. Pusty slot główny ukrywa cały widok.
-   Kolejność zmieniasz przez zastępowanie slotów. Pomiar już obecny w innym
+2. Wejdź krótkim RES. Wybierz `Slot 1` lub `Slot 2`, naciśnij RES, znajdź stronę
+   z katalogu Readings przyciskami góra/dół i zatwierdź krótkim RES. `Empty` czyści slot.
+3. **Slot 1 jest główną stroną odczytów**. MY23 pokazuje ją w pierwszej linii,
+   a Slot 2 w drugiej. Pusty slot główny ukrywa cały widok.
+   Kolejność zmieniasz przez zastępowanie slotów. Strona już obecna w innym
    slocie jest z niego usuwany. Edycja jest dostępna wyłącznie w Settings.
 4. Dwuklik otwiera pytanie o zapis. Przytrzymaj, aby zapisać, albo wykonaj
    następny dwuklik, aby odrzucić. Udany zapis pozostawia wybrany slot na ekranie;
    osobny dwuklik wraca.
 5. Bieżące wartości zobaczysz w `Favorites` menu głównego. Starszy ekran
-   pokazuje główny parametr zapisanego zestawu w jednej linii.
+   pokazuje główną stronę zapisanego zestawu w jednej linii.
 
 Po powrocie z innych list pozostaje wybrany ten sam zestaw ulubionych. Tak samo
 działa zmiana filtra silnika, jeśli zestaw nadal jest dostępny. W przeciwnym
 razie wyświetla się pierwszy dostępny zestaw. Wybór jest pamiętany osobno dla
 benzyny i diesla do ponownego uruchomienia urządzenia.
 
-Renderer najpierw próbuje krótkich etykiet wszystkich dodatkowych pomiarów.
-Jeśli nie mieszczą się w 22 znakach, używa mniejszych skrótów. Następnie zostawia
-kompletne segmenty w ustalonej kolejności: bez urwanej wartości, końcowej kropki
-rozdzielającej i dodatkowej strony. Przykład: `GEAR 3` i `R3500•S100•B-0.5bar`.
-RPM oznacza obr./min, prędkość km/h, a ciśnienie bar. `O`/`OE` to temperatura
-oleju ze źródła natywnego/ECU, `W` płynu chłodzącego, `IC` wyjścia intercoolera,
-`ICI` jego wejścia, `MA` MultiAir, a `GT` skrzyni. Stopień przy tych temperaturach
-oznacza Celsjusza. RPM korzysta z istniejących danych silnika i nie dodaje nowego
-zapytania CAN. `--` nadal oznacza brak aktualnej, poprawnej wartości.
+Każdy slot pokazuje pomiary z wybranej strony katalogu. MY23 usuwa zbędne
+odstępy i w razie potrzeby skraca podpis; starszy ekran zachowuje dotychczasowy
+format. Na przykład
+`Oil/coolant temp` zawiera dwa odczyty w jednej linii i po dodaniu do ulubionych
+pozostaje jednym slotem. `--` oznacza brak aktualnej wartości. `Gear -` obejmuje surowy kod
+`0xF` („brak informacji”); nie jest to piętnasty bieg.
 
-Benzyna i diesel mają osobne zestawy. Pomiar niepasujący do silnika pozostaje
+Wyświetlane i edytowane są tylko Slot 1 i Slot 2. Wcześniejsze rekordy pięciu
+slotów zachowują w pamięci miejsca 3–5 dla zgodności, ale nie są one pokazywane
+ani odpytywane. Zapis dwóch widocznych slotów nie usuwa pozostałych ID.
+W MY23 każda strona Readings pokazuje wszystkie swoje pomiary w pierwszej
+linii, także gdy zawiera dwa, trzy albo cztery pomiary. Krótszy format usuwa
+zbędne spacje i upraszcza długie podpisy, aby zmieścić się w 16 znakach. Ten sam
+format jest używany w ulubionych. Druga linia zapowiada następną stronę.
+Na przykład `Oil 35.0mm Q 80%` mieści się dokładnie. `B 100-200 8.54s` oznacza
+najlepszy czas od 100 do 200 km/h. Na stronie czterech temperatur `O` oznacza
+olej, `W` płyn chłodzący, `I` temperaturę na wejściu intercoolera, a `X` na
+wyjściu. Liczba, która nie mieści się w swoim polu, jest pokazana jako `--`,
+a nie ucięta w połowie.
+Strony statusu Information też
+zapowiadają kolejną pozycję; przy wielu kodach usterek druga linia pokazuje
+następny kod.
+
+Benzyna i diesel mają osobne zestawy. Strona niepasująca do silnika pozostaje
 zapisany i jest pomijany do czasu ponownego wyboru jego profilu. Niepasujący
-parametr główny ukrywa cały widok. Stare katalogi i identyfikatory stron pozostają
-bez zmian. Stare ulubione strony są importowane do zestawów bez powtarzania tego
-samego identyfikatora pomiaru, z zachowaniem źródeł i kolejności. Zapis aktualizuje
-format preferencji menu. Wgranie starszego firmware nie eksportuje nowych zestawów.
+główna strona ukrywa cały widok. Stare katalogi i identyfikatory stron pozostają
+bez zmian. Stare ulubione strony są importowane jako całe strony do Slotu 1.
+Atomowe identyfikatory pomiarów z beta 19 są w pamięci zamieniane na strony:
+najpierw wybierana jest strona z tym jednym pomiarem, a gdy jej nie ma, pierwsza
+strona, która go zawiera. Przed zapisem sprawdź wynik konwersji; dawny dodatkowy
+RPM pozostaje jako strona zgodności, lecz nowe wybory pochodzą z katalogu Readings. Zapis aktualizuje
+format preferencji. Starsze firmware nie odtworzy tego układu automatycznie.
 
 `Page favorites` i `Favorite order` są dostępne tylko w starszym profilu przed
-pierwszym zapisem zestawu slotów. Zatwierdzone zmiany aktualizują starszą listę
+pierwszym zapisem zestawu ulubionych. Zatwierdzone zmiany aktualizują starszą listę
 stron i zestawy importowane z tej listy. Błąd zapisu lub odrzucenie nie zmieniają
 żadnej z nich. MY23 i profile z zapisanymi zestawami mają tylko edytor
 `Favorites`, aby nie było drugiej opcji zmieniającej inną listę. Kolejność
-parametrów ustalasz przez zawartość slotów. Pusty Slot 1 ukrywa cały zestaw;
-sloty 2–5 nie przesuwają się automatycznie na pozycję główną. Na MY23 listy slotów, wyboru pomiaru,
+stron ustalasz przez zawartość slotów. Pusty Slot 1 ukrywa cały zestaw;
+Slot 2 nie przesuwa się automatycznie na pozycję główną. Na MY23 listy slotów, wyboru strony,
 testów IPC i Shown pages pokazują bieżącą oraz następną pozycję, także po
 przejściu z końca listy na początek.
 `Shown pages` i `Advanced pages` dotyczą zwykłych Readings, a nie jawnego wyboru
-pomiaru do zestawu. `Sort order` ma własny szkic i potwierdzenie zapisu.
+strony do zestawu. `Sort order` ma własny szkic i potwierdzenie zapisu.
 `Auto rotate` zmienia bieżący widok co pięć sekund.
 
 ## Ustawienia: Features
@@ -292,7 +313,7 @@ Szkic nie steruje samochodem przed udanym zapisem.
 | `LED strip` | Wyłączona / włączona | Steruje zamontowaną, zgodną listwą LED WS281x na podstawie danych samochodu, np. położenia pedału przyspieszenia i biegu. Wymaga dodatkowego sprzętu. Sterowanie listwą jest wstrzymywane, gdy USB korzysta ze wspólnego wyprowadzenia. |
 | `Shift light` | Wyłączona / włączona | Wysyła polecenie pokazania sygnału zmiany biegu po przekroczeniu Shift RPM. Wymaga zgodnej obsługi wskazania w trybie Race. Nie zmienia biegu za kierowcę. |
 | `Shift RPM` | 1500–6000 obr./min, co 250 | Próg obrotów silnika dla sygnału zmiany biegu. |
-| `MY23 display` | Wyłączona / włączona | Włącza układ MY23: 14 znaków w pierwszej linii i 22 w drugiej. OFF zachowuje starszy układ jednej linii z szerokością 18/24 znaków wybraną przy kompilacji. |
+| `MY23 display` | Wyłączona / włączona | Włącza układ MY23: 16 znaków w pierwszej linii i 22 w drugiej. OFF zachowuje starszy układ jednej linii z szerokością 18/24 znaków wybraną przy kompilacji. |
 | `DPF regen alert` | Wyłączona / włączona | Włącza powiadomienia o regeneracji DPF w dieslu. Zobacz [obserwowanie DPF](#obserwowanie-dpf). |
 | `Auto rotate` | Wyłączona / włączona | Automatycznie zmienia stronę bieżących odczytów co pięć sekund. |
 | `Advanced pages` | Wyłączona / włączona | Dodaje techniczne i dodatkowe strony do Readings, z uwzględnieniem profilu silnika i ustawionej widoczności. |
@@ -608,7 +629,7 @@ otwiera podmenu testowe.
 | Wersja C1 | Wersja oprogramowania kontrolera obsługującego menu. |
 | Wersja C2 | Wersja kontrolera podwozia. `? C2 no reply` oznacza brak aktualnej odpowiedzi z wersją. |
 | Wersja BH | Wersja kontrolera nadwozia. `? BH no reply` oznacza brak aktualnej odpowiedzi z wersją. |
-| `MY23:ON/OFF …ch` | Starszy profil: ustawienie MY23 i szerokość 18/24 znaki. MY23 pokazuje `IPC MY23` oraz `14 / 22 glyphs`. |
+| `MY23:ON/OFF …ch` | Starszy profil: ustawienie MY23 i szerokość 18/24 znaki. MY23 pokazuje `IPC MY23` oraz `16 / 22 glyphs`. |
 | `Immobilizer: ON/OFF` | Zapisane ustawienie immobilizera BACCAble. Nie można go przełączyć na tej stronie. |
 | `Reports:` | Liczba komunikatów o przyciskach kierownicy odebranych przez menu. Pomaga sprawdzić, dlaczego przyciski nie reagują. |
 | `Gaps:` | Liczba wykrytych przerw w docieraniu komunikatów o przyciskach. |
