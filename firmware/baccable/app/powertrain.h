@@ -13,6 +13,7 @@ void dashboard_send_setup(void);
 void dashboard_send_values(void);
 float native_parameter_read(uint8_t paramId);
 void dashboard_format_values(const char *template, const float *values, const uint8_t *paramId, char *result);
+void dashboard_format_my23_page(const ParameterPage *page, const float *values, char *result);
 uint32_t system_free_ram(void);
 void dashboard_clear(void);
 float accelerator_percent(uint8_t vol);

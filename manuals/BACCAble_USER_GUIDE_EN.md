@@ -188,7 +188,8 @@ Returning from other lists keeps the selected Favorite, as does engine filtering
 if that set remains available. Otherwise the first available set is selected.
 This selection is remembered separately for gasoline and diesel until restart.
 
-Each slot uses the selected page's original catalog format. A page such as
+Each slot uses the selected page's measurements. MY23 removes numeric padding
+and uses a shorter caption where necessary; legacy keeps the catalog format. A page such as
 `Oil/coolant temp` contains two values in one line; it remains one slot when
 added to Favorites. `--` means unavailable or stale. `Gear -` includes the raw
 `0xF` unavailable code; it is not gear 15.
@@ -196,11 +197,15 @@ added to Favorites. `--` means unavailable or stale. `Gear -` includes the raw
 Only the first two saved slots are shown and editable in this revision. Earlier
 five-slot records retain slots 3–5 in storage for compatibility, but those slots
 are not displayed or polled. Saving Slots 1–2 does not erase those old IDs.
-Every MY23 Readings page keeps its catalog format on line 1, whether it contains
-one, two, three or four values. Line 2 previews the next page. The Information status pages likewise
+Every MY23 Readings page keeps all of its measurements on line 1, whether it
+contains one, two, three or four values. Its compact format removes extra spaces
+and shortens long captions to fit 16 glyphs; the same format is used in MY23
+Favorites. Line 2 previews the next page. Information status pages likewise
 preview the next page; multiple fault codes show the following code on line 2.
-The upper MY23 field shows at most 16 glyphs: a longer catalog line is clipped
-there, and its remaining text cannot also occupy the next-page preview.
+For example, `Oil 35.0mm Q 80%` fits exactly. `B 100-200 8.54s` means the
+best 100–200 km/h run. The four-temperature page uses `O` for oil, `W` for
+coolant, `I` for intercooler inlet and `X` for intercooler outlet. A number too
+wide for its field appears as `--` rather than a partial number.
 
 Gasoline and diesel retain separate sets. Engine-incompatible saved pages
 remain stored and are omitted until that profile is selected again. A hidden

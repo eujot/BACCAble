@@ -106,10 +106,13 @@ visible slots selectable.
 Long generic notices continue onto L2 instead of replacing useful text with a
 static Back footer. A long active title ends with `…`.
 Settings show draft values with `▲▼ CHANGE`; confirmation shows
-`HOLD SAVE•2X DISCARD` and saved feedback `✓ SAVED`. Every Reading uses its
-catalog template on L1, including multi-value pages; L2 previews the next page.
-The 16-glyph upper field clips a longer catalog line. No formatter can display
-more than 16 glyphs there while also retaining the next-page preview.
+`HOLD SAVE•2X DISCARD` and saved feedback `✓ SAVED`. Every Reading keeps its
+catalog measurements on L1, including multi-value pages; L2 previews the next
+page. `dashboard_format_my23_page()` selects compact templates only in MY23,
+then removes numeric padding. Tests cover both catalogs and both compiled legacy
+widths: formatted MY23 pages fit 16 glyphs, including four-value and status
+pages. Legacy continues using the original catalog templates. The same MY23
+formatter supplies both visible Favorite slots.
 Ordinary MY23 screens have no fixed footer.
 Legacy uses ASCII/verified Latin-1 glyphs and single-line confirmation wording.
 The renderer translates MY23 control tokens before legacy output.
@@ -162,9 +165,10 @@ candidate for the observed left-shifted L2, pending an in-car display check.
 The owner confirmed MY23 menu operation in the car but found the packed Favorite
 initials unreadable. The clarified contract is two complete catalog pages per
 Favorite, one page on each line. Each page retains its original one-to-four-value
-template. Only Slots 1–2 are presented in the editor and live UDS polling; IDs in
+measurement set; MY23 uses the compact templates described above. Only Slots 1–2
+are presented in the editor and live UDS polling; IDs in
 historical Slots 3–5 remain stored in the same record without being erased.
-Readings retain the catalog template on L1 and preview the next eligible page
+Readings retain the catalog measurement set on L1 and preview the next eligible page
 on L2, regardless of the current page's measurement count.
 Information status pages preview the next status, and fault
 lists show the next code. Short one-off notices and empty-state messages remain
@@ -191,7 +195,7 @@ set by ID, falling back to the first available set. Startup selects the first
 available set. The EEPROM record and legacy remembered page IDs are unchanged.
 
 The selector displays each eligible page's catalog label. The live view uses the
-same `dashboard_format_values` template as Readings; a composite remains one
+same `dashboard_format_my23_page()` formatting as Readings; a composite remains one
 line in its slot. The catalog and engine eligibility control which pages can be
 chosen. Beta-19 atomic measurement IDs are converted in RAM to a dedicated page
 when present, otherwise the first page containing that ID. ID 97 (extra RPM)

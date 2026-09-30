@@ -457,7 +457,10 @@ static void format_favorite_page(uint8_t id, char out[DASHBOARD_MESSAGE_MAX_LENG
     float values[4] = {NAN, NAN, NAN, NAN};
     for (unsigned i = 0; i < parameter_page_elements(page); ++i)
         values[i] = parameter_cache_get(page->parameter_ids[i], currentTime);
-    dashboard_format_values(page->name, values, page->parameter_ids, out);
+    if (settings_state.ipc_my23_is_installed)
+        dashboard_format_my23_page(page, values, out);
+    else
+        dashboard_format_values(page->name, values, page->parameter_ids, out);
 }
 static __attribute__((noinline)) void present_favorite(const FavoriteParameters *favorite) {
     char first[DASHBOARD_MESSAGE_MAX_LENGTH + 1], second[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
@@ -859,7 +862,7 @@ void menu_render(void) {
         if (settings_state.ipc_my23_is_installed) {
             const ParameterPage *page = &parameter_pages[engine][list[selection]];
             const ParameterPage *next = &parameter_pages[engine][list[wrap(selection, list_count, 1)]];
-            dashboard_format_values(page->name, displayed_parameter_values, page->parameter_ids, text);
+            dashboard_format_my23_page(page, displayed_parameter_values, text);
             menu_present_lines(text, next->label);
             return;
         }

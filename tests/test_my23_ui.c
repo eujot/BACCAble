@@ -26,7 +26,66 @@ static void test_my23_glyph_budget(void) {
     assert(packet[5] == ' ' && !memcmp(packet + 1 + MY23_L1_VISIBLE, "RPM 3500", 8));
     for (unsigned i = 5; i < 1 + MY23_L1_VISIBLE; ++i) assert(packet[i] == ' ');
 }
-/* MY23 Readings keeps the old value text and previews the next eligible page. */
+/* MY23 Readings keeps each page's measurements and previews the next page. */
+static void test_my23_reading_formats_fit(void) {
+    const float samples[][4] = {
+        {NAN, NAN, NAN, NAN}, {0, 0, 0, 0}, {3, 3, 3, 3},
+        {8, 8, 8, 8}, {16, 16, 16, 16}, {48, 48, 48, 48}, {65, 65, 65, 65},
+        {9.9f, 9.9f, 9.9f, 9.9f},
+        {99.99f, 99.99f, 99.99f, 99.99f}, {101, 101, 101, 101},
+        {999.99f, 999.99f, 999.99f, 999.99f}, {999999, 999999, 999999, 999999},
+        {-9.9f, -9.9f, -9.9f, -9.9f}, {90, 85, 40, 35}, {5.5f, 80, 0, 0},
+        {35, 80, 0, 0}, {8.54f, 8.54f, 8.54f, 8.54f}, {41, 41, 41, 41}
+    };
+    for (unsigned engine = 0; engine < 2; ++engine)
+        for (unsigned i = 0; i < menu_page_count(engine); ++i) {
+            const ParameterPage *page = &parameter_pages[engine][i];
+            for (unsigned s = 0; s < sizeof(samples) / sizeof(samples[0]); ++s) {
+                char text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
+                dashboard_format_my23_page(page, samples[s], text);
+                size_t length = strlen(text);
+                assert(length <= MY23_L1_VISIBLE);
+                assert(!length || (text[0] != ' ' && text[length - 1] != ' '));
+                assert(!strstr(text, "  "));
+            }
+            /* Fill every numeric placeholder to its declared width at once. */
+            float fullest[4] = {0};
+            unsigned element = 0;
+            for (const char *part = page->name; *part && element < parameter_page_elements(page); ++part) {
+                if (!strncmp(part, "$enum", 5)) {
+                    fullest[element++] = 3; /* Long DPF state: NSC De-NOx. */
+                    part += 4;
+                } else if (part[0] == '$' && part[1] >= '0' && part[1] <= '9' &&
+                           part[2] == '.' && part[3] >= '0' && part[3] <= '9' && part[4] == 'f') {
+                    float value = 0;
+                    for (unsigned digit = 0; digit < (unsigned)(part[1] - '0'); ++digit)
+                        value = value * 10 + 9;
+                    fullest[element++] = value + (part[3] != '0' ? 0.5f : 0);
+                    part += 4;
+                }
+            }
+            char full_text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
+            dashboard_format_my23_page(page, fullest, full_text);
+            if (strlen(full_text) > MY23_L1_VISIBLE)
+                fprintf(stderr, "MY23 overflow: %u/%02x %s = %s (%zu)\n",
+                        engine, page->id, page->label, full_text, strlen(full_text));
+            assert(strlen(full_text) <= MY23_L1_VISIBLE);
+        }
+    char text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
+    const float oil_quality[] = {35, 80, 0, 0};
+    dashboard_format_my23_page(&parameter_pages[1][0x85 - 0x81], oil_quality, text);
+    assert(!strcmp(text, "Oil 35.0mm Q 80%"));
+    const float four_temps[] = {90, 85, 40, 35};
+    dashboard_format_my23_page(&parameter_pages[0][0x39 - 1], four_temps, text);
+    assert(!strcmp(text, "O 90W 85I 40X 35"));
+    const float oil_coolant[] = {101, 88, 0, 0};
+    dashboard_format_my23_page(&parameter_pages[0][0x04 - 1], oil_coolant, text);
+    assert(!strcmp(text, "Oil101\xb0 Cool 88\xb0"));
+    const float best[] = {8.54f, 8.54f, 0, 0};
+    dashboard_format_my23_page(&parameter_pages[0][0x2d - 1], best, text);
+    assert(!strcmp(text, "B 100-200 8.54s"));
+}
+
 static void test_my23_readings_preview_and_unavailable_gear(void) {
     fresh_contract();
     settings_state.ipc_my23_is_installed = 1;
@@ -49,7 +108,7 @@ static void test_my23_readings_preview_and_unavailable_gear(void) {
     assert(coolant >= 0);
     parameter_cache_put(42, 88, now);
     menu_show_parameter((uint8_t)coolant); menu_render();
-    assert(!memcmp(screen_packet + 2, "Coolant temp", 12));
+    assert(!memcmp(screen_packet + 2, "Coolant 88", 10));
     int pair = menu_page_index(0, 0x04); /* Oil and coolant must both be visible. */
     assert(pair >= 0);
     parameter_cache_put(5, 101, now);
@@ -62,9 +121,10 @@ static void test_my23_readings_preview_and_unavailable_gear(void) {
     menu_show_parameter((uint8_t)four); menu_render();
     char expected[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
     const float counts[] = {1, 2, 3, 4};
-    dashboard_format_values(parameter_pages[0][four].name, counts,
-                            parameter_pages[0][four].parameter_ids, expected);
-    assert(!memcmp(screen_packet + 2, expected, MY23_L1_VISIBLE));
+    dashboard_format_my23_page(&parameter_pages[0][four], counts, expected);
+    assert(!memcmp(screen_packet + 2, expected, strlen(expected)));
+    for (unsigned i = strlen(expected); i < MY23_L1_VISIBLE; ++i)
+        assert(screen_packet[2 + i] == ' ');
     count = menu_page_list_filtered(&prefs, 0, parameter_pages[0][four].group,
                                     false, false, false, false, pages);
     selected = 0;
@@ -136,10 +196,8 @@ static void test_whole_page_favorites_and_beta19_migration(void) {
     char first[DASHBOARD_MESSAGE_MAX_LENGTH + 1], second[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
     int oil_page = menu_page_index(0, 0x04), battery_page = menu_page_index(0, 0x07);
     assert(oil_page >= 0 && battery_page >= 0);
-    dashboard_format_values(parameter_pages[0][oil_page].name, oil_coolant,
-                            parameter_pages[0][oil_page].parameter_ids, first);
-    dashboard_format_values(parameter_pages[0][battery_page].name, battery,
-                            parameter_pages[0][battery_page].parameter_ids, second);
+    dashboard_format_my23_page(&parameter_pages[0][oil_page], oil_coolant, first);
+    dashboard_format_my23_page(&parameter_pages[0][battery_page], battery, second);
     uint8_t expected[MY23_PACKET_SIZE];
     my23_packet(expected, first, second);
     assert(!memcmp(screen_packet + 1, expected, sizeof(expected)));

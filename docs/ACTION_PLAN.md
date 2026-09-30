@@ -47,6 +47,24 @@ button timing or behavior in the car.
 
 ## Current work
 
+### MY23 catalog readings fit 16 columns, 2026-09-29
+
+The user's follow-up found that clipping longer beta-18 catalog templates
+could hide whole readings or cut a Best time midway. On branch
+`fix/my23-readability`, MY23 Readings and both visible Favorite slots now use
+shared compact templates with repeated spaces removed. The legacy 18/24-column
+formats are unchanged. All page measurements remain on the same line;
+`Oil 35.0mm Q 80%`, `B 100-200 8.54s` and four temperatures fit in 16 glyphs.
+The formatter retains `--` for a number that exceeds its declared field width.
+An enum conversion found by the display tests now checks its range before
+converting float to an integer/character. All 24 Apple Clang ASan/UBSan host
+executables pass. Tests cover both engine catalogs, both compiled legacy widths,
+full-width numeric fields and the compact outputs. All four UI profiles build
+for C1, C2 and BH with Arm GNU 15.2.Rel1; the largest C1 image uses
+93,924 / 98,304 Flash bytes and
+15,528 / 16,384 static RAM bytes, including reserved heap/stack. Vehicle
+readability remains unverified.
+
 ### MY23 measured 16-column correction, 2026-09-29
 
 On `fix/my23-readability`, the owner measured 16 visible glyphs on the upper
@@ -54,8 +72,8 @@ MY23 field and reported that L2 sometimes appeared shifted left in beta 19.
 The candidate changes the L1 budget from 14 to 16, moves the fixed CR/L2
 boundary two characters to the right, and increases matching C1/C2/BH screen
 UART packets from 38 to 40 bytes. The 39-character BH CAN output and its 13
-fragments remain unchanged. Readings and Favorite catalog pages are bounded to
-16 glyphs on L1; longer formatted pages still clip at that physical limit.
+fragments remain unchanged. The later MY23 compact-format change above ensures
+catalog readings fit the physical 16-glyph L1 limit.
 The blank-screen check now tests both MY23 fields instead of treating the marker
 as visible content. The English and Polish guides and menu guide describe the
 new limit. All 24 Apple Clang ASan/UBSan host executables pass, and all four

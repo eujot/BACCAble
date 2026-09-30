@@ -1145,6 +1145,7 @@ int main(void) {
         HOST_TEST(test_double_click_and_noise),
         HOST_TEST(test_atomic_favorite_packing),
         HOST_TEST(test_whole_page_favorites_and_beta19_migration),
+        HOST_TEST(test_my23_reading_formats_fit),
         HOST_TEST(test_my23_readings_preview_and_unavailable_gear),
         HOST_TEST(test_staged_setting_failure_and_discard),
         HOST_TEST(test_usb_draft_has_no_early_effect),

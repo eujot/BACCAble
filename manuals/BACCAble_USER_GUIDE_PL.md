@@ -203,7 +203,9 @@ działa zmiana filtra silnika, jeśli zestaw nadal jest dostępny. W przeciwnym
 razie wyświetla się pierwszy dostępny zestaw. Wybór jest pamiętany osobno dla
 benzyny i diesla do ponownego uruchomienia urządzenia.
 
-Każdy slot zachowuje wcześniejszy format wybranej strony katalogu. Na przykład
+Każdy slot pokazuje pomiary z wybranej strony katalogu. MY23 usuwa zbędne
+odstępy i w razie potrzeby skraca podpis; starszy ekran zachowuje dotychczasowy
+format. Na przykład
 `Oil/coolant temp` zawiera dwa odczyty w jednej linii i po dodaniu do ulubionych
 pozostaje jednym slotem. `--` oznacza brak aktualnej wartości. `Gear -` obejmuje surowy kod
 `0xF` („brak informacji”); nie jest to piętnasty bieg.
@@ -211,10 +213,15 @@ pozostaje jednym slotem. `--` oznacza brak aktualnej wartości. `Gear -` obejmuj
 Wyświetlane i edytowane są tylko Slot 1 i Slot 2. Wcześniejsze rekordy pięciu
 slotów zachowują w pamięci miejsca 3–5 dla zgodności, ale nie są one pokazywane
 ani odpytywane. Zapis dwóch widocznych slotów nie usuwa pozostałych ID.
-W MY23 każda strona Readings zachowuje format katalogu w pierwszej linii, także
-gdy zawiera dwa, trzy albo cztery pomiary. Druga linia zapowiada następną stronę.
-Górne pole MY23 mieści najwyżej 16 znaków. Dłuższy tekst katalogu zostanie tam
-ucięty; jego reszta nie zmieści się równocześnie z zapowiedzią następnej strony.
+W MY23 każda strona Readings pokazuje wszystkie swoje pomiary w pierwszej
+linii, także gdy zawiera dwa, trzy albo cztery pomiary. Krótszy format usuwa
+zbędne spacje i upraszcza długie podpisy, aby zmieścić się w 16 znakach. Ten sam
+format jest używany w ulubionych. Druga linia zapowiada następną stronę.
+Na przykład `Oil 35.0mm Q 80%` mieści się dokładnie. `B 100-200 8.54s` oznacza
+najlepszy czas od 100 do 200 km/h. Na stronie czterech temperatur `O` oznacza
+olej, `W` płyn chłodzący, `I` temperaturę na wejściu intercoolera, a `X` na
+wyjściu. Liczba, która nie mieści się w swoim polu, jest pokazana jako `--`,
+a nie ucięta w połowie.
 Strony statusu Information też
 zapowiadają kolejną pozycję; przy wielu kodach usterek druga linia pokazuje
 następny kod.
