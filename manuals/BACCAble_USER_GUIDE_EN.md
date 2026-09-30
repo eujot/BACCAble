@@ -211,6 +211,8 @@ If behavior worsens, select Reset safe or completely power down the device.
 
 ## Favorites and reading layout
 
+Favorites poll each diagnostic value once per cycle, even if it appears on both lines. Dense pairs of pages can take up to four seconds to refresh all eight values; they remain visible for that cycle and show `--` if replies stop. Native CAN readings retain their usual freshness limit.
+
 ### Configure two reading pages per favorite
 
 1. Open `Settings → Favorites` and choose `Favorite 1` through `Favorite 6`.

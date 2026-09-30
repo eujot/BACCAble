@@ -71,9 +71,11 @@ bool usb_modes_needs_apply(void) { return usb_needs_apply; }
 void usb_modes_apply(void) { ++usb_applies; usb_needs_apply = false; }
 void status_led_error(void) {}
 void status_led_activity(void) {}
+static uint8_t query_payload[4];
+static uint32_t query_ecu;
 uint32_t can_tx(CAN_TxHeaderTypeDef *header, uint8_t *data) {
-    (void)header;
-    (void)data;
+    query_ecu = header->ExtId;
+    memcpy(query_payload, data, sizeof(query_payload));
     ++queries;
     return HAL_OK;
 }
@@ -1151,6 +1153,7 @@ int main(void) {
         HOST_TEST(test_double_click_and_noise),
         HOST_TEST(test_atomic_favorite_packing),
         HOST_TEST(test_whole_page_favorites_and_beta19_migration),
+        HOST_TEST(test_favorite_poll_cycle),
         HOST_TEST(test_my23_reading_formats_fit),
         HOST_TEST(test_my23_readings_preview_and_unavailable_gear),
         HOST_TEST(test_staged_setting_failure_and_discard),

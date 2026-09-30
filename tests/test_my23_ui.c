@@ -230,6 +230,41 @@ static void test_whole_page_favorites_and_beta19_migration(void) {
     assert(saved[MENU_PREFS_SIZE + 4] == 22);
     assert(saved[MENU_PREFS_SIZE + 2 + FAVORITE_MAX_PARAMS] == 0xfe);
 }
+/* Two four-value pages need a full four-second poll cycle, without stale flicker. */
+static void test_favorite_poll_cycle(void) {
+    for (unsigned dense = 0; dense < 2; ++dense) {
+        fresh_contract();
+        assert(menu_preferences_save() == 0);
+        saved[MENU_PREFS_SIZE] = 2; saved[MENU_PREFS_SIZE + 1] = 1;
+        memset(saved + MENU_PREFS_SIZE + 2, FAVORITE_EMPTY, FAVORITE_STORAGE_SIZE - 2);
+        saved[MENU_PREFS_SIZE + 2] = 0x39;
+        saved[MENU_PREFS_SIZE + 3] = dense ? 0x37 : 0x3a;
+        settings_state.ipc_my23_is_installed = 1;
+        menu_init();
+        for (unsigned id = 0; id < 100; ++id) parameter_cache_put(id, 1, now);
+        now += dense ? 4000 : 3000;
+        menu_render();
+        for (unsigned i = 2; i + 1 < MY23_PACKET_SIZE; ++i)
+            assert(screen_packet[i] != '-' || screen_packet[i + 1] != '-');
+        /* Ordinary/native freshness never inherits the extended diagnostic cycle. */
+        if (dense) assert(isnan(parameter_cache_get(30, now)));
+        now += dense ? 501 : 1;
+        menu_render();
+        assert(memchr(screen_packet + 2, '-', MY23_L1_VISIBLE));
+        uint8_t payloads[8][4]; uint32_t ecus[8];
+        unsigned count = dense ? 8 : 5;
+        for (unsigned i = 0; i < count; ++i) {
+            now += 500;
+            unsigned before = queries;
+            menu_process();
+            assert(queries == before + 1);
+            for (unsigned j = 0; j < i; ++j)
+                assert(query_ecu != ecus[j] || memcmp(query_payload, payloads[j], 4));
+            memcpy(payloads[i], query_payload, 4); ecus[i] = query_ecu;
+        }
+    }
+}
+
 static void test_staged_setting_failure_and_discard(void) {
     for (unsigned profile = 0; profile < 2; ++profile) {
         fresh_contract(); to_settings(); menu_event(MENU_SELECT);

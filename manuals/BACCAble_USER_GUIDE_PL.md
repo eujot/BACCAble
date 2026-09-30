@@ -226,6 +226,8 @@ Delta. Jeśli działanie się pogorszy, wybierz Reset safe lub odłącz całe za
 
 ## Ulubione i układ odczytów
 
+Ulubione odpytują każdy parametr diagnostyczny raz na cykl, nawet jeśli występuje w obu liniach. Przy ośmiu pomiarach odświeżenie całego zestawu może trwać cztery sekundy. Wartości pozostają widoczne przez ten czas, a po utracie odpowiedzi pojawia się `--`. Odczyty przychodzące bezpośrednio z CAN zachowują dotychczasowy czas ważności.
+
 ### Dwie strony odczytów w jednym ulubionym widoku
 
 1. Otwórz `Settings → Favorites` i wybierz `Favorite 1` do `Favorite 6`.

@@ -87,6 +87,26 @@ reassertion and factory arbitration remain. No new beta or hardware flash.
 
 ## Current work
 
+### PR #49 follow-up review, 2026-09-30
+
+Two complete Favorite pages can contain eight UDS values. The 500 ms request
+cadence then needs four seconds, exceeding the three-second cache age and
+causing avoidable `--` gaps. Favorites now deduplicate diagnostic IDs across
+both rows and give diagnostic readings one complete poll cycle plus 500 ms
+of reply margin (minimum 3 s, maximum 4.5 s). Native CAN readings and ordinary
+Readings keep the three-second age. Query traffic remains bounded to two per
+second. A small stack array replaces repeated page lookup inside the polling
+loop. Tests cover eight distinct values, five unique values shared by two
+pages, expiration after missing replies, and unchanged ordinary cache freshness.
+The host suite passes with ASan/UBSan; C1's four-profile ARM matrix is checked
+for this change. Vehicle behavior remains unverified.
+
+The merge also left Lab's source hashes and IPC note describing the old 14+22
+layout. Refresh the source snapshot and generated dictionary for 16+CR+22;
+historical capture evidence is unchanged. Both manuals document dense Favorite
+refresh behavior. No further conflict in the Full/Delta display code was found
+in this focused review.
+
 ### Gear 15 root cause and enum-rendering audit, 2026-09-30
 
 The beta-19 source (`d071cfc`) decoded CAN gear nibble `0xF` as the integer 15
@@ -129,7 +149,7 @@ readability remains unverified. The change is open for review in
 [PR #49](https://github.com/eujot/BACCAble/pull/49). The branch has been
 updated with master, including PR #48's temporary IPC refresh controls. The
 merge resolution preserves both feature sets; host tests and the full
-C1/C2/BH/CAN UI build matrix are being rerun before pushing the conflict fix.
+C1/C2/BH/CAN UI build matrix passed before pushing the conflict fix.
 No release or vehicle acceptance is implied by this integration update.
 
 ### MY23 measured 16-column correction, 2026-09-29

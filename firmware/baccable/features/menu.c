@@ -467,13 +467,30 @@ static void import_page_favorites(void) {
             if (index >= 0) favorite_from_page(&favorites[e][f], &parameter_pages[e][index]);
         }
 }
-static void format_favorite_page(uint8_t id, char out[DASHBOARD_MESSAGE_MAX_LENGTH + 1]) {
+/* Poll each diagnostic once even when both pages contain it. At most eight IDs. */
+static unsigned favorite_queries(const FavoriteParameters *favorite, uint8_t ids[8]) {
+    unsigned count = 0;
+    for (unsigned slot = 0; slot < FAVORITE_VISIBLE_PARAMS; ++slot) {
+        const ParameterPage *page = favorite_page(engine, gasoline_v6, favorite->params[slot]);
+        if (!page) continue;
+        for (unsigned i = 0; i < parameter_page_elements(page); ++i) {
+            uint8_t id = page->parameter_ids[i];
+            if (id >= 100 || parameter_definitions[id].request_id <= 255) continue;
+            unsigned j = 0;
+            while (j < count && ids[j] != id) ++j;
+            if (j == count) ids[count++] = id;
+        }
+    }
+    return count;
+}
+static void format_favorite_page(uint8_t id, uint32_t max_age, char out[DASHBOARD_MESSAGE_MAX_LENGTH + 1]) {
     const ParameterPage *page = favorite_page(engine, gasoline_v6, id);
     out[0] = 0;
     if (!page) return;
     float values[4] = {NAN, NAN, NAN, NAN};
     for (unsigned i = 0; i < parameter_page_elements(page); ++i)
-        values[i] = parameter_cache_get(page->parameter_ids[i], currentTime);
+        values[i] = parameter_cache_get_max_age(page->parameter_ids[i], currentTime,
+            parameter_definitions[page->parameter_ids[i]].request_id > 255 ? max_age : 3000U);
     if (settings_state.ipc_my23_is_installed)
         dashboard_format_my23_page(page, values, out);
     else
@@ -481,8 +498,11 @@ static void format_favorite_page(uint8_t id, char out[DASHBOARD_MESSAGE_MAX_LENG
 }
 static __attribute__((noinline)) void present_favorite(const FavoriteParameters *favorite) {
     char first[DASHBOARD_MESSAGE_MAX_LENGTH + 1], second[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
-    format_favorite_page(favorite->params[0], first);
-    format_favorite_page(favorite->params[1], second);
+    uint8_t ids[8];
+    uint32_t max_age = (favorite_queries(favorite, ids) + 1U) * 500U;
+    if (max_age < 3000U) max_age = 3000U;
+    format_favorite_page(favorite->params[0], max_age, first);
+    format_favorite_page(favorite->params[1], max_age, second);
     menu_present_lines(first, second);
 }
 /* Convert beta-19 atomic measurement IDs to their dedicated catalog pages. */
@@ -1504,28 +1524,12 @@ void menu_process(void) {
     if (menu_parameters_active() && view == FAVORITES && (atomic_favorites || settings_state.ipc_my23_is_installed) &&
         !diagnostics_state.clear_faults_request && currentTime - page_changed >= 150 && currentTime - last_query >= 500) {
         const FavoriteParameters *favorite = &favorites[engine][list[selection]];
-        unsigned total = 0;
-        for (unsigned slot = 0; slot < FAVORITE_VISIBLE_PARAMS; ++slot) {
-            const ParameterPage *page = favorite_page(engine, gasoline_v6, favorite->params[slot]);
-            if (page) total += parameter_page_elements(page);
-        }
-        for (unsigned i = 0; i < total; ++i) {
-            unsigned position = (selected_parameter_element + i) % total;
-            unsigned element = position;
-            const ParameterPage *page = NULL;
-            for (unsigned slot = 0; slot < FAVORITE_VISIBLE_PARAMS; ++slot) {
-                const ParameterPage *candidate = favorite_page(engine, gasoline_v6, favorite->params[slot]);
-                if (!candidate) continue;
-                if (element < parameter_page_elements(candidate)) { page = candidate; break; }
-                element -= parameter_page_elements(candidate);
-            }
-            if (!page) break;
-            uint8_t id = page->parameter_ids[element];
-            if (id < 100 && parameter_definitions[id].request_id > 255) {
-                parameter_request_begin_id(id, 255); /* Favorites render directly from the ID cache. */
-                selected_parameter_element = (position + 1) % total;
-                break;
-            }
+        uint8_t ids[8];
+        unsigned total = favorite_queries(favorite, ids);
+        if (total) {
+            unsigned position = selected_parameter_element % total;
+            parameter_request_begin_id(ids[position], 255);
+            selected_parameter_element = (position + 1) % total;
         }
         last_query = currentTime;
     } else if (menu_parameters_active() && !diagnostics_state.clear_faults_request &&

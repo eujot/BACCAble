@@ -113,6 +113,11 @@ then removes numeric padding. Tests cover both catalogs and both compiled legacy
 widths: formatted MY23 pages fit 16 glyphs, including four-value and status
 pages. Legacy continues using the original catalog templates. The same MY23
 formatter supplies both visible Favorite slots.
+Favorite polling deduplicates UDS IDs across both pages at one request per
+500 ms. Its diagnostic cache age is max(3000 ms, (unique count + 1) * 500 ms),
+bounded to 4500 ms for eight values. Native values and ordinary Readings retain
+3000 ms. This avoids expiration during a healthy full cycle without increasing
+bus traffic or indefinitely retaining missing responses.
 Ordinary MY23 screens have no fixed footer.
 Legacy uses ASCII/verified Latin-1 glyphs and single-line confirmation wording.
 The renderer translates MY23 control tokens before legacy output.
