@@ -7,9 +7,24 @@ static void update_dirty(DisplayStream *stream) {
     for (unsigned i = 0; i < stream->count; ++i) {
         unsigned offset = i * DISPLAY_FRAGMENT_SIZE;
         if (!(stream->known & (1U << i)) ||
-            memcmp(stream->sent + offset, stream->target + offset, DISPLAY_FRAGMENT_SIZE))
+            memcmp(stream->sent + offset, (stream->full && stream->transferring ? stream->active : stream->target) + offset, DISPLAY_FRAGMENT_SIZE))
             stream->dirty |= 1U << i;
     }
+}
+
+/* Freeze one complete image until its final fragment is accepted. */
+static void begin_full(DisplayStream *stream) {
+    memcpy(stream->active, stream->target, sizeof(stream->active));
+    stream->transferring = true;
+    stream->cursor = 0;
+    stream->forced = (1U << stream->count) - 1U;
+    update_dirty(stream);
+}
+void display_stream_set_full(DisplayStream *stream, bool full) {
+    if (stream->full == full) return;
+    stream->full = full;
+    stream->transferring = false;
+    if (stream->valid) display_stream_restart(stream);
 }
 
 /* Replace obsolete waiting content with the latest complete, space-padded screen. */
@@ -21,11 +36,13 @@ void display_stream_submit_parts(DisplayStream *stream, const uint8_t *text, uin
     if (stream->count != count) {
         stream->known = stream->forced = 0;
         stream->cursor = 0;
+        stream->transferring = false;
     }
     stream->count = count;
     memcpy(stream->target, text, sizeof(stream->target));
     stream->valid = true;
     update_dirty(stream);
+    if (stream->full && !stream->transferring && stream->dirty) begin_full(stream);
 }
 
 /* Offer the next changed fragment fairly, including newer content after a failed send. */
@@ -38,7 +55,7 @@ bool display_stream_peek(DisplayStream *stream, uint8_t *fragment, uint8_t text[
         if (!(stream->dirty & (1U << i)))
             continue;
         stream->fragment = i;
-        memcpy(stream->offered, stream->target + i * DISPLAY_FRAGMENT_SIZE, DISPLAY_FRAGMENT_SIZE);
+        memcpy(stream->offered, (stream->full && stream->transferring ? stream->active : stream->target) + i * DISPLAY_FRAGMENT_SIZE, DISPLAY_FRAGMENT_SIZE);
         memcpy(text, stream->offered, DISPLAY_FRAGMENT_SIZE);
         *fragment = i;
         stream->offering = true;
@@ -58,6 +75,11 @@ void display_stream_accept(DisplayStream *stream) {
     stream->cursor = (i + 1) % stream->count;
     stream->offering = false;
     update_dirty(stream);
+    if (stream->full && stream->transferring && !stream->dirty) {
+        stream->transferring = false;
+        update_dirty(stream);
+        if (stream->dirty) begin_full(stream);
+    }
 }
 
 /* Forget previous output when BACCAble relinquishes the display. */
@@ -71,6 +93,7 @@ void display_stream_refresh(DisplayStream *stream) {
         if (stream->target[i] != ' ') {
             /* A complete IPC message begins with fragment zero. Once started,
              * subsequent refresh requests must let it reach its final fragment. */
+            if (stream->full) { begin_full(stream); return; }
             stream->cursor = 0;
             stream->forced = (1U << stream->count) - 1U;
             update_dirty(stream);
@@ -83,6 +106,7 @@ void display_stream_refresh(DisplayStream *stream) {
 void display_stream_restart(DisplayStream *stream) {
     if (!stream->valid)
         return;
+    if (stream->full) { begin_full(stream); return; }
     stream->cursor = 0;
     stream->forced = (1U << stream->count) - 1U;
     update_dirty(stream);

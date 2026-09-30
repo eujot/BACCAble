@@ -313,6 +313,70 @@ static void test_my23_fixed_fields_and_unicode_under_each_source(void) {
     }
 }
 
+/* Continuous C1 changes and retries cannot splice two full images together. */
+static void test_full_snapshot_and_latest_pending(void) {
+    DisplayStream stream = {0};
+    uint8_t a[DISPLAY_OUTPUT_LENGTH], b[DISPLAY_OUTPUT_LENGTH], c[DISPLAY_OUTPUT_LENGTH];
+    memset(a, 'A', sizeof(a)); memset(b, 'B', sizeof(b)); memset(c, 'C', sizeof(c));
+    display_stream_set_full(&stream, true);
+    display_stream_submit(&stream, a);
+    for (unsigned i = 0; i < DISPLAY_FRAGMENT_COUNT; ++i) {
+        uint8_t part, chars[3];
+        assert(display_stream_peek(&stream, &part, chars) && part == i);
+        assert(!memcmp(chars, "AAA", 3));
+        if (i == 2) {
+            display_stream_submit(&stream, b);
+            display_stream_refresh(&stream);
+            /* A failed queue offer stays on the same immutable fragment. */
+            assert(display_stream_peek(&stream, &part, chars) && part == i);
+            assert(!memcmp(chars, "AAA", 3));
+            display_stream_submit(&stream, c);
+        }
+        display_stream_accept(&stream);
+    }
+    for (unsigned i = 0; i < DISPLAY_FRAGMENT_COUNT; ++i) {
+        uint8_t part, chars[3];
+        assert(display_stream_peek(&stream, &part, chars) && part == i);
+        assert(!memcmp(chars, "CCC", 3));
+        display_stream_accept(&stream);
+    }
+    uint8_t part, chars[3];
+    assert(!display_stream_peek(&stream, &part, chars));
+    display_stream_submit(&stream, b);
+    assert(display_stream_peek(&stream, &part, chars) && part == 0);
+    display_stream_accept(&stream);
+    display_stream_submit(&stream, c);
+    display_stream_restart(&stream); /* Radio interruption uses the latest image. */
+    assert(display_stream_peek(&stream, &part, chars) && part == 0 && chars[0] == 'C');
+}
+
+static void test_temporary_pace_and_lease(void) {
+    chassis_state.stability_inverted = true; body_process();
+    chassis_state.stability_inverted = false; body_init();
+    submit("Pace test");
+    body_display_options(2, 0);
+    now += 50; body_process();
+    unsigned before = transmitted_count;
+    now += 9; body_process(); assert(transmitted_count == before);
+    now += 1; body_process(); assert(transmitted_count == before + 1);
+    fail_next = true;
+    now += 10; body_process(); assert(transmitted_count == before + 1);
+    now += 1; body_process(); assert(transmitted_count == before + 2);
+    assert(fragment(transmitted[before + 1]) == 2);
+    body_display_options(255, 255); /* Malformed commands cannot speed up the bus. */
+    now += 10; body_process(); assert(transmitted_count == before + 3);
+    now += 5000; body_process(); /* No renewal: default pacing and full restart. */
+    before = transmitted_count;
+    now += 10; body_process(); assert(transmitted_count == before);
+    now += 40; body_process(); assert(transmitted_count == before + 1);
+    body_display_options(1, 1);
+    now += 20; body_process();
+    before = transmitted_count;
+    body_init(); submit("After restart");
+    now += 20; body_process(); assert(transmitted_count == before);
+    now += 30; body_process(); assert(transmitted_count == before + 1);
+}
+
 int main(void) {
     const HostTest tests[] = {
         HOST_TEST(test_menu_footer_and_periodic_reassert),
@@ -321,6 +385,8 @@ int main(void) {
         HOST_TEST(test_carplay_and_close_restores_radio),
         HOST_TEST(test_bounded_radio_deferral_and_can_retry),
         HOST_TEST(test_utf_and_line_lengths_under_each_source),
+        HOST_TEST(test_full_snapshot_and_latest_pending),
+        HOST_TEST(test_temporary_pace_and_lease),
     };
     host_tests_run(DASHBOARD_MESSAGE_MAX_LENGTH == 24 ? "body-display-24" : "body-display-18", tests, sizeof(tests) / sizeof(tests[0]));
 }

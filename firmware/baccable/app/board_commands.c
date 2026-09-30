@@ -132,6 +132,9 @@ void board_commands_dispatch(const uint8_t *message) {
     case BhBusID: // message directed to baccable connected to BH bus
 #if defined(BACCABLE_BH)
         switch (message[1]) {
+        case BH_CMD_IPC_OPTIONS:
+            body_display_options(message[2], message[3]);
+            break;
         case BOARD_CMD_USB_STATE:
             usb_modes_request(message[2], message[3]);
             break;

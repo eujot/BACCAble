@@ -33,9 +33,9 @@ width. MY23 always has budgets `MY23_L1_VISIBLE = 16` and
 `MY23_L2_VISIBLE = 22`. Those are visible glyph counts, not UTF-8 byte limits.
 
 The main menu remains Favorites, Readings, Actions, Settings, Information.
-MY23/atomic Settings contains Features, Favorites, Shown pages, Sort order.
+MY23/atomic Settings contains Features, Favorites, Shown pages, Sort order, BACCAble IPC.
 Legacy before its first five-slot save retains Features, Page favorites,
-Shown pages, Favorite order, Sort order, Favorites. Existing catalogs, engine gates and page IDs are retained.
+Shown pages, Favorite order, Sort order, Favorites, BACCAble IPC. Existing catalogs, engine gates and page IDs are retained.
 The [catalog audit](CATALOG_AUDIT.md) describes the legacy reading model.
 
 ## Central button recognizer
@@ -228,8 +228,32 @@ Downgrading does not export the new sets for an old firmware's menu format.
 ## Refresh and vehicle boundaries
 
 C1 renders every 100 ms and resubmits unchanged screens after 500 ms. BH retains
-50 ms CAN fragment pacing and a one-second complete reassertion clock. Factory
-text uses the existing 100 ms complete-message guard/250 ms incomplete-message
+50 ms default CAN fragment pacing and a one-second complete reassertion clock.
+Settings → BACCAble IPC offers RAM-only Safe 50ms / Quick 20ms / Fast 10ms,
+Write Full / Write Delta, and Reset safe. SELECT applies a row immediately;
+UP/DOWN select a row, BACK returns. This experiment is explicitly outside the
+persisted draft workflow. Radio restoration and the separate IPC test patterns stay at 50 ms. No zero-delay burst or blocking wait was added.
+
+Full is the default: one immutable 39-byte image is sent in order, with one
+replaceable latest target waiting behind it. Repeated submissions and failed
+CAN queue offers cannot splice new content into the active image. Radio restart
+abandons it and starts the latest complete target at fragment zero. A profile
+switch resets the stream to avoid changing encoding in an active image. Delta
+retains the earlier changed-fragment behavior for comparison. Neither mode can
+guarantee an atomic visual swap at the IPC: CAN queue acceptance is not display
+commit, and there is no established IPC buffer-swap command.
+
+C1 sends command `[BhBusID, 0x47, pace(0..2), method(0=Full,1=Delta)]` through the
+ordinary fixed-width UART command queue. BH rejects invalid values. Nondefault
+options have a 5000 ms lease, renewed every 1000 ms by C1, including outside the
+menu. A failed enqueue leaves the selected pair unchanged; renewal retry is also
+bounded to once per second. Same-value renewals do not restart an active image.
+No Flash record or SettingsState field contains these options. Full power reset
+clears both boards; C1-only reset stops renewal, BH-only reset can be followed by
+reapplication from the still-running C1. Menu values represent queued requests,
+not peer acknowledgments.
+
+Factory text uses the existing 100 ms complete-message guard/250 ms incomplete-message
 settle fallback and bounded deferral. Source codes are learned only from complete
 media messages (0x05–0x09 and observed CarPlay context 0x21); no extra audio-source
 selection is injected. Closing restores the last complete radio text when known.

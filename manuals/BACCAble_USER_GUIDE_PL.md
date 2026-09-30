@@ -23,6 +23,7 @@ jego sterowników. Sama obecność opcji w menu nie oznacza, że samochód ją o
 - [Przyciski i nawigacja](#przyciski-i-nawigacja)
 - [Układ menu](#układ-menu)
 - [Symbole i komunikaty](#symbole-i-komunikaty)
+- [Tymczasowe ustawienia odświeżania IPC](#tymczasowe-ustawienia-odświeżania-ipc)
 - [Ulubione i układ odczytów](#ulubione-i-układ-odczytów)
 - [Ustawienia: Features](#ustawienia-features)
 - [Korzystanie z funkcji](#korzystanie-z-funkcji)
@@ -123,13 +124,15 @@ Menu główne
 │  │     └─ < Back           Powrót
 │  ├─ Favorites              Favorite 1–6 → Slot 1–2 → strona odczytów
 │  ├─ Shown pages            Pokazywanie i ukrywanie stron w Readings
-│  └─ Sort order             Sortowanie według grup albo alfabetycznie
+│  ├─ Sort order             Sortowanie według grup albo alfabetycznie
+│  └─ BACCAble IPC           Tymczasowe próby odświeżania
 └─ Information               Wersje, przyciski i test wyświetlacza IPC
 ```
 
 Ten układ Settings dotyczy MY23 oraz każdego profilu po zapisaniu zestawu
-ulubionych. Przed pierwszym takim zapisem starszy profil zachowuje kolejność:
-Features, Page favorites, Shown pages, Favorite order, Sort order, Favorites.
+dwu slotów ulubionych. Przed pierwszym takim zapisem starszy profil zachowuje
+kolejność: Features, Page favorites, Shown pages, Favorite order, Sort order,
+Favorites, BACCAble IPC.
 
 Kolejność menu głównego jest stała. Dostępność stron zależy od wybranego silnika
 oraz ustawień `Advanced pages` i `Shown pages`. Grupa bez dostępnych stron może
@@ -180,6 +183,46 @@ Czytelność, wyrównanie i odzyskiwanie ekranu po radiu wymagają próby w samo
 samo `C`. Przy korekcie zapłonu `°` oznacza kąt. Wartości ujemne zachowują znak
 minus. Symbole `«`/`»` przy edycji liczby wskazują możliwość regulacji, jeśli
 mieści się na nie miejsce. Listy nie pokazują numeru bieżącej pozycji.
+
+## Tymczasowe ustawienia odświeżania IPC
+
+Otwórz `Settings → BACCAble IPC`. Góra/dół wybiera wiersz, a krótkie kliknięcie
+RES przełącza wartość i stosuje ją od razu. Podwójne kliknięcie wraca do Settings.
+Te opcje próbne nie wymagają HOLD SAVE i nigdy nie są zapisywane w pamięci Flash.
+
+| Wiersz / wybór | Działanie |
+| --- | --- |
+| `Safe 50ms` | Domyślnie: 50 ms odstępu między ramkami CAN menu. |
+| `Quick 20ms` | Odstęp 20 ms między ramkami. |
+| `Fast 10ms` | Odstęp 10 ms między ramkami. |
+| `Write Full` | Domyślnie: wysyła cały ekran, wraz ze spacjami czyszczącymi pola, od pierwszego do ostatniego fragmentu. Treść nie zmienia się w trakcie tej transmisji; oczekuje tylko najnowszy kolejny ekran. |
+| `Write Delta` | Wysyła zmienione fragmenty; nowe wartości mogą zastąpić treść w trakcie transmisji. To tryb porównawczy, w którym mogą mieszać się stare i nowe napisy. |
+| `Reset safe` | Od razu przywraca `Safe 50ms` i `Write Full`. |
+
+Zapamiętuj parę, np. **Quick + Full**. MY23 potrzebuje 13 ramek: pełna transmisja
+zajmuje około 650 / 260 / 130 ms dla Safe / Quick / Fast, plus oczekiwanie na
+CAN lub radio. Nowy ekran może też czekać na zakończenie trwającej transmisji.
+To IPC decyduje, kiedy pokaże otrzymane fragmenty. Full zapobiega mieszaniu
+różnych ekranów przez firmware, ale nie gwarantuje jednoczesnej podmiany
+wszystkich znaków. W obu trybach pozostaje ponowne wysyłanie całego menu co
+sekundę. Nadal działa rozpoznawanie źródła i oczekiwanie po transmisji radia
+z ograniczonym czasem odroczenia. Przywracanie tekstu radia i osobny test
+Information → IPC display test zachowują odstęp 50 ms.
+
+Wgraj pasujące obrazy C1/C2/BH. Te opcje są tylko w RAM, również wtedy, gdy
+zapiszesz inne ustawienia Features. Pełny restart przywraca Safe + Full.
+Odłącz **zarówno zasilanie USB, jak i OBD**, aby wyłączyć całe urządzenie.
+BH dodatkowo wraca do Safe + Full po pięciu sekundach bez podtrzymania z C1.
+Działające C1 ponawia wybraną parę co sekundę, również po wyjściu z menu;
+restart samego BH może więc spowodować ponowne otrzymanie tej pary.
+`UART busy: retry` oznacza, że kliknięcie nie zostało przyjęte — powtórz je.
+Przyjęcie do kolejki nie jest potwierdzeniem wykonania przez BH ani IPC.
+
+Porównuj ustawienia przy tym samym źródle audio. Powtarzaj: długie i krótkie
+nazwy menu, przewijanie dwóch pozycji, bieżące ulubione, zmiana utworu i powrót
+do menu. Zapisuj parę ustawień, nakładanie napisów, opóźnienie i źródło audio.
+Zacznij od Safe + Full, potem Quick + Full, Fast + Full; opcjonalnie porównaj
+Delta. Jeśli działanie się pogorszy, wybierz Reset safe lub odłącz całe zasilanie.
 
 ## Ulubione i układ odczytów
 

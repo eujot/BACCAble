@@ -24,6 +24,7 @@ typedef enum {
     EDIT_VISIBLE,
     ORDER_FAVORITES,
     INFO,
+    IPC_OPTIONS,
     IPC_TEST_MENU,
     IPC_TEST_ACTIVE,
     FAV_SETS, FAV_SLOTS, FAV_PICK, SORT_EDIT,
@@ -85,7 +86,7 @@ static const char *const ipc_test_source_labels[] = {"USB source", "Bluetooth so
 static const char *const ipc_test_patterns[] = {"UTF glyphs", "Line 1 length", "Line 2 length", "Both lines"};
 static const char *const roots[] = {"Favorites", "Readings", "Actions", "Settings", "Information"};
 static const char *const settings[] = {"Features",   "Page favorites", "Shown pages",
-                                       "Favorite order", "Sort order", "Favorites"};
+                                       "Favorite order", "Sort order", "Favorites", "BACCAble IPC"};
 static char peer_versions[2][DASHBOARD_MESSAGE_MAX_LENGTH - 2];
 static uint32_t peer_updated[2];
 static uint8_t peer_seen[2];
@@ -116,6 +117,22 @@ static uint8_t root, group = 1, function, setting, info, editor_page, engine;
 static uint8_t list[64], list_count, selection, order_selected;
 static uint8_t setup_last, fault_index;
 static uint8_t ipc_test_source, ipc_test_entry, ipc_test_pattern;
+/* Experimental display options never enter settings_state or Flash records. */
+static uint8_t ipc_option, ipc_pace, ipc_method;
+static uint32_t ipc_options_sent;
+static bool ipc_options_sync;
+static const char *const ipc_paces[] = {"Safe 50ms", "Quick 20ms", "Fast 10ms"};
+static void ipc_option_text(char *out, size_t size, unsigned option) {
+    if (option == 0) snprintf_(out, size, "%s", ipc_paces[ipc_pace]);
+    else if (option == 1) snprintf_(out, size, "Write %s", ipc_method ? "Delta" : "Full");
+    else snprintf_(out, size, "Reset safe");
+}
+static bool ipc_options_send(uint8_t pace, uint8_t method) {
+    uint8_t command[] = {BhBusID, BH_CMD_IPC_OPTIONS, pace, method};
+    if (!board_uart_send(command, sizeof(command))) return false;
+    ipc_options_sent = currentTime;
+    return true;
+}
 static uint32_t page_changed, last_render, last_query, notice_started;
 static const char *notice;
 static const char *notice_label = "Settings";
@@ -150,9 +167,9 @@ static unsigned wrap(unsigned value, unsigned count, int delta) {
 
 /* Keep legacy membership editors out of the atomic Favorites workflow. */
 static uint8_t setting_move(uint8_t current, int direction) {
-    if (!modern_favorites()) return wrap(current, 6, direction);
-    static const uint8_t next[] = {5, 0, 4, 0, 0, 2};
-    static const uint8_t previous[] = {4, 0, 5, 0, 2, 0};
+    if (!modern_favorites()) return wrap(current, 7, direction);
+    static const uint8_t next[] = {5, 0, 4, 0, 6, 2, 0};
+    static const uint8_t previous[] = {6, 0, 5, 0, 2, 0, 4};
     return direction < 0 ? previous[current] : next[current];
 }
 static const ParameterPage *favorite_page(uint8_t profile, bool v6, uint8_t id) {
@@ -501,6 +518,8 @@ void menu_init(void) {
     setting = 0;
     info = 0;
     ipc_test_source = ipc_test_entry = ipc_test_pattern = 0;
+    ipc_option = ipc_pace = ipc_method = 0;
+    ipc_options_sync = false;
     setup_last = 0;
     notice = NULL;
     confirmed_action = 255;
@@ -894,6 +913,13 @@ void menu_render(void) {
         else
             snprintf_(text, sizeof(text), "%s%s", setting != 4 ? UI_SYMBOL_ENTER " " : "", settings[setting]);
         break;
+    case IPC_OPTIONS: {
+        char next[24];
+        ipc_option_text(text, sizeof(text), ipc_option);
+        ipc_option_text(next, sizeof(next), wrap(ipc_option, 3, 1));
+        menu_present_view(UI_MODE_LIST, text, next);
+        return;
+    }
     case SETUP:
         dashboard_send_setup();
         return;
@@ -1090,7 +1116,7 @@ static void back(void) {
         }
         favorite_confirm = false; view = FAV_SETS; return;
     }
-    if (view == FAV_SETS) { view = SETTINGS; return; }
+    if (view == FAV_SETS || view == IPC_OPTIONS) { view = SETTINGS; return; }
     if (view == IPC_TEST_ACTIVE) {
         view = IPC_TEST_MENU;
         return;
@@ -1225,6 +1251,9 @@ void menu_event(MenuEvent event) {
         case FUNCTIONS:
             function_move(direction, jump);
             break;
+        case IPC_OPTIONS:
+            ipc_option = wrap(ipc_option, 3, direction);
+            break;
         case SETTINGS:
             setting = setting_move(setting, direction);
             break;
@@ -1313,6 +1342,17 @@ void menu_event(MenuEvent event) {
         case FUNCTIONS:
             if (confirmed_action != actions[function].id || currentTime - confirm_started > 3000) action_run();
             break; /* Confirmation requires the separately labelled hold. */
+        case IPC_OPTIONS: {
+            uint8_t pace = ipc_pace, method = ipc_method;
+            if (ipc_option == 0) pace = (pace + 1) % 3;
+            else if (ipc_option == 1) method = !method;
+            else pace = method = 0;
+            if (ipc_options_send(pace, method)) {
+                ipc_pace = pace; ipc_method = method;
+                ipc_options_sync = pace || method;
+            } else menu_notice("UART busy: retry");
+            break;
+        }
         case SETTINGS:
             switch (setting) {
             case 0:
@@ -1335,6 +1375,7 @@ void menu_event(MenuEvent event) {
                 order_selected = 0;
                 build_pages(0);
                 break;
+            case 6: ipc_option = 0; view = IPC_OPTIONS; break;
             case 5: favorite_set = 0; view = FAV_SETS; break;
             case 4:
                 sort_draft = !preferences.alphabetical; sort_confirm = false; view = SORT_EDIT;
@@ -1406,7 +1447,7 @@ void menu_button(uint8_t button, bool allowed) {
     MenuEvent event = menu_input_update(&input, button, allowed, currentTime);
     bool repeat_allowed = allowed && !save_failed && dashboard_state.baccable_dashboard_menu_visible &&
                           (view == FAVORITES || view == VALUES || view == GROUPS ||
-                           view == SETTINGS || view == SETUP || view == IPC_TEST_MENU ||
+                           view == SETTINGS || view == SETUP || view == IPC_OPTIONS || view == IPC_TEST_MENU ||
                            view == IPC_TEST_ACTIVE || view == SORT_EDIT || view == FAV_SETS || view == FAV_SLOTS || view == FAV_PICK || is_editor() ||
                            (view == ORDER_FAVORITES && !order_selected));
     if (event == MENU_NONE)
@@ -1422,6 +1463,12 @@ void menu_button(uint8_t button, bool allowed) {
 
 /* Refresh the display and request readings at their intended intervals. */
 void menu_process(void) {
+    /* Renew only active experiments; a C1 reset stops renewal and BH falls back. */
+    if (ipc_options_sync && currentTime - ipc_options_sent >= 1000U) {
+        ipc_options_send(ipc_pace, ipc_method);
+        /* Bound queue-full retries too, rather than hammering UART each loop. */
+        ipc_options_sent = currentTime;
+    }
     menu_event(menu_input_poll(&input, input.armed, currentTime));
     fault_reader_process();
     action_requests_process();
@@ -1432,7 +1479,7 @@ void menu_process(void) {
         dashboard_clear();
     if (!dashboard_state.baccable_dashboard_menu_visible)
         return;
-    bool editor = view == SETTINGS || view == SETUP || view == IPC_TEST_MENU ||
+    bool editor = view == SETTINGS || view == SETUP || view == IPC_OPTIONS || view == IPC_TEST_MENU ||
                   view == IPC_TEST_ACTIVE || view == SORT_EDIT || view == FAV_SETS || view == FAV_SLOTS || view == FAV_PICK || is_editor() || view == ORDER_FAVORITES;
     /* Reading screens are intentionally persistent; active diagnostics get a fresh grace period. */
     if (fault_reader_busy() || diagnostics_state.clear_faults_request) {
