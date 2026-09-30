@@ -98,12 +98,13 @@ Readings keep the three-second age. Query traffic remains bounded to two per
 second. A small stack array replaces repeated page lookup inside the polling
 loop. Tests cover eight distinct values, five unique values shared by two
 pages, expiration after missing replies, and unchanged ordinary cache freshness.
-The host suite passes with ASan/UBSan; C1's four-profile ARM matrix is checked
-for this change. Vehicle behavior remains unverified.
+The host suite passes with ASan/UBSan; C1's four-profile ARM matrix passes
+with Arm GNU 15.2.Rel1. Vehicle behavior remains unverified.
 
 The merge also left Lab's source hashes and IPC note describing the old 14+22
-layout. Refresh the source snapshot and generated dictionary for 16+CR+22;
-historical capture evidence is unchanged. Both manuals document dense Favorite
+layout. Dictionary 2026-09-30.1 now references implementation `b3506a2` and
+refreshes the source snapshot and generated dictionary for 16+CR+22; all 46
+Lab tests pass. Historical capture evidence is unchanged. Both manuals document dense Favorite
 refresh behavior. No further conflict in the Full/Delta display code was found
 in this focused review.
 
