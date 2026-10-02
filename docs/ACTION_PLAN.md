@@ -34,6 +34,31 @@ bounded changes and existing modules/tests. No model-specific workflow, mandator
 PR count or broad rewrite is needed. This handoff is a backlog, not an instruction
 to automatically flash hardware or publish every future change.
 
+## Validated 20 ms IPC default, 2026-10-02
+
+Task branch: `fix/ipc-default-20ms`, based on master `48e4646`.
+Implementation: `778725f`. The owner reports stable 20 ms refresh without
+visible artifacts. Make Quick 20ms + Write Full the boot/default-reset pair;
+retain selectable Safe 50ms and Fast 10ms and the one-second reassertion.
+Both boards share the default constants, preserving UART option indices.
+Correct nondefault detection so Safe 50ms + Full is renewed by C1 and expires
+on BH back to 20 ms, just like other temporary overrides. Rename Reset safe
+to Reset default. Settings remain RAM-only; factory replay/test patterns stay
+at 50 ms. Update both manuals and the implementation-source dictionary.
+
+Bounded review covered full-screen buffering, CAN retry, UART option renewal
+and default/lease/reset consistency. Existing latest-target coalescing and
+bounded renewal retries already avoid redundant work; no speculative scheduler
+or protocol changes were introduced.
+
+Checks: all host tests pass with Apple Clang and sanitizers (including both
+menu profiles, rejected UART changes, Safe + Full renewal, lease expiry and
+boot pacing); cppcheck and full ARM builds pass for C1/C2/BH/CAN using
+Arm GNU 15.2.Rel1. Lab dictionary tests: 17 passed. No release or flash performed.
+The new binaries have not been vehicle-tested; the owner's acceptance concerns
+the previously selectable 20 ms mode. This change does not establish support
+for all IPC variants.
+
 ## Release status, 2026-09-29
 
 Released `v5-beta-19` from master commit `d071cfc` after PR #47. The beta
