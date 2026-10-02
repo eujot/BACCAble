@@ -5,6 +5,9 @@
 static void update_dirty(DisplayStream *stream) {
     stream->dirty = stream->forced;
     for (unsigned i = 0; i < stream->count; ++i) {
+        /* Forced fragments are dirty regardless of their previous content. */
+        if (stream->forced & (1U << i))
+            continue;
         unsigned offset = i * DISPLAY_FRAGMENT_SIZE;
         if (!(stream->known & (1U << i)) ||
             memcmp(stream->sent + offset, (stream->full && stream->transferring ? stream->active : stream->target) + offset, DISPLAY_FRAGMENT_SIZE))

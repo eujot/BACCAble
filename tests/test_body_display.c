@@ -342,6 +342,17 @@ static void test_full_snapshot_and_latest_pending(void) {
     }
     uint8_t part, chars[3];
     assert(!display_stream_peek(&stream, &part, chars));
+    /* A keepalive must resend even equal fragments; repeated requests must
+     * neither skip these fragments nor restart an in-progress pass. */
+    display_stream_refresh(&stream);
+    for (unsigned i = 0; i < DISPLAY_FRAGMENT_COUNT; ++i) {
+        display_stream_refresh(&stream);
+        assert(display_stream_peek(&stream, &part, chars) && part == i);
+        assert(!memcmp(chars, "CCC", 3));
+        assert(display_stream_peek(&stream, &part, chars) && part == i);
+        display_stream_accept(&stream);
+    }
+    assert(!display_stream_peek(&stream, &part, chars));
     display_stream_submit(&stream, b);
     assert(display_stream_peek(&stream, &part, chars) && part == 0);
     display_stream_accept(&stream);

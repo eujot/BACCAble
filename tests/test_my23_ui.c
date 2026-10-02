@@ -599,3 +599,31 @@ static void test_ipc_options_are_volatile(void) {
         assert(settings_writes + preference_writes == writes);
     }
 }
+
+/* Rendering on an input event must not be repeated by the same loop's timer. */
+static void test_render_interval_after_event(void) {
+    for (unsigned profile = 0; profile < 2; ++profile) {
+        fresh_contract();
+        settings_state.ipc_my23_is_installed = profile;
+        int reading = menu_page_index(0, 0x2c); /* Live native run statistic. */
+        assert(reading >= 0);
+        menu_show_parameter((uint8_t)reading);
+        now += 101;
+        unsigned before = native_reads;
+        menu_event(MENU_SELECT); /* Status SELECT renders without moving the page. */
+        assert(native_reads > before);
+        before = native_reads;
+        menu_process();
+        assert(native_reads == before);
+        now += 99; menu_process();
+        assert(native_reads == before);
+        now += 1; menu_process();
+        assert(native_reads > before);
+        /* Explicit redraws reset the interval too, including tick wrap. */
+        now = UINT32_MAX - 50U;
+        menu_render();
+        before = native_reads;
+        now += 99; menu_process(); assert(native_reads == before);
+        now += 1; menu_process(); assert(native_reads > before);
+    }
+}

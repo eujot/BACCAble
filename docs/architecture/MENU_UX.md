@@ -232,7 +232,10 @@ Downgrading does not export the new sets for an old firmware's menu format.
 
 ## Refresh and vehicle boundaries
 
-C1 renders every 100 ms and resubmits unchanged screens after 500 ms. BH retains
+C1 renders immediately on menu events and starts the next 100 ms periodic
+interval from that render, avoiding a second render in the same loop. Unchanged
+screens are resubmitted after 500 ms; duplicate detection precedes UART packet
+assembly and only accepted submissions update the resend clock. BH retains
 20 ms default CAN fragment pacing and a one-second complete reassertion clock.
 Settings → BACCAble IPC offers RAM-only Safe 50ms / Quick 20ms / Fast 10ms,
 Write Full / Write Delta, and Reset default. SELECT applies a row immediately;

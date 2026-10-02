@@ -84,7 +84,8 @@ uint32_t can_forward(const CAN_RxHeaderTypeDef *header, uint8_t *data) {
     (void)data;
     return HAL_OK;
 }
-float native_parameter_read(uint8_t id) { return (float)id + 0.5f; }
+static unsigned native_reads;
+float native_parameter_read(uint8_t id) { ++native_reads; return (float)id + 0.5f; }
 bool flash_record_load(unsigned slot, uint16_t type, void *data, size_t size) {
     (void)slot;
     if (type == 0x103 && have_old) {
@@ -1140,6 +1141,7 @@ int main(void) {
 #endif
     const HostTest tests[] = {
         HOST_TEST(test_my23_glyph_budget),
+        HOST_TEST(test_render_interval_after_event),
         HOST_TEST(test_ipc_options_are_volatile),
         HOST_TEST(test_atomic_favorite_selection_identity),
         HOST_TEST(test_my23_remaining_list_previews),

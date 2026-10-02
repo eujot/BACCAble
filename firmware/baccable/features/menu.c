@@ -330,12 +330,12 @@ static void function_move(int direction, bool next_group) {
 
 /* Queue a screen payload, including diagnostic control bytes, with normal coalescing. */
 static bool menu_present_packet(const uint8_t *content) {
-    uint8_t message[UART_SCREEN_BUFFER_SIZE];
-    message[0] = BhBusIDparamString;
-    memcpy(message + 1, content, UART_SCREEN_BUFFER_SIZE - 1);
     if (previous_valid && !memcmp(previous_text, content, sizeof(previous_text)) &&
         currentTime - previous_sent < 500)
         return false;
+    uint8_t message[UART_SCREEN_BUFFER_SIZE];
+    message[0] = BhBusIDparamString;
+    memcpy(message + 1, content, UART_SCREEN_BUFFER_SIZE - 1);
     if (!board_uart_send(message, sizeof(message)))
         return false;
     memcpy(previous_text, content, sizeof(previous_text));
@@ -848,6 +848,8 @@ static void action_render(char *text, size_t capacity, const ActionEntry *entry)
 void menu_render(void) {
     if (!dashboard_state.baccable_dashboard_menu_visible)
         return;
+    /* Event-driven renders also start the next periodic refresh interval. */
+    last_render = currentTime;
     action_requests_process();
     if (save_failed) {
         menu_present(UI_SYMBOL_FAILURE " Save failed: RES");
@@ -1551,9 +1553,7 @@ void menu_process(void) {
         selected_parameter_element = (selected_parameter_element + 1) % parameter_page_elements(page);
         last_query = currentTime;
     }
-    if (currentTime - last_render >= 100) {
-        last_render = currentTime;
+    if (currentTime - last_render >= 100)
         menu_render();
-    }
 }
 #endif
