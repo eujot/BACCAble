@@ -575,24 +575,27 @@ static void test_ipc_options_are_volatile(void) {
         fresh_contract(); to_settings();
         settings_state.ipc_my23_is_installed = profile;
         menu_event(MENU_PREVIOUS); menu_event(MENU_SELECT);
-        assert(strstr(screen, "Safe 50ms"));
+        assert(strstr(screen, "Quick 20ms"));
         unsigned writes = settings_writes + preference_writes;
         uart_busy = true; menu_event(MENU_SELECT); uart_busy = false;
-        now += 2000; menu_render(); assert(strstr(screen, "Safe 50ms"));
+        now += 2000; menu_render(); assert(strstr(screen, "Quick 20ms"));
         menu_event(MENU_SELECT);
-        assert(last_command == BH_CMD_IPC_OPTIONS && last_ipc_pace == 1 && last_ipc_method == 0);
-        menu_event(MENU_SELECT); assert(last_ipc_pace == 2);
+        assert(last_command == BH_CMD_IPC_OPTIONS && last_ipc_pace == 2 && last_ipc_method == 0);
+        menu_event(MENU_SELECT); assert(last_ipc_pace == 0);
+        last_ipc_pace = 255; /* Safe + Full is now nondefault and must renew. */
+        now += 1000; menu_process();
+        assert(last_ipc_pace == 0 && last_ipc_method == 0);
         menu_event(MENU_NEXT); menu_event(MENU_SELECT); assert(last_ipc_method == 1);
-        now += 1000; menu_process(); assert(last_ipc_pace == 2 && last_ipc_method == 1);
+        now += 1000; menu_process(); assert(last_ipc_pace == 0 && last_ipc_method == 1);
         assert(settings_writes + preference_writes == writes);
         menu_init(); menu_event(MENU_BACK);
         /* menu_init keeps visible state; BACK above returns to root. */
         menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_SELECT);
         menu_event(MENU_PREVIOUS); menu_event(MENU_SELECT);
-        assert(strstr(screen, "Safe 50ms"));
+        assert(strstr(screen, "Quick 20ms"));
         menu_event(MENU_SELECT); menu_event(MENU_NEXT); menu_event(MENU_SELECT);
         menu_event(MENU_NEXT); menu_event(MENU_SELECT);
-        assert(last_ipc_pace == 0 && last_ipc_method == 0);
+        assert(last_ipc_pace == 1 && last_ipc_method == 0);
         assert(settings_writes + preference_writes == writes);
     }
 }

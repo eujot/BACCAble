@@ -192,12 +192,12 @@ Te opcje próbne nie wymagają HOLD SAVE i nigdy nie są zapisywane w pamięci F
 
 | Wiersz / wybór | Działanie |
 | --- | --- |
-| `Safe 50ms` | Domyślnie: 50 ms odstępu między ramkami CAN menu. |
-| `Quick 20ms` | Odstęp 20 ms między ramkami. |
+| `Safe 50ms` | Wolniej: 50 ms odstępu między ramkami CAN menu. |
+| `Quick 20ms` | Domyślnie: odstęp 20 ms między ramkami. |
 | `Fast 10ms` | Odstęp 10 ms między ramkami. |
 | `Write Full` | Domyślnie: wysyła cały ekran, wraz ze spacjami czyszczącymi pola, od pierwszego do ostatniego fragmentu. Treść nie zmienia się w trakcie tej transmisji; oczekuje tylko najnowszy kolejny ekran. |
 | `Write Delta` | Wysyła zmienione fragmenty; nowe wartości mogą zastąpić treść w trakcie transmisji. To tryb porównawczy, w którym mogą mieszać się stare i nowe napisy. |
-| `Reset safe` | Od razu przywraca `Safe 50ms` i `Write Full`. |
+| `Reset default` | Od razu przywraca `Quick 20ms` i `Write Full`. |
 
 Zapamiętuj parę, np. **Quick + Full**. MY23 potrzebuje 13 ramek: pełna transmisja
 zajmuje około 650 / 260 / 130 ms dla Safe / Quick / Fast, plus oczekiwanie na
@@ -210,9 +210,9 @@ z ograniczonym czasem odroczenia. Przywracanie tekstu radia i osobny test
 Information → IPC display test zachowują odstęp 50 ms.
 
 Wgraj pasujące obrazy C1/C2/BH. Te opcje są tylko w RAM, również wtedy, gdy
-zapiszesz inne ustawienia Features. Pełny restart przywraca Safe + Full.
+zapiszesz inne ustawienia Features. Pełny restart przywraca Quick + Full.
 Odłącz **zarówno zasilanie USB, jak i OBD**, aby wyłączyć całe urządzenie.
-BH dodatkowo wraca do Safe + Full po pięciu sekundach bez podtrzymania z C1.
+BH dodatkowo wraca do Quick + Full po pięciu sekundach bez podtrzymania z C1.
 Działające C1 ponawia wybraną parę co sekundę, również po wyjściu z menu;
 restart samego BH może więc spowodować ponowne otrzymanie tej pary.
 `UART busy: retry` oznacza, że kliknięcie nie zostało przyjęte — powtórz je.
@@ -221,8 +221,8 @@ Przyjęcie do kolejki nie jest potwierdzeniem wykonania przez BH ani IPC.
 Porównuj ustawienia przy tym samym źródle audio. Powtarzaj: długie i krótkie
 nazwy menu, przewijanie dwóch pozycji, bieżące ulubione, zmiana utworu i powrót
 do menu. Zapisuj parę ustawień, nakładanie napisów, opóźnienie i źródło audio.
-Zacznij od Safe + Full, potem Quick + Full, Fast + Full; opcjonalnie porównaj
-Delta. Jeśli działanie się pogorszy, wybierz Reset safe lub odłącz całe zasilanie.
+Zacznij od Quick + Full, potem opcjonalnie Safe + Full lub Fast + Full; opcjonalnie porównaj
+Delta. Jeśli działanie się pogorszy, wybierz Reset default lub odłącz całe zasilanie.
 
 ## Ulubione i układ odczytów
 
