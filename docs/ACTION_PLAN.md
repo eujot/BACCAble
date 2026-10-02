@@ -94,8 +94,10 @@ Logs: ignored repo `tmp/opt-host.log`, `tmp/opt-{before,after,lint}-ROLE.log`,
 Lab dictionary source hashes and generated catalog are refreshed to the
 implementation commit; all 17 dictionary tests pass. No CAN layouts or
 historical capture evidence changed.
-The user-facing controls remain as documented in both manuals; only the
-internal scheduling guide changes in this optimization pass.
+Release notes are prepared in [v5-beta-21.md](releases/v5-beta-21.md). The
+user-facing controls remain as documented in both manuals; only the internal
+scheduling guide changes in this optimization pass. PR, merge and release
+publication are pending GitHub authentication.
 
 ## Release status, 2026-09-29
 
