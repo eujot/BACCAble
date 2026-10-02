@@ -54,9 +54,9 @@ or protocol changes were introduced.
 Checks: all host tests pass with Apple Clang and sanitizers (including both
 menu profiles, rejected UART changes, Safe + Full renewal, lease expiry and
 boot pacing); cppcheck and full ARM builds pass for C1/C2/BH/CAN using
-Arm GNU 15.2.Rel1. Lab dictionary tests: 17 passed. No release or flash performed.
-The new binaries have not been vehicle-tested; the owner's acceptance concerns
-the previously selectable 20 ms mode. This change does not establish support
+Arm GNU 15.2.Rel1. Lab dictionary tests: 17 passed. Release `v5-beta-21` was published from PR #50's merge commit. The new binaries
+have not been vehicle-tested; the owner's acceptance concerns the previously
+selectable 20 ms mode. This change does not establish support
 for all IPC variants.
 
 ## Small IPC refresh optimizations, 2026-10-02
@@ -97,7 +97,7 @@ historical capture evidence changed.
 Release notes are prepared in [v5-beta-21.md](releases/v5-beta-21.md). The
 user-facing controls remain as documented in both manuals; only the internal
 scheduling guide changes in this optimization pass. PR, merge and release
-publication are pending GitHub authentication.
+publication completed in PR #50 and workflow 37031156576.
 
 ## Release status, 2026-09-29
 
@@ -109,6 +109,17 @@ to the [GitHub release](https://github.com/eujot/BACCAble/releases/tag/v5-beta-1
 Notes are maintained in [v5-beta-19.md](releases/v5-beta-19.md). Vehicle
 acceptance is still open; publication does not confirm MY23 screen appearance,
 button timing or behavior in the car.
+
+## Release status, 2026-10-02
+
+PR #50 merged as `31e10c3` on master. Beta `v5-beta-21` was built from
+that merge commit by [workflow 37031156576](https://github.com/eujot/BACCAble/actions/runs/37031156576);
+the shared host, Lab, lint and all C1/C2/BH/CAN builds passed. The
+[release](https://github.com/eujot/BACCAble/releases/tag/v5-beta-21) contains
+the four board images, `BUILD_INFO.json` and `SHA256SUMS`; full release notes
+are in [v5-beta-21.md](releases/v5-beta-21.md). The release has not been
+installed in a vehicle; 20 ms stability is owner-reported from the earlier
+candidate, while these newly built images still need vehicle verification.
 
 ## Release status, 2026-09-30
 
