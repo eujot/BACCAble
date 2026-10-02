@@ -61,7 +61,8 @@ for all IPC variants.
 
 ## Small IPC refresh optimizations, 2026-10-02
 
-On `fix/ipc-default-20ms`, baseline `0772025`, following the 20 ms default:
+Implementation `7dff7fe` on `fix/ipc-default-20ms`, baseline `0772025`,
+following the 20 ms default:
 - Start the 100 ms periodic render interval at every visible render, including
   button-driven renders, avoiding duplicate work in the same loop.
 - Reject unchanged UART screen submissions before copying the packet; retain
@@ -90,6 +91,9 @@ BH spends 8 Flash bytes to avoid forced-fragment comparisons. These are linked
 sizes, not measured runtime stack headroom or CPU/visible-latency benchmarks.
 Logs: ignored repo `tmp/opt-host.log`, `tmp/opt-{before,after,lint}-ROLE.log`,
 `tmp/opt-size-{before,after}.txt`. No new vehicle test, release or flash.
+Lab dictionary source hashes and generated catalog are refreshed to the
+implementation commit; all 17 dictionary tests pass. No CAN layouts or
+historical capture evidence changed.
 The user-facing controls remain as documented in both manuals; only the
 internal scheduling guide changes in this optimization pass.
 
