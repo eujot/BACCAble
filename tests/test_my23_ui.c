@@ -575,24 +575,55 @@ static void test_ipc_options_are_volatile(void) {
         fresh_contract(); to_settings();
         settings_state.ipc_my23_is_installed = profile;
         menu_event(MENU_PREVIOUS); menu_event(MENU_SELECT);
-        assert(strstr(screen, "Safe 50ms"));
+        assert(strstr(screen, "Quick 20ms"));
         unsigned writes = settings_writes + preference_writes;
         uart_busy = true; menu_event(MENU_SELECT); uart_busy = false;
-        now += 2000; menu_render(); assert(strstr(screen, "Safe 50ms"));
+        now += 2000; menu_render(); assert(strstr(screen, "Quick 20ms"));
         menu_event(MENU_SELECT);
-        assert(last_command == BH_CMD_IPC_OPTIONS && last_ipc_pace == 1 && last_ipc_method == 0);
-        menu_event(MENU_SELECT); assert(last_ipc_pace == 2);
+        assert(last_command == BH_CMD_IPC_OPTIONS && last_ipc_pace == 2 && last_ipc_method == 0);
+        menu_event(MENU_SELECT); assert(last_ipc_pace == 0);
+        last_ipc_pace = 255; /* Safe + Full is now nondefault and must renew. */
+        now += 1000; menu_process();
+        assert(last_ipc_pace == 0 && last_ipc_method == 0);
         menu_event(MENU_NEXT); menu_event(MENU_SELECT); assert(last_ipc_method == 1);
-        now += 1000; menu_process(); assert(last_ipc_pace == 2 && last_ipc_method == 1);
+        now += 1000; menu_process(); assert(last_ipc_pace == 0 && last_ipc_method == 1);
         assert(settings_writes + preference_writes == writes);
         menu_init(); menu_event(MENU_BACK);
         /* menu_init keeps visible state; BACK above returns to root. */
         menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_SELECT);
         menu_event(MENU_PREVIOUS); menu_event(MENU_SELECT);
-        assert(strstr(screen, "Safe 50ms"));
+        assert(strstr(screen, "Quick 20ms"));
         menu_event(MENU_SELECT); menu_event(MENU_NEXT); menu_event(MENU_SELECT);
         menu_event(MENU_NEXT); menu_event(MENU_SELECT);
-        assert(last_ipc_pace == 0 && last_ipc_method == 0);
+        assert(last_ipc_pace == 1 && last_ipc_method == 0);
         assert(settings_writes + preference_writes == writes);
+    }
+}
+
+/* Rendering on an input event must not be repeated by the same loop's timer. */
+static void test_render_interval_after_event(void) {
+    for (unsigned profile = 0; profile < 2; ++profile) {
+        fresh_contract();
+        settings_state.ipc_my23_is_installed = profile;
+        int reading = menu_page_index(0, 0x2c); /* Live native run statistic. */
+        assert(reading >= 0);
+        menu_show_parameter((uint8_t)reading);
+        now += 101;
+        unsigned before = native_reads;
+        menu_event(MENU_SELECT); /* Status SELECT renders without moving the page. */
+        assert(native_reads > before);
+        before = native_reads;
+        menu_process();
+        assert(native_reads == before);
+        now += 99; menu_process();
+        assert(native_reads == before);
+        now += 1; menu_process();
+        assert(native_reads > before);
+        /* Explicit redraws reset the interval too, including tick wrap. */
+        now = UINT32_MAX - 50U;
+        menu_render();
+        before = native_reads;
+        now += 99; menu_process(); assert(native_reads == before);
+        now += 1; menu_process(); assert(native_reads > before);
     }
 }

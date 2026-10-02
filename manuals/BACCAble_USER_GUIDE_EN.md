@@ -178,12 +178,12 @@ experimental controls do not use HOLD SAVE and never write to Flash.
 
 | Row / choice | Effect |
 | --- | --- |
-| `Safe 50ms` | Default: 50 ms between menu CAN fragments. |
-| `Quick 20ms` | 20 ms between fragments. |
+| `Safe 50ms` | Conservative: 50 ms between menu CAN fragments. |
+| `Quick 20ms` | Default: 20 ms between fragments. |
 | `Fast 10ms` | 10 ms between fragments. |
 | `Write Full` | Default: send a complete, padded screen from the first to the last fragment. Its content stays fixed during that transmission; newer screens wait in one replaceable slot. |
 | `Write Delta` | Send changed fragments; newer values may replace content during transmission. This is a comparison mode and can show mixed old/new text. |
-| `Reset safe` | Restore `Safe 50ms` and `Write Full` immediately. |
+| `Reset default` | Restore `Quick 20ms` and `Write Full` immediately. |
 
 Remember a test as a pair, for example **Quick + Full**. MY23 needs 13 frames:
 a full pass takes roughly 650 / 260 / 130 ms at Safe / Quick / Fast, plus any
@@ -195,9 +195,9 @@ tracking, settling and bounded arbitration remain active. Restoring radio text
 and the separate Information → IPC display test keep their original 50 ms pace.
 
 Use matching C1/C2/BH firmware. These choices exist only in RAM, even if other
-Features are saved. A complete power cycle restores Safe + Full. Disconnect
+Features are saved. A complete power cycle restores Quick + Full. Disconnect
 **both USB power and OBD** to power down the entire device. BH also falls back
-to Safe + Full after five seconds without renewal from C1. While C1 is running,
+to Quick + Full after five seconds without renewal from C1. While C1 is running,
 it renews the chosen experimental pair once per second, including after menu
 exit; a BH-only restart may therefore receive that pair again. `UART busy: retry`
 means the click was not accepted; retry it. Queue acceptance is not a BH or IPC
@@ -206,8 +206,8 @@ acknowledgment.
 For comparison, use the same audio source and repeat: long/short menu labels,
 current/next scrolling, live Favorites, radio track change, then return to the
 menu. Record the pair, visible overlap, response delay and source. Start with
-Safe + Full, then Quick + Full, Fast + Full, and optionally compare Delta.
-If behavior worsens, select Reset safe or completely power down the device.
+Quick + Full, then optionally Safe + Full or Fast + Full, and optionally compare Delta.
+If behavior worsens, select Reset default or completely power down the device.
 
 ## Favorites and reading layout
 

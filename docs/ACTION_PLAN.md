@@ -1,6 +1,6 @@
 # BACCAble action plan and agent handoff
 
-Last updated: **2026-09-30** (dated verification boundaries below). This is the single source of planned work,
+Last updated: **2026-10-02** (dated verification boundaries below). This is the single source of planned work,
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
@@ -33,6 +33,71 @@ the maintained Polish user guide. Use small,
 bounded changes and existing modules/tests. No model-specific workflow, mandatory
 PR count or broad rewrite is needed. This handoff is a backlog, not an instruction
 to automatically flash hardware or publish every future change.
+
+## Validated 20 ms IPC default, 2026-10-02
+
+Task branch: `fix/ipc-default-20ms`, based on master `48e4646`.
+Implementation: `778725f`. The owner reports stable 20 ms refresh without
+visible artifacts. Make Quick 20ms + Write Full the boot/default-reset pair;
+retain selectable Safe 50ms and Fast 10ms and the one-second reassertion.
+Both boards share the default constants, preserving UART option indices.
+Correct nondefault detection so Safe 50ms + Full is renewed by C1 and expires
+on BH back to 20 ms, just like other temporary overrides. Rename Reset safe
+to Reset default. Settings remain RAM-only; factory replay/test patterns stay
+at 50 ms. Update both manuals and the implementation-source dictionary.
+
+Bounded review covered full-screen buffering, CAN retry, UART option renewal
+and default/lease/reset consistency. Existing latest-target coalescing and
+bounded renewal retries already avoid redundant work; no speculative scheduler
+or protocol changes were introduced.
+
+Checks: all host tests pass with Apple Clang and sanitizers (including both
+menu profiles, rejected UART changes, Safe + Full renewal, lease expiry and
+boot pacing); cppcheck and full ARM builds pass for C1/C2/BH/CAN using
+Arm GNU 15.2.Rel1. Lab dictionary tests: 17 passed. No release or flash performed.
+The new binaries have not been vehicle-tested; the owner's acceptance concerns
+the previously selectable 20 ms mode. This change does not establish support
+for all IPC variants.
+
+## Small IPC refresh optimizations, 2026-10-02
+
+Implementation `7dff7fe` on `fix/ipc-default-20ms`, baseline `0772025`,
+following the 20 ms default:
+- Start the 100 ms periodic render interval at every visible render, including
+  button-driven renders, avoiding duplicate work in the same loop.
+- Reject unchanged UART screen submissions before copying the packet; retain
+  the 500 ms resend clock and retry after queue rejection.
+- Skip content comparisons for fragments already forced dirty. Full screen
+  order, immutable active image, latest pending target and reassertion remain.
+
+Host suite passes with Apple Clang/ASan/UBSan. Added checks exercise immediate
+event rendering, the 99/100 ms boundary, tick wrap, and a complete identical
+screen reassertion with repeated refresh calls and unaccepted offers. Existing
+tests cover busy UART/CAN, latest-target coalescing and radio interference.
+Cppcheck and full ARM builds pass for C1/C2/BH/CAN. No production counters,
+heap allocation, new settings or CAN protocol changes were added.
+
+Comparable local sizes use Arm GNU 15.2.Rel1, default flags and the same
+`VERSION=ipc20-test` before/after (Flash = text + data, static RAM = data + bss):
+
+| Board | Flash before → after (bytes) | Static RAM before → after (bytes) |
+| --- | --- | --- |
+| C1 | 94292 → 94272 | 15336 → 15336 |
+| C2 | 29088 → 29088 | 12336 → 12336 |
+| BH | 32776 → 32784 | 13180 → 13180 |
+| CAN | 25200 → 25200 | 7000 → 7000 |
+
+BH spends 8 Flash bytes to avoid forced-fragment comparisons. These are linked
+sizes, not measured runtime stack headroom or CPU/visible-latency benchmarks.
+Logs: ignored repo `tmp/opt-host.log`, `tmp/opt-{before,after,lint}-ROLE.log`,
+`tmp/opt-size-{before,after}.txt`. No new vehicle test, release or flash.
+Lab dictionary source hashes and generated catalog are refreshed to the
+implementation commit; all 17 dictionary tests pass. No CAN layouts or
+historical capture evidence changed.
+Release notes are prepared in [v5-beta-21.md](releases/v5-beta-21.md). The
+user-facing controls remain as documented in both manuals; only the internal
+scheduling guide changes in this optimization pass. PR, merge and release
+publication are pending GitHub authentication.
 
 ## Release status, 2026-09-29
 
@@ -1057,7 +1122,7 @@ not close this task. Required checks, each with observed result and evidence:
 | ID / status | Work and completion boundary |
 | --- | --- |
 | P2-01 DIAGNOSTIC MENU | `Information` now exposes `Reports`, `Gaps`, `Max gap` and `Input age` from `MenuInput`. The counters do not change the 300 ms guard or gesture behavior. Read them after a hardware session and record them with end-to-end input/display timing before changing the timeout or adding a queue. |
-| P2-02 HARDWARE | Compare current 50 ms display pacing with a separate 30 ms candidate, measuring latency, CAN load, fragment fairness, retries and factory text. The old <150–250 ms UX targets are aspirations, not achieved guarantees. Keep 50 ms if evidence does not justify a change. |
+| P2-02 OWNER-TESTED / DEFAULT IMPLEMENTED | On 2026-10-02 the owner reported stable, artifact-free 20 ms menu pacing. Quick 20ms + Full is the default on `fix/ipc-default-20ms`; the old proposed 30 ms comparison is superseded. Exact end-to-end latency, CAN load and other IPC variants remain unmeasured. Existing host checks cover retry, periodic reassertion and factory arbitration; they do not measure physical display latency. |
 | P2-03 HARDWARE | Investigate explicit ROOT/BACK display release separately from idle. `0x11` in comments is not a verified ownership-handoff command. Require capture/IPC evidence before replacing blank transmission; retain busy-clear retry and cancellation on reopen. |
 | P2-04 DEFERRED | Add authoritative outcome reporting one vehicle action at a time when a real ECU/peer acknowledgement is identified. Preserve request/pending/unknown distinctions; no invented success. |
 | P2-05 COMPLETE LOCALLY | `tests/test_menu_labels.py` runs through the standard `tests/Makefile` test target and has an explicit CI step. Its source-label checks remain separate from production-render tests. |

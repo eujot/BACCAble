@@ -3,6 +3,10 @@
 
 #include "app/application_state.h"
 
+/* Keep UART pace indices stable: 0=50 ms, 1=20 ms, 2=10 ms. */
+#define IPC_DEFAULT_PACE 1U
+#define IPC_DEFAULT_METHOD 0U
+
 void body_display_options(uint8_t pace, uint8_t method);
 void body_display_submit(const uint8_t *text);
 void body_display_refresh(void);

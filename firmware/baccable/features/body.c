@@ -8,7 +8,7 @@
 _Static_assert(DISPLAY_OUTPUT_LENGTH == MY23_L1_VISIBLE + 1U + MY23_L2_VISIBLE,
                "MY23 lines must fill the complete CAN display stream");
 
-/* Safe default pacing; faster intervals are temporary vehicle-test options. */
+/* Factory restoration and diagnostic patterns retain their original pacing. */
 #define DISPLAY_FRAGMENT_INTERVAL_MS 50U
 #define DISPLAY_KEEPALIVE_INTERVAL_MS 1000U
 #define DISPLAY_FACTORY_SETTLE_MS 250U
@@ -34,7 +34,7 @@ void body_display_options(uint8_t pace, uint8_t method) {
     display_pace = pace;
     display_method = method;
     display_options_updated = currentTime;
-    display_options_leased = pace || method;
+    display_options_leased = pace != IPC_DEFAULT_PACE || method != IPC_DEFAULT_METHOD;
     if (changed) {
         display_stream_set_full(&screen, method == 0);
         display_stream_restart(&screen);
@@ -179,7 +179,8 @@ void body_display_factory_frame(const uint8_t data[8], uint8_t dlc) {
 
 /* Prepare body-bus features and restore saved mirror positions. */
 void body_init() {
-    display_pace = display_method = 0;
+    display_pace = IPC_DEFAULT_PACE;
+    display_method = IPC_DEFAULT_METHOD;
     display_options_leased = false;
     reset_screen();
     // let's open the can bus because we may need data
@@ -217,7 +218,7 @@ void body_init() {
 /* Update dashboard content, mirrors and enabled body-bus functions. */
 void body_process() {
     if (display_options_leased && currentTime - display_options_updated >= 5000U)
-        body_display_options(0, 0);
+        body_display_options(IPC_DEFAULT_PACE, IPC_DEFAULT_METHOD);
     if (chassis_state.stability_inverted) {
         reset_screen();
         ipc_display_test_stop();

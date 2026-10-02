@@ -342,6 +342,17 @@ static void test_full_snapshot_and_latest_pending(void) {
     }
     uint8_t part, chars[3];
     assert(!display_stream_peek(&stream, &part, chars));
+    /* A keepalive must resend even equal fragments; repeated requests must
+     * neither skip these fragments nor restart an in-progress pass. */
+    display_stream_refresh(&stream);
+    for (unsigned i = 0; i < DISPLAY_FRAGMENT_COUNT; ++i) {
+        display_stream_refresh(&stream);
+        assert(display_stream_peek(&stream, &part, chars) && part == i);
+        assert(!memcmp(chars, "CCC", 3));
+        assert(display_stream_peek(&stream, &part, chars) && part == i);
+        display_stream_accept(&stream);
+    }
+    assert(!display_stream_peek(&stream, &part, chars));
     display_stream_submit(&stream, b);
     assert(display_stream_peek(&stream, &part, chars) && part == 0);
     display_stream_accept(&stream);
@@ -368,13 +379,20 @@ static void test_temporary_pace_and_lease(void) {
     now += 5000; body_process(); /* No renewal: default pacing and full restart. */
     before = transmitted_count;
     now += 10; body_process(); assert(transmitted_count == before);
-    now += 40; body_process(); assert(transmitted_count == before + 1);
+    now += 10; body_process(); assert(transmitted_count == before + 1);
+    body_display_options(0, 0); /* Slower than default must also expire. */
+    now += 49; body_process(); assert(transmitted_count == before + 1);
+    now += 1; body_process(); assert(transmitted_count == before + 2);
+    now += 5000; body_process();
+    before = transmitted_count;
+    now += 19; body_process(); assert(transmitted_count == before);
+    now += 1; body_process(); assert(transmitted_count == before + 1);
     body_display_options(1, 1);
     now += 20; body_process();
     before = transmitted_count;
     body_init(); submit("After restart");
-    now += 20; body_process(); assert(transmitted_count == before);
-    now += 30; body_process(); assert(transmitted_count == before + 1);
+    now += 19; body_process(); assert(transmitted_count == before);
+    now += 1; body_process(); assert(transmitted_count == before + 1);
 }
 
 int main(void) {

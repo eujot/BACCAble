@@ -1,4 +1,5 @@
 #include "features/menu.h"
+#include "features/body.h"
 #include "features/ui_entry.h"
 #include "features/menu_diagnostics.h"
 #include "features/ipc_display_test.h"
@@ -125,7 +126,7 @@ static const char *const ipc_paces[] = {"Safe 50ms", "Quick 20ms", "Fast 10ms"};
 static void ipc_option_text(char *out, size_t size, unsigned option) {
     if (option == 0) snprintf_(out, size, "%s", ipc_paces[ipc_pace]);
     else if (option == 1) snprintf_(out, size, "Write %s", ipc_method ? "Delta" : "Full");
-    else snprintf_(out, size, "Reset safe");
+    else snprintf_(out, size, "Reset default");
 }
 static bool ipc_options_send(uint8_t pace, uint8_t method) {
     uint8_t command[] = {BhBusID, BH_CMD_IPC_OPTIONS, pace, method};
@@ -329,12 +330,12 @@ static void function_move(int direction, bool next_group) {
 
 /* Queue a screen payload, including diagnostic control bytes, with normal coalescing. */
 static bool menu_present_packet(const uint8_t *content) {
-    uint8_t message[UART_SCREEN_BUFFER_SIZE];
-    message[0] = BhBusIDparamString;
-    memcpy(message + 1, content, UART_SCREEN_BUFFER_SIZE - 1);
     if (previous_valid && !memcmp(previous_text, content, sizeof(previous_text)) &&
         currentTime - previous_sent < 500)
         return false;
+    uint8_t message[UART_SCREEN_BUFFER_SIZE];
+    message[0] = BhBusIDparamString;
+    memcpy(message + 1, content, UART_SCREEN_BUFFER_SIZE - 1);
     if (!board_uart_send(message, sizeof(message)))
         return false;
     memcpy(previous_text, content, sizeof(previous_text));
@@ -538,7 +539,9 @@ void menu_init(void) {
     setting = 0;
     info = 0;
     ipc_test_source = ipc_test_entry = ipc_test_pattern = 0;
-    ipc_option = ipc_pace = ipc_method = 0;
+    ipc_option = 0;
+    ipc_pace = IPC_DEFAULT_PACE;
+    ipc_method = IPC_DEFAULT_METHOD;
     ipc_options_sync = false;
     setup_last = 0;
     notice = NULL;
@@ -845,6 +848,8 @@ static void action_render(char *text, size_t capacity, const ActionEntry *entry)
 void menu_render(void) {
     if (!dashboard_state.baccable_dashboard_menu_visible)
         return;
+    /* Event-driven renders also start the next periodic refresh interval. */
+    last_render = currentTime;
     action_requests_process();
     if (save_failed) {
         menu_present(UI_SYMBOL_FAILURE " Save failed: RES");
@@ -1366,10 +1371,10 @@ void menu_event(MenuEvent event) {
             uint8_t pace = ipc_pace, method = ipc_method;
             if (ipc_option == 0) pace = (pace + 1) % 3;
             else if (ipc_option == 1) method = !method;
-            else pace = method = 0;
+            else { pace = IPC_DEFAULT_PACE; method = IPC_DEFAULT_METHOD; }
             if (ipc_options_send(pace, method)) {
                 ipc_pace = pace; ipc_method = method;
-                ipc_options_sync = pace || method;
+                ipc_options_sync = pace != IPC_DEFAULT_PACE || method != IPC_DEFAULT_METHOD;
             } else menu_notice("UART busy: retry");
             break;
         }
@@ -1548,9 +1553,7 @@ void menu_process(void) {
         selected_parameter_element = (selected_parameter_element + 1) % parameter_page_elements(page);
         last_query = currentTime;
     }
-    if (currentTime - last_render >= 100) {
-        last_render = currentTime;
+    if (currentTime - last_render >= 100)
         menu_render();
-    }
 }
 #endif
