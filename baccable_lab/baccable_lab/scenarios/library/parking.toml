@@ -1,0 +1,66 @@
+# Parkowanie i manewrowanie. Na postoju lub podczas wolnej jazdy na placu.
+
+[[scenario]]
+id = "park_sensors"
+title = "Czujniki parkowania: aktywacja i ostrzeżenie"
+group = "parking"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 4
+confounder_guard = ["hamulec", "hamulec postojowy", "bieg"]
+notes = "Silnik pracuje. Zbliżaj się do przeszkody powoli, od aktywacji do ostrzeżenia."
+[[scenario.steps]]
+action = "Czujniki parkowania stają się aktywne"
+expect = "park_sensors_active"
+[[scenario.steps]]
+action = "Zbliż się do przeszkody, aż zabrzmi ostrzeżenie"
+expect = "park_sensor_warning"
+[[scenario.steps]]
+action = "Odsuń się, aż ostrzeżenie ustanie"
+expect = ""
+
+[[scenario]]
+id = "reverse_camera"
+title = "Kamera cofania aktywna"
+group = "parking"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 4
+confounder_guard = ["czujniki parkowania", "bieg", "kierunkowskazy"]
+[[scenario.steps]]
+action = "Wybierz bieg R, aby pojawiła się kamera"
+expect = "reverse_camera_active"
+[[scenario.steps]]
+action = "Wybierz bieg P, aby kamera zniknęła"
+expect = ""
+
+[[scenario]]
+id = "park_assist"
+title = "Asystent parkowania: start i koniec"
+group = "parking"
+vehicle = "stationary"
+runs = 2
+min_separation_s = 5
+confounder_guard = ["hamulec", "bieg", "czujniki parkowania"]
+notes = "Tylko tam, gdzie pojazd to obsługuje i jest to bezpieczne."
+[[scenario.steps]]
+action = "Uruchom asystenta parkowania"
+expect = "park_assist_started"
+[[scenario.steps]]
+action = "Asystent parkowania kończy pracę"
+expect = "park_assist_finished"
+
+[[scenario]]
+id = "door_open_warning"
+title = "Ostrzeżenie o otwartych drzwiach przy ruszaniu"
+group = "parking"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 4
+confounder_guard = ["pas bezpieczeństwa", "bieg", "drzwi"]
+[[scenario.steps]]
+action = "Otwórz drzwi / zostaw uchylone przy włączonym zapłonie"
+expect = "door_open_warning"
+[[scenario.steps]]
+action = "Zamknij drzwi, aby ostrzeżenie zniknęło"
+expect = ""

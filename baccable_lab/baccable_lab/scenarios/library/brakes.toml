@@ -1,0 +1,119 @@
+# Hamulce i stabilność.
+# Zadziałania układów stabilności obserwuj wyłącznie na zamkniętym, bezpiecznym
+# terenie i przy małej prędkości; nigdy nie prowokuj ich na drodze publicznej.
+# Zaznaczaj tylko to, co rzeczywiście wystąpiło.
+
+[[scenario]]
+id = "brake_pedal"
+title = "Pedał hamulca: wciśnięcie i zwolnienie"
+group = "brakes"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["hamulec postojowy", "bieg", "kierunkowskazy"]
+notes = "Zapłon włączony, silnik zgaszony, bieg P. Naciskaj i zwalniaj tylko pedał."
+[[scenario.steps]]
+action = "Naciśnij mocno pedał hamulca"
+expect = "brake_on"
+[[scenario.steps]]
+action = "Zwolnij pedał hamulca"
+expect = "brake_off"
+
+[[scenario]]
+id = "parking_brake"
+title = "Hamulec postojowy elektryczny (EPB): zaciągnięcie i zwolnienie"
+group = "brakes"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 4
+confounder_guard = ["pedał hamulca", "bieg", "zapłon"]
+notes = "Poczekaj, aż silnik EPB zakończy pracę i kontrolka się ustabilizuje."
+[[scenario.steps]]
+action = "Zaciągnij hamulec postojowy"
+expect = "parking_brake_on"
+[[scenario.steps]]
+action = "Zwolnij hamulec postojowy"
+expect = "parking_brake_off"
+
+[[scenario]]
+id = "brake_hold"
+title = "Hamulec auto-hold: aktywacja i zwolnienie"
+group = "brakes"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 4
+confounder_guard = ["hamulec postojowy", "bieg", "pedał"]
+[[scenario.steps]]
+action = "Aktywuj hamulec auto-hold"
+expect = "brake_hold_active"
+[[scenario.steps]]
+action = "Zwolnij hamulec auto-hold"
+expect = ""
+
+[[scenario]]
+id = "abs_intervention_closed_area"
+title = "Zadziałanie ABS (tylko zamknięty teren)"
+group = "brakes"
+vehicle = "driving"
+site = "parking"
+runs = 2
+min_separation_s = 5
+confounder_guard = ["kierownica", "bieg", "tylko pedał"]
+notes = "Tylko na zamkniętej, bezpiecznej nawierzchni. Mocne hamowanie z małej prędkości; zaznacz, gdy ABS faktycznie zadziała."
+[[scenario.steps]]
+action = "Mocne hamowanie wywołujące ABS"
+expect = "abs_intervention"
+[[scenario.steps]]
+action = "Zwolnij i zatrzymaj się"
+expect = ""
+
+[[scenario]]
+id = "esc_intervention_closed_area"
+title = "Zadziałanie ESC (tylko zamknięty teren)"
+group = "brakes"
+vehicle = "driving"
+site = "parking"
+runs = 2
+min_separation_s = 5
+confounder_guard = ["kierownica", "bieg", "kierunkowskazy"]
+notes = "Tylko tam, gdzie jest to bezpieczne i dozwolone. Zaznacz, gdy ESC/ESP faktycznie zadziała."
+[[scenario.steps]]
+action = "Manewr wywołujący ESC"
+expect = "esc_intervention"
+[[scenario.steps]]
+action = "Wyprowadź pojazd"
+expect = ""
+
+[[scenario]]
+id = "traction_control_closed_area"
+title = "Zadziałanie kontroli trakcji ASR (tylko zamknięty teren)"
+group = "brakes"
+vehicle = "driving"
+site = "parking"
+runs = 2
+min_separation_s = 5
+confounder_guard = ["kierownica", "bieg", "nawierzchnia"]
+notes = "Tylko na bezpiecznym, zamkniętym terenie. Zaznacz tylko realne zadziałanie ASR/TCS."
+[[scenario.steps]]
+action = "Przyspieszenie wywołujące kontrolę trakcji"
+expect = "traction_control_intervention"
+[[scenario.steps]]
+action = "Odejmij gaz"
+expect = ""
+
+[[scenario]]
+id = "hill_descent"
+title = "Aktywna kontrola zjazdu (HDC)"
+group = "brakes"
+vehicle = "driving"
+site = "road"
+runs = 2
+min_separation_s = 5
+confounder_guard = ["hamulec", "bieg", "kierownica"]
+notes = "Na odpowiednim wzniesieniu w bezpiecznym miejscu; zaznacz tylko realne zadziałanie."
+[[scenario.steps]]
+action = "Zjazd z aktywną kontrolą zjazdu"
+expect = "hill_descent_active"
+[[scenario.steps]]
+action = "Zjazd na równy teren i wyłączenie"
+expect = ""

@@ -1,0 +1,159 @@
+# Jazda na placu / parkingu. Bezpieczne, małe prędkości.
+# Te procedury wykonuj na zamkniętym terenie. Uchwyć wrzucenie biegu i ruszenie,
+# przyspieszanie, hamowanie, zmianę prędkości, skręcanie i arming tempomatu.
+
+[[scenario]]
+id = "drive_pull_away"
+title = "Ruszenie: wrzucenie D i ruszenie z miejsca"
+group = "drive"
+vehicle = "driving"
+site = "parking"
+runs = 3
+min_separation_s = 4
+confounder_guard = ["hamulec", "kierunkowskazy", "klimatyzacja"]
+notes = "Silnik pracuje. Hamulec wciśnięty, wrzuć D, potem zwolnij hamulec i rusz."
+[[scenario.steps]]
+action = "Naciśnij hamulec i wrzuć bieg D"
+expect = "drive_selected"
+[[scenario.steps]]
+action = "Zwolnij hamulec i rusz powoli do przodu"
+expect = ""
+
+[[scenario]]
+id = "drive_accelerate"
+title = "Przyspieszanie: wciśnięcie i zwolnienie pedału gazu"
+group = "drive"
+vehicle = "driving"
+site = "parking"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["hamulec", "bieg", "kierownica"]
+notes = "Prosto, bezpiecznie. Naciskaj delikatnie i zwalniaj do końca."
+[[scenario.steps]]
+action = "Naciśnij pedał przyspieszenia"
+expect = "accelerator_pressed"
+[[scenario.steps]]
+action = "Zwolnij pedał przyspieszenia"
+expect = "accelerator_released"
+
+[[scenario]]
+id = "drive_brake"
+title = "Hamowanie: wciśnięcie i zwolnienie pedału hamulca w ruchu"
+group = "drive"
+vehicle = "driving"
+site = "parking"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["gaz", "bieg", "kierownica"]
+notes = "Hamuj równomiernie do zatrzymania, potem zwolnij pedał."
+[[scenario.steps]]
+action = "Hamuj do zatrzymania (pedał hamulca)"
+expect = "brake_on"
+[[scenario.steps]]
+action = "Zwolnij pedał hamulca"
+expect = "brake_off"
+
+[[scenario]]
+id = "drive_speed_change"
+title = "Zmiana prędkości: przyspieszenie i zwolnienie"
+group = "drive"
+vehicle = "driving"
+site = "parking"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["hamulec", "bieg", "kierownica"]
+notes = "Małe prędkości. Zaznaczaj po ustabilizowaniu się prędkości."
+[[scenario.steps]]
+action = "Przyspiesz do ok. 20 km/h"
+expect = "speed_changed"
+[[scenario.steps]]
+action = "Zwolnij do ok. 10 km/h"
+expect = "speed_changed"
+
+[[scenario]]
+id = "drive_steer"
+title = "Skręcanie w ruchu: kierownica w lewo i w prawo"
+group = "drive"
+vehicle = "driving"
+site = "parking"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["kierunkowskazy", "gaz", "bieg"]
+notes = "Wolna jazda. Ruch kierownicy to nie zdarzenie pasa ruchu."
+[[scenario.steps]]
+action = "Podczas wolnej jazdy skręć w lewo"
+expect = "steering_input"
+[[scenario.steps]]
+action = "Skręć w prawo i wróć na wprost"
+expect = "steering_input"
+
+[[scenario]]
+id = "drive_gear_up_down"
+title = "Zmiana biegu w ruchu: w górę i w dół"
+group = "drive"
+vehicle = "driving"
+site = "parking"
+runs = 2
+min_separation_s = 3
+confounder_guard = ["hamulec", "kierownica", "kierunkowskazy"]
+notes = "Prosto, mała prędkość, w trybie manualnym (łopatki lub dźwignia)."
+[[scenario.steps]]
+action = "Zmień bieg w górę"
+expect = "gear_up"
+[[scenario.steps]]
+action = "Zmień bieg w dół"
+expect = "gear_down"
+
+[[scenario]]
+id = "drive_reverse_manoeuvre"
+title = "Manewr na wstecznym: R, cofnięcie i powrót do D"
+group = "drive"
+vehicle = "driving"
+site = "parking"
+runs = 3
+min_separation_s = 4
+confounder_guard = ["hamulec", "kierunkowskazy", "czujniki parkowania"]
+notes = "Zatrzymaj się przed zmianą biegu. Cofnij ostrożnie kilka metrów."
+[[scenario.steps]]
+action = "Zatrzymaj się i wybierz bieg R"
+expect = "reverse_selected"
+[[scenario.steps]]
+action = "Cofnij ostrożnie kilka metrów i zatrzymaj"
+expect = ""
+[[scenario.steps]]
+action = "Wybierz bieg D"
+expect = "drive_selected"
+
+[[scenario]]
+id = "drive_cruise_arm"
+title = "Tempomat: włączenie i wyłączenie przyciskiem (stan gotowości)"
+group = "drive"
+vehicle = "driving"
+site = "parking"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["hamulec", "gaz", "ACC"]
+notes = "Samo naciśnięcie przycisku tempomatu. Ustawienie prędkości wymaga jazdy i jest osobnym scenariuszem."
+[[scenario.steps]]
+action = "Naciśnij przycisk tempomatu (CC) — stan gotowości"
+expect = ""
+[[scenario.steps]]
+action = "Naciśnij ponownie, aby wyłączyć tempomat"
+expect = ""
+
+[[scenario]]
+id = "drive_creep_stop"
+title = "Pełznięcie i zatrzymanie bez gazu"
+group = "drive"
+vehicle = "driving"
+site = "parking"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["gaz", "kierownica", "kierunkowskazy"]
+notes = "Bieg D, puść hamulec; pozwól pojazdowi pełznąć, potem zatrzymaj hamulcem."
+[[scenario.steps]]
+action = "Puść hamulec i pozwól pojazdowi pełznąć do przodu"
+expect = ""
+[[scenario.steps]]
+action = "Zatrzymaj pojazd pedałem hamulca"
+expect = "brake_on"

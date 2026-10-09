@@ -1,4 +1,4 @@
-"""Capture selected CAN ports with a deliberately small terminal UI."""
+"""Capture selected CAN ports with a deliberately small, scenario-first terminal UI."""
 
 from __future__ import annotations
 
@@ -15,12 +15,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from baccable_lab.can.baccable_binary import BinaryCaptureParser
-from baccable_lab.events.catalog import EVENT_GROUPS, MARKERS, label_text
-from baccable_lab.events.search import search_markers
+from baccable_lab.events.catalog import label_text_pl
+from baccable_lab.scenarios import (ProgressStore, ScenarioSession, group_label,
+                                    location_label)
 from baccable_lab.storage.manifest import write_manifest
 from baccable_lab.storage.raw_writer import RawWriters
 from baccable_lab.storage.sqlite_store import SessionStore
-from baccable_lab.ui import marker_help, render_dashboard
+from baccable_lab.ui import render_dashboard
 STARTUP_LOSS_WINDOW_NS = 2_000_000_000
 
 
@@ -116,18 +117,26 @@ class _Keyboard:
                 tty.setcbreak(sys.stdin.fileno())
 
 
-def capture(ports: dict[str, str], root: Path, command: list[str], *, preview: bool = False) -> int:
+def capture(ports: dict[str, str], root: Path, command: list[str], *, preview: bool = False,
+            scenarios: dict | None = None, scenario: str | None = None,
+            progress: ProgressStore | None = None, color: bool = True, caps: bool = False,
+            bell: bool = True, context: dict | None = None) -> int:
     if not ports or any(role not in {"C1", "C2", "BH"} or not device
                         for role, device in ports.items()):
         raise ValueError("provide at least one port mapping: C1=DEVICE, C2=DEVICE or BH=DEVICE")
     if len(set(ports.values())) != len(ports):
         raise ValueError("each role must use a different serial device")
+    scenarios = dict(scenarios or {})
+    if scenario is not None and scenario not in scenarios:
+        raise ValueError(f"unknown scenario: {scenario}")
+    progress_store = progress if progress is not None else ProgressStore(None)
+    scenario_session = ScenarioSession(scenarios.values(), progress_store)
     roles = [role for role in ("C1", "C2", "BH") if role in ports]
     root.mkdir(parents=True, exist_ok=True)
     session_id = new_session_id()
     directory = root / session_id
     directory.mkdir()
-    write_manifest(directory, session_id, ports, command)
+    write_manifest(directory, session_id, ports, command, context=context)
     store = raw = keyboard = None
     parsers = {role: BinaryCaptureParser(role) for role in roles}
     incoming: queue.Queue = queue.Queue(maxsize=4096)
@@ -143,9 +152,16 @@ def capture(ports: dict[str, str], root: Path, command: list[str], *, preview: b
     discarded_queued_bytes = 0
     errors: list[str] = []
     latest_frames: dict[str, tuple[float, int, bytes]] = {}
-    timeline: list[tuple[float, str, str]] = []
-    group_selection: str | None = None
-    status_message = ""
+    message = ""
+    done_count = 0
+    failed_count = 0
+
+    def ring() -> None:
+        # A short bell so the operator knows a confirmation or a new step
+        # happened without looking at the screen.
+        if bell and keyboard is not None and keyboard.enabled:
+            sys.stdout.write("\x07")
+            sys.stdout.flush()
 
     def consume(item):
         role, host_ns, data = item
@@ -170,11 +186,128 @@ def capture(ports: dict[str, str], root: Path, command: list[str], *, preview: b
         except Exception as exc:
             errors.append(f"{label}: {exc}")
 
+    def start_scenario(scenario_id: str | None = None) -> None:
+        nonlocal message
+        if scenario_session.total() == 0:
+            message = "Nie wczytano scenariuszy"
+            return
+        runner = scenario_session.start(scenario_id)
+        if runner is None:
+            message = f"Wszystkie scenariusze ukończone ({scenario_session.total()}). Naciśnij s, aby powtórzyć."
+        else:
+            message = (f"Wznów: {runner.scenario.title}" if runner.handled
+                       else f"Start: {runner.scenario.title}")
+            ring()
+
+    def confirm(outcome: str) -> None:
+        # A confirmation writes a timeline marker plus a structured row so the
+        # offline analysis can pair the matching ON/OFF steps across runs.
+        nonlocal message, last_event_id, last_event_label, events, done_count, failed_count
+        runner = scenario_session.runner
+        if runner is None:
+            return
+        pending = runner.done() if outcome == "done" else runner.failed()
+        if pending is None:
+            return
+        run, index, step = pending
+        at = time.monotonic_ns() - started
+        label = step.marker_label
+        note = f"scenario {runner.scenario.id} run {run} step {index + 1} {outcome}"
+        event_id = store.add_event(at, label, source="scenario", note=note)
+        store.add_scenario_step(at, event_id, runner.scenario.id, index, step.key, step.expect, run, outcome)
+        last_event_id, last_event_label = event_id, label
+        events += 1
+        done_count += outcome == "done"
+        failed_count += outcome == "failed"
+        scenario_session.progress.record(runner.scenario.id, runner.handled,
+                                         runner.scenario.total_steps, outcome)
+        ring()
+        if runner.finished:
+            finished = runner.scenario.title
+            following = scenario_session.advance()
+            if following:
+                message = f"Ukończono: {finished}. Następny: {following.scenario.title}"
+            else:
+                message = f"Ukończono: {finished}. Wszystkie scenariusze ukończone."
+        else:
+            handled, total = runner.progress()
+            outcome_pl = "zrobione" if outcome == "done" else "nieudane"
+            message = f"{outcome_pl}: {step.action} ({handled}/{total})"
+
+    def undo() -> None:
+        nonlocal message, last_event_id, last_event_label, events, done_count, failed_count
+        runner = scenario_session.runner
+        if last_event_id is None or runner is None or not runner.records:
+            message = "Brak do cofnięcia"
+            return
+        store.delete_event(last_event_id)
+        store.delete_scenario_step(last_event_id)
+        store.commit()
+        events -= 1
+        run, index, step, outcome = runner.records.pop()
+        runner.handled -= 1
+        runner.run, runner.index = run, index
+        runner.finished = False
+        scenario_session.progress.set_handled(runner.scenario.id, runner.handled,
+                                              runner.scenario.total_steps)
+        if outcome == "done":
+            done_count = max(0, done_count - 1)
+        else:
+            failed_count = max(0, failed_count - 1)
+        outcome_pl = "zrobione" if outcome == "done" else "nieudane"
+        message = f"Cofnięto {outcome_pl}: {step.action}"
+
+    def add_note() -> None:
+        nonlocal message
+        if last_event_id is None or not hasattr(keyboard, "read_line"):
+            message = "Brak kroku do oznaczenia"
+            return
+        note = keyboard.read_line("Notatka do ostatniego kroku: ")
+        if note:
+            store.update_event_note(last_event_id, note)
+            store.update_scenario_note(last_event_id, note)
+            store.commit()
+            message = f"Notatka: {note}"
+
+    def scenario_panel() -> dict:
+        runner = scenario_session.runner
+        if runner is None:
+            if scenario_session.total() == 0:
+                return {"empty": True}
+            return {"complete": True, "completed_scenarios": scenario_session.completed(),
+                    "total_scenarios": scenario_session.total(), "message": message}
+        pending = runner.current()
+        if pending is not None:
+            run, index, step = pending
+        else:
+            run, index = runner.run, runner.index
+            step = runner.scenario.steps[index]
+        steps = runner.scenario.steps
+        next_action = ""
+        next_index, next_run = index + 1, run
+        if next_index >= len(steps):
+            next_index, next_run = 0, run + 1
+        if next_run <= runner.scenario.runs:
+            next_action = steps[next_index].action
+        return {"number": scenario_session.current_number(), "total_scenarios": scenario_session.total(),
+                "completed_scenarios": scenario_session.completed(),
+                "title": runner.scenario.title, "location": location_label(runner.scenario),
+                "group": group_label(runner.scenario.group),
+                "run": run, "runs": runner.scenario.runs, "step_index": index,
+                "steps_in_run": len(runner.scenario.steps), "action": step.action,
+                "expected": label_text_pl(step.expect) if step.expect else "", "paused": runner.paused,
+                "handled": runner.handled, "total": runner.scenario.total_steps,
+                "next_action": next_action,
+                "guard": list(runner.scenario.confounder_guard),
+                "min_separation_s": runner.scenario.min_separation_s, "message": message}
+
     try:
         store = SessionStore(directory, session_id, roles)
         raw = RawWriters(directory, roles)
         keyboard = _Keyboard()
-        print(f"{'Offline demo' if preview else 'Session ' + session_id}; {marker_help()}")
+        start_scenario(scenario)
+        print(f"{'Podgląd offline' if preview else 'Sesja ' + session_id}; "
+              "scenariusze: ENTER=zrobione x=nieudane p=zatrzymaj r=wznów u=cofnij s=wybierz q=zakończ")
         for role in roles:
             reader_type = _DemoReader if preview else _Reader
             reader = reader_type(role, ports[role], incoming, stop, abort)
@@ -185,103 +318,45 @@ def capture(ports: dict[str, str], root: Path, command: list[str], *, preview: b
         last_counts = {role: 0 for role in roles}
         while not stop.is_set():
             key = keyboard.read()
-            label = ""
-            marker_source = "keyboard"
-            selected_from_group = False
+            runner = scenario_session.runner
+            # Quit and Ctrl-C always work, during a scenario too.
             if key in {"q", "Q", "\x03"}:
                 break
-            if key in {"\x1b", "\x7f", "\b"} and group_selection is not None:
-                group_selection = None
-                status_message = "Marker selection cancelled"
-            elif group_selection == "":
-                if key in EVENT_GROUPS:
-                    group_selection = key
-                    status_message = f"Group selected. Press an item number; 0 selects item 10."
-                elif key:
-                    status_message = "Choose a group key shown on screen, or Esc to cancel"
-            elif group_selection is not None:
-                if key and (key.isdigit()):
-                    _, entries = EVENT_GROUPS[group_selection]
-                    index = 9 if key == "0" else int(key) - 1
-                    if 0 <= index < len(entries):
-                        label = entries[index][0]
-                        group_selection = None
-                        selected_from_group = True
+            if runner is not None and not runner.paused:
+                if key in {"\r", "\n", " ", "y", "Y"}:
+                    confirm("done")
+                elif key in {"x", "X"}:
+                    confirm("failed")
+                elif key in {"p", "P"}:
+                    runner.pause()
+                    message = "Zatrzymane; naciśnij r, aby wznowić"
+                elif key in {"u", "U"}:
+                    undo()
+                elif key in {"n", "N"}:
+                    add_note()
+            elif runner is not None and runner.paused:
+                if key in {"r", "R"}:
+                    runner.resume()
+                    message = "Wznowione"
+                elif key in {"u", "U"}:
+                    undo()
+                elif key in {"n", "N"}:
+                    add_note()
+            if key in {"s", "S"} and (runner is None or runner.paused):
+                if scenario_session.total():
+                    listing = "\n".join(
+                        f"{i}. [{item.group}] {item.title} ({item.vehicle}, {item.total_steps} steps)"
+                        for i, item in enumerate(scenario_session.order, 1))
+                    answer = keyboard.read_line(f"Choose scenario:\n{listing}\nNumber or id: ").strip()
+                    choice = None
+                    if answer.isdigit() and 1 <= int(answer) <= len(scenario_session.order):
+                        choice = scenario_session.order[int(answer) - 1].id
+                    elif answer in scenarios:
+                        choice = answer
+                    if choice:
+                        start_scenario(choice)
                     else:
-                        label = ""
-                        status_message = "No marker at that number; choose another item or Esc"
-                else:
-                    label = ""
-            elif key in {"?", "m", "M"}:
-                status_message = marker_help()
-            elif key == "g":
-                group_selection = ""
-                status_message = "Choose a marker group key shown below"
-            elif key == "f" and hasattr(keyboard, "read_line"):
-                query = keyboard.read_line("Find marker or type an action: ")
-                if query:
-                    matches = search_markers(query)
-                    if len(matches) == 1:
-                        label = matches[0][0]
-                        status_message = f"Matched marker: {matches[0][1]}"
-                    elif len(matches) > 1:
-                        choices = "\n".join(f"{i}. {title}" for i, (_, title) in enumerate(matches, 1))
-                        answer = keyboard.read_line(
-                            f"Matches for {query!r}:\n{choices}\n"
-                            "Choose a number, or press Enter to add the typed action: "
-                        )
-                        if answer.isdigit() and 1 <= int(answer) <= len(matches):
-                            label, title = matches[int(answer) - 1]
-                            status_message = f"Matched marker: {title}"
-                        elif not answer:
-                            label = query
-                            marker_source = "typed"
-                            status_message = "Added typed action as a custom marker"
-                        else:
-                            status_message = "Marker search cancelled; choose a listed number or press Enter"
-                    else:
-                        label = query
-                        marker_source = "typed"
-                        status_message = "No catalog match; added typed action as a custom marker"
-                else:
-                    status_message = "Marker search cancelled"
-            elif key == "u":
-                if last_event_id is None:
-                    status_message = "No marker to undo"
-                else:
-                    store.delete_event(last_event_id)
-                    store.commit()
-                    status_message = f"Undid {last_event_label}"
-                    if timeline:
-                        timeline.pop()
-                    last_event_id = None
-                    last_event_label = None
-            elif key == "n":
-                if last_event_id is None:
-                    status_message = "No marker to annotate"
-                elif hasattr(keyboard, "read_line"):
-                    note = keyboard.read_line("Note: ")
-                    if note:
-                        store.update_event_note(last_event_id, note)
-                        store.commit()
-                        if timeline:
-                            at, label, _ = timeline[-1]
-                            timeline[-1] = (at, label, note)
-                        status_message = f"Note saved: {note}"
-            else:
-                label = ""
-            if not selected_from_group and not group_selection and key in MARKERS:
-                label = MARKERS[key]
-            if label:
-                if label == "custom" and hasattr(keyboard, "read_line"):
-                    label = keyboard.read_line("Marker label: ") or "custom"
-                at = time.monotonic_ns() - started
-                last_event_id = store.add_event(time.monotonic_ns() - started, label, source=marker_source)
-                last_event_label = label
-                timeline.append((at / 1_000_000_000, label, ""))
-                events += 1
-                if not status_message.startswith("Matched marker:") and not status_message.startswith("No catalog match") and not status_message.startswith("Added typed action"):
-                    status_message = f"Added marker: {label_text(label)}"
+                        message = "Nie wybrano scenariusza"
             try:
                 item = incoming.get(timeout=0.1)
             except queue.Empty:
@@ -311,20 +386,14 @@ def capture(ports: dict[str, str], root: Path, command: list[str], *, preview: b
                 )
                 elapsed = (time.monotonic_ns() - started) / 1_000_000_000
                 if keyboard.enabled and sys.stdout.isatty():
-                    prompt = status_message
-                    if group_selection == "":
-                        prompt = "Select group: " + "  ".join(f"{key}={title}" for key, (title, _) in EVENT_GROUPS.items())
-                    elif group_selection:
-                        title, _ = EVENT_GROUPS[group_selection]
-                        prompt = f"Select a {title} marker by number"
                     dashboard = render_dashboard(
                         mode="OFFLINE PREVIEW" if preview else "LIVE CAPTURE", elapsed=elapsed,
-                        counts=counts, latest=latest_frames, timeline=timeline,
-                        width=shutil.get_terminal_size((100, 24)).columns, prompt=prompt,
-                        selected_group=group_selection)
+                        counts=counts, latest=latest_frames,
+                        width=shutil.get_terminal_size((100, 24)).columns, prompt=message,
+                        scenario=scenario_panel(), color=color, caps=caps)
                     print("\x1b[2J\x1b[H" + dashboard, end="\x1b[J", flush=True)
                 else:
-                    print(f"\r{'PREVIEW' if preview else 'RECORDING'} {elapsed:.0f}s {line}    ", end="", flush=True)
+                    print(f"\r{'PODGLĄD' if preview else 'NAGRYWANIE'} {elapsed:.0f}s {line}    ", end="", flush=True)
                 if now - last_commit >= 1.0:
                     store.commit()
                     last_commit = now
@@ -377,6 +446,7 @@ def capture(ports: dict[str, str], root: Path, command: list[str], *, preview: b
         stats = {
             "session_id": session_id, "duration_seconds": duration, "events": events,
             "status": "failed" if errors else "complete",
+            "context": dict(context or {}),
             "roles": {role: parsers[role].stats.__dict__ for role in roles},
             "reader_errors": reader_errors, "errors": errors,
             "discarded_reader_bytes": sum(reader.discarded_bytes for reader in readers),
@@ -394,8 +464,10 @@ def capture(ports: dict[str, str], root: Path, command: list[str], *, preview: b
             cleanup("write summary", lambda: (directory / "summary.json").write_text(
                 json.dumps(stats, indent=2) + "\n"))
         if preview:
-            print("\nOffline preview ended. Demo frames and practice markers were discarded; no session was saved.")
+            print("\nPodgląd offline zakończony. Ramki demo i znaczniki ćwiczeniowe zostały odrzucone; sesja nie została zapisana.")
         else:
-            print(f"\nSession {'failed' if errors else 'complete'}: {directory}")
+            print(f"\nPodsumowanie: scenariusze ukończone {scenario_session.completed()}/{scenario_session.total()}; "
+                  f"potwierdzenia w tej sesji: {done_count} zrobione, {failed_count} nieudane; czas {duration:.0f}s")
+            print(f"Sesja {'nieudana' if errors else 'zakończona'}: {directory}")
             print(json.dumps(stats, indent=2))
     return 2 if errors else 0

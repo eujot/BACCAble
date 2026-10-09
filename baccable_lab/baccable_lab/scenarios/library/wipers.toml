@@ -1,0 +1,69 @@
+# Wycieraczki, spryskiwacz i czujnik deszczu.
+
+[[scenario]]
+id = "wipers_speeds"
+title = "Wycieraczki: przerywane, wolne, szybkie i wyłączone"
+group = "wipers"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["spryskiwacz", "deszcz", "zapłon"]
+notes = "Zapłon włączony. Po każdej pozycji poczekaj, aż się ustabilizuje."
+[[scenario.steps]]
+action = "Wycieraczki: tryb przerywany"
+expect = "wipers_intermittent"
+[[scenario.steps]]
+action = "Wycieraczki: wolne (ciągłe)"
+expect = "wipers_slow"
+[[scenario.steps]]
+action = "Wycieraczki: szybkie"
+expect = "wipers_fast"
+[[scenario.steps]]
+action = "Wycieraczki: wyłączone"
+expect = "wipers_off"
+
+[[scenario]]
+id = "washer"
+title = "Spryskiwacz przedniej szyby"
+group = "wipers"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["pozycja wycieraczek", "deszcz"]
+[[scenario.steps]]
+action = "Pociągnij dźwignię spryskiwacza"
+expect = "washer_used"
+[[scenario.steps]]
+action = "Puść i poczekaj, aż wycieraczki się zatrzymają"
+expect = ""
+
+[[scenario]]
+id = "rear_wiper"
+title = "Wycieraczka tylnej szyby: włączenie i wyłączenie"
+group = "wipers"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["przednie wycieraczki", "spryskiwacz"]
+[[scenario.steps]]
+action = "Wycieraczka tylna WŁ."
+expect = "rear_wiper_on"
+[[scenario.steps]]
+action = "Wycieraczka tylna WYŁ."
+expect = ""
+
+[[scenario]]
+id = "rain_sensing"
+title = "Czujnik deszczu: zwilżenie i wyschnięcie"
+group = "wipers"
+vehicle = "any"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["ręczne wycieraczki", "spryskiwacz"]
+notes = "Tryb przerywany/AUTO; podlej czujnik wodą, potem przestań i wysusz."
+[[scenario.steps]]
+action = "Podaj wodę na czujnik deszczu"
+expect = "rain_detected"
+[[scenario.steps]]
+action = "Przestań polewać i wysusz czujnik"
+expect = "rain_stopped"

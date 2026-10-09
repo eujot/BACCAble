@@ -26,6 +26,11 @@ def fingerprints(directory: Path) -> dict:
     return result
 
 
+def table_exists(database: sqlite3.Connection, name: str) -> bool:
+    """True when a table is present; older sessions may lack newer tables."""
+    return database.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (name,)).fetchone() is not None
+
+
 def open_readonly(directory: Path) -> sqlite3.Connection:
     """Read committed WAL pages without creating sidecars for checkpointed inputs."""
     wal = directory / "session.sqlite3-wal"
@@ -37,7 +42,8 @@ def open_readonly(directory: Path) -> sqlite3.Connection:
 
 def manual_event(source: str) -> bool:
     # Unknown sources must not quietly become independent manual evidence.
-    return source in ("keyboard", "cli")
+    # Scenario confirmations are human observations and count as manual.
+    return source in ("keyboard", "cli", "scenario")
 
 
 def matches(rule: dict, value: float) -> bool:
@@ -153,6 +159,32 @@ def display_evidence(database: sqlite3.Connection) -> dict:
             "limits": "RX factory traffic only. Text context is not proof of live audio source or screen ownership."}
 
 
+def scenario_candidates(candidate_bit_steps: list[dict]) -> list[dict]:
+    """Group exploratory bit steps by named action, keeping repeated evidence.
+
+    Reuses the windowed comparison that profile_frames already performs, then
+    keeps only bits that flipped for the same expected action at least twice.
+    Single events are dropped: one ON/OFF pair cannot name a field. Each kept
+    candidate lists its per-event windows so an analysis can weigh consistency.
+    """
+    grouped: dict[tuple, dict] = {}
+    for step in candidate_bit_steps:
+        key = (step["role"], step["can_id"], step["byte"], step["bit"], step["label"])
+        entry = grouped.setdefault(key, {"role": step["role"], "can_id": step["can_id"],
+                                         "byte": step["byte"], "bit": step["bit"],
+                                         "label": step["label"], "events": [],
+                                         "known_fields": step["known_fields"]})
+        entry["events"].append({"event_id": step["event_id"], "before": step["before"],
+                                "after": step["after"], "fractions": step["one_fraction_before_after"],
+                                "samples": step["samples_before_after"]})
+    result = [entry for entry in grouped.values() if len(entry["events"]) >= 2]
+    for entry in result:
+        entry["support"] = len(entry["events"])
+        entry["event_ids"] = [event["event_id"] for event in entry["events"]]
+    result.sort(key=lambda entry: (-entry["support"], str(entry["can_id"]), entry["byte"], entry["bit"]))
+    return result
+
+
 def button_evidence(database: sqlite3.Connection) -> dict:
     codes, crc = Counter(), Counter()
     holds = []
@@ -209,6 +241,17 @@ def review_session(directory: Path, catalog: dict) -> dict:
                               "diagnostic_response_id" if (role, can_id) in diagnostic_ids else "unmapped"})
         events = [dict(zip(("id", "host_ns", "label", "source", "note"), row)) for row in database.execute(
             "SELECT id,host_ns,label,source,note FROM events ORDER BY host_ns,id")]
+        scenario_steps = [dict(zip(("host_ns", "scenario", "step_index", "step_key", "expect", "run", "outcome", "note"), row))
+                          for row in database.execute(
+            "SELECT host_ns,scenario,step_index,step_key,expect,run,outcome,note FROM scenario_steps ORDER BY host_ns,id")] \
+            if table_exists(database, "scenario_steps") else []
+        scenario_by_run: dict[tuple, dict] = {}
+        for step in scenario_steps:
+            entry = scenario_by_run.setdefault((step['scenario'], step['run']),
+                                               {"scenario": step['scenario'], "run": step['run'],
+                                                "done": 0, "failed": 0})
+            entry["done" if step['outcome'] == "done" else "failed"] += 1
+        scenario_overview = [scenario_by_run[key] for key in sorted(scenario_by_run)]
         losses = [dict(zip(("role", "host_ns", "device_timestamp_ms", "dropped_count"), row))
                   for row in database.execute(
                       "SELECT role,host_ns,device_timestamp_ms,dropped_count FROM capture_loss ORDER BY host_ns,id")]
@@ -256,6 +299,7 @@ def review_session(directory: Path, catalog: dict) -> dict:
         result = {"session": metadata[0], "status": metadata[1], "duration_seconds": metadata[2],
                   "input_sha256": before, "frames": sum(i["frames"] for i in inventory),
                   "inventory": inventory, "events": events, "loss_records": losses,
+                  "scenario_steps": scenario_steps, "scenario_overview": scenario_overview,
                   "marker_correlations": correlate(database, catalog, events), "signal_statistics": signal_stats,
                   "diagnostic_matches": [{"parameter_id": p, "did": did, "positive_single_frames": n}
                                          for (p, did), n in sorted(diagnostic_counts.items())],
@@ -266,7 +310,9 @@ def review_session(directory: Path, catalog: dict) -> dict:
             result["capture_health"] = {k: captured[k] for k in
                 ("reader_errors", "errors", "discarded_reader_bytes", "discarded_queued_bytes", "roles")
                 if k in captured}
-        result.update(profile_frames(database, catalog, events))
+        profiles = profile_frames(database, catalog, events)
+        result.update(profiles)
+        result["scenario_candidates"] = scenario_candidates(profiles["candidate_bit_steps"])
     finally:
         database.close()
     if fingerprints(directory) != before:

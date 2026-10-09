@@ -1,0 +1,96 @@
+# Zawieszenie, układ kierowniczy i napęd Q4. Na postoju, o ile nie zaznaczono inaczej.
+
+[[scenario]]
+id = "suspension_mode"
+title = "Zmiana trybu zawieszenia (amortyzatory)"
+group = "chassis"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["DNA", "hamulec", "bieg"]
+notes = "Zmieniaj tylko tryb amortyzatorów; w miarę możliwości zostaw DNA bez zmian."
+[[scenario.steps]]
+action = "Zmień tryb zawieszenia"
+expect = "suspension_mode_changed"
+[[scenario.steps]]
+action = "Wróć do poprzedniego trybu"
+expect = "suspension_mode_changed"
+
+[[scenario]]
+id = "suspension_active"
+title = "Zawieszenie adaptacyjne: włączenie i wyłączenie"
+group = "chassis"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["DNA", "bieg"]
+[[scenario.steps]]
+action = "Włącz zawieszenie adaptacyjne"
+expect = "suspension_active"
+[[scenario.steps]]
+action = "Wyłącz zawieszenie adaptacyjne"
+expect = "suspension_inactive"
+
+[[scenario]]
+id = "ride_height"
+title = "Prześwit: podniesienie i opuszczenie"
+group = "chassis"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 5
+confounder_guard = ["tryb zawieszenia", "bieg", "drzwi"]
+notes = "Poczekaj, aż zmiana poziomu się zakończy, zanim potwierdzisz."
+[[scenario.steps]]
+action = "Podnieś prześwit"
+expect = "ride_height_raised"
+[[scenario.steps]]
+action = "Opusc prześwit"
+expect = "ride_height_lowered"
+
+[[scenario]]
+id = "awd"
+title = "Napęd Q4: załączenie napędu na cztery koła"
+group = "chassis"
+vehicle = "driving"
+site = "road"
+runs = 2
+min_separation_s = 4
+confounder_guard = ["kontrola trakcji", "kierownica"]
+notes = "Wyłącznie na zamkniętym, bezpiecznym terenie. Zaznacz tylko realne załączenie Q4."
+[[scenario.steps]]
+action = "Warunki, które załączają napęd Q4"
+expect = "awd_active"
+[[scenario.steps]]
+action = "Warunki ustąpiły"
+expect = ""
+
+[[scenario]]
+id = "steering_mode"
+title = "Zmiana trybu układu kierowniczego"
+group = "chassis"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["DNA", "zawieszenie"]
+[[scenario.steps]]
+action = "Zmień tryb układu kierowniczego"
+expect = "steering_mode_changed"
+[[scenario.steps]]
+action = "Wróć do poprzedniego trybu"
+expect = "steering_mode_changed"
+
+[[scenario]]
+id = "steering_input"
+title = "Ruch kierownicy: w lewo i w prawo"
+group = "chassis"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["kierunkowskazy", "wycieraczki", "bieg"]
+notes = "Kierownica w lewo, przez środek, w prawo. Ruch kierownicy to nie zdarzenie pasa."
+[[scenario.steps]]
+action = "Skręć kierownicą do oporu w lewo"
+expect = "steering_input"
+[[scenario.steps]]
+action = "Skręć przez środek do oporu w prawo"
+expect = "steering_input"

@@ -177,6 +177,51 @@ reassertion and factory arbitration remain. No new beta or hardware flash.
 
 ## Current work
 
+### Scenario-first capture redesign, 2026-10-09
+
+Guided scenarios are now the primary capture workflow. Lab runs procedures one
+after another in a functional order (stationary groups first: access, lighting,
+wipers, climate, media, chassis, brakes, drivetrain, parking; then the
+parking-lot driving group `drive`; then the on-road `adas` procedures) and
+advances to the next unfinished one automatically when a scenario completes.
+Confirming a step writes a timeline marker plus a `scenario_steps` row
+(`scenario`, `step_index`, `step_key`, `expect`, `run`, `outcome`). Progress
+persists in `config/scenario_state.json` (`--state`), so the next launch resumes
+at the first unfinished step instead of repeating completed work; `baccable
+scenarios` marks finished procedures. The live screen was rebuilt for
+readability: a boxed, enlarged `WYKONAJ:` step and only the scenario controls
+(ENTER/y zrobione, x nieudane, p zatrzymaj, r wznów, u cofnij, s wybierz, q
+zakończ). On-screen scenarios, actions, guards, controls and expected states are
+Polish and follow the terms used in the car; the stable `id`/`key` and the
+canonical `expect` labels stay English so structured markers, correlation and
+the CAN dictionary are unchanged (Polish wording in `TITLE_BY_LABEL_PL` /
+`label_text_pl`). The manual marker palette and its quick keys/groups/find/custom
+are removed from the live screen; naming evidence comes from confirmed steps.
+new modules `scenarios/state.py` and `scenarios/session.py`; a `site` field
+(`parking`/`road`) distinguishes drivable locations. The screen uses ANSI colours
+(colour, section header, `postęp: handled/total` bar, `dalej:` next-step preview,
+`SPACJA`=zrobione, a confirmation bell and immediate `q`/`Ctrl-C` quit) for at-a-glance
+readability in the car, with `--caps`, `--no-color`/`NO_COLOR` and `--no-bell`
+options, and all in-session messages are Polish. `review` gains
+`scenario_candidates` (bits that flipped for the same expected action at least
+twice, ranked by repeat count), and `dictionary --propose`/`--accept` build,
+validate and merge a candidate into a draft dictionary (promotion stays a
+reviewed step, not an automatic write). Every capture can record run context
+with `--context KEY=VALUE`, and `baccable bundle SESSION --output FILE` writes one
+self-contained artifact (session context, capture health, coverage, ranked
+per-action candidates, structural shape hints, per-step operator notes and
+scenario definitions, and bounded raw excerpts) as the single input to hand to
+the decoding step. New commands: `baccable
+scenarios [--json] [--state]`, `capture --scenario ID --state`, `preview
+--scenario ID`, `--scenarios-dir`. The bundled library has 79 procedures (473
+confirmations, 11 groups) in `baccable_lab/scenarios/library/*.toml`, parsed with
+stdlib `tomllib`; unknown `expect` labels are rejected at load. `review` returns
+`scenario_steps` and `scenario_overview`. New `baccable_lab/docs/SCENARIOS.md`;
+Lab README and both user guides updated. 54 Lab tests pass via the CI `unittest`
+discovery. No hardware run was performed: the procedure flow and marker quality
+still need a real capture (stationary and on a parking lot) before this closes
+the naming loop.
+
 ### PR #49 follow-up review, 2026-09-30
 
 Two complete Favorite pages can contain eight UDS values. The 500 ms request
