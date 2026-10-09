@@ -75,7 +75,7 @@ Guided scenarios are the primary capture workflow. The screen shows one step of
 a controlled in-car procedure at a time as a large `WYKONAJ:` instruction, and
 you confirm it with `ENTER`/`SPACJA` (zrobione), `x` (nieudane) or `p`
 (zatrzymaj); a stopped scenario resumes with `r`, `u` undoes the last
-confirmation, `s` jumps to another procedure and `q` (pressed twice) finishes.
+confirmation, `s` jumps to another procedure and `q` (or `Ctrl-C`) finishes.
 On-screen wording is Polish and follows the terms used in the car; the stable
 machine keys and the CAN dictionary labels stay English. Colour, a progress bar,
 a next-step preview and a short bell make the screen readable and usable from

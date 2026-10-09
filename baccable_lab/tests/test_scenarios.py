@@ -243,6 +243,20 @@ class ScenarioCaptureTests(unittest.TestCase):
                 capture({"C1": "/dev/test-C1"}, root, [], scenarios={}, scenario="missing")
             self.assertFalse(root.exists())
 
+    def test_quit_stop_and_note_keys_work_during_a_scenario(self):
+        scenarios = {s.id: s for s in parse_scenarios(DEMO)}
+        # q quits immediately while a scenario is running.
+        with tempfile.TemporaryDirectory() as temp:
+            self.assertEqual(self.run_capture(temp, ["q"], scenarios), 0)
+        # n records a note on the last step, p stops, then q quits.
+        with tempfile.TemporaryDirectory() as temp:
+            self.assertEqual(self.run_capture(temp, ["\r", "n", "p", "q"], scenarios,
+                                              line="silnik zgasł"), 0)
+            directory, = Path(temp).iterdir()
+            with contextlib.closing(sqlite3.connect(directory / "session.sqlite3")) as db:
+                note = db.execute("SELECT note FROM scenario_steps").fetchone()[0]
+            self.assertEqual(note, "silnik zgasł")
+
     def test_context_is_written_into_the_manifest_and_summary(self):
         scenarios = {s.id: s for s in parse_scenarios(DEMO)}
         with tempfile.TemporaryDirectory() as temp:

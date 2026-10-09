@@ -860,8 +860,9 @@ does not mean a serial capture port should exist in DFU.
    procedure at a time (in Polish, using the car's own terms) and you confirm
    each step with `ENTER`/`SPACJA` (zrobione), `x` (nieudane) or `p`
    (zatrzymaj). A stopped scenario resumes with `r`, `u` undoes the last
-   confirmation, `s` jumps to another procedure and `q` (pressed twice) ends the
-   session. Colour, a progress bar and a short bell make the screen readable and
+   confirmation, `s` jumps to another procedure and `q` (or `Ctrl-C`) ends the
+   session. Keys always work during a scenario: `p` stops, `n` adds a note, `u`
+   undoes and `q` exits. Colour, a progress bar and a short bell make the screen readable and
    usable from inside the car (`--caps`, `--no-color`, `--no-bell`). Procedures
    run in a functional order (stationary, then parking-lot driving, then on-road
    assistance) and advance automatically; progress is stored in

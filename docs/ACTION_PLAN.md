@@ -200,7 +200,7 @@ are removed from the live screen; naming evidence comes from confirmed steps.
 new modules `scenarios/state.py` and `scenarios/session.py`; a `site` field
 (`parking`/`road`) distinguishes drivable locations. The screen uses ANSI colours
 (colour, section header, `postęp: handled/total` bar, `dalej:` next-step preview,
-`SPACJA`=zrobione, a confirmation bell and a double-`q` quit guard) for at-a-glance
+`SPACJA`=zrobione, a confirmation bell and immediate `q`/`Ctrl-C` quit) for at-a-glance
 readability in the car, with `--caps`, `--no-color`/`NO_COLOR` and `--no-bell`
 options, and all in-session messages are Polish. `review` gains
 `scenario_candidates` (bits that flipped for the same expected action at least

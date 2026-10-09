@@ -916,8 +916,9 @@ powinien istnieć port szeregowy do przechwytywania CAN.
    procedurę naraz (po polsku, terminami z samochodu), a każdy krok
    potwierdzasz klawiszem `ENTER`/`SPACJA` (zrobione), `x` (nieudane) lub `p`
    (zatrzymaj). Zatrzymany scenariusz wznawia się klawiszem `r`, `u` cofa
-   ostatnie potwierdzenie, `s` przełącza do innej procedury, a `q` (naciśnięte
-   dwa razy) kończy sesję. Kolory, pasek postępu i krótki dźwięk ułatwiają
+   ostatnie potwierdzenie, `s` przełącza do innej procedury, a `q` (lub
+   `Ctrl-C`) kończy sesję. Klawisze zawsze działają w scenariuszu: `p`
+   zatrzymuje, `n` dodaje notatkę, `u` cofa, a `q` wychodzi. Kolory, pasek postępu i krótki dźwięk ułatwiają
    odczyt z samochodu (`--caps`, `--no-color`, `--no-bell`). Procedury idą
    w kolejności funkcjonalnej (postój, potem jazda na placu, potem wspomaganie
    na drodze) i same przechodzą do następnej; postęp jest zapisywany w

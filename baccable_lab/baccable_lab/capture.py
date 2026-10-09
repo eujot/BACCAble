@@ -315,23 +315,14 @@ def capture(ports: dict[str, str], root: Path, command: list[str], *, preview: b
             readers.append(reader)
         last_screen = 0.0
         last_commit = 0.0
-        quit_armed = False
         last_counts = {role: 0 for role in roles}
         while not stop.is_set():
             key = keyboard.read()
             runner = scenario_session.runner
-            if key not in {"q", "Q"}:
-                quit_armed = False
-            if key == "\x03":
+            # Quit and Ctrl-C always work, during a scenario too.
+            if key in {"q", "Q", "\x03"}:
                 break
-            if key in {"q", "Q"}:
-                # Confirm quit once so an accidental key cannot end the session.
-                if runner is not None and not quit_armed:
-                    quit_armed = True
-                    message = "Naciśnij q ponownie, aby zakończyć sesję"
-                else:
-                    break
-            elif runner is not None and not runner.paused:
+            if runner is not None and not runner.paused:
                 if key in {"\r", "\n", " ", "y", "Y"}:
                     confirm("done")
                 elif key in {"x", "X"}:

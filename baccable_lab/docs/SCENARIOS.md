@@ -34,7 +34,7 @@ procedure.
 | `u` | **Cofnij** the last confirmation of this run |
 | `n` | Add an operator **notatka** to the last confirmed step (e.g. "silnik zgasł") |
 | `s` | Choose a scenario to jump to (by number or id) |
-| `q` | Finish the session — press `q` twice so it cannot end by accident |
+| `q` | Finish the session — also works during a scenario; `Ctrl-C` does the same |
 
 A stopped scenario keeps its position. A short bell rings on a confirmation or a
 new step, so a confirmation can be heard without looking at the screen. The last
