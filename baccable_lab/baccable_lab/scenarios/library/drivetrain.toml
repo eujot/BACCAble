@@ -1,0 +1,138 @@
+# Zapłon, silnik, skrzynia i tryb DNA. Na postoju.
+
+[[scenario]]
+id = "ignition_cycle"
+title = "Zapłon: włączenie i wyłączenie (bez uruchamiania silnika)"
+group = "drivetrain"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 4
+confounder_guard = ["drzwi", "światła", "klimatyzacja", "kierunkowskazy"]
+notes = "Nie uruchamiaj silnika. Poczekaj, aż wyświetlacz w pełni się wybudzi."
+[[scenario.steps]]
+action = "Zapłon WŁ. (przycisk START bez uruchamiania)"
+expect = "ignition_on"
+[[scenario.steps]]
+action = "Zapłon WYŁ."
+expect = "ignition_off"
+
+[[scenario]]
+id = "engine_start_stop"
+title = "Uruchomienie i zgaszenie silnika"
+group = "drivetrain"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 5
+confounder_guard = ["klimatyzacja", "światła", "drzwi"]
+[[scenario.steps]]
+action = "Uruchom silnik i pozwól mu pracować na biegu jałowym"
+expect = "engine_start"
+[[scenario.steps]]
+action = "Zgaś silnik"
+expect = "engine_stop"
+
+[[scenario]]
+id = "gear_selector"
+title = "Dźwignia skrzyni: P > R > N > D i powrót"
+group = "drivetrain"
+vehicle = "stationary"
+runs = 2
+min_separation_s = 4
+confounder_guard = ["hamulec", "hamulec postojowy", "silnik"]
+notes = "Noga na hamulcu, silnik pracuje, pojazd stoi. Potwierdzaj po ustaleniu pozycji."
+[[scenario.steps]]
+action = "Ustaw dźwignię w P (postój)"
+expect = "park_selected"
+[[scenario.steps]]
+action = "Ustaw dźwignię w R (bieg wsteczny)"
+expect = "reverse_selected"
+[[scenario.steps]]
+action = "Ustaw dźwignię w N (luz)"
+expect = "neutral_selected"
+[[scenario.steps]]
+action = "Ustaw dźwignię w D (jazda)"
+expect = "drive_selected"
+
+[[scenario]]
+id = "reverse_with_camera"
+title = "Bieg wsteczny R (kamera cofania / czujniki)"
+group = "drivetrain"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 4
+confounder_guard = ["hamulec", "hamulec postojowy", "kierunkowskazy"]
+notes = "Silnik pracuje. Obserwuj kamerę cofania i czujniki parkowania."
+[[scenario.steps]]
+action = "Wybierz R (pojawia się kamera i czujniki)"
+expect = "reverse_selected"
+[[scenario.steps]]
+action = "Wybierz P"
+expect = "park_selected"
+
+[[scenario]]
+id = "manual_mode"
+title = "Tryb manualny skrzyni: włączenie"
+group = "drivetrain"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["bieg", "DNA", "hamulec"]
+[[scenario.steps]]
+action = "Przesuń dźwignię w tryb manualny"
+expect = "manual_mode_on"
+[[scenario.steps]]
+action = "Wróć dźwignią do trybu automatycznego"
+expect = ""
+
+[[scenario]]
+id = "dna_modes"
+title = "Tryb DNA: przejście przez kolejne tryby"
+group = "drivetrain"
+vehicle = "stationary"
+runs = 2
+min_separation_s = 3
+confounder_guard = ["bieg", "hamulec", "zawieszenie"]
+notes = "Przejdź każdy tryb i potwierdź raz na tryb, aby uchwycić każdy kod."
+[[scenario.steps]]
+action = "Wybierz tryb D (Dynamic)"
+expect = "dna_mode_changed"
+[[scenario.steps]]
+action = "Wybierz tryb N (Natural)"
+expect = "dna_mode_changed"
+[[scenario.steps]]
+action = "Wybierz tryb A (Advanced Efficiency)"
+expect = "dna_mode_changed"
+[[scenario.steps]]
+action = "Wybierz tryb Race (jeśli dostępny)"
+expect = "dna_mode_changed"
+
+[[scenario]]
+id = "start_stop_button"
+title = "Start/Stop: wyłączenie i przywrócenie przyciskiem"
+group = "drivetrain"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["bieg", "hamulec", "klimatyzacja"]
+[[scenario.steps]]
+action = "Naciśnij przycisk wyłączenia Start/Stop"
+expect = "start_stop_active"
+[[scenario.steps]]
+action = "Naciśnij przycisk przywrócenia Start/Stop"
+expect = "start_stop_restarted"
+
+[[scenario]]
+id = "start_stop_standstill"
+title = "Start/Stop na postoju: zgaszenie i samoczynny restart"
+group = "drivetrain"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 5
+confounder_guard = ["klimatyzacja", "nawiew", "światła"]
+notes = "Silnik rozgrzany, Start/Stop aktywny. Zatrzymaj się, aż silnik zgaśnie, potem rusz."
+[[scenario.steps]]
+action = "Zatrzymaj się, aż Start/Stop zgasi silnik"
+expect = "start_stop_active"
+[[scenario.steps]]
+action = "Rusz (np. zwolnij hamulec), silnik sam się uruchamia"
+expect = "start_stop_restarted"

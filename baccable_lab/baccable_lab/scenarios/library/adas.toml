@@ -1,0 +1,112 @@
+# Systemy wspomagania jazdy. Scenariusze drogowe wykonuj tylko na odpowiednich
+# drogach. Nigdy nie prowokuj hamowania awaryjnego ani gwałtownego skrętu na
+# drodze publicznej; zaznaczaj tylko ostrzeżenia występujące naturalnie lub
+# podczas kontrolowanej, bezpiecznej próby.
+
+[[scenario]]
+id = "cruise_control"
+title = "Tempomat: ustawienie, wyłączenie i wznowienie"
+group = "adas"
+vehicle = "driving"
+site = "road"
+runs = 2
+min_separation_s = 4
+confounder_guard = ["ACC", "hamulec", "bieg", "kierunkowskazy"]
+notes = "Stała prędkość, odcinek bez ruchu."
+[[scenario.steps]]
+action = "Ustaw tempomat (set)"
+expect = "cruise_control_set"
+[[scenario.steps]]
+action = "Wyłącz tempomat (dotknij hamulca lub przycisku)"
+expect = "cruise_control_cancelled"
+[[scenario.steps]]
+action = "Wznów tempomat (resume)"
+expect = "cruise_control_resumed"
+
+[[scenario]]
+id = "adaptive_cruise"
+title = "ACC: ustawienie, jazda za pojazdem i wyłączenie"
+group = "adas"
+vehicle = "driving"
+site = "road"
+runs = 2
+min_separation_s = 4
+confounder_guard = ["tempomat", "hamulec", "bieg", "pas"]
+[[scenario.steps]]
+action = "Ustaw ACC za pojazdem poprzedzającym"
+expect = "acc_set"
+[[scenario.steps]]
+action = "Jedź za pojazdem w ustawionym odstępie"
+expect = "acc_following"
+[[scenario.steps]]
+action = "Wyłącz ACC"
+expect = "acc_cancelled"
+[[scenario.steps]]
+action = "Wznów ACC"
+expect = "acc_resume"
+
+[[scenario]]
+id = "lane_assist"
+title = "Asystent pasa: ostrzeżenie i korekta toru jazdy"
+group = "adas"
+vehicle = "driving"
+site = "road"
+runs = 2
+min_separation_s = 4
+confounder_guard = ["ACC", "FCW", "kierunkowskazy"]
+notes = "Zaznacz tylko ostrzeżenie lub korektę, które faktycznie wystąpią; nie wymuszaj ich niebezpiecznie."
+[[scenario.steps]]
+action = "Ostrzeżenie o opuszczeniu pasa"
+expect = "lane_warning"
+[[scenario.steps]]
+action = "Korekta toru jazdy przez układ kierowniczy"
+expect = "lane_steering_intervention"
+
+[[scenario]]
+id = "forward_collision"
+title = "Ostrzeżenie o zderzeniu i hamowanie awaryjne"
+group = "adas"
+vehicle = "driving"
+site = "road"
+runs = 2
+min_separation_s = 5
+confounder_guard = ["ACC", "pas", "hamulec"]
+notes = "Zaznaczaj tylko ostrzeżenia lub zadziałania występujące naturalnie albo w bezpiecznej, kontrolowanej próbie."
+[[scenario.steps]]
+action = "Ostrzeżenie o zderzeniu z przodu (FCW)"
+expect = "forward_collision_warning"
+[[scenario.steps]]
+action = "Automatyczne hamowanie awaryjne (AEB)"
+expect = "automatic_emergency_braking"
+
+[[scenario]]
+id = "blind_spot"
+title = "Ostrzeżenie o martwym polu"
+group = "adas"
+vehicle = "driving"
+site = "road"
+runs = 2
+min_separation_s = 4
+confounder_guard = ["pas", "ACC", "kierunkowskazy"]
+[[scenario.steps]]
+action = "Pojazd wjeżdża w martwe pole"
+expect = "blind_spot_warning"
+[[scenario.steps]]
+action = "Pojazd opuszcza martwe pole"
+expect = ""
+
+[[scenario]]
+id = "driver_attention"
+title = "Ostrzeżenie o zmęczeniu kierowcy"
+group = "adas"
+vehicle = "driving"
+site = "road"
+runs = 2
+min_separation_s = 5
+confounder_guard = ["pas", "ACC"]
+[[scenario.steps]]
+action = "Pojawia się ostrzeżenie o zmęczeniu kierowcy"
+expect = "driver_attention_warning"
+[[scenario.steps]]
+action = "Ostrzeżenie znika"
+expect = ""

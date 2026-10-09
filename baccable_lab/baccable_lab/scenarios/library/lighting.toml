@@ -1,0 +1,154 @@
+# Oświetlenie zewnętrzne i wewnętrzne. Na postoju, o ile nie zaznaczono inaczej.
+
+[[scenario]]
+id = "indicator_left"
+title = "Lewy kierunkowskaz: włączenie i wyłączenie"
+group = "lighting"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["prawy kierunkowskaz", "światła awaryjne", "reflektory", "hamulec"]
+[[scenario.steps]]
+action = "Lewy kierunkowskaz WŁ."
+expect = "left_indicator_on"
+[[scenario.steps]]
+action = "Lewy kierunkowskaz WYŁ."
+expect = "left_indicator_off"
+
+[[scenario]]
+id = "indicator_right"
+title = "Prawy kierunkowskaz: włączenie i wyłączenie"
+group = "lighting"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["lewy kierunkowskaz", "światła awaryjne", "reflektory", "hamulec"]
+[[scenario.steps]]
+action = "Prawy kierunkowskaz WŁ."
+expect = "right_indicator_on"
+[[scenario.steps]]
+action = "Prawy kierunkowskaz WYŁ."
+expect = "right_indicator_off"
+
+[[scenario]]
+id = "hazard_lights"
+title = "Światła awaryjne: włączenie i wyłączenie"
+group = "lighting"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["kierunkowskazy", "reflektory"]
+[[scenario.steps]]
+action = "Światła awaryjne WŁ."
+expect = "hazard_lights_on"
+[[scenario.steps]]
+action = "Światła awaryjne WYŁ."
+expect = "hazard_lights_off"
+
+[[scenario]]
+id = "dipped_beam"
+title = "Światła mijania (ręcznie): włączenie i wyłączenie"
+group = "lighting"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["tryb AUTO", "światła drogowe", "przeciwmgielne", "kierunkowskazy"]
+notes = "Przełącznik poza AUTO, aby zmieniały się tylko ręczne światła mijania."
+[[scenario.steps]]
+action = "Światła mijania WŁ. (ręcznie)"
+expect = "dipped_beam_on"
+[[scenario.steps]]
+action = "Światła mijania WYŁ."
+expect = "dipped_beam_off"
+
+[[scenario]]
+id = "high_beam"
+title = "Światła drogowe: włączenie i wyłączenie"
+group = "lighting"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["światła mijania", "przeciwmgielne", "kierunkowskazy"]
+[[scenario.steps]]
+action = "Światła drogowe WŁ. (dźwignia do przodu)"
+expect = "high_beam_on"
+[[scenario.steps]]
+action = "Światła drogowe WYŁ."
+expect = "high_beam_off"
+
+[[scenario]]
+id = "fog_lights"
+title = "Światła przeciwmgielne przednie: włączenie i wyłączenie"
+group = "lighting"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["światła mijania", "drogowe", "kierunkowskazy"]
+[[scenario.steps]]
+action = "Przeciwmgielne przednie WŁ."
+expect = "fog_lights_on"
+[[scenario.steps]]
+action = "Przeciwmgielne przednie WYŁ."
+expect = "fog_lights_off"
+
+[[scenario]]
+id = "side_lights"
+title = "Światła pozycyjne: włączenie i wyłączenie"
+group = "lighting"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["światła mijania", "tryb AUTO", "oświetlenie wnętrza"]
+[[scenario.steps]]
+action = "Światła pozycyjne WŁ."
+expect = "side_lights_on"
+[[scenario.steps]]
+action = "Światła pozycyjne WYŁ."
+expect = "side_lights_off"
+
+[[scenario]]
+id = "automatic_headlights"
+title = "Światła automatyczne: włączenie i wyłączenie trybu AUTO"
+group = "lighting"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["faktyczne oświetlenie", "światła mijania"]
+notes = "Tylko przełącznik w/z AUTO; nie zmieniaj faktycznego oświetlenia."
+[[scenario.steps]]
+action = "Przełącznik w pozycję AUTO"
+expect = "automatic_headlights_on"
+[[scenario.steps]]
+action = "Przełącznik poza AUTO"
+expect = "automatic_headlights_off"
+
+[[scenario]]
+id = "interior_lights"
+title = "Oświetlenie wnętrza: włączenie i wyłączenie"
+group = "lighting"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["drzwi", "zapłon", "światła zewnętrzne"]
+[[scenario.steps]]
+action = "Oświetlenie wnętrza WŁ."
+expect = "interior_lights_on"
+[[scenario.steps]]
+action = "Oświetlenie wnętrza WYŁ."
+expect = "interior_lights_off"
+
+[[scenario]]
+id = "brake_lights_pedal"
+title = "Światła stopu od pedału hamulca (zapłon włączony)"
+group = "lighting"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["hamulec postojowy", "kierunkowskazy", "bieg"]
+notes = "Zapłon włączony, silnik zgaszony, bieg P. Naciskaj tylko pedał hamulca."
+[[scenario.steps]]
+action = "Naciśnij pedał hamulca"
+expect = "brake_lights_on"
+[[scenario.steps]]
+action = "Zwolnij pedał hamulca"
+expect = ""

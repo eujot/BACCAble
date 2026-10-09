@@ -912,6 +912,18 @@ powinien istnieć port szeregowy do przechwytywania CAN.
    czynności w samochodzie, aby później powiązać je ze zmianami danych CAN.
    Zakończ przechwytywanie zwykłym poleceniem wyjścia z Lab lub Ctrl-C
    i sprawdź podsumowanie sesji.
+6. Przechwytywanie prowadzą **scenariusze**: ekran pokazuje jedną kontrolowaną
+   procedurę naraz (po polsku, terminami z samochodu), a każdy krok
+   potwierdzasz klawiszem `ENTER`/`SPACJA` (zrobione), `x` (nieudane) lub `p`
+   (zatrzymaj). Zatrzymany scenariusz wznawia się klawiszem `r`, `u` cofa
+   ostatnie potwierdzenie, `s` przełącza do innej procedury, a `q` (naciśnięte
+   dwa razy) kończy sesję. Kolory, pasek postępu i krótki dźwięk ułatwiają
+   odczyt z samochodu (`--caps`, `--no-color`, `--no-bell`). Procedury idą
+   w kolejności funkcjonalnej (postój, potem jazda na placu, potem wspomaganie
+   na drodze) i same przechodzą do następnej; postęp jest zapisywany w
+   `config/scenario_state.json`, więc kolejne uruchomienie kontynuuje od miejsca
+   przerwania. Listę procedur i postęp wypisuje `baccable scenarios`; szczegóły
+   opisuje [przewodnik po scenariuszach](../baccable_lab/docs/SCENARIOS.md).
 
 Po włączeniu trybu urządzenie czeka około dziesięciu sekund na zestawienie
 połączenia USB z komputerem. Każdy kontroler pomocniczy potrzebuje własnego

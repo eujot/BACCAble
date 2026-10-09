@@ -856,6 +856,18 @@ does not mean a serial capture port should exist in DFU.
    remain acceptable. Describe or mark each vehicle action in the capture
    workflow so it can later be correlated with changing CAN data. Stop with
    Lab's normal quit/Ctrl-C procedure and inspect the session summary.
+6. Capture is driven by **guided scenarios**: the screen shows one controlled
+   procedure at a time (in Polish, using the car's own terms) and you confirm
+   each step with `ENTER`/`SPACJA` (zrobione), `x` (nieudane) or `p`
+   (zatrzymaj). A stopped scenario resumes with `r`, `u` undoes the last
+   confirmation, `s` jumps to another procedure and `q` (pressed twice) ends the
+   session. Colour, a progress bar and a short bell make the screen readable and
+   usable from inside the car (`--caps`, `--no-color`, `--no-bell`). Procedures
+   run in a functional order (stationary, then parking-lot driving, then on-road
+   assistance) and advance automatically; progress is stored in
+   `config/scenario_state.json`, so the next launch continues where you left off.
+   List the procedures and their progress with `baccable scenarios`; follow
+   [the scenario guide](../baccable_lab/docs/SCENARIOS.md).
 
 The initial unconfigured USB session expires after about ten seconds. Each
 auxiliary board needs its own host connection; an unconnected board can leave

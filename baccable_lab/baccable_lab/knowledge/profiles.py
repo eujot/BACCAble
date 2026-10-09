@@ -6,7 +6,7 @@ from collections import Counter, defaultdict
 def profile_frames(database, catalog, events):
     """One bounded-memory pass. Device intervals are local to a board, never cross-board."""
     profiles = {}
-    markers = sorted((e for e in events if e['source'] in ('keyboard', 'cli')), key=lambda e:e['host_ns'])
+    markers = sorted((e for e in events if e['source'] in ('keyboard', 'cli', 'scenario')), key=lambda e:e['host_ns'])
     times = [e['host_ns'] for e in markers]
     windows = defaultdict(lambda: [Counter(), Counter()])
     for role, can_id, dlc, host, device, payload in database.execute(

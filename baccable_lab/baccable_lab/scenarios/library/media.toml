@@ -1,0 +1,112 @@
+# Info-rozrywka i wyświetlacz wskaźników. Głównie na postoju.
+
+[[scenario]]
+id = "ipc_menu"
+title = "Menu na wyświetlaczu: otwarcie, nadpisanie i przywrócenie"
+group = "media"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 4
+confounder_guard = ["źródło audio", "utwór", "telefon"]
+notes = "Otwórz menu, pozwól ekranowi fabrycznemu je nadpisać, potem wróć do menu."
+[[scenario.steps]]
+action = "Otwórz menu na wyświetlaczu wskaźników"
+expect = "ipc_menu_opened"
+[[scenario.steps]]
+action = "Pozwól, aby ekran fabryczny nadpisał menu"
+expect = "ipc_menu_overwritten"
+[[scenario.steps]]
+action = "Wróć do menu na wyświetlaczu"
+expect = "ipc_menu_restored"
+
+[[scenario]]
+id = "ipc_screen"
+title = "Zmiana ekranu na wyświetlaczu wskaźników"
+group = "media"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["menu", "źródło audio"]
+[[scenario.steps]]
+action = "Zmień ekran/stronę na wyświetlaczu"
+expect = "ipc_screen_changed"
+[[scenario.steps]]
+action = "Wróć do poprzedniego ekranu"
+expect = "ipc_screen_changed"
+
+[[scenario]]
+id = "audio_source"
+title = "Zmiana źródła audio"
+group = "media"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["utwór", "telefon", "menu"]
+[[scenario.steps]]
+action = "Przełącz na inne źródło audio"
+expect = "audio_source_changed"
+[[scenario.steps]]
+action = "Wróć do poprzedniego źródła"
+expect = "audio_source_changed"
+
+[[scenario]]
+id = "track_change"
+title = "Zmiana utworu: następny i poprzedni"
+group = "media"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["źródło audio", "telefon", "menu"]
+[[scenario.steps]]
+action = "Następny utwór"
+expect = "track_changed"
+[[scenario.steps]]
+action = "Poprzedni utwór"
+expect = "track_changed"
+
+[[scenario]]
+id = "radio_button"
+title = "Naciśnięcie przycisku na panelu radia"
+group = "media"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 2
+confounder_guard = ["menu", "źródło audio", "głośność"]
+[[scenario.steps]]
+action = "Naciśnij przycisk na panelu radia"
+expect = "radio_button_pressed"
+[[scenario.steps]]
+action = "Poczekaj na powrót do stanu spoczynku"
+expect = ""
+
+[[scenario]]
+id = "phone_call"
+title = "Rozmowa telefoniczna: rozpoczęcie i zakończenie"
+group = "media"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 4
+confounder_guard = ["źródło audio", "utwór"]
+[[scenario.steps]]
+action = "Odbierz / rozpocznij rozmowę telefoniczną"
+expect = "phone_call_started"
+[[scenario.steps]]
+action = "Zakończ rozmowę telefoniczną"
+expect = "phone_call_ended"
+
+[[scenario]]
+id = "navigation_prompt"
+title = "Komunikat nawigacji"
+group = "media"
+vehicle = "driving"
+site = "road"
+runs = 3
+min_separation_s = 4
+confounder_guard = ["telefon", "źródło audio", "menu"]
+notes = "Zaplanowana trasa z komendą skrętu; zaznacz, gdy komunikat jest wypowiadany."
+[[scenario.steps]]
+action = "Nawigacja wypowiada komunikat"
+expect = "navigation_prompt"
+[[scenario.steps]]
+action = "Komunikat się skończył"
+expect = ""

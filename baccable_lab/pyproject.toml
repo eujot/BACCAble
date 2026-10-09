@@ -21,4 +21,4 @@ baccable = "baccable_lab.cli:main"
 where = ["."]
 
 [tool.setuptools.package-data]
-baccable_lab = ["knowledge/*.json"]
+baccable_lab = ["knowledge/*.json", "scenarios/library/*.toml"]

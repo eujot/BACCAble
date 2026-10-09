@@ -42,4 +42,18 @@ CREATE TABLE IF NOT EXISTS events (
     note TEXT NOT NULL DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS events_session_time ON events(session_id, host_ns);
+CREATE TABLE IF NOT EXISTS scenario_steps (
+    id INTEGER PRIMARY KEY,
+    session_id TEXT NOT NULL REFERENCES sessions(id),
+    host_ns INTEGER NOT NULL,
+    event_id INTEGER,
+    scenario TEXT NOT NULL,
+    step_index INTEGER NOT NULL,
+    step_key TEXT NOT NULL DEFAULT '',
+    expect TEXT NOT NULL DEFAULT '',
+    run INTEGER NOT NULL,
+    outcome TEXT NOT NULL,
+    note TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS scenario_steps_session_time ON scenario_steps(session_id, host_ns);
 """

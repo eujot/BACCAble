@@ -1,0 +1,156 @@
+# Dostęp, drzwi, szyby i lusterka. Wszystko na postoju.
+# Każdy scenariusz powtarza pary WŁ./WYŁ., aby analiza wymagała powtórzonych,
+# odwracalnych przejść z kontrolami negatywnymi.
+
+[[scenario]]
+id = "lock_unlock"
+title = "Centralny zamek: zablokowanie i odblokowanie pilotem"
+group = "access"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["drzwi", "szyby", "zapłon", "światła"]
+notes = "Dotykać tylko pilota; drzwi kierowcy zamknięte, aby zmieniał się sam stan zamka."
+[[scenario.steps]]
+action = "Naciśnij UNLOCK na pilocie, poczekaj na mignięcie kierunkowskazów"
+expect = "unlock"
+[[scenario.steps]]
+action = "Naciśnij LOCK na pilocie, poczekaj na mignięcie kierunkowskazów"
+expect = "lock"
+
+[[scenario]]
+id = "door_driver"
+title = "Drzwi kierowcy: otwarcie i zamknięcie"
+group = "access"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["pozostałe drzwi", "szyby", "zapłon"]
+notes = "Otwieraj tylko drzwi kierowcy. Zaznaczaj zaraz na początku ruchu."
+[[scenario.steps]]
+action = "Otwórz drzwi kierowcy"
+expect = "driver_door_open"
+[[scenario.steps]]
+action = "Zamknij drzwi kierowcy"
+expect = "driver_door_close"
+
+[[scenario]]
+id = "door_passenger"
+title = "Drzwi pasażera: otwarcie i zamknięcie"
+group = "access"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["pozostałe drzwi", "szyby", "zapłon"]
+[[scenario.steps]]
+action = "Otwórz drzwi pasażera"
+expect = "passenger_door_open"
+[[scenario.steps]]
+action = "Zamknij drzwi pasażera"
+expect = "passenger_door_close"
+
+[[scenario]]
+id = "boot_lid"
+title = "Bagażnik: otwarcie i zamknięcie"
+group = "access"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["drzwi", "zapłon"]
+[[scenario.steps]]
+action = "Otwórz klapę bagażnika"
+expect = "trunk_open"
+[[scenario.steps]]
+action = "Zamknij klapę bagażnika"
+expect = ""
+
+[[scenario]]
+id = "bonnet"
+title = "Maska: otwarcie i zamknięcie"
+group = "access"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["drzwi", "zapłon"]
+[[scenario.steps]]
+action = "Zwolnij zaczep i otwórz maskę"
+expect = "hood_open"
+[[scenario.steps]]
+action = "Zamknij maskę"
+expect = ""
+
+[[scenario]]
+id = "fuel_door"
+title = "Klapka wlewu paliwa: otwarcie i zamknięcie"
+group = "access"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["drzwi", "zapłon", "światła"]
+[[scenario.steps]]
+action = "Otwórz klapkę wlewu paliwa"
+expect = "fuel_door_open"
+[[scenario.steps]]
+action = "Zamknij klapkę wlewu paliwa"
+expect = ""
+
+[[scenario]]
+id = "window_driver"
+title = "Szyba kierowcy: pełne opuszczenie i podniesienie"
+group = "access"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 4
+confounder_guard = ["pozostałe drzwi", "zapłon", "klimatyzacja"]
+notes = "Użyj trybu automatycznego; poczekaj, aż szyba całkowicie się zatrzyma."
+[[scenario.steps]]
+action = "Szyba kierowcy do samego dołu"
+expect = "window_open"
+[[scenario.steps]]
+action = "Szyba kierowcy do samej góry"
+expect = "window_close"
+
+[[scenario]]
+id = "window_passenger"
+title = "Szyba pasażera: pełne opuszczenie i podniesienie"
+group = "access"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 4
+confounder_guard = ["pozostałe drzwi", "zapłon", "klimatyzacja"]
+[[scenario.steps]]
+action = "Szyba pasażera do samego dołu"
+expect = "window_open"
+[[scenario.steps]]
+action = "Szyba pasażera do samej góry"
+expect = "window_close"
+
+[[scenario]]
+id = "mirror_fold"
+title = "Lusterka: złożenie i rozłożenie"
+group = "access"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 4
+confounder_guard = ["drzwi", "zapłon", "szyby"]
+[[scenario.steps]]
+action = "Złóż lusterka"
+expect = "mirror_folded"
+[[scenario.steps]]
+action = "Rozłóż lusterka"
+expect = "mirror_unfolded"
+
+[[scenario]]
+id = "seat_belt_driver"
+title = "Pas kierowcy: zapięcie i odpięcie"
+group = "access"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["drzwi", "zapłon", "sygnał dźwiękowy"]
+[[scenario.steps]]
+action = "Zapnij pas kierowcy"
+expect = "seat_belt_fastened"
+[[scenario.steps]]
+action = "Odepnij pas kierowcy"
+expect = "seat_belt_unfastened"

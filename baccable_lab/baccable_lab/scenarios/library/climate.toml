@@ -1,0 +1,122 @@
+# Klimatyzacja i komfort. Na postoju, silnik pracuje lub zapłon włączony.
+
+[[scenario]]
+id = "ac_toggle"
+title = "Klimatyzacja: włączenie i wyłączenie sprężarki"
+group = "climate"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 4
+confounder_guard = ["nawiew", "temperatura", "odmrażanie", "recyrkulacja"]
+notes = "Nawiew powyżej minimum. Poczekaj kilka sekund na ustalenie stanu sprężarki."
+[[scenario.steps]]
+action = "Klimatyzacja WŁ. (świeci się płatek śniegu)"
+expect = "ac_on"
+[[scenario.steps]]
+action = "Klimatyzacja WYŁ."
+expect = "ac_off"
+
+[[scenario]]
+id = "climate_temperature"
+title = "Zadana temperatura kabiny: podniesienie i obniżenie"
+group = "climate"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["nawiew", "klimatyzacja", "odmrażanie"]
+[[scenario.steps]]
+action = "Podnieś temperaturę zadaną o kilka stopni"
+expect = "climate_temperature_changed"
+[[scenario.steps]]
+action = "Obniż temperaturę zadaną z powrotem"
+expect = "climate_temperature_changed"
+
+[[scenario]]
+id = "fan_speed"
+title = "Bieg nawiewu: zwiększenie do maksimum i zmniejszenie"
+group = "climate"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["temperatura", "klimatyzacja", "odmrażanie"]
+[[scenario.steps]]
+action = "Zwiększ bieg nawiewu do maksimum"
+expect = "fan_speed_changed"
+[[scenario.steps]]
+action = "Zmniejsz bieg nawiewu do minimum"
+expect = "fan_speed_changed"
+
+[[scenario]]
+id = "defrost_front"
+title = "Odmrażanie przedniej szyby: włączenie i wyłączenie"
+group = "climate"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 4
+confounder_guard = ["odmrażanie tylne", "klimatyzacja", "nawiew"]
+[[scenario.steps]]
+action = "Odmrażanie przedniej szyby WŁ."
+expect = "front_defrost_on"
+[[scenario.steps]]
+action = "Odmrażanie przedniej szyby WYŁ."
+expect = ""
+
+[[scenario]]
+id = "defrost_rear"
+title = "Odmrażanie tylnej szyby: włączenie i wyłączenie"
+group = "climate"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 4
+confounder_guard = ["odmrażanie przednie", "klimatyzacja"]
+[[scenario.steps]]
+action = "Odmrażanie tylnej szyby WŁ."
+expect = "rear_defrost_on"
+[[scenario.steps]]
+action = "Odmrażanie tylnej szyby WYŁ."
+expect = ""
+
+[[scenario]]
+id = "recirculation"
+title = "Recyrkulacja powietrza: włączenie i wyłączenie"
+group = "climate"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["klimatyzacja", "nawiew", "odmrażanie"]
+[[scenario.steps]]
+action = "Recyrkulacja WŁ."
+expect = "recirculation_on"
+[[scenario.steps]]
+action = "Recyrkulacja WYŁ."
+expect = ""
+
+[[scenario]]
+id = "seat_heating"
+title = "Podgrzewanie fotela kierowcy: stopnie"
+group = "climate"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["podgrzewanie kierownicy", "nawiew", "klimatyzacja"]
+[[scenario.steps]]
+action = "Podgrzewanie fotela o stopień w górę"
+expect = "seat_heating_changed"
+[[scenario.steps]]
+action = "Podgrzewanie fotela o stopień w dół / wyłącz"
+expect = "seat_heating_changed"
+
+[[scenario]]
+id = "steering_heating"
+title = "Podgrzewanie kierownicy: włączenie i wyłączenie"
+group = "climate"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["podgrzewanie fotela", "nawiew", "klimatyzacja"]
+[[scenario.steps]]
+action = "Podgrzewanie kierownicy WŁ."
+expect = "steering_heating_changed"
+[[scenario.steps]]
+action = "Podgrzewanie kierownicy WYŁ."
+expect = "steering_heating_changed"

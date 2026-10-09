@@ -32,6 +32,7 @@ python -m baccable_lab.cli session info SESSION_ID
 python -m baccable_lab.cli export SESSION_ID --basic
 python -m baccable_lab.cli dictionary --role BH --id 0x46C
 python -m baccable_lab.cli session decode SESSION_ID --role BH --id 0x46C --limit 20
+python -m baccable_lab.cli scenarios
 ```
 
 To capture only C1 (C2 or BH can also be selected alone):
@@ -67,6 +68,30 @@ catalog, search terms, and CAN interpretation limits are in
 automatic CAN signal detections; the live frame view shows raw identifiers and
 bytes. The first two seconds are reported separately as startup loss so an
 attachment backlog is visible without being confused with loss during the test.
+
+## Guided scenarios
+
+Guided scenarios are the primary capture workflow. The screen shows one step of
+a controlled in-car procedure at a time as a large `WYKONAJ:` instruction, and
+you confirm it with `ENTER`/`SPACJA` (zrobione), `x` (nieudane) or `p`
+(zatrzymaj); a stopped scenario resumes with `r`, `u` undoes the last
+confirmation, `s` jumps to another procedure and `q` (pressed twice) finishes.
+On-screen wording is Polish and follows the terms used in the car; the stable
+machine keys and the CAN dictionary labels stay English. Colour, a progress bar,
+a next-step preview and a short bell make the screen readable and usable from
+inside the car (`--caps`, `--no-color`/`NO_COLOR`, `--no-bell`). Procedures run
+in a functional order (stationary first, then a parking-lot driving group, then
+on-road assistance) and advance automatically to the next one. Progress is
+stored in `config/scenario_state.json`, so starting Lab again continues from the
+first unfinished step instead of repeating completed work. The manual marker
+palette is not shown while a scenario runs, keeping the screen readable. List
+the procedures and their progress with `baccable scenarios`, jump to one with
+`baccable capture --scenario ID`, or practise it with
+`baccable preview --scenario ID`. Record run context with `--context KEY=VALUE`
+(for example the vehicle, firmware or conditions) and hand one finished session
+to an analysis with `baccable bundle SESSION --output FILE`, which writes a single
+self-contained artifact (coverage, ranked per-action candidates and bounded raw
+excerpts). See [docs/SCENARIOS.md](docs/SCENARIOS.md).
 
 Hardware setup and the acceptance checklist are in [docs/HARDWARE_SETUP.md](docs/HARDWARE_SETUP.md)
 and [docs/CAPTURE.md](docs/CAPTURE.md). The parent project specification is
