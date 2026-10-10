@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "dictionary_version": "2026-10-02.2",
+  "dictionary_version": "2026-10-10.1",
   "vehicle": {
     "model": "Alfa Romeo Giulia (owner-reported)",
     "model_year": null,
@@ -7071,7 +7071,91 @@
       "can_id": null,
       "role": null,
       "topic": "Rain sensor / wiper strokes",
-      "status": "No unambiguous manual marker or active rain/wiper decoder identified. Do not infer from lighting or suspension activity."
+      "status": "No confirmed decoder. The 2026-10-10 guided campaign adds first wiper leads (BH 0x2F0); see docs/research/20261010-scenario-sessions.md. Do not infer from lighting or suspension activity."
+    },
+    {
+      "can_id": "0x4AE",
+      "role": "C1",
+      "topic": "Low-rate counter/heartbeat (no payload state)",
+      "source": "docs/research/20261010-scenario-sessions.md",
+      "status": "candidate bits on this frame are counter-phase artefacts; exclude byte 6 / byte 7 from scoring"
+    },
+    {
+      "can_id": "0x15A",
+      "role": "C1",
+      "topic": "Low-rate counter/heartbeat (no payload state)",
+      "source": "docs/research/20261010-scenario-sessions.md",
+      "status": "candidate bits on this frame are counter-phase artefacts; exclude byte 2 / byte 3 from scoring"
+    },
+    {
+      "can_id": "0x116",
+      "role": "C1",
+      "topic": "Closure/ajar status on the 10 ms backbone (boot byte 2 bit 2 active-low, bonnet byte 3 bit 1)",
+      "source": "docs/research/20261010-scenario-sessions.md",
+      "status": "candidate; single session, gateway-duplicated on C2, needs repetition"
+    },
+    {
+      "can_id": "0x3DE",
+      "role": "BH",
+      "topic": "BH companion of 0x116 closure/bonnet status",
+      "source": "docs/research/20261010-scenario-sessions.md",
+      "status": "candidate"
+    },
+    {
+      "can_id": "0x0F1",
+      "role": "C2",
+      "topic": "Lock/door status byte (byte 3)",
+      "source": "docs/research/20261010-scenario-sessions.md",
+      "status": "candidate"
+    },
+    {
+      "can_id": "0x0FA",
+      "role": "C1",
+      "topic": "One-hot lamp/indicator flag byte (byte 0) on the 10 ms backbone",
+      "source": "docs/research/20261010-scenario-sessions.md",
+      "status": "unresolved; per-lamp isolation needed"
+    },
+    {
+      "can_id": "0x104",
+      "role": "C1",
+      "topic": "Brake state (byte 2 bit 6)",
+      "source": "docs/research/20261010-scenario-sessions.md",
+      "status": "candidate"
+    },
+    {
+      "can_id": "0x1FC",
+      "role": "C2",
+      "topic": "Engine-running bit (byte 0 bit 4); may coexist with the active-damping reference",
+      "source": "docs/research/20261010-scenario-sessions.md",
+      "status": "candidate"
+    },
+    {
+      "can_id": "0x736",
+      "role": "C1",
+      "topic": "HVAC front defrost / fan",
+      "source": "docs/research/20261010-scenario-sessions.md",
+      "status": "candidate"
+    },
+    {
+      "can_id": "0x46A",
+      "role": "BH",
+      "topic": "Climate status (temperature / fan)",
+      "source": "docs/research/20261010-scenario-sessions.md",
+      "status": "candidate"
+    },
+    {
+      "can_id": "0x2F0",
+      "role": "BH",
+      "topic": "Comfort status (wipers lead, washer)",
+      "source": "docs/research/20261010-scenario-sessions.md",
+      "status": "candidate"
+    },
+    {
+      "can_id": "0x341",
+      "role": "C1",
+      "topic": "Monotonic accumulators (suspect counter; state bits unproven)",
+      "source": "docs/research/20261010-scenario-sessions.md",
+      "status": "unresolved"
     }
   ],
   "confidence_policy": {

@@ -160,6 +160,137 @@
         "Event 26 describes driver-window closing and notes passenger-window opening. Only one explicitly driver-open marker; movement duration and final positions are unknown."
       ],
       "next_test": "Stationary: driver down/up three times, then passenger down/up separately. Mark switch press, release and full-open/full-closed states; keep other controls and ignition steady."
+    },
+    {
+      "id": "COUNTER-HEARTBEAT-001",
+      "status": "supported",
+      "role": "C1",
+      "can_id": "0x4AE",
+      "dlc": 8,
+      "description": "Constant prefix 00 00 00 20 60 00 followed by a 4-bit rolling counter (byte 6, modulus 16) and its check byte (byte 7). Carries no payload state; candidate bits on it are phase artefacts (bundle top hits are here).",
+      "evidence": [],
+      "contradictions": [],
+      "next_test": "Exclude byte 6 and byte 7 from candidate scoring on low-rate frames; confirm the modulus over a long baseline."
+    },
+    {
+      "id": "COUNTER-HEARTBEAT-002",
+      "status": "supported",
+      "role": "C1",
+      "can_id": "0x15A",
+      "dlc": 4,
+      "description": "Constant prefix 80 00 followed by a 4-bit rolling counter (byte 2) and a check byte (byte 3). Carries no payload state.",
+      "evidence": [],
+      "contradictions": [],
+      "next_test": "Same counter exclusion as COUNTER-HEARTBEAT-001."
+    },
+    {
+      "id": "COUNTER-BYTES-003",
+      "status": "supported",
+      "role": "C1",
+      "can_id": "0x5A8",
+      "dlc": 8,
+      "description": "Bytes 6-7 are a 4-bit counter and its check byte; bytes 0-5 carry drive-mode state. Only byte 6/7 candidates are spurious.",
+      "evidence": [],
+      "contradictions": [],
+      "next_test": "Restrict 0x5A8 candidate scoring to bytes 0-5."
+    },
+    {
+      "id": "COUNTER-SUSPECT-004",
+      "status": "unresolved",
+      "role": "C1",
+      "can_id": "0x341",
+      "dlc": 8,
+      "description": "Bytes 0-3 hold two 16-bit values that decrease monotonically and bytes 4-7 are constant (ff ff 00 00); it may be an accumulator/heartbeat rather than instantaneous state, which would make its window/seat-belt/mirror/suspension candidates drift.",
+      "evidence": [],
+      "contradictions": [
+        "Automatic bit-step ranking shows moderate window/seat-belt/mirror/suspension agreement, but the field trend is monotonic."
+      ],
+      "next_test": "Sample 0x341 over a quiet idle baseline and over a long steady interval; confirm whether the fields are time counters before accepting any state bit."
+    },
+    {
+      "id": "BODY-CLOSURE-001",
+      "status": "candidate",
+      "role": "C1",
+      "can_id": "0x116",
+      "dlc": 8,
+      "description": "Closure/ajar status on the 10 ms backbone, gateway-duplicated on C2: boot at byte 2 bit 2 (active-low), bonnet at byte 3 bit 1 (active-low). Byte 6 is a counter and byte 7 a CRC.",
+      "evidence": [],
+      "contradictions": [
+        "Single session; closure bits and other byte 0-3 activity are not yet separated."
+      ],
+      "next_test": "Repeat boot-only and bonnet-only cycles and confirm the active-low sense with negative controls."
+    },
+    {
+      "id": "BODY-CLOSURE-002",
+      "status": "candidate",
+      "role": "BH",
+      "can_id": "0x3DE",
+      "dlc": 8,
+      "description": "BH-side companion of 0x116; boot at byte 2 bit 2 follows the same open/closed sense.",
+      "evidence": [],
+      "contradictions": [],
+      "next_test": "Confirm it is the same body state as 0x116 in a repeated session."
+    },
+    {
+      "id": "BODY-DOORLOCK-001",
+      "status": "candidate",
+      "role": "C2",
+      "can_id": "0x0F1",
+      "dlc": 8,
+      "description": "Lock/door status byte: byte 3 carries 128 distinct values and its bits 2-6 follow lock/unlock; byte 6 is a counter and byte 7 a CRC.",
+      "evidence": [],
+      "contradictions": [],
+      "next_test": "Isolate lock, unlock and per-door open/close with the door warning marker."
+    },
+    {
+      "id": "BODY-LIGHTFLAG-001",
+      "status": "unresolved",
+      "role": "C1",
+      "can_id": "0x0FA",
+      "dlc": 8,
+      "description": "High-volume backbone frame whose byte 0 takes single-bit values (0x20/0x40/0x80), suggesting a one-hot lamp/indicator flag; byte 7 is a CRC. The individual lamp was not isolated.",
+      "evidence": [],
+      "contradictions": [
+        "Steady dipped/high/fog lamps produced no clean level bit; a pulse/one-hot encoding is plausible."
+      ],
+      "next_test": "Activate one lamp at a time and read byte 0 raw values; keep lamps steady for several seconds."
+    },
+    {
+      "id": "BODY-BRAKE-002",
+      "status": "candidate",
+      "role": "C1",
+      "can_id": "0x104",
+      "dlc": 8,
+      "description": "Brake state lead on the 10 ms backbone: byte 2 bit 6 rises with the brake-pedal marker (ON 0.66 / OFF 0.01); 0x100 byte 0 also follows. Distinct from the 0x384 park-brake comment.",
+      "evidence": [],
+      "contradictions": [],
+      "next_test": "Pedal-only cycles with EPB unchanged, then EPB-only cycles with pedal held."
+    },
+    {
+      "id": "ENGINE-RUN-001",
+      "status": "candidate",
+      "role": "C2",
+      "can_id": "0x1FC",
+      "dlc": 8,
+      "description": "Byte 0 bit 4 rises with engine start and clears on stop (ON 0.83 / OFF 0.01). Conflicts with the existing reference-only note that calls 0x1FC active damping; both meanings may coexist on one multiplexed frame.",
+      "evidence": [],
+      "contradictions": [
+        "Prior reference-only interpretation: active damping / differential status."
+      ],
+      "next_test": "Repeat start/stop cycles and inspect the full payload to separate engine-running from the damping reference."
+    },
+    {
+      "id": "WIPER-HVAC-001",
+      "status": "candidate",
+      "role": "BH",
+      "can_id": "0x2F0",
+      "dlc": 8,
+      "description": "Comfort status: wipers at byte 4 bit 4 (ON 0.92 / OFF 0.29); a first wiper lead. Companion climate leads: BH 0x46A and C1 0x736 follow front defrost/fan.",
+      "evidence": [],
+      "contradictions": [
+        "Rain sensor / wiper strokes were previously an explicit gap; this is a lead, not a decoder."
+      ],
+      "next_test": "Run the rain/wipers procedures alone with each wiper speed isolated and the washer separated."
     }
   ]
 }
