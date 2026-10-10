@@ -249,8 +249,9 @@ def review_session(directory: Path, catalog: dict) -> dict:
         for step in scenario_steps:
             entry = scenario_by_run.setdefault((step['scenario'], step['run']),
                                                {"scenario": step['scenario'], "run": step['run'],
-                                                "done": 0, "failed": 0})
-            entry["done" if step['outcome'] == "done" else "failed"] += 1
+                                                "done": 0, "failed": 0, "skipped": 0})
+            key = step['outcome'] if step['outcome'] in ("done", "failed", "skipped") else "failed"
+            entry[key] += 1
         scenario_overview = [scenario_by_run[key] for key in sorted(scenario_by_run)]
         losses = [dict(zip(("role", "host_ns", "device_timestamp_ms", "dropped_count"), row))
                   for row in database.execute(

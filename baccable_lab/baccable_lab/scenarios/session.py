@@ -12,11 +12,14 @@ class ScenarioSession:
 
     ``start`` begins the first unfinished scenario (or an explicitly requested
     one). ``advance`` is called after a scenario finishes and moves to the next
-    unfinished scenario, so the operator never repeats completed work.
+    unfinished scenario, so the operator never repeats completed work. A scenario
+    the operator permanently excluded (for example ABS or traction control) is
+    left out of the queue entirely and never scheduled.
     """
 
     def __init__(self, scenarios, progress: ProgressStore):
-        self.order = order_scenarios(scenarios)
+        excluded = progress.excluded_ids()
+        self.order = [s for s in order_scenarios(scenarios) if s.id not in excluded]
         self.progress = progress
         self.runner: ScenarioRunner | None = None
         self.position = -1

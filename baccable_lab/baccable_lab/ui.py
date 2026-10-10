@@ -59,7 +59,7 @@ def _message_style(message: str) -> str:
         return GREEN
     if low.startswith(("nieudane", "brak")):
         return RED
-    if "zatrzym" in low:
+    if low.startswith(("pominięte", "pominięto", "wykluczono", "zatrzym")):
         return YELLOW
     return GREY
 
@@ -130,8 +130,8 @@ def _scenario_block(scenario: dict | None, width: int, color: bool, caps: bool) 
     if scenario.get("next_action"):
         body.append((f"dalej:  {scenario['next_action']}", GREY))
     lines = _box(body, width, color)
-    lines.append(_clip("  [ENTER/SPACJA] zrobione   [x] nieudane   [p] zatrzymaj", width))
-    lines.append(_clip("  [r] wznów   [u] cofnij   [n] notatka   [s] wybierz   [q] zakończ", width))
+    lines.append(_clip("  [ENTER/SPACJA] zrobione   [x] nieudane   [k] pomiń krok   [p] zatrzymaj", width))
+    lines.append(_clip("  [o] pomiń scenariusz   [e] wyklucz   [r] wznów   [u] cofnij   [n] notatka   [s] wybierz   [q] zakończ", width))
     if scenario.get("guard"):
         lines.append(_paint(_clip("  nie zmieniaj: " + ", ".join(scenario["guard"]), width), GREY, color))
     lines.append(_paint(_clip(f"  odstęp między akcjami >= {scenario.get('min_separation_s', 3):g}s", width), GREY, color))

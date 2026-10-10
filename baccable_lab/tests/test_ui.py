@@ -31,7 +31,9 @@ class DashboardTests(unittest.TestCase):
                          "powtórzenie 2/3", "WYKONAJ:", "Naciśnij UNLOCK", "oczekiwany stan:",
                          "Odblokowanie zamków", "postęp: 3/6", "— Dostęp i drzwi —", "dalej:  Naciśnij LOCK",
                          "[ENTER/SPACJA] zrobione", "[x] nieudane",
-                         "[p] zatrzymaj", "[r] wznów", "[s] wybierz", "nie zmieniaj: drzwi, szyby", "0x090"):
+                         "[p] zatrzymaj", "[r] wznów", "[s] wybierz", "[k] pomiń krok",
+                         "[o] pomiń scenariusz", "[e] wyklucz",
+                         "nie zmieniaj: drzwi, szyby", "0x090"):
             self.assertIn(expected, screen)
         for absent in ("MARKER GROUPS", "QUICK MARKERS", "DO NOW:", "[1] Unlock"):
             self.assertNotIn(absent, screen)
