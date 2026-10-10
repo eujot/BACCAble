@@ -29,6 +29,9 @@ procedure.
 | --- | --- |
 | `ENTER`, `SPACJA` or `y` | Step performed — mark as **zrobione** |
 | `x` | Step could not be performed — mark as **nieudane** |
+| `k` | **Pomiń** this step — you deliberately do not perform it (no marker is written) |
+| `o` | **Pomiń scenariusz** — skip every remaining step of the current procedure |
+| `e` | **Wyklucz** — skip the rest and stop scheduling this procedure permanently |
 | `p` | **Zatrzymaj** (pause) the scenario; recording continues |
 | `r` | **Wznów** the paused scenario at the same step |
 | `u` | **Cofnij** the last confirmation of this run |
@@ -38,7 +41,33 @@ procedure.
 
 A stopped scenario keeps its position. A short bell rings on a confirmation or a
 new step, so a confirmation can be heard without looking at the screen. The last
-confirmation stays undoable with `u`.
+confirmation stays undoable with `u` — including a skipped step.
+
+### Skipping work you will not perform
+
+A step you do not want to perform (for example provoking ABS, ESC or traction
+control) is marked **pominięte** with `k`. It advances the procedure but writes
+**no timeline marker**: a skipped step must never look like evidence that the
+physical action happened. Only its structured `scenario_steps` row (with
+`outcome = "skipped"`) is stored, so the analysis sees that the step existed and
+was skipped on purpose rather than missed.
+
+`o` skips every remaining confirmation of the current procedure (all steps and
+all repetitions) in one keystroke. `e` does the same **and** retires the procedure
+permanently: it is stored in the excluded list of `config/scenario_state.json`, is
+never scheduled again and is left out of the queue until you re-enable it. This is
+the quick way, inside the car, to say "I will not provoke ABS or traction
+control". The same decision can be made from a terminal:
+
+```sh
+baccable scenarios --exclude abs_intervention_closed_area   # never schedule it
+baccable scenarios --exclude esc_intervention_closed_area --exclude traction_control_closed_area
+baccable scenarios --include abs_intervention_closed_area   # re-enable it
+```
+
+Skipping is not the same as failing: `x` says the action was expected but did not
+work (useful evidence), while `k`/`o`/`e` say the action was intentionally not
+attempted and carries no signal evidence.
 
 ### Colour and readability
 
@@ -66,14 +95,17 @@ work for both `capture` and `preview`.
 - Each confirmation is stored immediately. Progress lives in
   `config/scenario_state.json` (override with `--state PATH`). Starting Lab
   again resumes at the first unfinished scenario and step; a scenario already
-  treated as complete is skipped. `baccable scenarios` marks finished procedures
-  with `[x]`.
+  treated as complete is skipped. `baccable scenarios` marks each procedure:
+  `[x]` fully done, `[~]` finished but with skipped steps, `[E]` excluded,
+  `[ ]` still pending. The table footer reports how many are done, how many
+  finished with skips and how many are excluded.
 
 ## Commands
 
 ```sh
 baccable scenarios                       # ordered list with progress
 baccable scenarios --json                # machine-readable list
+baccable scenarios --exclude ID --include ID   # retire / re-enable procedures
 baccable scenarios --scenarios-dir DIR --state FILE
 baccable capture --port C1=/dev/cu.usbmodemXXXX      # resumes from progress
 baccable capture --port C1=/dev/cu.usbmodemXXXX --scenario drive_brake  # jump to one
@@ -148,8 +180,10 @@ must never be provoked on a public road.
 
 Each confirmation stores a `scenario_steps` row
 (`scenario`, `step_index`, `step_key`, `expect`, `run`, `outcome`) linked to a
-timeline marker. `baccable review` includes `scenario_steps` and a per-run
-`scenario_overview`, and treats scenario markers as manual evidence. It also
+timeline marker. `outcome` is `done`, `failed` or `skipped`; only `done`/`failed`
+carry a marker, so a skipped step is never used as signal evidence. `baccable
+review` includes `scenario_steps` and a per-run `scenario_overview` (done / failed
+/ skipped) and treats scenario markers as manual evidence. It also
 reports `scenario_candidates`: bits that flipped for the same expected action at
 least twice, ranked by repeat count, so a repeated ON/OFF pair becomes a short
 list to verify instead of thousands of single-event leads. A field is still only

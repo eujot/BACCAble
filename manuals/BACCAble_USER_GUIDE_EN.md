@@ -858,8 +858,13 @@ does not mean a serial capture port should exist in DFU.
    Lab's normal quit/Ctrl-C procedure and inspect the session summary.
 6. Capture is driven by **guided scenarios**: the screen shows one controlled
    procedure at a time (in Polish, using the car's own terms) and you confirm
-   each step with `ENTER`/`SPACJA` (zrobione), `x` (nieudane) or `p`
-   (zatrzymaj). A stopped scenario resumes with `r`, `u` undoes the last
+   each step with `ENTER`/`SPACJA` (zrobione), `x` (nieudane) or `k` (pomiń ten
+   krok). A step you do not want to perform — for example provoking ABS, ESC or
+   traction control — is skipped with `k` and writes no marker, so it never looks
+   like evidence that the action happened. `o` skips the whole procedure and `e`
+   skips it and stops scheduling it permanently (also `baccable scenarios
+   --exclude ID` / `--include ID`, both kept in the same state file). A stopped
+   scenario resumes with `r`, `u` undoes the last
    confirmation, `s` jumps to another procedure and `q` (or `Ctrl-C`) ends the
    session. Keys always work during a scenario: `p` stops, `n` adds a note, `u`
    undoes and `q` exits. Colour, a progress bar and a short bell make the screen readable and

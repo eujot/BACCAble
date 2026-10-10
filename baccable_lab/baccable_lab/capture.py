@@ -24,6 +24,12 @@ from baccable_lab.storage.sqlite_store import SessionStore
 from baccable_lab.ui import render_dashboard
 STARTUP_LOSS_WINDOW_NS = 2_000_000_000
 
+_OUTCOME_PL = {"done": "zrobione", "failed": "nieudane", "skipped": "pominięte"}
+
+
+def _outcome_pl(outcome: str) -> str:
+    return _OUTCOME_PL.get(outcome, outcome)
+
 
 def new_session_id() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%SZ")
@@ -145,7 +151,9 @@ def capture(ports: dict[str, str], root: Path, command: list[str], *, preview: b
     started = time.monotonic_ns()
     events = 0
     last_event_id: int | None = None
-    last_event_label: str | None = None
+    # (marker event id or None, scenario_steps rowid) per confirmation, so undo
+    # and the step note work even for a deliberately skipped step with no marker.
+    history: list[tuple[int | None, int]] = []
     startup_losses = {role: 0 for role in roles}
     in_session_losses = {role: 0 for role in roles}
     startup_loss_reported: set[str] = set()
@@ -155,6 +163,7 @@ def capture(ports: dict[str, str], root: Path, command: list[str], *, preview: b
     message = ""
     done_count = 0
     failed_count = 0
+    skipped_count = 0
 
     def ring() -> None:
         # A short bell so the operator knows a confirmation or a new step
@@ -199,73 +208,108 @@ def capture(ports: dict[str, str], root: Path, command: list[str], *, preview: b
                        else f"Start: {runner.scenario.title}")
             ring()
 
-    def confirm(outcome: str) -> None:
-        # A confirmation writes a timeline marker plus a structured row so the
-        # offline analysis can pair the matching ON/OFF steps across runs.
-        nonlocal message, last_event_id, last_event_label, events, done_count, failed_count
+    def confirm(outcome: str, *, announce: bool = True) -> None:
+        # A performed action (done/failed) writes a timeline marker plus a
+        # structured row. A skipped step writes only the structured row so it is
+        # never mistaken for evidence that the physical action happened.
+        nonlocal message, last_event_id, events, done_count, failed_count, skipped_count
         runner = scenario_session.runner
         if runner is None:
             return
-        pending = runner.done() if outcome == "done" else runner.failed()
+        pending = runner.record(outcome)
         if pending is None:
             return
         run, index, step = pending
         at = time.monotonic_ns() - started
-        label = step.marker_label
         note = f"scenario {runner.scenario.id} run {run} step {index + 1} {outcome}"
-        event_id = store.add_event(at, label, source="scenario", note=note)
-        store.add_scenario_step(at, event_id, runner.scenario.id, index, step.key, step.expect, run, outcome)
-        last_event_id, last_event_label = event_id, label
-        events += 1
+        event_id: int | None = None
+        if outcome != "skipped":
+            event_id = store.add_event(at, step.marker_label, source="scenario", note=note)
+            events += 1
+        step_id = store.add_scenario_step(at, event_id, runner.scenario.id, index, step.key,
+                                          step.expect, run, outcome)
+        last_event_id = event_id
+        history.append((event_id, step_id))
         done_count += outcome == "done"
         failed_count += outcome == "failed"
+        skipped_count += outcome == "skipped"
         scenario_session.progress.record(runner.scenario.id, runner.handled,
                                          runner.scenario.total_steps, outcome)
-        ring()
         if runner.finished:
             finished = runner.scenario.title
             following = scenario_session.advance()
-            if following:
-                message = f"Ukończono: {finished}. Następny: {following.scenario.title}"
-            else:
-                message = f"Ukończono: {finished}. Wszystkie scenariusze ukończone."
-        else:
+            if announce:
+                ring()
+                if following:
+                    message = f"Ukończono: {finished}. Następny: {following.scenario.title}"
+                else:
+                    message = f"Ukończono: {finished}. Wszystkie scenariusze ukończone."
+        elif announce:
+            ring()
             handled, total = runner.progress()
-            outcome_pl = "zrobione" if outcome == "done" else "nieudane"
-            message = f"{outcome_pl}: {step.action} ({handled}/{total})"
+            message = f"{_outcome_pl(outcome)}: {step.action} ({handled}/{total})"
+
+    def skip_scenario(*, exclude: bool) -> None:
+        # Skip every remaining confirmation of the current scenario (including
+        # its repetitions). Optionally exclude it permanently so it never returns
+        # to the queue, e.g. ABS or traction control the operator will not provoke.
+        nonlocal message
+        runner = scenario_session.runner
+        if runner is None:
+            return
+        target, title = runner.scenario.id, runner.scenario.title
+        count = 0
+        while True:
+            current = scenario_session.runner
+            if current is None or current.scenario.id != target or current.current() is None:
+                break
+            confirm("skipped", announce=False)
+            count += 1
+        if exclude:
+            scenario_session.progress.exclude(target)
+            message = f"Wykluczono na stałe: {title} ({count} pominiętych) — nie wróci w kolejce"
+        else:
+            message = f"Pominięto: {title} ({count} kroków)"
+        ring()
 
     def undo() -> None:
-        nonlocal message, last_event_id, last_event_label, events, done_count, failed_count
+        nonlocal message, last_event_id, events, done_count, failed_count, skipped_count
         runner = scenario_session.runner
-        if last_event_id is None or runner is None or not runner.records:
+        if runner is None or not runner.records or not history:
             message = "Brak do cofnięcia"
             return
-        store.delete_event(last_event_id)
-        store.delete_scenario_step(last_event_id)
+        event_id, step_id = history.pop()
+        if event_id is not None:
+            store.delete_event(event_id)
+            events = max(0, events - 1)
+        store.delete_scenario_step(step_id)
         store.commit()
-        events -= 1
         run, index, step, outcome = runner.records.pop()
         runner.handled -= 1
         runner.run, runner.index = run, index
         runner.finished = False
         scenario_session.progress.set_handled(runner.scenario.id, runner.handled,
-                                              runner.scenario.total_steps)
+                                              runner.scenario.total_steps, revert=outcome)
         if outcome == "done":
             done_count = max(0, done_count - 1)
-        else:
+        elif outcome == "failed":
             failed_count = max(0, failed_count - 1)
-        outcome_pl = "zrobione" if outcome == "done" else "nieudane"
-        message = f"Cofnięto {outcome_pl}: {step.action}"
+        else:
+            skipped_count = max(0, skipped_count - 1)
+        last_event_id = history[-1][0] if history else None
+        message = f"Cofnięto {_outcome_pl(outcome)}: {step.action}"
 
     def add_note() -> None:
         nonlocal message
-        if last_event_id is None or not hasattr(keyboard, "read_line"):
+        if not history or not hasattr(keyboard, "read_line"):
             message = "Brak kroku do oznaczenia"
             return
+        event_id, step_id = history[-1]
         note = keyboard.read_line("Notatka do ostatniego kroku: ")
         if note:
-            store.update_event_note(last_event_id, note)
-            store.update_scenario_note(last_event_id, note)
+            store.update_scenario_note(step_id, note)
+            if event_id is not None:
+                store.update_event_note(event_id, note)
             store.commit()
             message = f"Notatka: {note}"
 
@@ -307,7 +351,8 @@ def capture(ports: dict[str, str], root: Path, command: list[str], *, preview: b
         keyboard = _Keyboard()
         start_scenario(scenario)
         print(f"{'Podgląd offline' if preview else 'Sesja ' + session_id}; "
-              "scenariusze: ENTER=zrobione x=nieudane p=zatrzymaj r=wznów u=cofnij s=wybierz q=zakończ")
+              "scenariusze: ENTER=zrobione x=nieudane k=pomiń krok o=pomiń scenariusz "
+              "e=wyklucz p=zatrzymaj r=wznów u=cofnij n=notatka s=wybierz q=zakończ")
         for role in roles:
             reader_type = _DemoReader if preview else _Reader
             reader = reader_type(role, ports[role], incoming, stop, abort)
@@ -327,6 +372,12 @@ def capture(ports: dict[str, str], root: Path, command: list[str], *, preview: b
                     confirm("done")
                 elif key in {"x", "X"}:
                     confirm("failed")
+                elif key in {"k", "K"}:
+                    confirm("skipped")
+                elif key in {"o", "O"}:
+                    skip_scenario(exclude=False)
+                elif key in {"e", "E"}:
+                    skip_scenario(exclude=True)
                 elif key in {"p", "P"}:
                     runner.pause()
                     message = "Zatrzymane; naciśnij r, aby wznowić"
@@ -467,7 +518,8 @@ def capture(ports: dict[str, str], root: Path, command: list[str], *, preview: b
             print("\nPodgląd offline zakończony. Ramki demo i znaczniki ćwiczeniowe zostały odrzucone; sesja nie została zapisana.")
         else:
             print(f"\nPodsumowanie: scenariusze ukończone {scenario_session.completed()}/{scenario_session.total()}; "
-                  f"potwierdzenia w tej sesji: {done_count} zrobione, {failed_count} nieudane; czas {duration:.0f}s")
+                  f"potwierdzenia w tej sesji: {done_count} zrobione, {failed_count} nieudane, "
+                  f"{skipped_count} pominięte; czas {duration:.0f}s")
             print(f"Sesja {'nieudana' if errors else 'zakończona'}: {directory}")
             print(json.dumps(stats, indent=2))
     return 2 if errors else 0
