@@ -110,3 +110,19 @@ expect = "driver_attention_warning"
 [[scenario.steps]]
 action = "Ostrzeżenie znika"
 expect = ""
+
+[[scenario]]
+id = "lane_assist_toggle"
+title = "Asystent pasa ruchu (LKA): wyłączenie i włączenie (dwuklik na lewej dźwigni)"
+group = "adas"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["kierunkowskazy", "tempomat", "bieg"]
+notes = "Na postoju, zapłon włączony. Dwukrotnie kliknij przycisk pasa na lewej dźwigni, aby wyłączyć asystenta; ponowny dwuklik włącza go. Nic więcej nie zmieniaj."
+[[scenario.steps]]
+action = "Dwuklik na lewej dźwigni — wyłącz asystenta pasa (LKA)"
+expect = "lane_assist_disabled"
+[[scenario.steps]]
+action = "Dwuklik na lewej dźwigni — włącz asystenta pasa (LKA)"
+expect = "lane_assist_enabled"

@@ -107,6 +107,28 @@ action = "Wybierz tryb Race (jeśli dostępny)"
 expect = "dna_mode_changed"
 
 [[scenario]]
+id = "dna_all_modes"
+title = "DNA: wszystkie tryby (D, N, A, Race) - potwierdzenie kodów"
+group = "drivetrain"
+vehicle = "stationary"
+runs = 3
+min_separation_s = 3
+confounder_guard = ["bieg", "hamulec", "zapłon"]
+notes = "Pokrętło jest monostabilne (wraca w to samo miejsce). Obracaj, aż tryb zmieni się na wyświetlaczu, i potwierdź po ustabilizowaniu. Race zaznacz tylko jeśli jest dostępny; inaczej pomiń ten krok."
+[[scenario.steps]]
+action = "Ustaw tryb D (Dynamic)"
+expect = "dna_dynamic"
+[[scenario.steps]]
+action = "Ustaw tryb N (Natural)"
+expect = "dna_natural"
+[[scenario.steps]]
+action = "Ustaw tryb A (Advanced Efficiency)"
+expect = "dna_allweather"
+[[scenario.steps]]
+action = "Ustaw tryb Race (jeśli dostępny)"
+expect = "dna_race"
+
+[[scenario]]
 id = "start_stop_button"
 title = "Start/Stop: wyłączenie i przywrócenie przyciskiem"
 group = "drivetrain"

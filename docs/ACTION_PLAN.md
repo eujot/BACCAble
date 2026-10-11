@@ -177,6 +177,24 @@ reassertion and factory arbitration remain. No new beta or hardware flash.
 
 ## Current work
 
+### Scenario-decode docs consistency and the LKA toggle finding, 2026-10-11
+
+Resolved the PR #53 rebase conflict in this file and audited the Lab documentation,
+frame descriptions and code against the current scenario work. Kept the knowledge
+base in sync: the seven catalog labels added for the targeted decode procedures
+(`dna_natural`, `dna_dynamic`, `dna_allweather`, `dna_race`, `lane_assist_disabled`,
+`lane_assist_enabled`, `wipers_auto`) are now listed in `giulia.json`
+`marker_index` (status `no_event_decoder`), so the marker index again mirrors the
+catalog; `dictionary_version` bumped to `2026-10-11.1` and `CAN_DICTIONARY.md`
+re-rendered. Added the `ADAS-LKA-001` hypothesis: LKA is enabled/disabled by a
+double-click on the left stalk button (not a menu item), and the frame carrying the
+assist state is still unidentified — parked with the `lane_assist_toggle` scenario
+and a `research_candidates[]` pointer. Corrected `docs/MARKERS.md`, which still
+described the removed interactive marker palette (`1`–`0`, `f`, `g`, `c`), to the
+scenario-confirmation workflow plus `baccable event add`, and refreshed one stale
+scenario-count fixture in the UI test. 69 Lab tests pass; no hardware run was
+performed.
+
 ### Bundle-first research playbook for AI reviews, 2026-10-10
 
 Added `baccable_lab/docs/RESEARCH_PLAYBOOK.md`: the repeatable, test-minimising
@@ -232,8 +250,29 @@ skips, `[E]` excluded, `[ ]` pending, and reports the three totals. `review`'
 s `scenario_overview` and the bundle `brief` now count skipped confirmations
 separately, and the bundle keeps the intentional gaps visible without treating
 them as candidates. Screen legend, `SCENARIOS.md`, README and both user guides
-updated. 69 Lab tests pass via the CI `unittest` discovery; no hardware run was
-performed.
+updated. 69 Lab tests pass via the CI `unittest` discovery; no hardware run was performed.
+
+### Targeted decode scenarios: DNA modes, lane assist, wipers→lights, 2026-10-10
+
+Added three guided procedures and the markers they need, so the firmware options
+the owner wants (default DNA mode, lane-assist disable, automatic lights driven by
+wiper activity) can be decoded from controlled recordings: `dna_all_modes`
+(drivetrain, stationary, D/N/A/Race each with its own marker),
+`lane_assist_toggle` (adas, stationary, LKA off/on with a double-click on the left
+stalk button) and `wipers_lights_auto` (wipers, stationary, wipers off/slow/fast/auto
+with the headlights in AUTO, marking the dipped-beam reaction). The rain-sensor
+trigger is deliberately dropped in favour of wiper activity, which the firmware can
+see without a rain-sensor decoder. The catalog gains the four per-mode DNA markers
+(`dna_natural`, `dna_dynamic`, `dna_allweather`, `dna_race`), the lane toggle
+markers (`lane_assist_disabled`, `lane_assist_enabled`) and `wipers_auto` — English
+keys, Polish on-screen wording, search aliases — so each mode correlates separately
+instead of sharing `dna_mode_changed`. The bundled library is now **82 procedures /
+513 confirmations**. `SCENARIOS.md` documents the three tests and the repetition
+rule: ≥3 clean ON/OFF cycles in one recording, the same action repeated in a second
+session for independence, and a physical check (watching the lamps) for `validated`
+— 6–9 observations per action, not a repeat of all 82. The scenario ordering test
+now compares `drive` before `adas` among driving procedures, so a stationary `adas`
+procedure is allowed. 69 Lab tests pass; no hardware run performed.
 
 ### Scenario-first capture redesign, 2026-10-09
 

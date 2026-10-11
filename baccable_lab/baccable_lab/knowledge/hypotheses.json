@@ -291,6 +291,18 @@
         "Rain sensor / wiper strokes were previously an explicit gap; this is a lead, not a decoder."
       ],
       "next_test": "Run the rain/wipers procedures alone with each wiper speed isolated and the washer separated."
+    },
+    {
+      "id": "ADAS-LKA-001",
+      "status": "unresolved",
+      "role": null,
+      "can_id": null,
+      "description": "Lane-keeping assist (LKA) is enabled/disabled by a double-click on the left stalk button with the ignition on and the car stationary; it is not a menu item. The frame that carries the LKA enable/disable state is not yet identified. The momentary lane stalk button press itself is already decoded (BH 0x5A0 byte 4 bit 0; C1/C2 0x384 byte 3 bit 6, historical comment), so the search must separate that button pulse from a persistent assist state.",
+      "evidence": [],
+      "contradictions": [
+        "The 2026-10-10 campaign planned the lane procedures on the assumption that LKA is toggled from a menu; the owner's confirmation of the left-stalk double-click supersedes that assumption. No lane-toggle frames were captured in that campaign."
+      ],
+      "next_test": "Run `lane_assist_toggle` (stationary, ignition on) with at least three clean OFF/ON double-click cycles, mark lane_assist_disabled / lane_assist_enabled, and repeat the same procedure in a second session; correlate by state interval and separate the button pulse (0x5A0 / 0x384) from any persistent enable state."
     }
   ]
 }

@@ -10,7 +10,7 @@ from baccable_lab.events.search import search_markers
 from baccable_lab.ui import render_dashboard
 
 SCENARIO = {
-    "number": 12, "total_scenarios": 79, "completed_scenarios": 11,
+    "number": 12, "total_scenarios": 82, "completed_scenarios": 11,
     "title": "Centralny zamek: zablokowanie i odblokowanie pilotem", "location": "postój",
     "run": 2, "runs": 3, "step_index": 0, "steps_in_run": 2,
     "action": "Naciśnij UNLOCK na pilocie, poczekaj na mignięcie kierunkowskazów",
@@ -27,7 +27,7 @@ class DashboardTests(unittest.TestCase):
             mode="LIVE CAPTURE", elapsed=12.5,
             counts={"C1": {"frames": 12, "dropped": 0}},
             latest={"C1": (11.8, 0x090, b"\x01\x02")}, width=120, scenario=SCENARIO)
-        for expected in ("LIVE CAPTURE", "SCENARIUSZ 12/79", "Centralny zamek", "KROK 1/2",
+        for expected in ("LIVE CAPTURE", "SCENARIUSZ 12/82", "Centralny zamek", "KROK 1/2",
                          "powtórzenie 2/3", "WYKONAJ:", "Naciśnij UNLOCK", "oczekiwany stan:",
                          "Odblokowanie zamków", "postęp: 3/6", "— Dostęp i drzwi —", "dalej:  Naciśnij LOCK",
                          "[ENTER/SPACJA] zrobione", "[x] nieudane",
@@ -54,8 +54,8 @@ class DashboardTests(unittest.TestCase):
         screen = render_dashboard(mode="LIVE CAPTURE", elapsed=0, counts={}, latest={}, scenario=paused)
         self.assertIn("ZATRZYMANE", screen)
         complete = render_dashboard(mode="LIVE CAPTURE", elapsed=0, counts={}, latest={},
-                                    scenario={"complete": True, "completed_scenarios": 79,
-                                              "total_scenarios": 79, "message": ""})
+                                    scenario={"complete": True, "completed_scenarios": 82,
+                                              "total_scenarios": 82, "message": ""})
         self.assertIn("WSZYSTKIE SCENARIUSZE UKOŃCZONE", complete)
         empty = render_dashboard(mode="LIVE CAPTURE", elapsed=0, counts={}, latest={}, scenario={"empty": True})
         self.assertIn("Nie wczytano biblioteki", empty)

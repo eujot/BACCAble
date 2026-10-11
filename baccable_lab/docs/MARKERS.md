@@ -8,34 +8,32 @@ handbook, for example, describes optional driver assistance, rain sensing,
 different DNA modes and active chassis features; it does not define their CAN
 IDs or payload encoding.
 
-## Fast entry
+## How markers are placed
 
-The capture screen keeps the quick-key meanings visible. Keys `1`–`0` retain the
-established actions:
+Markers are written by the guided scenarios. Confirming a step adds a
+timestamped event carrying that step's stable catalog label, and the same
+confirmation is stored as a structured `scenario_steps` row (see
+[SCENARIOS.md](SCENARIOS.md)). The live capture screen deliberately keeps **no**
+manual marker palette: the former quick keys `1`–`0`, the `f` search, the `g`
+group browser and the `c` custom prompt were removed so that only the confirmed
+action writes a marker. While a scenario runs, `n` attaches a note to the last
+confirmation, `u` undoes it, and `q` finishes the session.
 
-| Key | Marker | Key | Marker |
-| --- | --- | --- | --- |
-| `1` | Unlock | `6` | Brake off |
-| `2` | Driver door open | `7` | Left indicator on |
-| `3` | Driver door close | `8` | Left indicator off |
-| `4` | Engine start | `9` | Right indicator on |
-| `5` | Brake on | `0` | Right indicator off |
+To add a marker to an already recorded session, use the CLI. The label is free
+text and the event is stored with `source = "cli"`:
 
-Press `f` and type an action or keyword in English or Polish. A single best match is recorded with
-its stable catalog label. When several labels match, choose a numbered result;
-press Enter to save the original phrase as a custom marker. When nothing
-matches, the phrase is saved directly as a custom marker. Search ignores case
-and accents, and recognizes common terms such as ABS, ESC/ESP, ASR/TCS, ACC,
-FCW, AEB, BSM, LDW/LKA, TPMS, PDC, DNA, Q4, ADC, SOC, and Polish terms such as
-`deszcz` or `temperatura intercoolera`. `c` always opens a custom
-marker prompt. `g` browses the full catalog; the group key and item number are
-shown on screen. Press `n` to annotate the latest marker, `u` to undo it, and
-`q` to finish.
+```sh
+baccable event add SESSION_ID brake_on --at-ns 123456789
+```
 
 ## Catalog
 
-Use the group selector (`g`) when you want a known label rather than search.
-Every action below is a manually placed timestamp:
+The table below is the stable label set the bundled scenarios use, grouped as in
+the catalog module (`baccable_lab/events/catalog.py`). It documents what each
+label means — it is not a keypad. The wording and search helpers
+(`search_markers`, `EVENT_GROUPS`, `SEARCH_ALIASES`) remain available to resolve
+a phrase to a label, but nothing on the capture screen places markers by key.
+Each entry below is written as a manually confirmed timestamp:
 
 | Group | Available markers |
 | --- | --- |
@@ -55,11 +53,12 @@ Every action below is a manually placed timestamp:
 | Parking / manoeuvring | Parking sensors, warnings, reverse camera, park assist start/finish, parking brake, door warning, vehicle approach |
 | Electrical / diagnostics | Module wake/sleep, warning/fault/clear messages, TPMS/battery warnings, charging change, OBD connection, diagnostic session |
 
-Use custom text for an event not represented here, including vehicle-specific
+A step whose `expect` is empty stores its raw action text instead of a catalog
+label; use that for an event not represented here, including vehicle-specific
 conditions such as coolant or intercooler temperature, engine load, fan
-operation, a particular dashboard message, or a precise test step. Matching
-search terms include `SOC`, `RPM`, `boost`, `coolant temp` and `intercooler`.
-Add a short
+operation, a particular dashboard message, or a precise test step. `baccable
+event add` accepts arbitrary labels the same way, and its matching search terms
+include `SOC`, `RPM`, `boost`, `coolant temp` and `intercooler`. Add a short
 note (`n`) when the marker alone is ambiguous (for example, which door, which
 DNA mode, or what triggered an intervention).
 
@@ -72,8 +71,8 @@ message definitions and signal layouts (often a DBC or manufacturer-specific
 documentation), plus validation against the exact vehicle configuration, to
 decode meanings. ISO-TP diagnostic traffic is a higher-level transport over
 CAN and must be interpreted separately. BACCAble Lab currently records raw
-frames and manual markers; it does not identify ECUs, decode vehicle signals,
-or infer these catalog events.
+frames and human-confirmed markers; it does not identify ECUs, decode vehicle
+signals, or infer these catalog events.
 
 The catalog is intended as a practical checklist for safe, ordinary
 observations, not a request to trigger emergency braking, stability control,
