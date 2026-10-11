@@ -113,16 +113,16 @@ expect = ""
 
 [[scenario]]
 id = "lane_assist_toggle"
-title = "Asystent pasa ruchu (LKA): wyłączenie i włączenie w menu"
+title = "Asystent pasa ruchu (LKA): wyłączenie i włączenie (dwuklik na lewej dźwigni)"
 group = "adas"
 vehicle = "stationary"
 runs = 3
 min_separation_s = 3
 confounder_guard = ["kierunkowskazy", "tempomat", "bieg"]
-notes = "Na postoju, zapłon włączony. Wyłącz/włącz asystenta pasa w menu; nic więcej nie zmieniaj."
+notes = "Na postoju, zapłon włączony. Dwukrotnie kliknij przycisk pasa na lewej dźwigni, aby wyłączyć asystenta; ponowny dwuklik włącza go. Nic więcej nie zmieniaj."
 [[scenario.steps]]
-action = "Wyłącz asystenta pasa ruchu (LKA) w menu"
+action = "Dwuklik na lewej dźwigni — wyłącz asystenta pasa (LKA)"
 expect = "lane_assist_disabled"
 [[scenario.steps]]
-action = "Włącz asystenta pasa ruchu (LKA) w menu"
+action = "Dwuklik na lewej dźwigni — włącz asystenta pasa (LKA)"
 expect = "lane_assist_enabled"

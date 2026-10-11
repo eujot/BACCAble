@@ -185,7 +185,7 @@ Three procedures target specific firmware options, using markers in the catalog
 
 - `dna_all_modes` (drivetrain, stationary) — visit D, N, A and Race, each with its
   own marker, to confirm the per-mode code on `0x384` / `0x46C` / `0x25A`.
-- `lane_assist_toggle` (adas, stationary) — LKA off/on in the menu.
+- `lane_assist_toggle` (adas, stationary) — toggle LKA off/on with a double-click on the left stalk button.
 - `wipers_lights_auto` (wipers, stationary) — drive the wipers through off, slow,
   fast and automatic (rain-sensor) with the headlights in AUTO, in daylight, and
   mark the dipped-beam reaction.
@@ -213,7 +213,7 @@ observations per action is the practical reliability threshold.
 ### Controls inside a run
 
 - DNA: end each run on N so the next baseline is known; never touch A or Race.
-- Lane: keep indicators, cruise and gear steady; the menu is the only change.
+- Lane: keep indicators, cruise and gear steady; the left-stalk double-click is the only change.
 - Wipers: run in daylight with the headlights in AUTO so the dark-sensor cannot
   turn the lamps on by itself; the wiper state is the only change.
 
