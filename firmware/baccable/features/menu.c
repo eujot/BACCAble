@@ -612,13 +612,39 @@ bool menu_parameters_active(void) {
            list_count;
 }
 
+/* Only MY23 Readings exposes the following page as a second-line preview. */
+static bool reading_preview(void) {
+    return view == VALUES && settings_state.ipc_my23_is_installed && list_count;
+}
+
+/* Poll the actual filtered/sorted pair, deduplicating shared diagnostics. */
+static unsigned reading_queries(uint8_t ids[8]) {
+    unsigned count = 0;
+    for (unsigned line = 0; line < 2; ++line) {
+        const ParameterPage *page = &parameter_pages[engine][list[line ? wrap(selection, list_count, 1) : selection]];
+        for (unsigned i = 0; i < parameter_page_elements(page); ++i) {
+            uint8_t id = page->parameter_ids[i];
+            if (parameter_definitions[id].request_id <= 0xff) continue;
+            unsigned j = 0;
+            while (j < count && ids[j] != id) ++j;
+            if (j == count) ids[count++] = id;
+        }
+    }
+    return count;
+}
+
 /* Fill the current screen with its latest usable measurements. */
 void menu_parameters_refresh(void) {
     if (dashboard_state.dashboard_page_index >= parameter_page_count)
         return;
     const ParameterPage *page = &parameter_pages[engine][dashboard_state.dashboard_page_index];
-    for (unsigned i = 0; i < parameter_page_elements(page); ++i)
-        displayed_parameter_values[i] = parameter_cache_get(page->parameter_ids[i], currentTime);
+    for (unsigned i = 0; i < parameter_page_elements(page); ++i) {
+        uint8_t id = page->parameter_ids[i];
+        /* Eight diagnostics take four seconds; keep the bound stable across
+         * navigation so a prefetched value does not expire on promotion. */
+        uint32_t max_age = reading_preview() && parameter_definitions[id].request_id > 0xff ? 4500U : 3000U;
+        displayed_parameter_values[i] = parameter_cache_get_max_age(id, currentTime, max_age);
+    }
 }
 
 /* Remember the selected reading and stop requests belonging to the previous page. */
@@ -647,7 +673,8 @@ static void select_page(void) {
         preferences.last_favorite[engine] = id;
     else
         preferences.last[engine][group] = id;
-    parameter_request_cancel();
+    if (reading_preview()) parameter_request_follow_page();
+    else parameter_request_cancel();
     parameter_peak_reset();
     selected_parameter_element = 0;
     page_changed = currentTime;
@@ -1546,6 +1573,17 @@ void menu_process(void) {
         unsigned total = favorite_queries(favorite, ids);
         if (total) {
             unsigned position = selected_parameter_element % total;
+            parameter_request_begin_id(ids[position], 255);
+            selected_parameter_element = (position + 1) % total;
+        }
+        last_query = currentTime;
+    } else if (menu_parameters_active() && reading_preview() && !diagnostics_state.clear_faults_request &&
+        currentTime - page_changed >= 150 && currentTime - last_query >= 500) {
+        uint8_t ids[8];
+        unsigned total = reading_queries(ids);
+        if (total) {
+            unsigned position = selected_parameter_element % total;
+            /* Cache-only reply: the preview must not overwrite current elements. */
             parameter_request_begin_id(ids[position], 255);
             selected_parameter_element = (position + 1) % total;
         }

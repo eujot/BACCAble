@@ -264,7 +264,14 @@ are not displayed or polled. Saving Slots 1–2 does not erase those old IDs.
 Every MY23 Readings page keeps all of its measurements on line 1, whether it
 contains one, two, three or four values. Its compact format removes extra spaces
 and shortens long captions to fit 16 glyphs; the same format is used in MY23
-Favorites. Line 2 previews the next page. Information status pages likewise
+Favorites. Line 2 previews the next page. While that preview is visible, BACCAble
+also reads its diagnostic values in the background. Moving forward uses the
+cached values immediately when replies have arrived. Current and preview pages
+share one query every 500 ms, with shared values read only once per cycle; dense
+pairs can take up to four seconds. Diagnostic values remain usable for 4.5 seconds
+in this view, while native CAN values keep their normal three-second freshness
+limit. Fast scrolling or a missing ECU reply can still show `--`.
+Information status pages likewise
 preview the next page; multiple fault codes show the following code on line 2.
 For example, `Oil 35.0mm Q 80%` fits exactly. `B 100-200 8.54s` means the
 best 100–200 km/h run. The four-temperature page uses `O` for oil, `W` for

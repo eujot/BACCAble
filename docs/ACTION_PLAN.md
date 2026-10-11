@@ -177,6 +177,35 @@ reassertion and factory arbitration remain. No new beta or hardware flash.
 
 ## Current work
 
+### Readings next-page prefetch, 2026-10-12
+
+Task branch: `feat/readings-preview-prefetch`, based on merged master `7015b40`
+(PR #54 includes the preceding firmware review). Previously MY23 Readings showed
+the next page label on L2 but queried only L1, leaving the new page empty until
+its first diagnostic response after navigation.
+
+Readings now polls the current and actual next visible page from the filtered,
+sorted list, including wraparound, deduplicating shared IDs. It retains one UDS
+request per 500 ms and the 150 ms navigation settling interval. Native CAN values
+continue to arrive through the existing receive cache. The preview label remains;
+its diagnostic replies populate only the cache, never the current page's slots.
+On navigation, an in-flight cache-only request can finish if the new current page
+contains its parameter and the engine still matches, without extending its 500 ms
+deadline. Other transitions cancel it. Diagnostic cache age in this view is
+4500 ms for up to eight queried values; native values retain 3000 ms. Legacy
+views without a next-page preview keep their existing polling.
+
+Both manuals and MENU_UX describe the behavior and its limits: rapid scrolling,
+missing replies and expired values can still show `--`. No synthetic values or
+new CAN layouts are introduced. Validation covers prefetch before navigation,
+reply during navigation, rate/settling limits, current-page isolation, composite
+ID deduplication, filtered-list wrap, a single visible page, stale replies,
+leaving Readings and legacy behavior, across both menu widths and MY23 defaults.
+Host suite and menu labels pass with Apple Clang ASan/UBSan. ARM/cppcheck and Lab
+results are recorded in the completion update. No vehicle test, flash or release.
+The five original untracked capture bundles remain untouched.
+
+
 ### Firmware review of 3bbd8a5 and 3964000, 2026-10-12
 
 Task branch: `fix/firmware-review-20261012`, baseline `3964000`, implementation

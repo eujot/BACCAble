@@ -323,6 +323,98 @@ static void test_shipped_favorite_pairs(void) {
     sets = (const FavoriteParameters *)(saved + MENU_PREFS_SIZE + 2);
     assert(sets[1].params[0] == 0x01 && sets[1].params[1] == FAVORITE_EMPTY);
 }
+/* Set up exactly the pair that the filtered Readings list exposes. */
+static void preview_pair(uint16_t first, uint16_t second, bool my23) {
+    fresh_menu();
+    MenuPreferences prefs;
+    menu_preferences_default(&prefs);
+    for (unsigned i = 0; i < menu_page_count(0); ++i)
+        menu_page_show(&prefs, 0, i, parameter_pages[0][i].id == first || parameter_pages[0][i].id == second);
+    menu_preferences_encode(&prefs, v1_preferences);
+    settings_state.ipc_my23_is_installed = my23;
+    settings_state.advanced_pages = 1;
+    menu_init();
+    menu_event(MENU_BACK);
+    menu_show_parameter(menu_page_index(0, first));
+    menu_render();
+}
+static void reply_parameter(uint8_t id) {
+    const ParameterDefinition *p = &parameter_definitions[id];
+    uint16_t did = ((p->request_data >> 16) & 0xff) << 8 | (p->request_data >> 24);
+    uint8_t reply[8] = {7, 0x62, did >> 8, did, 0, 0, 0, 0};
+    reply[4 + p->value_offset + p->value_length - 1] = 70;
+    CAN_RxHeaderTypeDef header = {.IDE = CAN_ID_EXT, .ExtId = p->response_id, .DLC = 8};
+    parameter_request_receive(&header, reply);
+}
+static void test_readings_preview_prefetch(void) {
+    for (unsigned in_flight = 0; in_flight < 2; ++in_flight) {
+        preview_pair(0x12, 0x15, true); /* Oil / gearbox temperature. */
+        unsigned before = queries;
+        now += 149; menu_process();
+        assert(queries == before);
+        now += 1; menu_process(); reply_parameter(30);
+        assert(queries == before + 1);
+        now += 499; menu_process();
+        assert(queries == before + 1);
+        now += 1; menu_process();
+        assert(queries == before + 2);
+        assert(query_payload[2] == (uint8_t)(parameter_definitions[33].request_data >> 16));
+        assert(query_payload[3] == (uint8_t)(parameter_definitions[33].request_data >> 24));
+        float first_value = displayed_parameter_values[0];
+        if (!in_flight) {
+            reply_parameter(33);
+            assert(displayed_parameter_values[0] == first_value); /* Preview is cache-only. */
+        }
+        menu_event(MENU_NEXT);
+        if (in_flight) reply_parameter(33); /* Reply survives promotion to L1. */
+        assert(dashboard_state.dashboard_page_index == menu_page_index(0, 0x15));
+        assert(isfinite(displayed_parameter_values[0]));
+        assert(!memchr(screen_packet + 2, '-', MY23_L1_VISIBLE));
+        now += 4501; menu_render();
+        assert(isnan(displayed_parameter_values[0]));
+    }
+    /* Legacy single-page rendering does not query an invisible next page. */
+    preview_pair(0x12, 0x15, false);
+    now += 500; menu_process(); reply_parameter(30);
+    now += 500; menu_process(); reply_parameter(33);
+    assert(isnan(parameter_cache_get(33, now)));
+
+    /* Shared IDs in composite pages are polled once, including list wrap. */
+    preview_pair(0x39, 0x3a, true);
+    const uint8_t expected[] = {30, 42, 23, 22, 33};
+    for (unsigned i = 0; i < 10; ++i) {
+        now += 500;
+        unsigned before = queries;
+        menu_process();
+        assert(queries == before + 1);
+        const ParameterDefinition *p = &parameter_definitions[expected[i % 5]];
+        assert(query_ecu == p->request_id);
+        for (unsigned b = 0; b < 4; ++b) assert(query_payload[b] == (uint8_t)(p->request_data >> (8*b)));
+        reply_parameter(expected[i % 5]);
+    }
+    menu_event(MENU_NEXT); /* Last visible page previews the first. */
+    now += 500; menu_process(); reply_parameter(30);
+    now += 500; menu_process(); reply_parameter(42);
+    now += 500; menu_process(); reply_parameter(33);
+    now += 500; menu_process();
+    assert(query_payload[2] == (uint8_t)(parameter_definitions[23].request_data >> 16));
+    assert(query_payload[3] == (uint8_t)(parameter_definitions[23].request_data >> 24));
+    parameter_cache_put(23, NAN, now);
+    menu_event(MENU_BACK); reply_parameter(23); /* Leaving Readings cancels pending preview. */
+    assert(isnan(parameter_cache_get(23, now)));
+
+    preview_pair(0x12, 0x15, true);
+    now += 500; menu_process(); reply_parameter(30);
+    now += 500; menu_process();
+    now += 501; menu_event(MENU_NEXT); reply_parameter(33);
+    assert(isnan(parameter_cache_get(33, now))); /* Promotion does not extend the deadline. */
+
+    preview_pair(0x12, 0x12, true);
+    for (unsigned i = 0; i < 3; ++i) {
+        now += 500; menu_process(); reply_parameter(30);
+        assert(isfinite(displayed_parameter_values[0]));
+    }
+}
 static void to_settings(void) {
     menu_event(MENU_BACK); /* Favorites -> root. */
     menu_event(MENU_NEXT);
@@ -1250,6 +1342,7 @@ int main(void) {
         HOST_TEST(test_maximum_hold),
         HOST_TEST(test_board_sync_retry),
         HOST_TEST(test_shipped_favorite_pairs),
+        HOST_TEST(test_readings_preview_prefetch),
         HOST_TEST(test_engine_filters),
         HOST_TEST(test_action_availability)
     };

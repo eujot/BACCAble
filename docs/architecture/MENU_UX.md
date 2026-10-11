@@ -115,7 +115,7 @@ pages. Legacy continues using the original catalog templates. The same MY23
 formatter supplies both visible Favorite slots.
 Favorite polling deduplicates UDS IDs across both pages at one request per
 500 ms. Its diagnostic cache age is max(3000 ms, (unique count + 1) * 500 ms),
-bounded to 4500 ms for eight values. Native values and ordinary Readings retain
+bounded to 4500 ms for eight values. Native values and Readings without a next-page preview retain
 3000 ms. This avoids expiration during a healthy full cycle without increasing
 bus traffic or indefinitely retaining missing responses.
 Ordinary MY23 screens have no fixed footer.
@@ -183,6 +183,24 @@ The reported `Gear 15` was the CAN 0x2EF nibble `0xF` (unavailable), which the
 beta-19 atomic formatter had printed as a decimal. Both Readings and Favorites
 now use the catalog enum formatter, which displays the unknown marker `-`.
 Raw CAN state and the CAN dictionary layout are unchanged.
+
+## Readings preview polling
+
+MY23 Readings polls the selected page and the actual next visible page from the
+filtered/sorted list, including wraparound. The second line keeps its page label.
+Shared parameter IDs are deduplicated, with at most eight diagnostics and one
+request per 500 ms after the existing 150 ms navigation settling interval.
+Current-page IDs lead each cycle. Native signals keep their receive-driven cache.
+Legacy views without a next-page preview keep single-page polling.
+
+Preview replies update only the cache, then render the current page from its own
+IDs. Navigation retains an in-flight cache-only request only if the new current
+page contains that parameter and the engine profile still matches; its original
+500 ms deadline and ECU/DID validation remain. Other page changes and leaving
+Readings cancel it. Cached diagnostic values have a fixed 4500 ms age bound in
+preview Readings, covering an eight-value cycle and remaining stable when the
+preview becomes current. Native values retain 3000 ms. Missing replies or rapid
+scrolling can still produce unavailable values; prefetch does not invent readings.
 
 ## Atomic Favorite sets
 
