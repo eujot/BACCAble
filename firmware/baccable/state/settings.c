@@ -61,4 +61,8 @@ SettingsState settings_state = {
     .park_mirror = 0,
 
     .has_function_enabled = 0,
+
+    .default_drive_mode = 0,
+
+    .lane_assist_disabled = 0,
 };

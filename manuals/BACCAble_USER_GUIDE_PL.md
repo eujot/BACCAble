@@ -228,6 +228,28 @@ Delta. Jeśli działanie się pogorszy, wybierz Reset default lub odłącz całe
 
 Ulubione odpytują każdy parametr diagnostyczny raz na cykl, nawet jeśli występuje w obu liniach. Przy ośmiu pomiarach odświeżenie całego zestawu może trwać cztery sekundy. Wartości pozostają widoczne przez ten czas, a po utracie odpowiedzi pojawia się `--`. Odczyty przychodzące bezpośrednio z CAN zachowują dotychczasowy czas ważności.
 
+### Domyślne zestawy ulubionych
+
+Świeża instalacja (benzyna) startuje z sześcioma tematycznymi zestawami, z których
+każdy łączy stronę pierwszej linii ze stroną drugiej linii. Wyświetlacz 1-liniowy
+pokazuje tylko pierwszą kolumnę, a 2-liniowy obie linie. Po starcie wybrany jest
+zestaw **S1 Elektryka**.
+
+| Zestaw | Linia 1 | Linia 2 |
+| --- | --- | --- |
+| S1 Elektryka | `Oil L / mm / %` | `Batt charge BCM` |
+| S2 Osiągi | `Power / torque` | `Boost pressure` |
+| S3 Temperatury | `Oil/water/gear C` | `Intercooler out` |
+| S4 Jazda | `Speed` | `Gear` |
+| S5 Timery | `0-100 km/h` | `Best 0-100` |
+| S6 Olej / Multiair | `Oil/water/IC C` | `Misfires/MA temp` |
+
+Diesel zachowuje cztery dotychczasowe domyślne strony i nie ma stron drugiej
+linii. Nowe instalacje używają układu ze slotami Favorites na obu profilach IPC.
+Pary są ustawiane tylko wtedy, gdy nie ma zapisanych ustawień stron ani slotów.
+Zapisane ulubione pozostają zachowane, nawet jeśli pierwsza strona ma taki sam
+numer jak strona domyślna. Edycja tych zestawów przebiega według poniższych kroków.
+
 ### Dwie strony odczytów w jednym ulubionym widoku
 
 1. Otwórz `Settings → Favorites` i wybierz `Favorite 1` do `Favorite 6`.
@@ -338,12 +360,14 @@ Szkic nie steruje samochodem przed udanym zapisem.
 | `Virtual ACC` | Wyłączona / włączona | Pozwala obsługiwać ACC zgodnym panelem przycisków zwykłego tempomatu. Samochód musi już mieć potrzebny sprzęt i konfigurację ACC. Funkcja nie zastępuje radaru ani innych brakujących elementów. |
 | `ACC resume` | OFF / RES / + | Wybiera automatyczne wysyłanie RES albo lekkiego naciśnięcia w górę, gdy ACC jest aktywny i utrzymuje zatrzymany samochód. Może to umożliwić ponowne ruszenie. Zobacz [obsługę ACC i HAS](#obsługa-acc-i-has). |
 | `Virtual HAS` | Wyłączona / włączona | Udostępnia symulowane naciśnięcie przycisku Highway Assist przez akcję lub podwójne naciśnięcie przycisku asystenta pasa. Wymaga zgodnego i skonfigurowanego wyposażenia samochodu. |
+| `Disable LKA` | Wyłączona / włączona | Funkcja eksperymentalna: wysyła ponownie stan asystenta z wyzerowanym bitem włączenia, wyłącznie w BH `0x4F6` i C2 `0x547` (8 bajtów). Faktycznego wyłączenia asystenta nie zweryfikowano jeszcze w samochodzie; sama zmiana kontrolki tego nie potwierdza. |
 
 ### Grupa układu napędowego
 
 | Opcja | Wartości | Do czego służy |
 | --- | --- | --- |
 | `Launch Nm` | 25–600 Nm, co 25 | Wartość momentu obrotowego zgłaszanego przez silnik, przy której wspomaganie startu wysyła polecenie zwolnienia wymuszonych przednich hamulców. To nie jest ograniczenie momentu ani ustawienie tuningu. |
+| `Default mode` | OFF / A / D / Race | Wymusza tryb jazdy przy każdym uruchomieniu (AllWeather, Dynamic albo Race). `OFF` nie zmienia samochodu. Zmiana odebranego trybu kończy wymuszanie, także podczas aktywnego ESC/TC. Wybudzenie lub zapis Features ponownie je uzbraja; zakończenie przechwytywania USB lub diagnostyki tego nie robi. |
 | `ESC/TC control` | Wyłączona / włączona | Udostępnia przełączanie kontroli stabilności i trakcji oraz obsługiwany skrót przyciskiem asystenta pasa. Samochód musi mieć odpowiednią konfigurację. |
 | `Dyno action` | Wyłączona / włączona | Udostępnia `Toggle Dyno mode`. Samo włączenie tego ustawienia nie uruchamia trybu Dyno. |
 | `Brake action` | Wyłączona / włączona | Udostępnia `Brake override` i `Disable launch`. Samo włączenie ustawienia nie uruchamia hamulców. |

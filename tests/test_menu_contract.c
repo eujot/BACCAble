@@ -235,8 +235,7 @@ static void test_unnumbered_filtered_editors(void) {
         fresh_contract();
         MenuPreferences prefs;
         menu_preferences_default(&prefs);
-        assert(menu_favorite_toggle(&prefs, 0, 0x2f));
-        assert(menu_favorite_toggle(&prefs, 0, 0x22));
+        seed_filtered_favorites(&prefs);
         menu_preferences_encode(&prefs, saved);
         have_saved = true;
         settings_state.gasoline_v6 = v6;

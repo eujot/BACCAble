@@ -50,6 +50,12 @@ typedef struct {
     uint8_t park_mirror;
 
     uint8_t has_function_enabled;
+
+    /* Default drive mode forced at start-up (0=off, 1=AllWeather, 2=Dynamic, 3=Race). */
+    uint8_t default_drive_mode;
+
+    /* Force the lane-keeping assist off while set. */
+    uint8_t lane_assist_disabled;
 } SettingsState;
 extern SettingsState settings_state;
 #endif

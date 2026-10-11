@@ -53,6 +53,8 @@
     #define SETUP_FLASH_PDC_MUTE 31
     #define SETUP_FLASH_REVERSE_AUDIO 32
     #define SETUP_FLASH_ROTATE 33
+    #define SETUP_FLASH_DEFAULT_MODE 38
+    #define SETUP_FLASH_LANE_ASSIST 39
 
     #define SETUP_TEXT_HIDDEN 0
 
@@ -232,6 +234,18 @@
 
     #define DEFAULT_EUJOT 0
 
+    #if defined(DEFAULT_DRIVE_MODE)
+        #define DEFAULT_DEFAULT_MODE DEFAULT_DRIVE_MODE
+    #else
+        #define DEFAULT_DEFAULT_MODE 0
+    #endif
+
+    #if defined(LANE_ASSIST_DISABLED)
+        #define DEFAULT_LANE_ASSIST 1
+    #else
+        #define DEFAULT_LANE_ASSIST 0
+    #endif
+
     #define SETUP_TOGGLE(flash, text, def, variable) \
         {flash, 1, def, SETUP_VALUE_UINT8, &(variable), text, 0, UI_ENTRY_TOGGLE, 0, 0, 0}
     #define SETUP_PROFILE(flash, text, def, variable, render_fn) \
@@ -253,6 +267,7 @@ static void setup_render_pedal_power(void);
 static void setup_render_acc_autostart(void);
 static void setup_render_close_windows(void);
 static void setup_render_open_windows(void);
+static void setup_render_default_mode(void);
 
 // Interaction follows the shared draft engine; no callback may mutate live values.
 const SetupParam setup_params[] = {
@@ -312,6 +327,10 @@ const SetupParam setup_params[] = {
                         settings_state.open_windows_with_door_lock, setup_render_open_windows),
     SETUP_TOGGLE(SETUP_FLASH_HAS_VIRTUAL_PAD, "Virtual HAS", DEFAULT_HAS_VIRTUAL_PAD,
                         settings_state.has_function_enabled),
+    SETUP_ENUM8(SETUP_FLASH_DEFAULT_MODE, "Default mode", 4, DEFAULT_DEFAULT_MODE,
+                        settings_state.default_drive_mode, setup_render_default_mode),
+    SETUP_TOGGLE(SETUP_FLASH_LANE_ASSIST, "Disable LKA", DEFAULT_LANE_ASSIST,
+                        settings_state.lane_assist_disabled),
     SETUP_TOGGLE(SETUP_FLASH_QV_EXHAUST_FLAP, "QV exhaust", DEFAULT_QV_EXHAUST_FLAP,
                  settings_state.qv_exhaust_flap_function_enabled),
     SETUP_HIDDEN_TOGGLE(SETUP_FLASH_EUJOT, DEFAULT_EUJOT, settings_state.eujot_enabled),
@@ -393,6 +412,13 @@ static void setup_render_pedal_power(void) {
     char text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
     ui_render_signed_number(text, sizeof(text), "Pedal trim", settings_state.pedal_map_power, false);
     setup_write_text(0, text);
+}
+
+/* Show the driving mode enabled at each start-up before the driver changes it. */
+static void setup_render_default_mode(void) {
+    static const char *const labels[] = {"OFF", "A", "D", "Race"};
+    uint8_t index = settings_state.default_drive_mode;
+    setup_write_value("Default mode", labels[index <= 3 ? index : 0]);
 }
 
 /* Show how adaptive cruise is configured to resume. */

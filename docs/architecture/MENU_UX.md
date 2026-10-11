@@ -194,6 +194,11 @@ it hides that screen. Assigning an already selected page clears its other slot.
 User edits happen only
 under `Settings → Favorites → Favorite N → Slot N`.
 
+When no saved page/slot preferences exist, initialization seeds the six gasoline
+pairs and enables the slot layout for either IPC profile (diesel retains four
+single-page sets). Importing an existing page record never adds a companion just
+because its primary ID equals a new shipped default.
+
 Live atomic Favorites retain a separate set ID per fuel profile in RAM. Other
 lists cannot overwrite this selection; filtering restores the same eligible
 set by ID, falling back to the first available set. Startup selects the first

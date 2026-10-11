@@ -1,6 +1,6 @@
 # BACCAble action plan and agent handoff
 
-Last updated: **2026-10-02** (dated verification boundaries below). This is the single source of planned work,
+Last updated: **2026-10-12** (dated verification boundaries below). This is the single source of planned work,
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
@@ -176,6 +176,113 @@ but cannot guarantee atomic physical screen replacement. The existing one-second
 reassertion and factory arbitration remain. No new beta or hardware flash.
 
 ## Current work
+
+### Firmware review of 3bbd8a5 and 3964000, 2026-10-12
+
+Task branch: `fix/firmware-review-20261012`, baseline `3964000`, implementation
+`f709bc3`. Review compared
+DNA/LKA handlers with the bus-specific dictionary and October-11 findings,
+settings/UART synchronization, ESC/TC interaction and Favorite migration.
+
+- Restrict experimental lane-state rewriting to BH `0x4F6` and C2 `0x547`,
+  standard data frames with DLC 8. Previously both IDs were modified on any role.
+- Sample the default-mode baseline even while ESC/TC owns the outgoing frame.
+  Reject invalid configured modes. C2 ESC/TC inversion uses the effective default
+  Race mode, and stability reports do not advertise disabled controls when that
+  effective Race mode has been inverted to Dynamic.
+- Separate wake/save re-arming from transport resynchronization. USB exit no
+  longer re-arms a manually cancelled default. UART command 0x48 gains an explicit
+  fifth-byte re-arm flag; install matching C1/C2/BH firmware for this contract.
+- Activate slot Favorites on fresh installations for both IPC profiles, so the
+  seeded companion is actually displayed. Seed pairs only without saved page/slot
+  preferences; never infer an untouched set from a matching primary page ID.
+  Existing page and slot records retain their selections.
+- Update both user guides and the menu technical guide. Correct the research
+  note's inline-gateway claim: `can_forward` retransmits on the same peripheral;
+  original traffic is not suppressed. LKA physical deactivation remains unverified.
+
+Validation: PASS — full native Apple Clang ASan/UBSan suite and menu labels,
+role-specific CAN regressions (C1/C2/BH), menu migration/sync regressions,
+all four ARM 15.2.Rel1 builds and cppcheck, and all 69 Lab tests. No vehicle test,
+flash, release, merge or remote publication. The user's five untracked capture
+bundles remain untouched. Source hashes/catalog are refreshed in the follow-up
+knowledge commit after the implementation commit.
+
+
+### Themed default Favorites for 1- and 2-line displays, 2026-10-11
+
+Replaced the four generic gasoline start-up favorites with six themed sets, each
+pairing a primary page (first line) with a companion page (second line). A
+1-line IPC shows the first column; a 2-line IPC shows both:
+
+| Set | Line 1 | Line 2 |
+| --- | --- | --- |
+| S1 Elektryka | `Oil L / mm / %` `0x38` | `Batt charge BCM` `0x16` |
+| S2 Osiągi | `Power / torque` `0x01` | `Boost pressure` `0x0d` |
+| S3 Temperatury | `Oil/water/gear C` `0x3a` | `Intercooler out` `0x0a` |
+| S4 Jazda | `Speed` `0x28` | `Gear` `0x1a` |
+| S5 Timery | `0-100 km/h` `0x2a` | `Best 0-100` `0x2c` |
+| S6 Olej / Multiair | `Oil/water/IC C` `0x39` | `Misfires/MA temp` `0x40` |
+
+Diesel keeps its previous four defaults (no companion pages). The set active on a
+fresh install is S1 (Elektryka). `MenuPreferences` still stores one page per set
+(flash layout unchanged); the companion line is seeded at import time in
+`import_page_favorites()` only while a set still equals its shipped default, so a
+driver edit is never overwritten. New accessors `menu_default_favorite()` and
+`menu_default_favorite_companion()` in `firmware/baccable/features/menu_model.c`
+hold the tables. Host tests that depended on the old `0x04`/`0x28` defaults were
+updated to derive counts from the shipped defaults or from a documented seed.
+Validation: the native host suite and label test pass, all four firmware flavours
+build and lint, and the 69 Lab tests pass. Both user guides updated.
+
+### Re-analysis: DNA is settable, older bundles had no DNA/LKA data, 2026-10-11
+
+Corrected an earlier analysis error. A first pass over the 2026-10-11 bundles
+concluded the drive mode was only *observable* because “no request frame” exists
+for the DNA knob. That was wrong: `0x384` is a body→ECU **broadcast** whose
+consumers (TCM/IPC/ECM/… on C1; HAL/ORC/EPS/BSM on C2) obey its mode field, and the
+firmware already rewrites and forwards it (`can_forward`, the ESC/TC path). A body
+broadcast that consumers obey is actionable; a missing knob-input frame does not
+make the function uncontrollable. All five bundles were re-checked:
+
+- The 2026-10-10 bundles (`10paz1`/`10paz2`) had `dna_modes` and `lane_assist`
+  **skipped**, so they carry no DNA/LKA ground truth — hence the dedicated
+  2026-10-11 runs.
+- DNA codes re-confirmed (N/D/A/Race = 0/2/4/12 on `0x384`/`0x46C`; 16/8/4/1 on
+  `0x25A`).
+- Wipers/rain remain **undecoded**: no clean bit survives counter filtering once
+  windows are bounded to the scenario span (an earlier “result” was a window run
+to the session end); `wipers_lights_auto` still needs recording.
+
+Recorded in `docs/research/20261011-dna-lane-decode.md` (correction plus method
+lessons), the playbook anti-patterns, the dictionary (`dna_mode` notes,
+`DNA-MODE-001` hypothesis, version 2026-10-11.3) and the re-rendered
+`CAN_DICTIONARY.md`.
+
+### Firmware: start-up default drive mode and lane-assist disable, 2026-10-11
+
+Added two owner preferences to the C1 Setup menu, driven by the 2026-10-11
+`dna_all_modes` / `lane_assist_toggle` capture sessions:
+
+- **`Default mode`** (OFF / A / D / Race) — on each start-up BACCAble rewrites the
+drive-mode field of the body broadcasts `0x384` (C1, C2), `0x46C` and `0x25A`
+(BH) to the selected mode, the same `can_forward` way the ESC/TC feature forces
+Race. The override is armed on wake-up/save and stops as soon as the driver
+changes the mode by hand.
+- **`Disable LKA`** — holds the lane-keeping assist off by clearing byte 6 bit 1
+of the lane-assist state frame `0x4F6` (BH) / `0x547` (C2), the signal decoded
+from the lane-toggle sessions.
+
+Both settings persist (flash slots 38/39) and reach C2 and BH through a new
+`C2_Bh_cmdSetDriverAids` sync command. A new host test `tests/test_drive_mode.c`
+covers the field encodings, the “stop after a manual change” rule and the
+lane-assist clearing, and the board-sync retry test now counts eight options.
+The linked Lab dictionary gained the two lane frames (`lane_assist_enabled` on
+BH `0x4F6` / C2 `0x547`), refreshed firmware source hashes and a dated
+`docs/research/20261011-dna-lane-decode.md` note (DNA codes confirmed, LKA state
+and control). All four firmware flavours build and lint; the host suite (native
+executables plus the label test) and the Lab suite pass. In-car behaviour of the
+LKA override still needs confirmation on the vehicle.
 
 ### Scenario-decode docs consistency and the LKA toggle finding, 2026-10-11
 

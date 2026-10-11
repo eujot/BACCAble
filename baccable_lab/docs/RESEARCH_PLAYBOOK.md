@@ -150,6 +150,16 @@ instead of recording the whole library again.
 - Treating diagnostic (`0x18DA…`) transport or counter bits as signals.
 - Overwriting a previous meaning because one dataset disagrees; review labelling
   and applicability first.
+- **Treating a body broadcast as a passive report and hunting for a separate
+  request frame** (the DNA-knob trap). A momentary stalk button or a monostable
+  knob may be read locally, yet the body still *broadcasts* the resulting state —
+  and when other ECUs obey that broadcast, **rewriting it is the actionable
+  path** (`can_forward`), as the ESC/TC and `Default mode` features do. Absence of
+  a request frame does not mean a function cannot be controlled.
+- **Letting the last state interval run to the end of the session.** Bound every
+  window to the scenario span; a final interval that reaches the recording end
+  fills occupancy with unrelated later activity and invents bits that do not
+  exist (a spurious wiper/rain result came from exactly this bug).
 
 ## 7. Outputs of every review
 

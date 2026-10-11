@@ -2,11 +2,22 @@
 #include "features/periodic.h"
 #if defined(BACCABLE_C1)
 static uint8_t next_option;
+static uint8_t rearm_default = 1;
 
 /* Restart auxiliary-board configuration after a save, wake-up or diagnostic session. */
 void board_sync_restart(void) {
     next_option = 0;
     runtime_state.instruct_slave_boards_trigger_enabled = 1;
+}
+
+/* Only wake-up and saved preferences may restart the default-mode override. */
+void board_sync_rearm(void) {
+    board_sync_restart();
+    rearm_default = 1;
+    /* A fresh wake-up or save re-arms the start-up drive mode and lets the driver
+     * change it again by hand. */
+    chassis_state.default_mode_override = 1;
+    chassis_state.default_mode_baseline = 0xFF;
 }
 
 /* Deliver every enabled-feature preference, retrying when the board link is busy. */
@@ -15,7 +26,7 @@ void board_sync_process(void) {
         currentTime - runtime_state.all_processors_wakeup_time <=
             TIMING__C1____DELAY_BEFORE_SERIAL_INSTRUCT_OF_C2BH_AFTER_OTHER_CHIP_WAKE_MS)
         return;
-    uint8_t command[4] = {0};
+    uint8_t command[5] = {0};
     unsigned length = 2;
     switch (next_option) {
     case 0:
@@ -54,12 +65,22 @@ void board_sync_process(void) {
         command[1] =
             settings_state.has_function_enabled ? C2_Bh_cmdFunctHAS_Enabled : C2_Bh_cmdFunctHAS_Disabled;
         break;
+    case 7:
+        command[0] = C2_Bh_BusID;
+        command[1] = C2_Bh_cmdSetDriverAids;
+        command[2] = settings_state.default_drive_mode;
+        command[3] = settings_state.lane_assist_disabled;
+        command[4] = rearm_default;
+        length = 5;
+        break;
     default:
         next_option = 0;
         runtime_state.instruct_slave_boards_trigger_enabled = 0;
         return;
     }
-    if (board_uart_send(command, length))
+    if (board_uart_send(command, length)) {
+        if (next_option == 7) rearm_default = 0;
         ++next_option;
+    }
 }
 #endif

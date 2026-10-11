@@ -82,7 +82,7 @@ void power_process(void) {
             runtime_state.low_consume_is_active = 0;
 
             runtime_state.all_processors_wakeup_time = currentTime;
-            board_sync_restart();
+            board_sync_rearm();
         }
     } else { // Otherwise enter low-consumption mode if needed.
         // Enter low-consumption mode after the inactivity timeout.

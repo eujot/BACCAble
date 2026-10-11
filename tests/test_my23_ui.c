@@ -424,10 +424,10 @@ static void test_my23_remaining_list_previews(void) {
         expect_my23_list(entries[i], entries[(i+1)%5]); menu_event(MENU_NEXT);
     }
     menu_event(MENU_NEXT); menu_event(MENU_SELECT); menu_event(MENU_SELECT);
-    const char *slots[] = {"S1 Oil/coolant temp", "S2 Empty"};
+    const char *slots[] = {"S1 Oil L / mm / %", "S2 Empty"};
     for (unsigned i=0;i<2;++i) { expect_my23_list(slots[i],slots[(i+1)%2]); menu_event(MENU_NEXT); }
     menu_event(MENU_SELECT);
-    expect_my23_list("Oil/coolant temp", "Oil level/qual.");
+    expect_my23_list("Oil L / mm / %", "Oil/water/IC C");
     for (unsigned i=0;i<70 && memcmp(screen_packet+4,"Empty",5);++i) menu_event(MENU_PREVIOUS);
     expect_my23_list("Empty", "Power / torque");
     menu_event(MENU_BACK); menu_event(MENU_BACK); menu_event(MENU_BACK); menu_event(MENU_BACK);
@@ -454,7 +454,7 @@ static void test_v6_parameter_label_identity(void) {
 }
 /* Compatibility page editors must never expose or persist an unaccepted draft. */
 static void test_page_editor_transactions(void) {
-    for (unsigned editor=1;editor<=3;++editor) {
+    for (unsigned editor=2;editor<=3;++editor) {
         fresh_contract(); to_settings(); assert(menu_preferences_save()==0);
         uint8_t original[sizeof(saved)]; memcpy(original,saved,sizeof(saved));
         for(unsigned i=0;i<editor;++i) menu_event(MENU_NEXT);
@@ -470,7 +470,7 @@ static void test_page_editor_transactions(void) {
         fail_save=false; menu_event(MENU_HOLD);
         assert(preference_writes==writes+2 && memcmp(original,saved,sizeof(saved)));
         now+=2000; menu_render(); menu_event(MENU_BACK); /* Clean editor -> Settings. */
-        assert(strstr(screen, editor==1 ? "Page favorites" : editor==2 ? "Shown pages" : "Favorite order"));
+        assert(strstr(screen, editor==2 ? "Shown pages" : "Favorite order"));
         MenuPreferences committed; assert(menu_preferences_decode(&committed,saved));
         for(unsigned f=0;f<FAVORITE_SET_COUNT;++f) {
             int index=menu_page_index(0,committed.favorites[0][f]);
@@ -485,6 +485,13 @@ static void test_page_editor_transactions(void) {
         now+=60001; menu_process(); /* Timeout discards too. */
         assert(menu_parameters_active() && !memcmp(original,saved,sizeof(saved)));
     }
+    /* The shipped gasoline defaults fill all six page favorites, so adding one more
+       is refused and the draft stays clean (Back leaves without a prompt). */
+    fresh_contract(); to_settings(); assert(menu_preferences_save()==0);
+    menu_event(MENU_NEXT); menu_event(MENU_SELECT); menu_event(MENU_SELECT);
+    assert(strstr(screen,"Max 6 favorites"));
+    menu_event(MENU_BACK);
+    assert(!strstr(screen,"Hold save"));
 }
 static void test_my23_visibility_transaction(void) {
     fresh_contract(); to_settings(); settings_state.ipc_my23_is_installed=1;
@@ -515,13 +522,13 @@ static void test_my23_visibility_transaction(void) {
 static void test_favorite_slot_compact_label(void) {
     fresh_contract(); to_settings(); settings_state.ipc_my23_is_installed=1;
     menu_event(MENU_NEXT); menu_event(MENU_SELECT); menu_event(MENU_SELECT); menu_event(MENU_SELECT);
-    /* Page 0x04 -> 0x05, without flattening Oil/coolant into two IDs. */
+    /* Page 0x38 -> 0x39, without flattening Oil/water into two IDs. */
     menu_event(MENU_NEXT);
     menu_event(MENU_SELECT);
-    expect_my23_list("S1 Oil level/qual.","S2 Empty");
+    expect_my23_list("S1 Oil/water/IC C","S2 Empty");
     menu_event(MENU_BACK); menu_event(MENU_BACK); /* Discard preserves imported primary. */
     menu_event(MENU_SELECT);
-    expect_my23_list("S1 Oil/coolant temp","S2 Empty");
+    expect_my23_list("S1 Oil L / mm / %","S2 Empty");
 }
 static void test_my23_favorite_duplicate_rollback(void) {
     fresh_contract(); to_settings(); settings_state.ipc_my23_is_installed=1;
@@ -529,17 +536,17 @@ static void test_my23_favorite_duplicate_rollback(void) {
     uint8_t original[sizeof(saved)]; memcpy(original,saved,sizeof(saved));
     menu_event(MENU_NEXT); menu_event(MENU_SELECT); menu_event(MENU_SELECT);
     menu_event(MENU_NEXT); menu_event(MENU_SELECT); /* Slot 2 picker. */
-    for (unsigned i=0;i<70 && memcmp(screen_packet+4,"Oil/coolant",11);++i) menu_event(MENU_PREVIOUS);
-    assert(!memcmp(screen_packet+4,"Oil/coolant",11));
+    for (unsigned i=0;i<70 && memcmp(screen_packet+4,"Oil L / mm ",11);++i) menu_event(MENU_PREVIOUS);
+    assert(!memcmp(screen_packet+4,"Oil L / mm ",11));
     menu_event(MENU_SELECT); /* Move primary to Slot 2 only in the draft. */
-    expect_my23_list("S2 Oil/coolant temp","S1 Empty");
+    expect_my23_list("S2 Oil L / mm / %","S1 Empty");
     menu_event(MENU_PREVIOUS);
-    expect_my23_list("S1 Empty","S2 Oil/coolant temp");
+    expect_my23_list("S1 Empty","S2 Oil L / mm / %");
     menu_event(MENU_BACK); fail_save=true; menu_event(MENU_HOLD);
     assert(!memcmp(original,saved,sizeof(saved)));
     fail_save=false; menu_event(MENU_BACK); /* Discard failed draft. */
     menu_event(MENU_SELECT);
-    expect_my23_list("S1 Oil/coolant temp","S2 Empty");
+    expect_my23_list("S1 Oil L / mm / %","S2 Empty");
     assert(!memcmp(original,saved,sizeof(saved)));
 }
 

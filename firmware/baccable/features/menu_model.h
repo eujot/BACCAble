@@ -16,6 +16,10 @@ extern const char *const menu_group_names[MENU_GROUPS];
 uint8_t menu_page_count(uint8_t engine);
 int menu_page_index(uint8_t engine, uint16_t id);
 void menu_preferences_default(MenuPreferences *prefs);
+/* Primary page of a themed default favorite set (0 when the set is unset). */
+uint16_t menu_default_favorite(uint8_t engine, uint8_t set);
+/* Companion page shown on the second line of a default set (0 when none). */
+uint16_t menu_default_favorite_companion(uint8_t engine, uint8_t set);
 void menu_preferences_encode(const MenuPreferences *prefs, uint8_t data[MENU_PREFS_SIZE]);
 bool menu_preferences_decode(MenuPreferences *prefs, const uint8_t data[MENU_PREFS_SIZE]);
 bool menu_page_visible(const MenuPreferences *prefs, uint8_t engine, uint8_t index);

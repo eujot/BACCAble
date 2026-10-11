@@ -18,14 +18,39 @@ int menu_page_index(uint8_t engine, uint16_t id) {
     return -1;
 }
 
+/* Start-up favorites: six themed sets per engine. Each set has a primary page
+ * (first line) and an optional companion page (second line). Gasoline gets the
+ * owner's themed layout; diesel keeps its existing four defaults. */
+static const uint16_t default_favorite_primary[2][MENU_FAVORITES] = {
+    {0x38, 0x01, 0x3a, 0x28, 0x2a, 0x39}, /* gasoline: electrical / performance / temperatures / driving / timers / oil */
+    {0x84, 0x81, 0x87, 0x88, 0x00, 0x00}, /* diesel: unchanged */
+};
+static const uint16_t default_favorite_companion[2][MENU_FAVORITES] = {
+    {0x16, 0x0d, 0x0a, 0x1a, 0x2c, 0x40},
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+};
+
 /* Provide initial favorites and a visible parameter catalog. */
 void menu_preferences_default(MenuPreferences *prefs) {
     memset(prefs, 0, sizeof(*prefs));
-    const uint16_t favorites[2][4] = {{0x04, 0x01, 0x07, 0x28}, {0x84, 0x81, 0x87, 0x88}};
     for (unsigned e = 0; e < 2; ++e) {
-        memcpy(prefs->favorites[e], favorites[e], sizeof(favorites[e]));
-        prefs->last_favorite[e] = favorites[e][0];
+        memcpy(prefs->favorites[e], default_favorite_primary[e], sizeof(default_favorite_primary[e]));
+        prefs->last_favorite[e] = default_favorite_primary[e][0];
     }
+}
+
+/* Primary page of a themed default favorite set (0 when the set is unset). */
+uint16_t menu_default_favorite(uint8_t engine, uint8_t set) {
+    if (engine > 1 || set >= MENU_FAVORITES)
+        return 0;
+    return default_favorite_primary[engine][set];
+}
+
+/* Companion page shown on the second line of a default set (0 when none). */
+uint16_t menu_default_favorite_companion(uint8_t engine, uint8_t set) {
+    if (engine > 1 || set >= MENU_FAVORITES)
+        return 0;
+    return default_favorite_companion[engine][set];
 }
 
 /* Add a permanent page identity to the saved menu preferences. */

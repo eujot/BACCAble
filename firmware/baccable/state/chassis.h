@@ -38,6 +38,13 @@ typedef struct {
     uint8_t launch_assist_enabled;
 
     uint8_t stability_inverted;
+
+    /* 1 while the configured default drive mode is being injected; 0 once the
+     * driver changed the mode by hand (until the next wake-up / save). */
+    uint8_t default_mode_override;
+
+    /* Raw drive-mode field seen when the override was armed; 0xFF = not sampled yet. */
+    uint8_t default_mode_baseline;
 } ChassisState;
 extern ChassisState chassis_state;
 #endif

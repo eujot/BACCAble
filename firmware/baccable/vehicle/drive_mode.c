@@ -1,5 +1,38 @@
 #include "vehicle/drive_mode.h"
 
+/* Raw field values for the start-up default mode, indexed by [encoding][mode]:
+ * mode 0=off, 1=AllWeather, 2=Dynamic, 3=Race. */
+static const uint8_t DEFAULT_MODE_ENCODING[3][4] = {
+    {0x00, 0x10, 0x08, 0x30}, /* 0x384 byte 1 bits 6..2 */
+    {0x00, 0x04, 0x02, 0x0C}, /* 0x46C byte 7 bits 4..0 */
+    {0x00, 0x10, 0x20, 0x04}, /* 0x25A byte 0 bits 6..2 */
+};
+
+/* Raw field value that encodes the configured default mode for one frame layout. */
+uint8_t drive_mode_default_field(uint8_t encoding) {
+    uint8_t mode = settings_state.default_drive_mode;
+    if (encoding > 2 || mode == 0 || mode > 3)
+        return 0;
+    return DEFAULT_MODE_ENCODING[encoding][mode];
+}
+
+/* Advance the start-up override from the observed raw mode: 1 = keep injecting,
+ * 0 = leave the mode alone (feature off, already stopped, or the driver changed it). */
+uint8_t drive_mode_default_should_apply(uint8_t raw_mode) {
+    if (settings_state.default_drive_mode == 0 || settings_state.default_drive_mode > 3 ||
+        !chassis_state.default_mode_override)
+        return 0;
+    if (chassis_state.default_mode_baseline == 0xFF) {
+        chassis_state.default_mode_baseline = raw_mode; /* first sample after arming */
+        return 1;
+    }
+    if (raw_mode != chassis_state.default_mode_baseline) {
+        chassis_state.default_mode_override = 0; /* the driver changed it on purpose */
+        return 0;
+    }
+    return 1;
+}
+
 /* Update the current driving mode and its related feature behavior. */
 void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 8)
@@ -15,6 +48,7 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
     // 0x4=AllWeather [shifted by 2 bits becomes 0x10], 0xC=race [shifted by 2 bits becomes 0x30]
     telemetry_state.drive_mode =
         frame_data[1] & 0x7C; // 7C is the mask from bit 6 to 2 (we avoid bit shift to save cpu loops)
+    uint8_t apply_default = drive_mode_default_should_apply(telemetry_state.drive_mode);
     if (chassis_state.stability_inverted) {
 
         if (telemetry_state.drive_mode != 0x30) { // if not in race
@@ -25,6 +59,13 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
 
         frame_data[7] = frame_checksum(frame_data, rx_header->DLC); // update CRC
         can_forward(rx_header, frame_data);                         // transmit the modified packet
+    } else if (apply_default) {
+        uint8_t default_mode = drive_mode_default_field(DRIVE_MODE_ENC_CAN);
+        if ((frame_data[1] & 0x7C) != default_mode) {
+            frame_data[1] = (frame_data[1] & ~0x7C) | default_mode;
+            frame_data[7] = frame_checksum(frame_data, rx_header->DLC);
+            can_forward(rx_header, frame_data);
+        }
     }
 
 #endif
@@ -97,9 +138,12 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
     // 0x4=AllWeather [shifted by 2 bits becomes 0x10], 0xC=race [shifted by 2 bits becomes 0x30]
     telemetry_state.drive_mode =
         frame_data[1] & 0x7C; // 7C is the mask from bit 6 to 2 (we avoid bit shift to save cpu loops)
+    uint8_t apply_default = drive_mode_default_should_apply(telemetry_state.drive_mode);
     if (chassis_state.stability_inverted) {
 
-        if (telemetry_state.drive_mode == 0x30) { // race
+        uint8_t effective_mode = apply_default ? drive_mode_default_field(DRIVE_MODE_ENC_CAN)
+                                               : telemetry_state.drive_mode;
+        if (effective_mode == 0x30) { // race, including the configured start-up mode
 
             // ESC and TC
             frame_data[1] =
@@ -113,6 +157,13 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
 
         frame_data[7] = frame_checksum(frame_data, rx_header->DLC); // update CRC
         can_forward(rx_header, frame_data);                         // transmit the modified packet
+    } else if (apply_default) {
+        uint8_t default_mode = drive_mode_default_field(DRIVE_MODE_ENC_CAN);
+        if ((frame_data[1] & 0x7C) != default_mode) {
+            frame_data[1] = (frame_data[1] & ~0x7C) | default_mode;
+            frame_data[7] = frame_checksum(frame_data, rx_header->DLC);
+            can_forward(rx_header, frame_data);
+        }
     }
 #endif
 
@@ -125,4 +176,28 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
     // Park Brake Status is on byte 3 bit 3.
     // Int. Relay Fail Status is on byte 4 from bit 7 to 6
     // SuspensionLevel is on byte 5 bit0 and byte 6 bit7.
+}
+
+/* CAN ID 0x000004F6 (BH) and 0x00000547 (C2). */
+/* Experimental state override; physical assist deactivation remains unverified. */
+void vehicle_handle_lane_state(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
+#if defined(BACCABLE_BH)
+    if (rx_header->StdId != 0x4F6)
+        return;
+#elif defined(BACCABLE_C2)
+    if (rx_header->StdId != 0x547)
+        return;
+#else
+    (void)rx_header;
+    (void)frame_data;
+    return;
+#endif
+    if (rx_header->DLC != 8 || rx_header->IDE != CAN_ID_STD || rx_header->RTR != CAN_RTR_DATA)
+        return;
+
+    if (settings_state.lane_assist_disabled &&
+        (frame_data[6] & 0x02)) { // byte 6 bit 1 is the lane-assist enable flag (0 = disabled)
+        frame_data[6] &= (uint8_t)~0x02;
+        can_forward(rx_header, frame_data);
+    }
 }

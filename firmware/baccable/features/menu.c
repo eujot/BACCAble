@@ -555,11 +555,13 @@ void menu_init(void) {
     last_input = currentTime;
     menu_preferences_default(&preferences);
     uint8_t data[MENU_STORAGE_SIZE] = {0};
+    bool default_favorites = false;
     bool new_record = flash_record_load(VISIBILITY_RECORD, 0x105, data, sizeof(data));
     if ((!new_record && !flash_record_load(VISIBILITY_RECORD, 0x104, data, MENU_PREFS_SIZE)) ||
         !menu_preferences_decode(&preferences, data)) {
         /* Old visibility was shared by both engine profiles. Import it once;
            only saving the new record replaces it. Settings and mirrors are untouched. */
+        default_favorites = true;
         uint8_t old[30];
         if (flash_record_load(VISIBILITY_RECORD, 0x103, old, sizeof(old)))
             for (unsigned e = 0; e < 2; ++e)
@@ -583,7 +585,18 @@ void menu_init(void) {
                         *id = FAVORITE_EMPTY;
                 }
     }
-    if (!atomic_favorites) import_page_favorites();
+    if (!atomic_favorites || default_favorites) import_page_favorites();
+    if (default_favorites) {
+        /* Seed pairs only when no saved page/slot preferences exist. An ID
+         * matching a shipped default does not prove the user never edited it. */
+        for (unsigned e = 0; e < 2; ++e)
+            for (unsigned f = 0; f < FAVORITE_SET_COUNT; ++f) {
+                uint16_t companion = menu_default_favorite_companion(e, f);
+                if (companion && menu_page_index(e, companion) >= 0)
+                    favorites[e][f].params[1] = companion;
+            }
+        atomic_favorites = true;
+    }
     editor_confirm = false;
     editor_draft = preferences;
     favorite_confirm = false;

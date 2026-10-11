@@ -213,6 +213,27 @@ If behavior worsens, select Reset default or completely power down the device.
 
 Favorites poll each diagnostic value once per cycle, even if it appears on both lines. Dense pairs of pages can take up to four seconds to refresh all eight values; they remain visible for that cycle and show `--` if replies stop. Native CAN readings retain their usual freshness limit.
 
+### Shipped default favorites
+
+A fresh install (gasoline) starts with six themed sets, each pairing a first-line
+page with a second-line page. A 1-line IPC shows only the first column; a 2-line
+IPC shows both lines. The set selected on start-up is **S1 Elektryka**.
+
+| Set | Line 1 | Line 2 |
+| --- | --- | --- |
+| S1 Elektryka | `Oil L / mm / %` | `Batt charge BCM` |
+| S2 Osiągi | `Power / torque` | `Boost pressure` |
+| S3 Temperatury | `Oil/water/gear C` | `Intercooler out` |
+| S4 Jazda | `Speed` | `Gear` |
+| S5 Timery | `0-100 km/h` | `Best 0-100` |
+| S6 Olej / Multiair | `Oil/water/IC C` | `Misfires/MA temp` |
+
+Diesel keeps its four existing defaults and has no second-line pages. New
+installations use the Favorite slot layout on both IPC profiles. Pairs are seeded
+only when no saved page or slot preferences exist. Existing saved favorites are
+preserved, even when their primary page matches a shipped default. Editing
+these sets follows the same steps below.
+
 ### Configure two reading pages per favorite
 
 1. Open `Settings → Favorites` and choose `Favorite 1` through `Favorite 6`.
@@ -317,12 +338,14 @@ workflow; their draft does not control the car before successful persistence.
 | `Virtual ACC` | Off / on | Use a compatible standard cruise-control pad for ACC functions. It requires an ACC-capable, correctly configured vehicle; it does not add radar or ACC capability. |
 | `ACC resume` | OFF / RES / + | Select whether BACCAble sends automatic RES or gentle-up requests while ACC is engaged and holding a stationary car. This can allow the car to resume movement; see [assistance controls](#acc-and-has-controls). |
 | `Virtual HAS` | Off / on | Permit simulated Highway Assist button presses through the action or a double press of the lane button. Requires compatible, configured vehicle assistance equipment. |
+| `Disable LKA` | Off / on | Experimental: retransmit the lane-assist state with its enable bit cleared, only on BH `0x4F6` and C2 `0x547` (8 bytes). Actual assist deactivation is not yet vehicle-verified; a changed dashboard indication alone does not establish it. |
 
 ### Drivetrain group
 
 | Option | Values | Purpose |
 | --- | --- | --- |
 | `Launch Nm` | 25–600 Nm, step 25 | Reported engine torque at which launch assist requests release of the forced front brakes. It is not a torque limit or a tuning setting. |
+| `Default mode` | OFF / A / D / Race | Force the drive mode at each start-up (AllWeather, Dynamic or Race). `OFF` leaves the car unchanged. A change in the received mode stops the override, including while ESC/TC is active. Wake-up or saving Features re-arms it; ending USB capture or diagnostics does not. |
 | `ESC/TC control` | Off / on | Permit the ESC/traction-control toggle and supported lane-button gesture. Vehicle configuration must support the function. |
 | `Dyno action` | Off / on | Permit `Toggle Dyno mode`; enabling this preference alone does not enter Dyno. |
 | `Brake action` | Off / on | Permit `Brake override` and `Disable launch`. Enabling this preference alone does not apply the brakes. |
