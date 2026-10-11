@@ -338,12 +338,14 @@ Szkic nie steruje samochodem przed udanym zapisem.
 | `Virtual ACC` | Wyłączona / włączona | Pozwala obsługiwać ACC zgodnym panelem przycisków zwykłego tempomatu. Samochód musi już mieć potrzebny sprzęt i konfigurację ACC. Funkcja nie zastępuje radaru ani innych brakujących elementów. |
 | `ACC resume` | OFF / RES / + | Wybiera automatyczne wysyłanie RES albo lekkiego naciśnięcia w górę, gdy ACC jest aktywny i utrzymuje zatrzymany samochód. Może to umożliwić ponowne ruszenie. Zobacz [obsługę ACC i HAS](#obsługa-acc-i-has). |
 | `Virtual HAS` | Wyłączona / włączona | Udostępnia symulowane naciśnięcie przycisku Highway Assist przez akcję lub podwójne naciśnięcie przycisku asystenta pasa. Wymaga zgodnego i skonfigurowanego wyposażenia samochodu. |
+| `Disable LKA` | Wyłączona / włączona | Gdy jest włączona, utrzymuje asystenta pasa ruchu wyłączonego. Korzysta z ramki stanu asystenta pasa; po włączeniu sprawdź kontrolkę na desce samochodu. |
 
 ### Grupa układu napędowego
 
 | Opcja | Wartości | Do czego służy |
 | --- | --- | --- |
 | `Launch Nm` | 25–600 Nm, co 25 | Wartość momentu obrotowego zgłaszanego przez silnik, przy której wspomaganie startu wysyła polecenie zwolnienia wymuszonych przednich hamulców. To nie jest ograniczenie momentu ani ustawienie tuningu. |
+| `Default mode` | OFF / A / D / Race | Wymusza tryb jazdy przy każdym uruchomieniu (AllWeather, Dynamic albo Race). `OFF` nie zmienia samochodu. Gdy sam zmienisz tryb, BACCAble przestaje go wymuszać do następnego uruchomienia. |
 | `ESC/TC control` | Wyłączona / włączona | Udostępnia przełączanie kontroli stabilności i trakcji oraz obsługiwany skrót przyciskiem asystenta pasa. Samochód musi mieć odpowiednią konfigurację. |
 | `Dyno action` | Wyłączona / włączona | Udostępnia `Toggle Dyno mode`. Samo włączenie tego ustawienia nie uruchamia trybu Dyno. |
 | `Brake action` | Wyłączona / włączona | Udostępnia `Brake override` i `Disable launch`. Samo włączenie ustawienia nie uruchamia hamulców. |

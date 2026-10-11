@@ -102,6 +102,9 @@ void board_uart_status(uint8_t out[5]);
     0x3D // second byte of the message to C2 and BH bus, identifies the request to disable ESC/TC function.
 #define C2_Bh_cmdFunction_Save_Log_to_File                                                                   \
     0x3E // second byte of the message to C2 and BH bus, identifies the request to save log to file.
+#define C2_Bh_cmdSetDriverAids                                                                               \
+    0x48 // second byte of the message to C2 and BH bus: third byte = default drive mode
+         // (0=off, 1=AllWeather, 2=Dynamic, 3=Race), fourth byte = lane-assist disabled (0/1).
 
 #define C1BHcmdShowRaceScreen                                                                                \
     0x40 // second byte of the message to C1 and BH bus, identifies the request to show Race Screen on

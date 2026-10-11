@@ -7,6 +7,10 @@ static uint8_t next_option;
 void board_sync_restart(void) {
     next_option = 0;
     runtime_state.instruct_slave_boards_trigger_enabled = 1;
+    /* A fresh wake-up or save re-arms the start-up drive mode and lets the driver
+     * change it again by hand. */
+    chassis_state.default_mode_override = 1;
+    chassis_state.default_mode_baseline = 0xFF;
 }
 
 /* Deliver every enabled-feature preference, retrying when the board link is busy. */
@@ -53,6 +57,13 @@ void board_sync_process(void) {
         command[0] = C2_Bh_BusID;
         command[1] =
             settings_state.has_function_enabled ? C2_Bh_cmdFunctHAS_Enabled : C2_Bh_cmdFunctHAS_Disabled;
+        break;
+    case 7:
+        command[0] = C2_Bh_BusID;
+        command[1] = C2_Bh_cmdSetDriverAids;
+        command[2] = settings_state.default_drive_mode;
+        command[3] = settings_state.lane_assist_disabled;
+        length = 4;
         break;
     default:
         next_option = 0;

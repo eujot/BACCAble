@@ -177,6 +177,28 @@ reassertion and factory arbitration remain. No new beta or hardware flash.
 
 ## Current work
 
+### Firmware: start-up default drive mode and lane-assist disable, 2026-10-11
+
+Added two owner preferences to the C1 Setup menu, driven by the 2026-10-11
+`dna_all_modes` / `lane_assist_toggle` capture sessions:
+
+- **`Default mode`** (OFF / A / D / Race) — on each start-up BACCAble rewrites the
+drive-mode field of the body broadcasts `0x384` (C1, C2), `0x46C` and `0x25A`
+(BH) to the selected mode, the same `can_forward` way the ESC/TC feature forces
+Race. The override is armed on wake-up/save and stops as soon as the driver
+changes the mode by hand.
+- **`Disable LKA`** — holds the lane-keeping assist off by clearing byte 6 bit 1
+of the lane-assist state frame `0x4F6` (BH) / `0x547` (C2), the signal decoded
+from the lane-toggle sessions.
+
+Both settings persist (flash slots 38/39) and reach C2 and BH through a new
+`C2_Bh_cmdSetDriverAids` sync command. A new host test `tests/test_drive_mode.c`
+covers the field encodings, the “stop after a manual change” rule and the
+lane-assist clearing, and the board-sync retry test now counts eight options. All
+four firmware flavours build and lint; the host suite (native executables plus the
+label test) passes. In-car behaviour of the LKA override still needs confirmation
+on the vehicle.
+
 ### Scenario-decode docs consistency and the LKA toggle finding, 2026-10-11
 
 Resolved the PR #53 rebase conflict in this file and audited the Lab documentation,

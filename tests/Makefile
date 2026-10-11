@@ -19,6 +19,7 @@ test: build/test_core build/test_transport build/test_catalog build/test_menu bu
 	./build/test_input_repeat
 	./build/test_engine_status
 	./build/test_exhaust
+	./build/test_drive_mode
 	./build/test_upstream
 	./build/test_parking_c2
 	./build/test_parking_bh
@@ -73,6 +74,13 @@ build/test_exhaust: test_exhaust.c $(FIRMWARE)/features/exhaust.c $(HEADERS) Mak
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC1_FLAVOR=1 test_exhaust.c \
 		$(FIRMWARE)/features/exhaust.c -lm -o $@
+
+DRIVE_MODE_SOURCES := test_drive_mode.c $(FIRMWARE)/vehicle/drive_mode.c $(FIRMWARE)/protocol/checksum.c
+build/test_drive_mode: $(DRIVE_MODE_SOURCES) $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC1_FLAVOR=1 -DGIT_VERSION=\"test\" $(DRIVE_MODE_SOURCES) -o $@
+
+test: build/test_drive_mode
 
 MENU_SOURCES := test_menu.c $(addprefix $(FIRMWARE)/, features/menu.c features/menu_model.c \
  features/menu_input.c features/my23_ui.c features/favorite_parameters.c features/ui_entry.c features/menu_diagnostics.c features/display_stream.c features/ibs_override.c features/board_sync.c features/dashboard.c features/dashboard_format.c \

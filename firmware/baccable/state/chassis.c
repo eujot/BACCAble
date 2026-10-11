@@ -99,4 +99,8 @@ ChassisState chassis_state = {
     .launch_assist_enabled = 0,
 
     .stability_inverted = 0,
+
+    .default_mode_override = 1,
+
+    .default_mode_baseline = 0xFF,
 };

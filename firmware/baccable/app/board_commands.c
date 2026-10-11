@@ -265,6 +265,13 @@ void board_commands_dispatch(const uint8_t *message) {
         case C2_Bh_cmdFunction_Save_Log_to_File:
             filesystem_save_log();
             break;
+        case C2_Bh_cmdSetDriverAids:
+            settings_state.default_drive_mode = message[2] <= 3 ? message[2] : 0;
+            settings_state.lane_assist_disabled = message[3] ? 1 : 0;
+            /* Re-arm the start-up override so this board applies the new preference. */
+            chassis_state.default_mode_override = 1;
+            chassis_state.default_mode_baseline = 0xFF;
+            break;
         default:
         }
 

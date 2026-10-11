@@ -84,6 +84,9 @@ void vehicle_dispatch_standard(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
     case 0x0000046C:
         vehicle_handle_body_drive_mode(rx_header, frame_data);
         break;
+    case 0x000004F6:
+        vehicle_handle_lane_state(rx_header, frame_data);
+        break;
     case 0x000004AF:
         vehicle_handle_stability_status(rx_header, frame_data);
         break;
@@ -95,6 +98,9 @@ void vehicle_dispatch_standard(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
         break;
     case 0x00000545:
         vehicle_handle_brightness(rx_header, frame_data);
+        break;
+    case 0x00000547:
+        vehicle_handle_lane_state(rx_header, frame_data);
         break;
     case 0x000005A0:
         vehicle_handle_lane_button(rx_header, frame_data);
