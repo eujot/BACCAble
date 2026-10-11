@@ -179,7 +179,8 @@ reassertion and factory arbitration remain. No new beta or hardware flash.
 
 ### Readings next-page prefetch, 2026-10-12
 
-Task branch: `feat/readings-preview-prefetch`, based on merged master `7015b40`
+Task branch: `feat/readings-preview-prefetch`, implementation `6b7e839`,
+based on merged master `7015b40`
 (PR #54 includes the preceding firmware review). Previously MY23 Readings showed
 the next page label on L2 but queried only L1, leaving the new page empty until
 its first diagnostic response after navigation.
@@ -201,8 +202,10 @@ new CAN layouts are introduced. Validation covers prefetch before navigation,
 reply during navigation, rate/settling limits, current-page isolation, composite
 ID deduplication, filtered-list wrap, a single visible page, stale replies,
 leaving Readings and legacy behavior, across both menu widths and MY23 defaults.
-Host suite and menu labels pass with Apple Clang ASan/UBSan. ARM/cppcheck and Lab
-results are recorded in the completion update. No vehicle test, flash or release.
+Host suite and menu labels PASS with Apple Clang ASan/UBSan; C1/C2/BH/CAN
+builds PASS with full ARM 15.2.Rel1, all four cppcheck runs PASS, and all 69 Lab
+tests PASS. Dictionary 2026-10-12.2 refreshes the request-handler source hash;
+CAN layouts and capture evidence are unchanged. No vehicle test, flash or release.
 The five original untracked capture bundles remain untouched.
 
 
