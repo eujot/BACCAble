@@ -72,7 +72,12 @@ class ScenarioModelTests(unittest.TestCase):
         groups = [s.group for s in ordered]
         self.assertLess(groups.index("access"), groups.index("drivetrain"))
         self.assertLess(groups.index("parking"), groups.index("drive"))
-        self.assertLess(groups.index("drive"), groups.index("adas"))
+        # Within the driving block the parking-lot group `drive` precedes the
+        # on-road `adas` group. A stationary `adas` procedure (a menu toggle)
+        # stays in the stationary block, so compare the order among driving
+        # procedures only.
+        driving_groups = [s.group for s in ordered if s.vehicle == "driving"]
+        self.assertLess(driving_groups.index("drive"), driving_groups.index("adas"))
         vehicles = [s.vehicle for s in ordered]
         first_driving = vehicles.index("driving")
         self.assertTrue(all(v != "driving" for v in vehicles[:first_driving]))

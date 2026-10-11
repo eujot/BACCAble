@@ -155,26 +155,67 @@ drive, adas`, then `order` and `id`.
 
 ## Bundled library
 
-79 procedures (473 confirmations). Groups:
+82 procedures (513 confirmations). Groups:
 
 | Group | Procedures | Location | Examples |
 | --- | --- | --- | --- |
 | access | 10 | postój | zamek, drzwi, bagażnik, maska, klapka paliwa, szyby, lusterka, pas |
 | lighting | 10 | postój | kierunkowskazy, awaryjne, mijania/drogowe, przeciwmgielne, pozycyjne, wnętrze, stop |
-| wipers | 4 | postój/dowolnie | biegi wycieraczek, spryskiwacz, tylna wycieraczka, czujnik deszczu |
+| wipers | 5 | postój/dowolnie | biegi wycieraczek, spryskiwacz, tylna wycieraczka, czujnik deszczu, wycieraczki→światła mijania (AUTO) |
 | climate | 8 | postój | klimatyzacja, temperatura, nawiew, odmrażanie, recyrkulacja, podgrzewanie |
 | media | 7 | postój (+1 droga) | menu IPC, ekran, źródło audio, utwór, radio, telefon, nawigacja |
 | chassis | 6 | postój (+1 droga) | tryb zawieszenia, prześwit, Q4, tryb kierownicy, ruch kierownicy |
 | brakes | 7 | postój/plac/droga | pedał hamulca, EPB, auto-hold, ABS/ESC/ASR (plac), kontrola zjazdu |
-| drivetrain | 8 | postój | zapłon, silnik, dźwignia P/R/N/D, wsteczny, manual, DNA, Start/Stop |
+| drivetrain | 9 | postój | zapłon, silnik, dźwignia P/R/N/D, wsteczny, manual, DNA (D/N/A/Race), Start/Stop |
 | parking | 4 | postój | czujniki parkowania, kamera cofania, asystent, ostrzeżenie drzwi |
 | **drive** | **9** | **jazda – plac** | ruszenie (D), przyspieszanie, hamowanie, zmiana prędkości, skręcanie, biegi, manewr na wstecznym, arming tempomatu, pełznięcie |
-| adas | 6 | jazda – droga | tempomat, ACC, asystent pasa, FCW/AEB, martwe pole, zmęczenie kierowcy |
+| adas | 7 | postój/droga | tempomat, ACC, asystent pasa (LKA), FCW/AEB, martwe pole, zmęczenie kierowcy |
 
 The `drive` group is designed for a **parking lot / closed area** at low speed,
 so the owner can record while driving without needing a public road. `vehicle =
 "driving"` procedures are grouped last; on-road stability and collision tests
 must never be provoked on a public road.
+
+## Targeted decode tests (DNA modes, lane assist, wipers→lights)
+
+Three procedures target specific firmware options, using markers in the catalog
+(the DNA mode markers `dna_dynamic` / `dna_natural` / `dna_allweather` /
+`dna_race`, the lane toggle `lane_assist_disabled` / `lane_assist_enabled`, and
+`wipers_auto`):
+
+- `dna_all_modes` (drivetrain, stationary) — visit D, N, A and Race, each with its
+  own marker, to confirm the per-mode code on `0x384` / `0x46C` / `0x25A`.
+- `lane_assist_toggle` (adas, stationary) — LKA off/on in the menu.
+- `wipers_lights_auto` (wipers, stationary) — drive the wipers through off, slow,
+  fast and automatic (rain-sensor) with the headlights in AUTO, in daylight, and
+  mark the dipped-beam reaction.
+
+Each DNA mode gets a **distinct** marker (not the shared `dna_mode_changed`) so
+the per-mode code can be correlated without mixing the four modes.
+
+### How many repetitions make the data reliable
+
+One action needs **≥3 clean ON/OFF cycles in one recording** (what `runs = 3`
+already gives) and, for independence, the **same action repeated in a second
+session**. Promotion to `validated` also needs a physical confirmation (for
+wipers→lights: you watch the lamps).
+
+| Level | Repetitions | What it buys |
+| --- | --- | --- |
+| one session | 3 cycles (`runs = 3`) | `supported` candidate after counter/confounder filtering |
+| two sessions | 3 + 3 cycles | cross-session support and confounder rejection |
+| physical check | any | `validated` for wipers→lights |
+
+Do **not** repeat all 82 procedures: run only these three in one session (~10
+minutes), then repeat the same three in a second session. 6–9 ON/OFF
+observations per action is the practical reliability threshold.
+
+### Controls inside a run
+
+- DNA: end each run on N so the next baseline is known; never touch A or Race.
+- Lane: keep indicators, cruise and gear steady; the menu is the only change.
+- Wipers: run in daylight with the headlights in AUTO so the dark-sensor cannot
+  turn the lamps on by itself; the wiper state is the only change.
 
 ## How the results are used
 
