@@ -194,10 +194,13 @@ from the lane-toggle sessions.
 Both settings persist (flash slots 38/39) and reach C2 and BH through a new
 `C2_Bh_cmdSetDriverAids` sync command. A new host test `tests/test_drive_mode.c`
 covers the field encodings, the “stop after a manual change” rule and the
-lane-assist clearing, and the board-sync retry test now counts eight options. All
-four firmware flavours build and lint; the host suite (native executables plus the
-label test) passes. In-car behaviour of the LKA override still needs confirmation
-on the vehicle.
+lane-assist clearing, and the board-sync retry test now counts eight options.
+The linked Lab dictionary gained the two lane frames (`lane_assist_enabled` on
+BH `0x4F6` / C2 `0x547`), refreshed firmware source hashes and a dated
+`docs/research/20261011-dna-lane-decode.md` note (DNA codes confirmed, LKA state
+and control). All four firmware flavours build and lint; the host suite (native
+executables plus the label test) and the Lab suite pass. In-car behaviour of the
+LKA override still needs confirmation on the vehicle.
 
 ### Scenario-decode docs consistency and the LKA toggle finding, 2026-10-11
 

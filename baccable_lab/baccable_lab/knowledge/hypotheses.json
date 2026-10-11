@@ -294,15 +294,15 @@
     },
     {
       "id": "ADAS-LKA-001",
-      "status": "unresolved",
-      "role": null,
-      "can_id": null,
-      "description": "Lane-keeping assist (LKA) is enabled/disabled by a double-click on the left stalk button with the ignition on and the car stationary; it is not a menu item. The frame that carries the LKA enable/disable state is not yet identified. The momentary lane stalk button press itself is already decoded (BH 0x5A0 byte 4 bit 0; C1/C2 0x384 byte 3 bit 6, historical comment), so the search must separate that button pulse from a persistent assist state.",
+      "status": "candidate",
+      "role": "BH",
+      "can_id": "0x4F6",
+      "description": "Lane-keeping assist (LKA) is enabled/disabled by a double-click on the left stalk button (stationary, ignition on). The enable state is reported on the single-bit frame BH 0x4F6 byte 6 bit 1 (0 = disabled, 1 = enabled), gateway-duplicated on C2 0x547. Across the 2026-10-11 lane_assist_toggle recordings it tracked every one of the 12 toggles (two sessions, three OFF/ON cycles each) and also cleared whenever Race was engaged. The momentary button press is on C2 0x384 byte 3 bit 6 (and BH 0x5A0 byte 4 bit 0).",
       "evidence": [],
       "contradictions": [
-        "The 2026-10-10 campaign planned the lane procedures on the assumption that LKA is toggled from a menu; the owner's confirmation of the left-stalk double-click supersedes that assumption. No lane-toggle frames were captured in that campaign."
+        "The 2026-10-10 campaign planned the lane procedures on the assumption that LKA is toggled from a menu; the owner's confirmation of the left-stalk double-click supersedes that assumption."
       ],
-      "next_test": "Run `lane_assist_toggle` (stationary, ignition on) with at least three clean OFF/ON double-click cycles, mark lane_assist_disabled / lane_assist_enabled, and repeat the same procedure in a second session; correlate by state interval and separate the button pulse (0x5A0 / 0x384) from any persistent enable state."
+      "next_test": "Confirm the BH 0x4F6 / C2 0x547 byte 6 bit 1 meaning against the dashboard lane-assist lamp on the car, and verify that clearing the bit through the firmware `Disable LKA` option really disables the assist."
     }
   ]
 }
