@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "dictionary_version": "2026-10-11.2",
+  "dictionary_version": "2026-10-11.3",
   "vehicle": {
     "model": "Alfa Romeo Giulia (owner-reported)",
     "model_year": null,
@@ -240,7 +240,8 @@
             "8": "Dynamic",
             "4": "AllWeather",
             "1": "Race"
-          }
+          },
+          "note": "Confirmed from the 2026-10-11 dna_all_modes sessions (three runs each): N=16, D=8, A=4, Race=1 (mask 0x7C, byte 0). Dashboard presentation broadcast."
         }
       ],
       "note": "",
@@ -1173,7 +1174,8 @@
             "2": "Dynamic",
             "4": "AllWeather",
             "12": "Race"
-          }
+          },
+          "note": "Confirmed from the 2026-10-11 dna_all_modes sessions (three runs each, reversible, Natural baseline): N=0, D=2, A=4, Race=12. This is a body broadcast the other ECUs obey, so BACCAble can rewrite and forward it (ESC/TC and Default mode) - the drive mode is both observable and settable."
         },
         {
           "name": "indicator_request",
@@ -2592,7 +2594,8 @@
             "2": "Dynamic",
             "4": "AllWeather",
             "12": "Race"
-          }
+          },
+          "note": "Confirmed from the 2026-10-11 dna_all_modes sessions (three runs each, reversible, Natural baseline): N=0, D=2, A=4, Race=12. This is a body broadcast the other ECUs obey, so BACCAble can rewrite and forward it (ESC/TC and Default mode) - the drive mode is both observable and settable."
         },
         {
           "name": "lane_stalk_button",
@@ -4433,7 +4436,8 @@
             "2": "Dynamic",
             "4": "AllWeather",
             "12": "Race"
-          }
+          },
+          "note": "Confirmed from the 2026-10-11 dna_all_modes sessions (three runs each, reversible, Natural baseline): N=0, D=2, A=4, Race=12. This is a body broadcast the other ECUs obey, so BACCAble can rewrite and forward it (ESC/TC and Default mode) - the drive mode is both observable and settable."
         },
         {
           "name": "lane_stalk_button",
@@ -7139,7 +7143,7 @@
       "can_id": null,
       "role": null,
       "topic": "Rain sensor / wiper strokes",
-      "status": "No confirmed decoder. The 2026-10-10 guided campaign adds first wiper leads (BH 0x2F0); see docs/research/20261010-scenario-sessions.md. Do not infer from lighting or suspension activity."
+      "status": "No confirmed decoder. BH 0x2F0 byte 4 bit 4 is the best wiper lead. The 2026-10-11 re-analysis (docs/research/20261011-dna-lane-decode.md) found that the older wipers_speeds/rain_sensing data yields no clean bit after counter filtering; a dedicated wipers_lights_auto recording (headlights in AUTO, daylight) is still required."
     },
     {
       "can_id": null,

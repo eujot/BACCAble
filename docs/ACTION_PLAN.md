@@ -177,6 +177,30 @@ reassertion and factory arbitration remain. No new beta or hardware flash.
 
 ## Current work
 
+### Re-analysis: DNA is settable, older bundles had no DNA/LKA data, 2026-10-11
+
+Corrected an earlier analysis error. A first pass over the 2026-10-11 bundles
+concluded the drive mode was only *observable* because “no request frame” exists
+for the DNA knob. That was wrong: `0x384` is a body→ECU **broadcast** whose
+consumers (TCM/IPC/ECM/… on C1; HAL/ORC/EPS/BSM on C2) obey its mode field, and the
+firmware already rewrites and forwards it (`can_forward`, the ESC/TC path). A body
+broadcast that consumers obey is actionable; a missing knob-input frame does not
+make the function uncontrollable. All five bundles were re-checked:
+
+- The 2026-10-10 bundles (`10paz1`/`10paz2`) had `dna_modes` and `lane_assist`
+  **skipped**, so they carry no DNA/LKA ground truth — hence the dedicated
+  2026-10-11 runs.
+- DNA codes re-confirmed (N/D/A/Race = 0/2/4/12 on `0x384`/`0x46C`; 16/8/4/1 on
+  `0x25A`).
+- Wipers/rain remain **undecoded**: no clean bit survives counter filtering once
+  windows are bounded to the scenario span (an earlier “result” was a window run
+to the session end); `wipers_lights_auto` still needs recording.
+
+Recorded in `docs/research/20261011-dna-lane-decode.md` (correction plus method
+lessons), the playbook anti-patterns, the dictionary (`dna_mode` notes,
+`DNA-MODE-001` hypothesis, version 2026-10-11.3) and the re-rendered
+`CAN_DICTIONARY.md`.
+
 ### Firmware: start-up default drive mode and lane-assist disable, 2026-10-11
 
 Added two owner preferences to the C1 Setup menu, driven by the 2026-10-11
