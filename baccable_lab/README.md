@@ -73,9 +73,13 @@ attachment backlog is visible without being confused with loss during the test.
 
 Guided scenarios are the primary capture workflow. The screen shows one step of
 a controlled in-car procedure at a time as a large `WYKONAJ:` instruction, and
-you confirm it with `ENTER`/`SPACJA` (zrobione), `x` (nieudane) or `p`
-(zatrzymaj); a stopped scenario resumes with `r`, `u` undoes the last
+you confirm it with `ENTER`/`SPACJA` (zrobione), `x` (nieudane) or `k`
+(pomiń ten krok); a stopped scenario resumes with `r`, `u` undoes the last
 confirmation, `s` jumps to another procedure and `q` (or `Ctrl-C`) finishes.
+A step you will not perform (for example provoking ABS, ESC or traction control)
+is skipped with `k` and writes no marker, so it is not mistaken for evidence;
+`o` skips the whole procedure and `e` skips it and stops scheduling it
+permanently (`baccable scenarios --exclude ID` / `--include ID`).
 On-screen wording is Polish and follows the terms used in the car; the stable
 machine keys and the CAN dictionary labels stay English. Colour, a progress bar,
 a next-step preview and a short bell make the screen readable and usable from
@@ -83,7 +87,8 @@ inside the car (`--caps`, `--no-color`/`NO_COLOR`, `--no-bell`). Procedures run
 in a functional order (stationary first, then a parking-lot driving group, then
 on-road assistance) and advance automatically to the next one. Progress is
 stored in `config/scenario_state.json`, so starting Lab again continues from the
-first unfinished step instead of repeating completed work. The manual marker
+first unfinished step instead of repeating completed work. `baccable scenarios`
+marks `[x]` done, `[~]` finished with skips and `[E]` excluded. The manual marker
 palette is not shown while a scenario runs, keeping the screen readable. List
 the procedures and their progress with `baccable scenarios`, jump to one with
 `baccable capture --scenario ID`, or practise it with

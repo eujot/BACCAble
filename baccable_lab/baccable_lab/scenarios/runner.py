@@ -4,15 +4,17 @@ from __future__ import annotations
 
 from .model import Scenario, Step
 
-OUTCOMES = ("done", "failed")
+OUTCOMES = ("done", "failed", "skipped")
 
 
 class ScenarioRunner:
     """Track position in a scenario and record confirmed step outcomes.
 
-    The runner holds no I/O. ``current`` reports the pending step; ``done`` and
-    ``failed`` record the outcome and advance. Pausing keeps the position so the
-    operator can resume and continue marking.
+    The runner holds no I/O. ``current`` reports the pending step; ``done``,
+    ``failed`` and ``skip`` record the outcome and advance. ``skip`` marks a step
+    the operator deliberately does not perform (for example ABS or traction
+    control); it still advances so the procedure is not blocked. Pausing keeps
+    the position so the operator can resume and continue marking.
     """
 
     def __init__(self, scenario: Scenario, handled: int = 0):
@@ -30,11 +32,19 @@ class ScenarioRunner:
             return None
         return self.run, self.index, self.scenario.steps[self.index]
 
+    def record(self, outcome: str) -> tuple[int, int, Step] | None:
+        if outcome not in OUTCOMES:
+            raise ValueError(f"unknown outcome: {outcome}")
+        return self._record(outcome)
+
     def done(self) -> tuple[int, int, Step] | None:
         return self._record("done")
 
     def failed(self) -> tuple[int, int, Step] | None:
         return self._record("failed")
+
+    def skip(self) -> tuple[int, int, Step] | None:
+        return self._record("skipped")
 
     def _record(self, outcome: str) -> tuple[int, int, Step] | None:
         pending = self.current()

@@ -177,6 +177,64 @@ reassertion and factory arbitration remain. No new beta or hardware flash.
 
 ## Current work
 
+### Bundle-first research playbook for AI reviews, 2026-10-10
+
+Added `baccable_lab/docs/RESEARCH_PLAYBOOK.md`: the repeatable, test-minimising
+procedure for an AI to turn a `baccable bundle` and its raw sessions into named
+frames. It maps where frames are described today (`giulia.json` sources vs the
+generated `CAN_DICTIONARY.md`, `hypotheses.json`, dated `docs/research/` notes),
+routes each kind of finding to the right file, defines the
+`unresolved→candidate→supported→validated` ladder, and orders the review so that
+**frame-structure classification runs before candidate trust** — excluding
+counter/checksum bytes (the `0x4AE`/`0x15A` trap) and correlating by state
+interval rather than a fixed before/after window. It states exactly when a new
+recording is justified and how small it should be, lists anti-patterns, and gives
+the write/version/re-render/test loop. Linked from `SESSION_ANALYSIS.md` and the
+generated catalog header. 69 Lab tests pass; documentation only, no code
+behaviour changed.
+
+### Guided-scenario CAN analysis and counter-frame red flags, 2026-10-10
+
+The first two guided-scenario capture sessions (`20261010-104325Z`,
+`20261010-111025Z`; 10.6 M frames together, `access`/`lighting` plus 40 further
+procedures) were analysed from their `baccable bundle` artifacts and the raw
+`session.sqlite3` bit sequences. Findings are recorded in
+`baccable_lab/docs/research/20261010-scenario-sessions.md` and promoted to
+`knowledge/hypotheses.json`; the dictionary moves to `2026-10-10.1` with new
+`research_candidates`. Key results: the low-rate frames `0x4AE` and `0x15A`
+(and `0x5A8` bytes 6-7) are pure counter+check heartbeats, so their bundle
+candidates are phase artefacts — including the top-ranked hits; `0x341` looks
+like monotonic accumulators (suspect). Real new leads: `0x116`/`0x3DE` closure
+status (boot/bonnet, gateway-duplicated, one of the highest-volume unmapped
+frames), `0x0F1` lock/door byte, `0x0FA` one-hot lamp flag byte, `0x100`/`0x104`
+brake, `0x1FC` engine-running, `0x736`/`0x46A`/`0x2F0` HVAC/comfort and the first
+wiper lead. Steady dipped/high/fog lamps produced no clean level bit (pulse/one-hot
+hypothesis). No cross-session same-label repetition yet (the two sessions are
+disjoint); next step is a repeat session plus canonical negative markers. 69 Lab
+tests pass; no hardware run beyond the owner's recordings.
+
+### Skipping and excluding scenarios you will not perform, 2026-10-10
+
+The guided workflow can now record that a step was deliberately **not**
+performed, which matters for ABS, ESC and traction-control procedures the owner
+will not provoke. In the running scenario `k` skips the current step
+(`outcome = "skipped"`), `o` skips every remaining step of the procedure and `e`
+skips the rest **and** excludes the procedure permanently. A skipped step
+advances the run but writes **no timeline marker** — only its `scenario_steps`
+row — so it can never be mistaken for evidence that the physical action
+happened; only `done`/`failed` carry markers. The same permanent decision is
+available from a terminal with `baccable scenarios --exclude ID` /
+`--include ID`, stored in the excluded list of `config/scenario_state.json`;
+excluded procedures are filtered out of the session queue and never scheduled.
+`ProgressStore` now tracks `skipped` separately (and `set_handled` reverts the
+right counter on undo); the scenario list marks `[x]` done, `[~]` finished with
+skips, `[E]` excluded, `[ ]` pending, and reports the three totals. `review`'
+s `scenario_overview` and the bundle `brief` now count skipped confirmations
+separately, and the bundle keeps the intentional gaps visible without treating
+them as candidates. Screen legend, `SCENARIOS.md`, README and both user guides
+updated. 69 Lab tests pass via the CI `unittest` discovery; no hardware run was
+performed.
+
 ### Scenario-first capture redesign, 2026-10-09
 
 Guided scenarios are now the primary capture workflow. Lab runs procedures one

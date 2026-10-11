@@ -214,7 +214,9 @@ def render_brief(bundle: dict) -> str:
     scenarios = {step["scenario"] for step in bundle["scenario"]["steps"]}
     done = sum(1 for step in bundle["scenario"]["steps"] if step["outcome"] == "done")
     failed = sum(1 for step in bundle["scenario"]["steps"] if step["outcome"] == "failed")
-    lines.append(f"Scenarios touched: {len(scenarios)}; confirmations: {done} done, {failed} failed.")
+    skipped = sum(1 for step in bundle["scenario"]["steps"] if step["outcome"] == "skipped")
+    lines.append(f"Scenarios touched: {len(scenarios)}; confirmations: {done} done, {failed} failed, "
+                 f"{skipped} skipped (not performed on purpose).")
     top = bundle["scenario"]["candidates"][:10]
     if top:
         lines.append("Top candidate bits (by repeats):")

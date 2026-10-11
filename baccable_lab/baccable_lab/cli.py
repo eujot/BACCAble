@@ -39,6 +39,15 @@ def _steps_word(count: int) -> str:
     return "kroków"
 
 
+def _scenario_mark(state, scenario) -> str:
+    """One-character status: excluded, done, done-with-skips, or pending."""
+    if state.is_excluded(scenario.id):
+        return "E"
+    if state.complete(scenario.id, scenario.total_steps):
+        return "~" if state.skipped(scenario.id) else "x"
+    return " "
+
+
 def _colors(args) -> bool:
     return not (getattr(args, "no_color", False) or os.environ.get("NO_COLOR"))
 
@@ -181,6 +190,10 @@ def build_parser() -> argparse.ArgumentParser:
     scenarios = sub.add_parser("scenarios", help="list guided capture scenarios and progress")
     scenarios.add_argument("--scenarios-dir", default=None, help="scenario library directory (default: bundled)")
     scenarios.add_argument("--state", default=None, help="scenario progress file (default: config/scenario_state.json)")
+    scenarios.add_argument("--exclude", action="append", default=None, metavar="ID",
+                           help="stop scheduling a scenario, e.g. ABS/ESC/ASR you will not provoke (repeatable)")
+    scenarios.add_argument("--include", action="append", default=None, metavar="ID",
+                           help="re-enable a previously excluded scenario (repeatable)")
     scenarios.add_argument("--json", action="store_true", help="emit machine-readable JSON")
     sessions = sub.add_parser("sessions", help="list completed and active sessions")
     sessions.add_argument("--sessions", default=None)
@@ -327,11 +340,20 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "scenarios":
             library = load_scenarios(_scenarios_dir(args.scenarios_dir))
             state = ProgressStore(_state_path(args.state))
+            for scenario_id in args.exclude or []:
+                if scenario_id not in library:
+                    raise ValueError(f"unknown scenario id: {scenario_id}")
+                state.exclude(scenario_id)
+            for scenario_id in args.include or []:
+                if scenario_id not in library:
+                    raise ValueError(f"unknown scenario id: {scenario_id}")
+                state.include(scenario_id)
             ordered = order_scenarios(library.values())
             if args.json:
                 print(json.dumps([{"id": s.id, "title": s.title, "group": s.group, "vehicle": s.vehicle,
                                    "site": s.site, "location": location_label(s),
                                    "runs": s.runs, "complete": state.complete(s.id, s.total_steps),
+                                   "skipped": state.skipped(s.id), "excluded": state.is_excluded(s.id),
                                    "steps": [{"action": step.action, "expect": step.expect}
                                               for step in s.steps]} for s in ordered], indent=2))
             else:
@@ -340,9 +362,18 @@ def main(argv: list[str] | None = None) -> int:
                     if item.group != group:
                         group = item.group
                         print(f"[{group or 'general'}]")
-                    mark = "x" if state.complete(item.id, item.total_steps) else " "
+                    mark = _scenario_mark(state, item)
                     print(f"  [{mark}] {item.id:<26} {location_label(item):<12} {item.total_steps:>2} {_steps_word(item.total_steps)}  {item.title}")
-                print(f"{state.completed_count(ordered)}/{len(ordered)} scenariuszy ukończonych")
+                schedulable = [s for s in ordered if not state.is_excluded(s.id)]
+                done = state.completed_count(schedulable)
+                excluded = len(ordered) - len(schedulable)
+                skipped = sum(1 for s in schedulable if state.skipped(s.id))
+                summary = f"{done}/{len(schedulable)} scenariuszy ukończonych"
+                if skipped:
+                    summary += f" · {skipped} z pominiętymi krokami"
+                if excluded:
+                    summary += f" · {excluded} wykluczonych"
+                print(summary)
             return 0
         if args.command == "sessions":
             paths = list_sessions(_root(args.sessions)) if _root(args.sessions).exists() else []

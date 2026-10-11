@@ -5,6 +5,8 @@ identify a signal, or extend the BACCAble CAN dictionary. Read `AGENTS.md` and
 `docs/ACTION_PLAN.md` first. The goal is an accumulating, evidence-backed
 **frame and signal catalog**, with readable descriptions and reproducible
 annotations for the next capture. A collection of plausible names is not enough.
+For the ordered, test-minimising checklist to run on a `baccable bundle`, see the
+[bundle-first research playbook](RESEARCH_PLAYBOOK.md).
 
 ## Inputs and persistent outputs
 
@@ -16,6 +18,7 @@ annotations for the next capture. A collection of plausible names is not enough.
 | `docs/research/20260928-session-review.json` | Initial reproducible evidence ledger; create a dated report for a later batch |
 | `docs/research/20260928-findings.md` | Initial investigation, contradictions and candidate experiments |
 | `baccable_lab/knowledge/hypotheses.json` | Research claims requiring validation; these are not executable decoders |
+| `baccable_lab/docs/RESEARCH_PLAYBOOK.md` | Bundle-first, test-minimising checklist for an AI review (where each finding goes) |
 | `docs/ACTION_PLAN.md` in the repository root | Integration status and remaining work; do not create another backlog |
 
 Paths in this table are relative to `baccable_lab/`, except the action plan.

@@ -14,8 +14,11 @@ def render(catalog):
              f"{len(catalog['messages'])} bus-specific frame descriptions, "
              f"{sum(len(m['signals']) for m in catalog['messages'])} fields and "
              f"{len(catalog['diagnostic_parameters'])} diagnostic catalog entries.", '',
-             'For the iterative investigation procedure read [SESSION_ANALYSIS.md](SESSION_ANALYSIS.md).',
-             'For observations and unresolved claims read [the initial findings](research/20260928-findings.md)',
+             'For the iterative investigation procedure read [SESSION_ANALYSIS.md](SESSION_ANALYSIS.md)',
+             'and the [bundle-first research playbook](RESEARCH_PLAYBOOK.md).',
+             'For observations and unresolved claims read the research notes',
+             '([initial baseline](research/20260928-findings.md),',
+             '[guided-scenario campaign](research/20261010-scenario-sessions.md))',
              'and [the research hypotheses](../baccable_lab/knowledge/hypotheses.json).', '',
              '## Scope and interpretation', '', catalog['vehicle']['scope'], '',
              catalog['byte_convention'], '',

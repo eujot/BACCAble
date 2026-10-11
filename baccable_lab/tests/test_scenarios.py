@@ -120,6 +120,14 @@ class ScenarioModelTests(unittest.TestCase):
         self.assertEqual([r[3] for r in runner.records], ["done", "failed"])
         self.assertEqual(runner.progress(), (2, 4))
 
+    def test_runner_skip_advances_without_a_performed_outcome(self):
+        runner = ScenarioRunner(parse_scenarios(DEMO)[0])
+        runner.skip()
+        self.assertEqual(runner.records[-1][3], "skipped")
+        self.assertEqual(runner.progress(), (1, 4))
+        with self.assertRaises(ValueError):
+            runner.record("bogus")
+
 
 class ProgressTests(unittest.TestCase):
     def test_progress_persists_records_and_set_handled(self):
@@ -133,6 +141,29 @@ class ProgressTests(unittest.TestCase):
             self.assertFalse(reloaded.complete("x", 6))
             store.set_handled("x", 1, 6)
             self.assertEqual(ProgressStore(path).handled("x"), 1)
+
+    def test_progress_tracks_skipped_and_reverts_on_undo(self):
+        store = ProgressStore(None)
+        store.record("x", 1, 3, "done")
+        store.record("x", 2, 3, "skipped")
+        store.record("x", 3, 3, "failed")
+        self.assertEqual(store.skipped("x"), 1)
+        self.assertTrue(store.complete("x", 3))
+        store.set_handled("x", 2, 3, revert="skipped")
+        self.assertEqual(store.skipped("x"), 0)
+
+    def test_progress_exclusion_persists_and_filters_the_queue(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "scenario_state.json"
+            store = ProgressStore(path)
+            store.exclude("beta")
+            reloaded = ProgressStore(path)
+            self.assertTrue(reloaded.is_excluded("beta"))
+            self.assertEqual(reloaded.excluded_ids(), {"beta"})
+            session = ScenarioSession(parse_scenarios(TWO), reloaded)
+            self.assertEqual([s.id for s in session.order], ["alpha"])
+            reloaded.include("beta")
+            self.assertFalse(ProgressStore(path).is_excluded("beta"))
 
     def test_session_auto_advances_and_resumes(self):
         scenarios = parse_scenarios(TWO)
@@ -236,6 +267,40 @@ class ScenarioCaptureTests(unittest.TestCase):
             self.assertEqual(step_note, "silnik zgasł")
             self.assertEqual(event_note, "silnik zgasł")
 
+    def test_skip_step_records_no_marker_and_advances(self):
+        scenarios = {s.id: s for s in parse_scenarios(DEMO)}
+        with tempfile.TemporaryDirectory() as temp:
+            self.assertEqual(self.run_capture(temp, ["k", "q", "q"], scenarios), 0)
+            directory, = Path(temp).iterdir()
+            with contextlib.closing(sqlite3.connect(directory / "session.sqlite3")) as db:
+                events = db.execute("SELECT count(*) FROM events").fetchone()[0]
+                row = db.execute("SELECT expect, outcome, event_id FROM scenario_steps").fetchone()
+            self.assertEqual(events, 0)
+            self.assertEqual(row, ("unlock", "skipped", None))
+
+    def test_skip_scenario_key_marks_every_remaining_step_skipped(self):
+        scenarios = {s.id: s for s in parse_scenarios(DEMO)}
+        with tempfile.TemporaryDirectory() as temp:
+            self.assertEqual(self.run_capture(temp, ["o", "q", "q"], scenarios), 0)
+            directory, = Path(temp).iterdir()
+            with contextlib.closing(sqlite3.connect(directory / "session.sqlite3")) as db:
+                rows = db.execute("SELECT outcome FROM scenario_steps").fetchall()
+                events = db.execute("SELECT count(*) FROM events").fetchone()[0]
+            self.assertEqual(rows, [("skipped",)] * 4)   # 2 steps x 2 runs
+            self.assertEqual(events, 0)
+
+    def test_exclude_key_skips_and_retires_the_scenario(self):
+        scenarios = {s.id: s for s in parse_scenarios(DEMO)}
+        with tempfile.TemporaryDirectory() as temp:
+            state = Path(temp) / "state.json"
+            with tempfile.TemporaryDirectory() as root:
+                self.assertEqual(self.run_capture(root, ["e", "q", "q"], scenarios,
+                                                  progress=ProgressStore(state)), 0)
+            store = ProgressStore(state)
+            self.assertTrue(store.is_excluded("demo"))
+            self.assertEqual(store.skipped("demo"), 4)
+            self.assertTrue(store.complete("demo", 4))
+
     def test_unknown_scenario_is_rejected_without_creating_a_session(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp) / "sessions"
@@ -317,7 +382,7 @@ class ScenarioCaptureTests(unittest.TestCase):
             result = review_session(directory, load_dictionary())
             self.assertEqual(result["scenario_steps"][0]["scenario"], "lock_unlock")
             self.assertEqual(result["scenario_overview"], [{"scenario": "lock_unlock", "run": 1,
-                                                            "done": 1, "failed": 0}])
+                                                            "done": 1, "failed": 0, "skipped": 0}])
 
     def test_group_labels_and_scenario_candidate_ranking(self):
         self.assertEqual(group_label("access"), "Dostęp i drzwi")
@@ -395,6 +460,26 @@ class ScenarioCliTests(unittest.TestCase):
                 self.assertEqual(db.execute("SELECT scenario, outcome FROM scenario_steps").fetchone(),
                                  ("lock_unlock", "done"))
             self.assertEqual(ProgressStore(state).handled("lock_unlock"), 1)
+
+    def test_scenarios_exclude_and_include_flags(self):
+        with tempfile.TemporaryDirectory() as temp:
+            state = str(Path(temp) / "state.json")
+            target = "abs_intervention_closed_area"
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(main(["scenarios", "--state", state, "--exclude", target]), 0)
+            text = output.getvalue()
+            self.assertIn("[E]", text)
+            self.assertIn("wykluczonych", text)
+            self.assertTrue(ProgressStore(Path(state)).is_excluded(target))
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(main(["scenarios", "--json", "--state", state]), 0)
+            entry, = [s for s in json.loads(output.getvalue()) if s["id"] == target]
+            self.assertTrue(entry["excluded"])
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(main(["scenarios", "--state", state, "--include", target]), 0)
+            self.assertFalse(ProgressStore(Path(state)).is_excluded(target))
+            with contextlib.redirect_stderr(io.StringIO()):
+                self.assertEqual(main(["scenarios", "--state", state, "--exclude", "no_such_id"]), 2)
 
 
 if __name__ == "__main__":

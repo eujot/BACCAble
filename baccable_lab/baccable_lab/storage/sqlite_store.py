@@ -61,9 +61,14 @@ class SessionStore:
         )
         return int(cursor.lastrowid)
 
-    def add_scenario_step(self, host_ns: int, event_id: int, scenario: str, step_index: int,
+    def add_scenario_step(self, host_ns: int, event_id: int | None, scenario: str, step_index: int,
                           step_key: str, expect: str, run: int, outcome: str, note: str = "") -> int:
-        """Record one confirmed scenario step next to its timeline marker."""
+        """Record one confirmed scenario step next to its timeline marker.
+
+        ``event_id`` is the marker id for a performed step (``done``/``failed``);
+        a deliberately ``skipped`` step has no marker (``None``) so it cannot be
+        mistaken for evidence that the physical action happened.
+        """
         cursor = self.database.execute(
             "INSERT INTO scenario_steps(session_id, host_ns, event_id, scenario, step_index, step_key, "
             "expect, run, outcome, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -71,13 +76,13 @@ class SessionStore:
         )
         return int(cursor.lastrowid)
 
-    def delete_scenario_step(self, event_id: int) -> None:
-        self.database.execute("DELETE FROM scenario_steps WHERE session_id=? AND event_id=?",
-                              (self.session_id, event_id))
+    def delete_scenario_step(self, step_id: int) -> None:
+        self.database.execute("DELETE FROM scenario_steps WHERE session_id=? AND id=?",
+                              (self.session_id, step_id))
 
-    def update_scenario_note(self, event_id: int, note: str) -> None:
-        self.database.execute("UPDATE scenario_steps SET note=? WHERE session_id=? AND event_id=?",
-                              (note, self.session_id, event_id))
+    def update_scenario_note(self, step_id: int, note: str) -> None:
+        self.database.execute("UPDATE scenario_steps SET note=? WHERE session_id=? AND id=?",
+                              (note, self.session_id, step_id))
 
     def update_event_note(self, event_id: int, note: str) -> None:
         self.database.execute("UPDATE events SET note=? WHERE id=? AND session_id=?",

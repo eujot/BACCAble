@@ -914,8 +914,13 @@ powinien istnieć port szeregowy do przechwytywania CAN.
    i sprawdź podsumowanie sesji.
 6. Przechwytywanie prowadzą **scenariusze**: ekran pokazuje jedną kontrolowaną
    procedurę naraz (po polsku, terminami z samochodu), a każdy krok
-   potwierdzasz klawiszem `ENTER`/`SPACJA` (zrobione), `x` (nieudane) lub `p`
-   (zatrzymaj). Zatrzymany scenariusz wznawia się klawiszem `r`, `u` cofa
+   potwierdzasz klawiszem `ENTER`/`SPACJA` (zrobione), `x` (nieudane) lub `k`
+   (pomiń ten krok). Krok, którego nie chcesz wykonać — na przykład prowokowanie
+   ABS, ESC albo kontroli trakcji — pomijasz klawiszem `k`; nie zapisuje on
+   znacznika, więc nigdy nie wygląda jak dowód, że akcja się odbyła. `o` pomija
+   całą procedurę, a `e` pomija ją i przestaje ją w ogóle planować (to samo z
+   terminala: `baccable scenarios --exclude ID` / `--include ID`, zapisane w tym
+   samym pliku stanu). Zatrzymany scenariusz wznawia się klawiszem `r`, `u` cofa
    ostatnie potwierdzenie, `s` przełącza do innej procedury, a `q` (lub
    `Ctrl-C`) kończy sesję. Klawisze zawsze działają w scenariuszu: `p`
    zatrzymuje, `n` dodaje notatkę, `u` cofa, a `q` wychodzi. Kolory, pasek postępu i krótki dźwięk ułatwiają
