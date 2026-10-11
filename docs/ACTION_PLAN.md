@@ -1,6 +1,6 @@
 # BACCAble action plan and agent handoff
 
-Last updated: **2026-10-02** (dated verification boundaries below). This is the single source of planned work,
+Last updated: **2026-10-12** (dated verification boundaries below). This is the single source of planned work,
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
@@ -176,6 +176,37 @@ but cannot guarantee atomic physical screen replacement. The existing one-second
 reassertion and factory arbitration remain. No new beta or hardware flash.
 
 ## Current work
+
+### Firmware review of 3bbd8a5 and 3964000, 2026-10-12
+
+Task branch: `fix/firmware-review-20261012`, baseline `3964000`. Review compared
+DNA/LKA handlers with the bus-specific dictionary and October-11 findings,
+settings/UART synchronization, ESC/TC interaction and Favorite migration.
+
+- Restrict experimental lane-state rewriting to BH `0x4F6` and C2 `0x547`,
+  standard data frames with DLC 8. Previously both IDs were modified on any role.
+- Sample the default-mode baseline even while ESC/TC owns the outgoing frame.
+  Reject invalid configured modes. C2 ESC/TC inversion uses the effective default
+  Race mode, and stability reports do not advertise disabled controls when that
+  effective Race mode has been inverted to Dynamic.
+- Separate wake/save re-arming from transport resynchronization. USB exit no
+  longer re-arms a manually cancelled default. UART command 0x48 gains an explicit
+  fifth-byte re-arm flag; install matching C1/C2/BH firmware for this contract.
+- Activate slot Favorites on fresh installations for both IPC profiles, so the
+  seeded companion is actually displayed. Seed pairs only without saved page/slot
+  preferences; never infer an untouched set from a matching primary page ID.
+  Existing page and slot records retain their selections.
+- Update both user guides and the menu technical guide. Correct the research
+  note's inline-gateway claim: `can_forward` retransmits on the same peripheral;
+  original traffic is not suppressed. LKA physical deactivation remains unverified.
+
+Validation: native Apple Clang ASan/UBSan suite, role-specific CAN regressions,
+menu migration/sync regressions, all four ARM 15.2.Rel1 builds and cppcheck,
+and Lab dictionary tests (results recorded at task completion). No vehicle test,
+flash, release, merge or remote publication. The user's five untracked capture
+bundles remain untouched. Source hashes/catalog are refreshed in the follow-up
+knowledge commit after the implementation commit.
+
 
 ### Themed default Favorites for 1- and 2-line displays, 2026-10-11
 

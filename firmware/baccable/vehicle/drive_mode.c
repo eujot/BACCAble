@@ -19,7 +19,8 @@ uint8_t drive_mode_default_field(uint8_t encoding) {
 /* Advance the start-up override from the observed raw mode: 1 = keep injecting,
  * 0 = leave the mode alone (feature off, already stopped, or the driver changed it). */
 uint8_t drive_mode_default_should_apply(uint8_t raw_mode) {
-    if (settings_state.default_drive_mode == 0 || !chassis_state.default_mode_override)
+    if (settings_state.default_drive_mode == 0 || settings_state.default_drive_mode > 3 ||
+        !chassis_state.default_mode_override)
         return 0;
     if (chassis_state.default_mode_baseline == 0xFF) {
         chassis_state.default_mode_baseline = raw_mode; /* first sample after arming */
@@ -47,6 +48,7 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
     // 0x4=AllWeather [shifted by 2 bits becomes 0x10], 0xC=race [shifted by 2 bits becomes 0x30]
     telemetry_state.drive_mode =
         frame_data[1] & 0x7C; // 7C is the mask from bit 6 to 2 (we avoid bit shift to save cpu loops)
+    uint8_t apply_default = drive_mode_default_should_apply(telemetry_state.drive_mode);
     if (chassis_state.stability_inverted) {
 
         if (telemetry_state.drive_mode != 0x30) { // if not in race
@@ -57,7 +59,7 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
 
         frame_data[7] = frame_checksum(frame_data, rx_header->DLC); // update CRC
         can_forward(rx_header, frame_data);                         // transmit the modified packet
-    } else if (drive_mode_default_should_apply(telemetry_state.drive_mode)) {
+    } else if (apply_default) {
         uint8_t default_mode = drive_mode_default_field(DRIVE_MODE_ENC_CAN);
         if ((frame_data[1] & 0x7C) != default_mode) {
             frame_data[1] = (frame_data[1] & ~0x7C) | default_mode;
@@ -136,9 +138,12 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
     // 0x4=AllWeather [shifted by 2 bits becomes 0x10], 0xC=race [shifted by 2 bits becomes 0x30]
     telemetry_state.drive_mode =
         frame_data[1] & 0x7C; // 7C is the mask from bit 6 to 2 (we avoid bit shift to save cpu loops)
+    uint8_t apply_default = drive_mode_default_should_apply(telemetry_state.drive_mode);
     if (chassis_state.stability_inverted) {
 
-        if (telemetry_state.drive_mode == 0x30) { // race
+        uint8_t effective_mode = apply_default ? drive_mode_default_field(DRIVE_MODE_ENC_CAN)
+                                               : telemetry_state.drive_mode;
+        if (effective_mode == 0x30) { // race, including the configured start-up mode
 
             // ESC and TC
             frame_data[1] =
@@ -152,7 +157,7 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
 
         frame_data[7] = frame_checksum(frame_data, rx_header->DLC); // update CRC
         can_forward(rx_header, frame_data);                         // transmit the modified packet
-    } else if (drive_mode_default_should_apply(telemetry_state.drive_mode)) {
+    } else if (apply_default) {
         uint8_t default_mode = drive_mode_default_field(DRIVE_MODE_ENC_CAN);
         if ((frame_data[1] & 0x7C) != default_mode) {
             frame_data[1] = (frame_data[1] & ~0x7C) | default_mode;
@@ -174,9 +179,20 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
 }
 
 /* CAN ID 0x000004F6 (BH) and 0x00000547 (C2). */
-/* Hold the lane-keeping assist off while the owner disables it. */
+/* Experimental state override; physical assist deactivation remains unverified. */
 void vehicle_handle_lane_state(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
-    if (rx_header->DLC < 7)
+#if defined(BACCABLE_BH)
+    if (rx_header->StdId != 0x4F6)
+        return;
+#elif defined(BACCABLE_C2)
+    if (rx_header->StdId != 0x547)
+        return;
+#else
+    (void)rx_header;
+    (void)frame_data;
+    return;
+#endif
+    if (rx_header->DLC != 8 || rx_header->IDE != CAN_ID_STD || rx_header->RTR != CAN_RTR_DATA)
         return;
 
     if (settings_state.lane_assist_disabled &&

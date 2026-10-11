@@ -424,7 +424,7 @@ static void test_my23_remaining_list_previews(void) {
         expect_my23_list(entries[i], entries[(i+1)%5]); menu_event(MENU_NEXT);
     }
     menu_event(MENU_NEXT); menu_event(MENU_SELECT); menu_event(MENU_SELECT);
-    const char *slots[] = {"S1 Oil L / mm / %", "S2 Batt charge BCM"};
+    const char *slots[] = {"S1 Oil L / mm / %", "S2 Empty"};
     for (unsigned i=0;i<2;++i) { expect_my23_list(slots[i],slots[(i+1)%2]); menu_event(MENU_NEXT); }
     menu_event(MENU_SELECT);
     expect_my23_list("Oil L / mm / %", "Oil/water/IC C");
@@ -525,10 +525,10 @@ static void test_favorite_slot_compact_label(void) {
     /* Page 0x38 -> 0x39, without flattening Oil/water into two IDs. */
     menu_event(MENU_NEXT);
     menu_event(MENU_SELECT);
-    expect_my23_list("S1 Oil/water/IC C","S2 Batt charge BCM");
+    expect_my23_list("S1 Oil/water/IC C","S2 Empty");
     menu_event(MENU_BACK); menu_event(MENU_BACK); /* Discard preserves imported primary. */
     menu_event(MENU_SELECT);
-    expect_my23_list("S1 Oil L / mm / %","S2 Batt charge BCM");
+    expect_my23_list("S1 Oil L / mm / %","S2 Empty");
 }
 static void test_my23_favorite_duplicate_rollback(void) {
     fresh_contract(); to_settings(); settings_state.ipc_my23_is_installed=1;
@@ -546,7 +546,7 @@ static void test_my23_favorite_duplicate_rollback(void) {
     assert(!memcmp(original,saved,sizeof(saved)));
     fail_save=false; menu_event(MENU_BACK); /* Discard failed draft. */
     menu_event(MENU_SELECT);
-    expect_my23_list("S1 Oil L / mm / %","S2 Batt charge BCM");
+    expect_my23_list("S1 Oil L / mm / %","S2 Empty");
     assert(!memcmp(original,saved,sizeof(saved)));
 }
 

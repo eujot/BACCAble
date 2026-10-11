@@ -40,7 +40,7 @@ static unsigned settings_writes, preference_writes, usb_applies;
 static bool usb_needs_apply;
 static uint16_t fail_type;
 static uint8_t last_command;
-static uint8_t last_ipc_pace, last_ipc_method;
+static uint8_t last_ipc_pace, last_ipc_method, last_driver_rearm;
 static bool uart_busy;
 static uint8_t setup_page_for(uint8_t slot);
 uint32_t HAL_GetTick(void) { return now; }
@@ -58,6 +58,10 @@ uint8_t board_uart_send(const uint8_t *data, size_t size) {
     } else {
         ++commands;
         last_command = size > 1 ? data[1] : 0;
+        if (last_command == C2_Bh_cmdSetDriverAids) {
+            assert(size == 5);
+            last_driver_rearm = data[4];
+        }
         if (data[0] == BhBusID && last_command == BH_CMD_IPC_OPTIONS) {
             assert(size == 4);
             last_ipc_pace = data[2]; last_ipc_method = data[3];
@@ -291,12 +295,33 @@ static void fresh_menu(void) {
     dashboard_state.baccable_dashboard_menu_visible = 0;
     now = 1000;
     have_saved = false;
-    have_v1 = false;
+    /* Existing navigation tests exercise the retained legacy page editor. */
+    have_v1 = true;
+    MenuPreferences legacy;
+    menu_preferences_default(&legacy);
+    menu_preferences_encode(&legacy, v1_preferences);
     have_old = false;
     fail_save = false;
     fail_type = 0;
     menu_init();
     menu_event(MENU_BACK);
+}
+static void test_shipped_favorite_pairs(void) {
+    fresh_menu();
+    have_v1 = false;
+    menu_init();
+    assert(menu_preferences_save() == 0);
+    assert(saved[MENU_PREFS_SIZE + 1] == 1);
+    const FavoriteParameters *sets = (const FavoriteParameters *)(saved + MENU_PREFS_SIZE + 2);
+    for (unsigned f = 0; f < FAVORITE_SET_COUNT; ++f) {
+        assert(sets[f].params[0] == menu_default_favorite(0, f));
+        assert(sets[f].params[1] == menu_default_favorite_companion(0, f));
+    }
+    /* A matching primary in an existing record must not acquire a companion. */
+    fresh_menu();
+    assert(menu_preferences_save() == 0);
+    sets = (const FavoriteParameters *)(saved + MENU_PREFS_SIZE + 2);
+    assert(sets[1].params[0] == 0x01 && sets[1].params[1] == FAVORITE_EMPTY);
 }
 static void to_settings(void) {
     menu_event(MENU_BACK); /* Favorites -> root. */
@@ -434,6 +459,7 @@ static void test_controller(void) {
     memset(old_visibility, 0xff, sizeof(old_visibility));
     old_visibility[0] &= ~2;
     have_saved = false;
+    have_v1 = false;
     have_old = true;
     menu_init();
     assert(menu_preferences_save() == 0);
@@ -1118,7 +1144,7 @@ static void test_board_sync_retry(void) {
     now = 20000;
     runtime_state.all_processors_wakeup_time = 0;
     commands = 0;
-    board_sync_restart();
+    board_sync_rearm();
     for (unsigned option = 0; option < 8; ++option) {
         uart_busy = true;
         board_sync_process();
@@ -1130,7 +1156,15 @@ static void test_board_sync_retry(void) {
     board_sync_process();
     assert(!runtime_state.instruct_slave_boards_trigger_enabled);
     board_sync_process();
-    assert(commands == 8);
+    assert(commands == 8 && last_driver_rearm == 1);
+    chassis_state.default_mode_override = 0;
+    chassis_state.default_mode_baseline = 0x10;
+    board_sync_restart();
+    for (unsigned i = 0; i < 9; ++i) board_sync_process();
+    assert(last_driver_rearm == 0 && !chassis_state.default_mode_override);
+    assert(chassis_state.default_mode_baseline == 0x10);
+    board_sync_rearm();
+    assert(chassis_state.default_mode_override && chassis_state.default_mode_baseline == 0xff);
 }
 
 static void fresh_contract(void);
@@ -1215,6 +1249,7 @@ int main(void) {
         HOST_TEST(test_cache_flags),
         HOST_TEST(test_maximum_hold),
         HOST_TEST(test_board_sync_retry),
+        HOST_TEST(test_shipped_favorite_pairs),
         HOST_TEST(test_engine_filters),
         HOST_TEST(test_action_availability)
     };

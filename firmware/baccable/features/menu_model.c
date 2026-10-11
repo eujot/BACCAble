@@ -22,7 +22,7 @@ int menu_page_index(uint8_t engine, uint16_t id) {
  * (first line) and an optional companion page (second line). Gasoline gets the
  * owner's themed layout; diesel keeps its existing four defaults. */
 static const uint16_t default_favorite_primary[2][MENU_FAVORITES] = {
-    {0x38, 0x01, 0x3a, 0x28, 0x2a, 0x39}, /* gasoline: Elec / Osiagi / Temp / Jazda / Timery / Olej */
+    {0x38, 0x01, 0x3a, 0x28, 0x2a, 0x39}, /* gasoline: electrical / performance / temperatures / driving / timers / oil */
     {0x84, 0x81, 0x87, 0x88, 0x00, 0x00}, /* diesel: unchanged */
 };
 static const uint16_t default_favorite_companion[2][MENU_FAVORITES] = {

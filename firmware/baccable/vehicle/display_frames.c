@@ -36,7 +36,8 @@ void vehicle_handle_drive_style_display(const CAN_RxHeaderTypeDef *rx_header, ui
                 can_forward(rx_header, frame_data); // transmit the modified packet
             }
         }
-    } else if (settings_state.default_drive_mode != 0 && chassis_state.default_mode_override) {
+    } else if (settings_state.default_drive_mode >= 1 && settings_state.default_drive_mode <= 3 &&
+               chassis_state.default_mode_override) {
         uint8_t default_mode = drive_mode_default_field(DRIVE_MODE_ENC_IPC);
         if ((frame_data[0] & 0x7C) != default_mode) {
             frame_data[0] = (frame_data[0] & ~0x7C) | default_mode;
@@ -77,6 +78,7 @@ void vehicle_handle_body_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_
     // current DNA mode, also called "Drive Style Status" (RDNA mode) is on byte 7, from bit 0 to bit 4
     // (0x0=Natural, 0x2=dynamic, 0x4=AllWeather, 0xC=race)
     telemetry_state.drive_mode = frame_data[7] & 0x1F; // 1F is the mask from bit 4 to 0
+    uint8_t apply_default = drive_mode_default_should_apply(telemetry_state.drive_mode);
     if (chassis_state.stability_inverted) {
         if (telemetry_state.drive_mode != 0x0C) { // if not in race
             frame_data[7] =
@@ -86,7 +88,7 @@ void vehicle_handle_body_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_
 
             // problem as expected status_led_activity();
         }
-    } else if (drive_mode_default_should_apply(telemetry_state.drive_mode)) {
+    } else if (apply_default) {
         uint8_t default_mode = drive_mode_default_field(DRIVE_MODE_ENC_BODY);
         if ((frame_data[7] & 0x1F) != default_mode) {
             frame_data[7] = (frame_data[7] & ~0x1F) | default_mode;
@@ -108,7 +110,11 @@ void vehicle_handle_stability_status(const CAN_RxHeaderTypeDef *rx_header, uint8
 #if defined(BACCABLE_C1) ||                                                                                  \
     defined(BACCABLE_C2) // we will test it to understand messages changing style on IPC
     if (chassis_state.stability_inverted) {
-        if (telemetry_state.drive_mode != 0x30) { // if we're not in race
+        uint8_t effective_mode = telemetry_state.drive_mode;
+        if (settings_state.default_drive_mode >= 1 && settings_state.default_drive_mode <= 3 &&
+            chassis_state.default_mode_override)
+            effective_mode = drive_mode_default_field(DRIVE_MODE_ENC_CAN);
+        if (effective_mode != 0x30) { // if we're not in race
             if (((frame_data[0] & 0x01) != 0x01) ||
                 ((frame_data[1] & 0x04) != 0x04)) { // if not set as expected in race
                 frame_data[0] = frame_data[0] |

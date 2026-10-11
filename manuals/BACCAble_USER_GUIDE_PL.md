@@ -245,10 +245,10 @@ zestaw **S1 Elektryka**.
 | S6 Olej / Multiair | `Oil/water/IC C` | `Misfires/MA temp` |
 
 Diesel zachowuje cztery dotychczasowe domyślne strony i nie ma stron drugiej
-linii. Druga linia tematycznego zestawu benzynowego jest ustawiana tylko dopóki
-zestaw odpowiada wartościom fabrycznym, więc każda wykonana przez Ciebie zmiana
-zostaje zachowana i nie jest nadpisywana. Edycja tych zestawów przebiega według
-poniższych kroków.
+linii. Nowe instalacje używają układu ze slotami Favorites na obu profilach IPC.
+Pary są ustawiane tylko wtedy, gdy nie ma zapisanych ustawień stron ani slotów.
+Zapisane ulubione pozostają zachowane, nawet jeśli pierwsza strona ma taki sam
+numer jak strona domyślna. Edycja tych zestawów przebiega według poniższych kroków.
 
 ### Dwie strony odczytów w jednym ulubionym widoku
 
@@ -360,14 +360,14 @@ Szkic nie steruje samochodem przed udanym zapisem.
 | `Virtual ACC` | Wyłączona / włączona | Pozwala obsługiwać ACC zgodnym panelem przycisków zwykłego tempomatu. Samochód musi już mieć potrzebny sprzęt i konfigurację ACC. Funkcja nie zastępuje radaru ani innych brakujących elementów. |
 | `ACC resume` | OFF / RES / + | Wybiera automatyczne wysyłanie RES albo lekkiego naciśnięcia w górę, gdy ACC jest aktywny i utrzymuje zatrzymany samochód. Może to umożliwić ponowne ruszenie. Zobacz [obsługę ACC i HAS](#obsługa-acc-i-has). |
 | `Virtual HAS` | Wyłączona / włączona | Udostępnia symulowane naciśnięcie przycisku Highway Assist przez akcję lub podwójne naciśnięcie przycisku asystenta pasa. Wymaga zgodnego i skonfigurowanego wyposażenia samochodu. |
-| `Disable LKA` | Wyłączona / włączona | Gdy jest włączona, utrzymuje asystenta pasa ruchu wyłączonego. Korzysta z ramki stanu asystenta pasa; po włączeniu sprawdź kontrolkę na desce samochodu. |
+| `Disable LKA` | Wyłączona / włączona | Funkcja eksperymentalna: wysyła ponownie stan asystenta z wyzerowanym bitem włączenia, wyłącznie w BH `0x4F6` i C2 `0x547` (8 bajtów). Faktycznego wyłączenia asystenta nie zweryfikowano jeszcze w samochodzie; sama zmiana kontrolki tego nie potwierdza. |
 
 ### Grupa układu napędowego
 
 | Opcja | Wartości | Do czego służy |
 | --- | --- | --- |
 | `Launch Nm` | 25–600 Nm, co 25 | Wartość momentu obrotowego zgłaszanego przez silnik, przy której wspomaganie startu wysyła polecenie zwolnienia wymuszonych przednich hamulców. To nie jest ograniczenie momentu ani ustawienie tuningu. |
-| `Default mode` | OFF / A / D / Race | Wymusza tryb jazdy przy każdym uruchomieniu (AllWeather, Dynamic albo Race). `OFF` nie zmienia samochodu. Gdy sam zmienisz tryb, BACCAble przestaje go wymuszać do następnego uruchomienia. |
+| `Default mode` | OFF / A / D / Race | Wymusza tryb jazdy przy każdym uruchomieniu (AllWeather, Dynamic albo Race). `OFF` nie zmienia samochodu. Zmiana odebranego trybu kończy wymuszanie, także podczas aktywnego ESC/TC. Wybudzenie lub zapis Features ponownie je uzbraja; zakończenie przechwytywania USB lub diagnostyki tego nie robi. |
 | `ESC/TC control` | Wyłączona / włączona | Udostępnia przełączanie kontroli stabilności i trakcji oraz obsługiwany skrót przyciskiem asystenta pasa. Samochód musi mieć odpowiednią konfigurację. |
 | `Dyno action` | Wyłączona / włączona | Udostępnia `Toggle Dyno mode`. Samo włączenie tego ustawienia nie uruchamia trybu Dyno. |
 | `Brake action` | Wyłączona / włączona | Udostępnia `Brake override` i `Disable launch`. Samo włączenie ustawienia nie uruchamia hamulców. |

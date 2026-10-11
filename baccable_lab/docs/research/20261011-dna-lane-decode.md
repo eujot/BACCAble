@@ -11,8 +11,7 @@ methodological:
   actually broadcasts**.
 - It treated `0x384` as a passive *report*. In the firmware it is a body→ECU
   **command broadcast** whose consumers — TCM, IPC, ECM, DTCM, DCTM, DASM, CDCM,
-  BCM on C1; HAL, ORC, EPS, BSM on C2 — act on its drive-mode field. BACCAble sits
-  inline and already **rewrites and forwards** this frame for the ESC/TC feature
+  BCM on C1; HAL, ORC, EPS, BSM on C2 — act on its drive-mode field. BACCAble already **retransmits a modified copy** of this frame for the ESC/TC feature
   (`can_forward` in `vehicle/drive_mode.c`).
 
 **A body broadcast that consumers obey is actionable.** The absence of a request
@@ -101,3 +100,17 @@ decodable** from the existing data:
 - **Classify counters/CRC before scoring.** `0x4AE`, `0x15A`, `0x5A8`
   (counter + CRC), `0x341` (accumulator), `0x4B4`, `0x59E` (periodic heartbeats)
   and `0x749` (slow rotator) again dominate the raw ranking and must be excluded.
+
+## Firmware review boundary, 2026-10-12
+
+The mode bit encodings above match the implementation. `can_forward()` queues a
+modified copy on the board's single CAN peripheral; it does not suppress the
+original frame. The earlier inline-gateway wording was inaccurate. Captures of
+received traffic alone do not establish how every consumer resolves competing
+reports. The original DNA control evidence and existing ESC/TC behavior remain;
+this review adds no vehicle acceptance.
+
+The lane-state handler is now restricted to BH `0x4F6` / C2 `0x547`, standard data
+frames with DLC 8. Clearing a correlated state bit is still an experimental
+control method: actual assist deactivation remains unverified. No button pulse
+sequence or new actuator command is inferred from the status decode.
