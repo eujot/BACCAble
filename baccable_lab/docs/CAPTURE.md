@@ -5,22 +5,16 @@ uses synthetic frames, marks them as demo traffic, opens no serial ports, and
 deletes its temporary session on exit. Optional `--role C1`, `--role C2`, and
 `--role BH` arguments select the simulated buses; by default all three appear.
 
-During a real capture or preview, the terminal dashboard displays recent raw
-CAN frames and IDs, per-bus frame/loss totals, and the four newest events on a
-timestamped event timeline. Marker groups stay visible; selecting one displays
-all of its available labels. The expanded catalog is grouped by vehicle, driving,
-powertrain/transmission, engine/live readings, brakes/stability, driver
-assistance/safety, body/access, IPC/media, suspension/chassis, weather/wipers,
-lights, lighting/visibility, climate/comfort, parking/manoeuvring and
-electrical/diagnostics. To place a
-grouped marker, press `g`, the group key shown on screen, then its item number
-(`0` selects item 10). Number keys `1`–`0` retain their existing quick markers,
-and their exact actions are written on the screen. Press `f` and type an action
-to search the catalog: one best match is recorded directly; with multiple
-matches choose a number, or press Enter to add the typed phrase; no match adds
-the phrase as a custom marker. `c` adds a custom label, `n` adds a note to the
-most recent marker, `u` removes that marker, and `q` finishes the capture.
-`m` or `?` shows the controls again. See [the marker catalog and CAN limits](MARKERS.md).
+During a real capture or preview, the terminal dashboard shows the current guided
+scenario step in a large box, its expected state, the repetition counter and
+progress, the confounder guard, and the live raw CAN frames with per-bus
+frame/loss totals. The manual marker palette is deliberately not shown: only a
+confirmed scenario step writes a marker (see [SCENARIOS.md](SCENARIOS.md)).
+Confirm with `ENTER`/`SPACJA`/`y`, mark a step failed with `x`, skip a step with
+`k`, skip the rest of the procedure with `o`, retire it with `e`, pause with `p`,
+resume with `r`, undo with `u`, annotate the last step with `n`, jump to another
+scenario with `s`, and finish with `q` or `Ctrl-C` (both work during a scenario).
+See [the marker catalog and CAN limits](MARKERS.md).
 
 All event labels are manual observations. For example, `Rain detected`,
 `Suspension active`, `IPC menu overwritten`, and `A/C on` are not automatically
@@ -30,11 +24,11 @@ not guess signal meanings.
 ## Capture acceptance
 
 Before starting, record the firmware release, board identities and port mapping.
-Run a stationary 20–30 minute session. The capture screen shows the marker
-palette. Number keys and `l` retain quick markers for unlock, doors, engine
-start, brakes, indicators and lock. Press `m` or `?` to show the palette again,
-`c` to enter a custom label, `n` to add a note to the last marker, and `u` to
-remove the last marker. Press `q` or Ctrl-C to stop cleanly.
+Run a stationary 20–30 minute session. The scenario screen is the primary control
+surface: `ENTER`/`SPACJA`/`y` confirms the current step, `x` marks it failed,
+`k`/`o`/`e` skip or retire work you will not perform, `p`/`r` pause and resume,
+`n` adds a note, and `q` or `Ctrl-C` stops cleanly. See
+[SCENARIOS.md](SCENARIOS.md) for the complete control list.
 
 Shutdown stops further serial reads and drains queued data plus the final read
 before closing raw files and SQLite. This does not drain the device/OS USB buffers.

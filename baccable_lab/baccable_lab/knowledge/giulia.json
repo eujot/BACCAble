@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "dictionary_version": "2026-10-10.1",
+  "dictionary_version": "2026-10-11.1",
   "vehicle": {
     "model": "Alfa Romeo Giulia (owner-reported)",
     "model_year": null,
@@ -7074,6 +7074,13 @@
       "status": "No confirmed decoder. The 2026-10-10 guided campaign adds first wiper leads (BH 0x2F0); see docs/research/20261010-scenario-sessions.md. Do not infer from lighting or suspension activity."
     },
     {
+      "can_id": null,
+      "role": null,
+      "topic": "Lane assist (LKA) enable/disable",
+      "source": "baccable_lab/docs/SCENARIOS.md",
+      "status": "No confirmed decoder. The 2026-10-10 campaign was recorded on the menu assumption; the owner confirms LKA is toggled on/off by a double-click on the left stalk button (stationary, ignition on), not the menu. Capture the enabling frame with the `lane_assist_toggle` scenario (markers lane_assist_disabled / lane_assist_enabled). The lane stalk button itself is already decoded (BH 0x5A0, C1/C2 0x384 byte 3 bit 6)."
+    },
+    {
       "can_id": "0x4AE",
       "role": "C1",
       "topic": "Low-rate counter/heartbeat (no payload state)",
@@ -7823,6 +7830,38 @@
       "status": "no_event_decoder"
     },
     {
+      "label": "dna_natural",
+      "title": "DNA: Natural (N)",
+      "group": "Powertrain / transmission",
+      "candidate_signals": [],
+      "observed_events": [],
+      "status": "no_event_decoder"
+    },
+    {
+      "label": "dna_dynamic",
+      "title": "DNA: Dynamic (D)",
+      "group": "Powertrain / transmission",
+      "candidate_signals": [],
+      "observed_events": [],
+      "status": "no_event_decoder"
+    },
+    {
+      "label": "dna_allweather",
+      "title": "DNA: Advanced Efficiency (A)",
+      "group": "Powertrain / transmission",
+      "candidate_signals": [],
+      "observed_events": [],
+      "status": "no_event_decoder"
+    },
+    {
+      "label": "dna_race",
+      "title": "DNA: Race",
+      "group": "Powertrain / transmission",
+      "candidate_signals": [],
+      "observed_events": [],
+      "status": "no_event_decoder"
+    },
+    {
       "label": "start_stop_active",
       "title": "Start/Stop active",
       "group": "Powertrain / transmission",
@@ -8284,6 +8323,22 @@
       "status": "no_event_decoder"
     },
     {
+      "label": "lane_assist_disabled",
+      "title": "Lane assist disabled",
+      "group": "Driver assistance / safety",
+      "candidate_signals": [],
+      "observed_events": [],
+      "status": "no_event_decoder"
+    },
+    {
+      "label": "lane_assist_enabled",
+      "title": "Lane assist enabled",
+      "group": "Driver assistance / safety",
+      "candidate_signals": [],
+      "observed_events": [],
+      "status": "no_event_decoder"
+    },
+    {
       "label": "driver_attention_warning",
       "title": "Driver attention warning",
       "group": "Driver assistance / safety",
@@ -8564,6 +8619,14 @@
     {
       "label": "wipers_intermittent",
       "title": "Wipers intermittent",
+      "group": "Weather / wipers",
+      "candidate_signals": [],
+      "observed_events": [],
+      "status": "no_event_decoder"
+    },
+    {
+      "label": "wipers_auto",
+      "title": "Wipers auto (rain sensor)",
       "group": "Weather / wipers",
       "candidate_signals": [],
       "observed_events": [],

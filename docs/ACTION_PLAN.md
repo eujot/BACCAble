@@ -177,6 +177,24 @@ reassertion and factory arbitration remain. No new beta or hardware flash.
 
 ## Current work
 
+### Scenario-decode docs consistency and the LKA toggle finding, 2026-10-11
+
+Resolved the PR #53 rebase conflict in this file and audited the Lab documentation,
+frame descriptions and code against the current scenario work. Kept the knowledge
+base in sync: the seven catalog labels added for the targeted decode procedures
+(`dna_natural`, `dna_dynamic`, `dna_allweather`, `dna_race`, `lane_assist_disabled`,
+`lane_assist_enabled`, `wipers_auto`) are now listed in `giulia.json`
+`marker_index` (status `no_event_decoder`), so the marker index again mirrors the
+catalog; `dictionary_version` bumped to `2026-10-11.1` and `CAN_DICTIONARY.md`
+re-rendered. Added the `ADAS-LKA-001` hypothesis: LKA is enabled/disabled by a
+double-click on the left stalk button (not a menu item), and the frame carrying the
+assist state is still unidentified — parked with the `lane_assist_toggle` scenario
+and a `research_candidates[]` pointer. Corrected `docs/MARKERS.md`, which still
+described the removed interactive marker palette (`1`–`0`, `f`, `g`, `c`), to the
+scenario-confirmation workflow plus `baccable event add`, and refreshed one stale
+scenario-count fixture in the UI test. 69 Lab tests pass; no hardware run was
+performed.
+
 ### Bundle-first research playbook for AI reviews, 2026-10-10
 
 Added `baccable_lab/docs/RESEARCH_PLAYBOOK.md`: the repeatable, test-minimising
