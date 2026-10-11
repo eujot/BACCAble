@@ -179,7 +179,8 @@ reassertion and factory arbitration remain. No new beta or hardware flash.
 
 ### Firmware review of 3bbd8a5 and 3964000, 2026-10-12
 
-Task branch: `fix/firmware-review-20261012`, baseline `3964000`. Review compared
+Task branch: `fix/firmware-review-20261012`, baseline `3964000`, implementation
+`f709bc3`. Review compared
 DNA/LKA handlers with the bus-specific dictionary and October-11 findings,
 settings/UART synchronization, ESC/TC interaction and Favorite migration.
 
@@ -200,9 +201,9 @@ settings/UART synchronization, ESC/TC interaction and Favorite migration.
   note's inline-gateway claim: `can_forward` retransmits on the same peripheral;
   original traffic is not suppressed. LKA physical deactivation remains unverified.
 
-Validation: native Apple Clang ASan/UBSan suite, role-specific CAN regressions,
-menu migration/sync regressions, all four ARM 15.2.Rel1 builds and cppcheck,
-and Lab dictionary tests (results recorded at task completion). No vehicle test,
+Validation: PASS — full native Apple Clang ASan/UBSan suite and menu labels,
+role-specific CAN regressions (C1/C2/BH), menu migration/sync regressions,
+all four ARM 15.2.Rel1 builds and cppcheck, and all 69 Lab tests. No vehicle test,
 flash, release, merge or remote publication. The user's five untracked capture
 bundles remain untouched. Source hashes/catalog are refreshed in the follow-up
 knowledge commit after the implementation commit.
