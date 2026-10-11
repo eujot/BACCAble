@@ -177,6 +177,32 @@ reassertion and factory arbitration remain. No new beta or hardware flash.
 
 ## Current work
 
+### Themed default Favorites for 1- and 2-line displays, 2026-10-11
+
+Replaced the four generic gasoline start-up favorites with six themed sets, each
+pairing a primary page (first line) with a companion page (second line). A
+1-line IPC shows the first column; a 2-line IPC shows both:
+
+| Set | Line 1 | Line 2 |
+| --- | --- | --- |
+| S1 Elektryka | `Oil L / mm / %` `0x38` | `Batt charge BCM` `0x16` |
+| S2 Osiągi | `Power / torque` `0x01` | `Boost pressure` `0x0d` |
+| S3 Temperatury | `Oil/water/gear C` `0x3a` | `Intercooler out` `0x0a` |
+| S4 Jazda | `Speed` `0x28` | `Gear` `0x1a` |
+| S5 Timery | `0-100 km/h` `0x2a` | `Best 0-100` `0x2c` |
+| S6 Olej / Multiair | `Oil/water/IC C` `0x39` | `Misfires/MA temp` `0x40` |
+
+Diesel keeps its previous four defaults (no companion pages). The set active on a
+fresh install is S1 (Elektryka). `MenuPreferences` still stores one page per set
+(flash layout unchanged); the companion line is seeded at import time in
+`import_page_favorites()` only while a set still equals its shipped default, so a
+driver edit is never overwritten. New accessors `menu_default_favorite()` and
+`menu_default_favorite_companion()` in `firmware/baccable/features/menu_model.c`
+hold the tables. Host tests that depended on the old `0x04`/`0x28` defaults were
+updated to derive counts from the shipped defaults or from a documented seed.
+Validation: the native host suite and label test pass, all four firmware flavours
+build and lint, and the 69 Lab tests pass. Both user guides updated.
+
 ### Re-analysis: DNA is settable, older bundles had no DNA/LKA data, 2026-10-11
 
 Corrected an earlier analysis error. A first pass over the 2026-10-11 bundles

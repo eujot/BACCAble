@@ -466,6 +466,13 @@ static void import_page_favorites(void) {
         for (unsigned f = 0; f < FAVORITE_SET_COUNT; ++f) {
             int index = menu_page_index(e, preferences.favorites[e][f]);
             if (index >= 0) favorite_from_page(&favorites[e][f], &parameter_pages[e][index]);
+            /* An untouched default set also seeds its themed second line. */
+            if (preferences.favorites[e][f] != 0 &&
+                preferences.favorites[e][f] == menu_default_favorite(e, f)) {
+                uint16_t companion = menu_default_favorite_companion(e, f);
+                if (companion && menu_page_index(e, companion) >= 0)
+                    favorites[e][f].params[1] = companion;
+            }
         }
 }
 /* Poll each diagnostic once even when both pages contain it. At most eight IDs. */

@@ -213,6 +213,26 @@ If behavior worsens, select Reset default or completely power down the device.
 
 Favorites poll each diagnostic value once per cycle, even if it appears on both lines. Dense pairs of pages can take up to four seconds to refresh all eight values; they remain visible for that cycle and show `--` if replies stop. Native CAN readings retain their usual freshness limit.
 
+### Shipped default favorites
+
+A fresh install (gasoline) starts with six themed sets, each pairing a first-line
+page with a second-line page. A 1-line IPC shows only the first column; a 2-line
+IPC shows both lines. The set selected on start-up is **S1 Elektryka**.
+
+| Set | Line 1 | Line 2 |
+| --- | --- | --- |
+| S1 Elektryka | `Oil L / mm / %` | `Batt charge BCM` |
+| S2 Osiągi | `Power / torque` | `Boost pressure` |
+| S3 Temperatury | `Oil/water/gear C` | `Intercooler out` |
+| S4 Jazda | `Speed` | `Gear` |
+| S5 Timery | `0-100 km/h` | `Best 0-100` |
+| S6 Olej / Multiair | `Oil/water/IC C` | `Misfires/MA temp` |
+
+Diesel keeps its four existing defaults and has no second-line pages. The second
+line of a themed gasoline set is seeded only while that set still matches its
+shipped default, so any edit you make is preserved and never overwritten. Editing
+these sets follows the same steps below.
+
 ### Configure two reading pages per favorite
 
 1. Open `Settings → Favorites` and choose `Favorite 1` through `Favorite 6`.

@@ -228,6 +228,28 @@ Delta. Jeśli działanie się pogorszy, wybierz Reset default lub odłącz całe
 
 Ulubione odpytują każdy parametr diagnostyczny raz na cykl, nawet jeśli występuje w obu liniach. Przy ośmiu pomiarach odświeżenie całego zestawu może trwać cztery sekundy. Wartości pozostają widoczne przez ten czas, a po utracie odpowiedzi pojawia się `--`. Odczyty przychodzące bezpośrednio z CAN zachowują dotychczasowy czas ważności.
 
+### Domyślne zestawy ulubionych
+
+Świeża instalacja (benzyna) startuje z sześcioma tematycznymi zestawami, z których
+każdy łączy stronę pierwszej linii ze stroną drugiej linii. Wyświetlacz 1-liniowy
+pokazuje tylko pierwszą kolumnę, a 2-liniowy obie linie. Po starcie wybrany jest
+zestaw **S1 Elektryka**.
+
+| Zestaw | Linia 1 | Linia 2 |
+| --- | --- | --- |
+| S1 Elektryka | `Oil L / mm / %` | `Batt charge BCM` |
+| S2 Osiągi | `Power / torque` | `Boost pressure` |
+| S3 Temperatury | `Oil/water/gear C` | `Intercooler out` |
+| S4 Jazda | `Speed` | `Gear` |
+| S5 Timery | `0-100 km/h` | `Best 0-100` |
+| S6 Olej / Multiair | `Oil/water/IC C` | `Misfires/MA temp` |
+
+Diesel zachowuje cztery dotychczasowe domyślne strony i nie ma stron drugiej
+linii. Druga linia tematycznego zestawu benzynowego jest ustawiana tylko dopóki
+zestaw odpowiada wartościom fabrycznym, więc każda wykonana przez Ciebie zmiana
+zostaje zachowana i nie jest nadpisywana. Edycja tych zestawów przebiega według
+poniższych kroków.
+
 ### Dwie strony odczytów w jednym ulubionym widoku
 
 1. Otwórz `Settings → Favorites` i wybierz `Favorite 1` do `Favorite 6`.

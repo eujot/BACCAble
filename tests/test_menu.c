@@ -249,7 +249,7 @@ static void test_preferences(void) {
     menu_preferences_default(&prefs);
     uint8_t list[64], raw[MENU_PREFS_SIZE];
     for (unsigned e = 0; e < 2; ++e) {
-        assert(menu_page_list(&prefs, e, 0, true, false, list) == 4);
+        assert(menu_page_list(&prefs, e, 0, true, false, list) == (e == 0 ? 6 : 4));
         unsigned total = 0;
         for (unsigned g = 1; g < MENU_GROUPS; ++g)
             total += menu_page_list(&prefs, e, g, false, false, list);
@@ -267,7 +267,7 @@ static void test_preferences(void) {
     menu_favorite_move(&prefs, 0, first, 1);
     assert(prefs.favorites[0][0] == second && prefs.favorites[0][1] == first);
     menu_page_show(&prefs, 0, menu_page_index(0, first), false);
-    assert(menu_page_list(&prefs, 0, 0, true, false, list) == 4); /* Hide != remove favorite. */
+    assert(menu_page_list(&prefs, 0, 0, true, false, list) == 6); /* Hide != remove favorite. */
     prefs.alphabetical = 1;
     unsigned n = menu_page_list(&prefs, 0, 0, false, false, list);
     for (unsigned i = 1; i < n; ++i)
@@ -304,6 +304,16 @@ static void to_settings(void) {
     menu_event(MENU_NEXT);
     menu_event(MENU_NEXT);
     menu_event(MENU_SELECT);
+}
+/* Seek a favorite mixture for filtering tests: the shipped defaults with two
+   slots freed, refilled with an I4-incompatible favorite (cylinder 5) and the
+   Key ID page, so browsing hides cylinder 5 while storage keeps it. */
+static void seed_filtered_favorites(MenuPreferences *prefs) {
+    menu_preferences_default(prefs);
+    prefs->favorites[0][4] = 0;
+    prefs->favorites[0][5] = 0;
+    assert(menu_favorite_toggle(prefs, 0, 0x2f));
+    assert(menu_favorite_toggle(prefs, 0, 0x22));
 }
 /* Persistence compares committed domains and retries only the unsuccessful work. */
 static void test_automatic_persistence(void) {
@@ -393,7 +403,10 @@ static void test_present_retry(void) {
 static void test_controller(void) {
     fresh_menu();
     assert(dashboard_state.baccable_dashboard_menu_visible);
-    assert(dashboard_state.dashboard_page_index == 3);
+    MenuPreferences defaults;
+    menu_preferences_default(&defaults);
+    assert(dashboard_state.dashboard_page_index ==
+           (unsigned)menu_page_index(0, defaults.favorites[0][0]));
     menu_event(MENU_NEXT);
     uint8_t selected = dashboard_state.dashboard_page_index;
     menu_event(MENU_BACK);
@@ -889,8 +902,7 @@ static void test_engine_filters(void) {
     MenuPreferences prefs, restored;
     uint8_t raw[MENU_PREFS_SIZE], list[64];
     menu_preferences_default(&prefs);
-    assert(menu_favorite_toggle(&prefs, 0, 0x2f));
-    assert(menu_favorite_toggle(&prefs, 0, 0x22));
+    seed_filtered_favorites(&prefs);
     menu_preferences_encode(&prefs, raw);
     assert(menu_preferences_decode(&restored, raw));
     assert(!memcmp(prefs.favorites, restored.favorites, sizeof(prefs.favorites)));
