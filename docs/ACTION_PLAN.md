@@ -46,16 +46,30 @@ by three speed/off cycles. DNA/LKA mappings agree with the existing code, while
 rain, belt, doors, brake hold and central lock need more isolation. Evidence,
 counter checks, exact event IDs and a minimal next capture are in
 [the five-bundle investigation](../baccable_lab/docs/research/20261012-five-bundle-investigation.md).
-The dictionary and generated CAN catalog are updated in the research PR; no
+The dictionary and generated CAN catalog were updated in PR #56; no
 firmware or user-visible behavior changed. Physical right/left lamp verification
 and the dedicated `wipers_lights_auto` capture remain open.
 The cumulative evidence ledger retains 20 sessions / 21,354,624 frames;
 dictionary version is `2026-10-12.4`, retaining PR #55's request-handler source
 snapshot. All 70 Lab tests pass, including the new captured-payload,
-bus-isolation and exact-DLC regression. Research is prepared on
-`lab/five-bundle-release` after the merge of Readings PR #55 (`a9b5f44`).
-The next release notes are prepared in [v5-beta-22.md](releases/v5-beta-22.md);
-the release workflow and vehicle acceptance remain separate checks.
+bus-isolation and exact-DLC regression. Research PR #56 merged as `02dd92c`
+after Readings PR #55 (`a9b5f44`). The resulting firmware is published as
+[v5-beta-22](https://github.com/eujot/BACCAble/releases/tag/v5-beta-22);
+[notes](releases/v5-beta-22.md) are attached to the release page. See the
+release verification below; vehicle acceptance remains open.
+
+## Release status, 2026-10-12
+
+`v5-beta-22` was published from master merge commit `02dd92c` by
+[workflow 38279570129](https://github.com/eujot/BACCAble/actions/runs/38279570129).
+The release CI passed native host tests with sanitizers, Lab tests, menu labels,
+release-script checks, cppcheck and C1/C2/BH/CAN firmware builds with pinned
+Arm GNU 15.3.Rel1. The release contains BIN/HEX/ELF files for all four roles,
+`BUILD_INFO.json` and `SHA256SUMS`. Downloaded assets passed every listed
+SHA-256 check; build identity and tag both reference `02dd92c`. The release
+body matches [v5-beta-22.md](releases/v5-beta-22.md). No released image has
+yet been installed or tested in a vehicle. Readings appearance, DNA/LKA
+physical behavior and the new indicator field still need vehicle confirmation.
 
 ## Validated 20 ms IPC default, 2026-10-02
 
