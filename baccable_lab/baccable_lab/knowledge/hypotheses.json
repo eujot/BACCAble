@@ -303,7 +303,7 @@
       "contradictions": [
         "The 2026-10-10 campaign planned the lane procedures on the assumption that LKA is toggled from a menu; the owner's confirmation of the left-stalk double-click supersedes that assumption."
       ],
-      "next_test": "Verify in the car that one C2 0x384 button pulse from the firmware disables LKA, the original C2 0x547 / BH 0x4F6 reports remain OFF afterward, and a later driver press can re-enable it. Confirm the state bit against the dashboard lamp."
+      "next_test": "Verify in the car that one C2 0x384 double-click sequence (press, release, press, release) from the firmware disables LKA, the original C2 0x547 / BH 0x4F6 reports remain OFF afterward, and a later driver double-click can re-enable it. Confirm the state bit against the dashboard lamp."
     },
     {
       "id": "DNA-MODE-001",

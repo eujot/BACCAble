@@ -34,32 +34,33 @@ bounded changes and existing modules/tests. No model-specific workflow, mandator
 PR count or broad rewrite is needed. This handoff is a backlog, not an instruction
 to automatically flash hardware or publish every future change.
 
-## Start-up LKA button pulse candidate, 2026-10-13
+## Start-up LKA button double-click candidate, 2026-10-13
 
 The `kla` and `dnskla` recordings distinguish a momentary left-stalk button
 report from recurring LKA state. In `kla`, C2 `0x384` byte 3 bit 6 rises at
-24.207 s and returns at 24.316 s; the state on C2 `0x547` changes to OFF at
-24.528 s and continues to be reported. BH `0x5A0` also shows the button, but
+24.207 s and returns at 24.316 s, rises again at 24.423 s and returns at
+24.528 s; the state on C2 `0x547` changes to OFF at 24.528 s and continues to
+be reported. BH `0x5A0` also shows the button, but
 sending pulses on both buses could create two actions if the vehicle bridges
-them. A single press, rather than the double-click in the recording, has not
-been proven sufficient to change physical LKA on this car.
+them. The earlier single-press candidate did not reproduce the recorded gesture.
 
 The candidate on `fix/driver-aids-startup-one-shot` replaces the one-shot state
-rewrite with one C2 `0x384` pressed copy followed by a released copy about
-100 ms later. It waits until C2 `0x547` reports LKA enabled, skips the action
+rewrite with a C2 `0x384` double-click: press, release, press, release, roughly
+100 ms between steps. It waits until C2 `0x547` reports LKA enabled, skips the action
 if already off, cancels a pending action when the driver presses first, retains
-the release through queue rejection and board resync, and leaves C2/BH state
+the remaining steps through queue rejection and board resync, and leaves C2/BH state
 reports untouched. BH no longer injects an LKA frame. The host suite, C1/C2/BH/CAN
 cppcheck lint and Arm GNU 15.2.Rel1 firmware builds pass locally. Both user
 guides and the CAN research note describe this experimental behavior.
-Implementation commit: `939e062`. The dictionary and generated CAN catalog now
-use source snapshot `939e062` (dictionary version `2026-10-13.1`); all 70 Lab
-tests pass. The candidate is on draft PR #58; integration and release await the
+Initial implementation commit: `939e062`; double-click correction: `25e518b`.
+The dictionary and generated CAN catalog use source snapshot `25e518b` and
+dictionary version `2026-10-13.2`; all 70 Lab tests pass. The candidate is on
+draft PR #58; integration and release await the
 vehicle check.
 
-**Vehicle acceptance remains open:** confirm a single injected C2 button pulse
+**Vehicle acceptance remains open:** confirm an injected C2 button double-click
 turns LKA off, original C2 `0x547` / BH `0x4F6` reports remain OFF after BACCAble
-stops transmitting, and a later driver press can turn LKA on. If the pulse does
+stops transmitting, and a later driver double-click can turn LKA on. If the gesture does
 not latch, capture the controller-side input and do not restore a continuous
 status override. The default DNA-mode one-shot check in the section below also
 remains open. No firmware image from this branch has been installed in the car.

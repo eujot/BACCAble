@@ -75,9 +75,11 @@ did not establish that one injected copy changes the body's stored mode.
 
 The state frame is described in [CAN_DICTIONARY.md](../CAN_DICTIONARY.md) as
 `lane_assist_enabled`; the physical meaning still needs a dashboard-lamp check on
-the car. The experimental `Disable LKA` start-up action now sends one C2 `0x384`
-pressed report and a released report 100 ms later, only when C2 `0x547` reports
-enabled. It no longer rewrites the recurring state frames. Whether this pulse
+the car. The experimental `Disable LKA` start-up action now sends the observed
+C2 `0x384` double-click: press, release, press, release, at roughly 100 ms
+intervals, only when C2 `0x547` initially reports enabled. A state change after
+the first click does not abort the second click, as seen in the recording. It no
+longer rewrites the recurring state frames. Whether this gesture
 reaches the controller and turns assistance off needs a vehicle test.
 
 ## Wiper-driven lights — still open, and why
@@ -119,5 +121,5 @@ this review adds no vehicle acceptance.
 The earlier lane-state rewrite was restricted to BH `0x4F6` / C2 `0x547`, standard
 data frames with DLC 8. Beta-22 testing found that its continuous rewrite blocked
 later driver re-enabling. The subsequent one-shot status rewrite was replaced by
-the C2 button pulse described above. Actual deactivation by that pulse remains
+the C2 button double-click described above. Actual deactivation by that gesture remains
 unverified; the received captures alone do not identify the controller's input.
