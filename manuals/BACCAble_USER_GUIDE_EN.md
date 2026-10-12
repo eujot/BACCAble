@@ -345,7 +345,7 @@ workflow; their draft does not control the car before successful persistence.
 | `Virtual ACC` | Off / on | Use a compatible standard cruise-control pad for ACC functions. It requires an ACC-capable, correctly configured vehicle; it does not add radar or ACC capability. |
 | `ACC resume` | OFF / RES / + | Select whether BACCAble sends automatic RES or gentle-up requests while ACC is engaged and holding a stationary car. This can allow the car to resume movement; see [assistance controls](#acc-and-has-controls). |
 | `Virtual HAS` | Off / on | Permit simulated Highway Assist button presses through the action or a double press of the lane button. Requires compatible, configured vehicle assistance equipment. |
-| `Disable LKA` | Off / on | At vehicle start-up, queue one lane-assist state frame with its enable bit cleared on BH `0x4F6` and C2 `0x547` (8 bytes). If the CAN queue is full, retry on a later state report. A later double press of the left-stalk button is left alone until the next start-up. Beta-22 testing confirmed that the previous continuous override switched LKA off but prevented switching it back on; the one-time behavior still needs a vehicle test. Saving a changed preference takes effect on the next start-up. |
+| `Disable LKA` | Off / on | At vehicle start-up, if C2 reports LKA enabled, send one short left-stalk button press and release on C2 `0x384`. The firmware leaves the recurring LKA state reports unchanged and skips its pulse if LKA is already off or the driver presses the button first. A later driver press is left alone. The button-pulse method still needs a vehicle test to confirm that LKA switches off and can later be switched on again. Saving a changed preference takes effect on the next start-up. |
 
 ### Drivetrain group
 

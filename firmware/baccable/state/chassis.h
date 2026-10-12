@@ -48,8 +48,19 @@ typedef struct {
     /* Raw drive-mode field seen when the override was armed; 0xFF = not sampled yet. */
     uint8_t default_mode_baseline;
 
-    /* One pending LKA-off report, armed only on start-up. */
+    /* Start-up LKA button pulse state; see LANE_ASSIST_* below. */
     uint8_t lane_assist_pending;
+#if defined(BACCABLE_C2)
+    uint8_t lane_assist_release_data[8];
+    uint32_t lane_assist_pressed_at;
+#endif
 } ChassisState;
+
+enum {
+    LANE_ASSIST_IDLE = 0,
+    LANE_ASSIST_WAIT_STATE = 1,
+    LANE_ASSIST_WAIT_BUTTON = 2,
+    LANE_ASSIST_RELEASE_PENDING = 3,
+};
 extern ChassisState chassis_state;
 #endif

@@ -83,6 +83,7 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
 #endif
 
 #if defined(BACCABLE_C2)
+    lane_assist_button_observe(rx_header, frame_data);
     // on C2 can bus, msg 0x384 contains, in byte3, bit6 contains left stalk button press status (LANE
     // indicator button)
     if ((frame_data[3] & 0x40) == 0x40) { // left stalk button was pressed (lane following indicator)
@@ -193,32 +194,71 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
     // SuspensionLevel is on byte 5 bit0 and byte 6 bit7.
 }
 
-/* CAN ID 0x000004F6 (BH) and 0x00000547 (C2). */
-/* Experimental state override; physical assist deactivation remains unverified. */
+/* Wait for an enabled LKA state before offering the start-up button pulse. */
 void vehicle_handle_lane_state(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
-#if defined(BACCABLE_BH)
-    if (rx_header->StdId != 0x4F6)
-        return;
-#elif defined(BACCABLE_C2)
+#if defined(BACCABLE_C2)
     if (rx_header->StdId != 0x547)
         return;
-#else
-    (void)rx_header;
-    (void)frame_data;
-    return;
-#endif
     if (rx_header->DLC != 8 || rx_header->IDE != CAN_ID_STD || rx_header->RTR != CAN_RTR_DATA)
         return;
 
-    if (!settings_state.lane_assist_disabled || !chassis_state.lane_assist_pending)
+    if (!settings_state.lane_assist_disabled || chassis_state.lane_assist_pending == LANE_ASSIST_IDLE ||
+        chassis_state.lane_assist_pending == LANE_ASSIST_RELEASE_PENDING)
         return;
-    if (!(frame_data[6] & 0x02)) { /* Already off at start-up. */
-        chassis_state.lane_assist_pending = 0;
+    if (!(frame_data[6] & 0x02)) {
+        chassis_state.lane_assist_pending = LANE_ASSIST_IDLE;
         return;
     }
-    uint8_t original = frame_data[6];
-    frame_data[6] &= (uint8_t)~0x02;
-    if (can_forward(rx_header, frame_data) == HAL_OK)
-        chassis_state.lane_assist_pending = 0;
-    frame_data[6] = original;
+    chassis_state.lane_assist_pending = LANE_ASSIST_WAIT_BUTTON;
+#else
+    (void)rx_header;
+    (void)frame_data;
+#endif
+}
+
+/* Copy a released factory button report and offer one pressed report on its bus. */
+void lane_assist_button_observe(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
+#if defined(BACCABLE_C2)
+    const uint32_t id = 0x384;
+    const uint8_t byte = 3, mask = 0x40;
+    if (rx_header->StdId != id || rx_header->DLC != 8 || rx_header->IDE != CAN_ID_STD ||
+        rx_header->RTR != CAN_RTR_DATA || !settings_state.lane_assist_disabled)
+        return;
+    if (frame_data[byte] & mask) {
+        /* A driver press wins over the pending start-up action. */
+        if (chassis_state.lane_assist_pending == LANE_ASSIST_WAIT_STATE ||
+            chassis_state.lane_assist_pending == LANE_ASSIST_WAIT_BUTTON)
+            chassis_state.lane_assist_pending = LANE_ASSIST_IDLE;
+        return;
+    }
+    if (chassis_state.lane_assist_pending != LANE_ASSIST_WAIT_BUTTON)
+        return;
+    memcpy(chassis_state.lane_assist_release_data, frame_data, 8);
+    frame_data[byte] |= mask;
+    uint32_t result = can_forward(rx_header, frame_data);
+    frame_data[byte] &= (uint8_t)~mask;
+    if (result == HAL_OK) {
+        chassis_state.lane_assist_pressed_at = currentTime;
+        chassis_state.lane_assist_pending = LANE_ASSIST_RELEASE_PENDING;
+    }
+#else
+    (void)rx_header;
+    (void)frame_data;
+#endif
+}
+
+/* The observed button reports return to released after roughly 100 ms. */
+void lane_assist_button_process(void) {
+#if defined(BACCABLE_C2)
+    if (chassis_state.lane_assist_pending != LANE_ASSIST_RELEASE_PENDING ||
+        currentTime - chassis_state.lane_assist_pressed_at < 100U)
+        return;
+    CAN_TxHeaderTypeDef header = {.StdId = 0x384,
+                                  .IDE = CAN_ID_STD,
+                                  .RTR = CAN_RTR_DATA,
+                                  .DLC = 8,
+                                  .TransmitGlobalTime = DISABLE};
+    if (can_tx(&header, chassis_state.lane_assist_release_data) == HAL_OK)
+        chassis_state.lane_assist_pending = LANE_ASSIST_IDLE;
+#endif
 }

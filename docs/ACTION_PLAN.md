@@ -1,6 +1,6 @@
 # BACCAble action plan and agent handoff
 
-Last updated: **2026-10-12** (dated verification boundaries below). This is the single source of planned work,
+Last updated: **2026-10-13** (dated verification boundaries below). This is the single source of planned work,
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
@@ -34,6 +34,32 @@ bounded changes and existing modules/tests. No model-specific workflow, mandator
 PR count or broad rewrite is needed. This handoff is a backlog, not an instruction
 to automatically flash hardware or publish every future change.
 
+## Start-up LKA button pulse candidate, 2026-10-13
+
+The `kla` and `dnskla` recordings distinguish a momentary left-stalk button
+report from recurring LKA state. In `kla`, C2 `0x384` byte 3 bit 6 rises at
+24.207 s and returns at 24.316 s; the state on C2 `0x547` changes to OFF at
+24.528 s and continues to be reported. BH `0x5A0` also shows the button, but
+sending pulses on both buses could create two actions if the vehicle bridges
+them. A single press, rather than the double-click in the recording, has not
+been proven sufficient to change physical LKA on this car.
+
+The candidate on `fix/driver-aids-startup-one-shot` replaces the one-shot state
+rewrite with one C2 `0x384` pressed copy followed by a released copy about
+100 ms later. It waits until C2 `0x547` reports LKA enabled, skips the action
+if already off, cancels a pending action when the driver presses first, retains
+the release through queue rejection and board resync, and leaves C2/BH state
+reports untouched. BH no longer injects an LKA frame. The host suite, C1/C2/BH/CAN
+cppcheck lint and Arm GNU 15.2.Rel1 firmware builds pass locally. Both user
+guides and the CAN research note describe this experimental behavior.
+
+**Vehicle acceptance remains open:** confirm a single injected C2 button pulse
+turns LKA off, original C2 `0x547` / BH `0x4F6` reports remain OFF after BACCAble
+stops transmitting, and a later driver press can turn LKA on. If the pulse does
+not latch, capture the controller-side input and do not restore a continuous
+status override. The default DNA-mode one-shot check in the section below also
+remains open. No firmware image from this branch has been installed in the car.
+
 ## Beta-22 vehicle finding and start-up driver aids, 2026-10-12
 
 The owner tested beta-22 in the car. `Default mode = D` lit the Dynamic lamp,
@@ -45,9 +71,10 @@ identities and a transmit-side trace were not supplied.
 Source review found both defaults retransmitting on every matching status
 report: `0x384` on C1/C2, `0x46C` and `0x25A` on BH, and LKA state `0x547` on C2 /
 `0x4F6` on BH. Those reports recur; the LKA handler erased every subsequent
-enable state, explaining the blocked double press. The firmware fix on branch
-`fix/driver-aids-startup-one-shot` queues each relevant modified frame once per
-vehicle start, retrying only after CAN rejects the queue submission. A saved
+enable state, explaining the blocked double press. The initial firmware fix on
+branch `fix/driver-aids-startup-one-shot` queued each relevant modified frame once
+per vehicle start, retrying only after CAN rejected the queue submission. Its LKA
+part was superseded by the C2 button-pulse candidate above. A saved
 preference is synchronized but does not inject a frame until the next start.
 Transport-only resync leaves the current session alone. Host tests cover each
 board, repeated original reports, later driver input, queue failure and rearm.
@@ -62,8 +89,7 @@ the firmware and lint jobs were pending when this handoff was recorded.
 
 **Hardware acceptance remains open:** confirm that a single injected DNA frame
 actually latches the selected drive mode and removes the faint Natural lamp;
-confirm LKA starts off and a later double press turns it on without another
-BACCAble override. The current capture format observes received frames, not
+confirm the LKA pulse as specified above. The current capture format observes received frames, not
 BACCAble's own transmissions. A rewritten status broadcast may be overridden by
 the body's next original broadcast; if so, find a genuine one-time request or
 another control path rather than restoring a continuous conflicting stream.

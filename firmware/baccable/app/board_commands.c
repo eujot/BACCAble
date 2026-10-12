@@ -273,10 +273,18 @@ void board_commands_dispatch(const uint8_t *message) {
                 chassis_state.default_mode_override = 1;
                 chassis_state.default_mode_sent = 0;
                 chassis_state.default_mode_baseline = 0xFF;
-                chassis_state.lane_assist_pending = settings_state.lane_assist_disabled;
+#if defined(BACCABLE_C2)
+                if (chassis_state.lane_assist_pending != LANE_ASSIST_RELEASE_PENDING)
+                    chassis_state.lane_assist_pending = settings_state.lane_assist_disabled
+                                                            ? LANE_ASSIST_WAIT_STATE
+                                                            : LANE_ASSIST_IDLE;
+#endif
             } else if (message[4] == 2) {
                 chassis_state.default_mode_override = 0;
-                chassis_state.lane_assist_pending = 0;
+#if defined(BACCABLE_C2)
+                if (chassis_state.lane_assist_pending != LANE_ASSIST_RELEASE_PENDING)
+                    chassis_state.lane_assist_pending = LANE_ASSIST_IDLE;
+#endif
             }
             break;
         default:

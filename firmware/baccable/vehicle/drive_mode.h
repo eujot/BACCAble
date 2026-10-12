@@ -11,6 +11,8 @@
 
 void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data);
 void vehicle_handle_lane_state(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data);
+void lane_assist_button_observe(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data);
+void lane_assist_button_process(void);
 
 /* Raw field value that encodes the configured default mode for one frame layout. */
 uint8_t drive_mode_default_field(uint8_t encoding);

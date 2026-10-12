@@ -11,11 +11,25 @@ ComfortState comfort_state;
 MirrorsState mirrors_state;
 DisplayState display_state;
 DashboardState dashboard_state;
-uint32_t HAL_GetTick(void) { return 100; }
+static uint32_t now = 100;
+uint32_t HAL_GetTick(void) { return now; }
 void status_led_activity(void) {}
 void body_display_factory_frame(const uint8_t *data, uint8_t dlc) { (void)data; (void)dlc; }
 uint8_t board_uart_send(const uint8_t *data, size_t length) { (void)data; (void)length; return 1; }
-uint32_t can_tx(CAN_TxHeaderTypeDef *header, uint8_t *data) { (void)header; (void)data; return 0; }
+static uint8_t sent[8];
+static uint32_t sent_id;
+static unsigned sends, send_rejected;
+uint32_t can_tx(CAN_TxHeaderTypeDef *header, uint8_t *data) {
+    if (send_rejected) {
+        --send_rejected;
+        return HAL_ERROR;
+    }
+    assert(header->DLC == 8 && header->IDE == CAN_ID_STD && header->RTR == CAN_RTR_DATA);
+    sent_id = header->StdId;
+    memcpy(sent, data, 8);
+    ++sends;
+    return HAL_OK;
+}
 static uint8_t forwarded[8];
 static unsigned forwards;
 static unsigned rejected;
@@ -49,6 +63,8 @@ static void arm(void) {
     chassis_state.lane_assist_pending = 0;
     telemetry_state.drive_mode = 0;
     forwards = 0;
+    sends = 0;
+    now = 100;
 }
 int main(void) {
     static const uint8_t codes[3][3] = {{0x10,0x04,0x10}, {0x08,0x02,0x20}, {0x30,0x0c,0x04}};
@@ -130,67 +146,91 @@ int main(void) {
     vehicle_handle_drive_style_display(&ipc_header, ipc);
     assert(forwards == 2);
 #endif
-    /* Identical IDs on different buses do not imply identical signals. */
+#if defined(BACCABLE_C2)
+    /* A real button report is pressed once and explicitly released 100 ms later. */
+    arm();
     settings_state.lane_assist_disabled = 1;
     chassis_state.lane_assist_pending = 1;
-    for (unsigned id = 0; id < 2; ++id)
-        for (unsigned dlc = 0; dlc <= 8; ++dlc) {
-            CAN_RxHeaderTypeDef header = {.StdId = id ? 0x547 : 0x4f6, .DLC = dlc};
-            uint8_t data[8] = {0,0,0,0,0,8,0x82,0};
-            forwards = 0;
-            vehicle_handle_lane_state(&header, data);
-            unsigned expected = 0;
-#if defined(BACCABLE_BH)
-            expected = id == 0 && dlc == 8;
-#elif defined(BACCABLE_C2)
-            expected = id == 1 && dlc == 8;
+    CAN_RxHeaderTypeDef state_header = {.StdId = 0x547,
+                                        .IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .DLC = 8};
+    CAN_RxHeaderTypeDef button_header = {.StdId = 0x384,
+                                         .IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .DLC = 8};
+    uint8_t state[8] = {0,0,0,0,0,8,2,0};
+    uint8_t button[8] = {0};
+    button[0] = 8; button[1] = 9; button[2] = 0x8a; button[3] = 0x80;
+    const uint8_t button_byte = 3, button_mask = 0x40;
+    lane_assist_button_observe(&button_header, button);
+    assert(forwards == 0); /* Wait for a valid, enabled status. */
+    state_header.StdId = 0x4f6;
+    vehicle_handle_lane_state(&state_header, state);
+    assert(chassis_state.lane_assist_pending == 1); /* BH layout is not the C2 input. */
+    state_header.StdId = 0x547;
+    state_header.DLC = 7;
+    vehicle_handle_lane_state(&state_header, state);
+    assert(chassis_state.lane_assist_pending == 1);
+    state_header.DLC = 8;
+    vehicle_handle_lane_state(&state_header, state);
+    assert(chassis_state.lane_assist_pending == 2 && forwards == 0);
+    button_header.StdId = 0x5a0;
+    lane_assist_button_observe(&button_header, button);
+    button_header.StdId = 0x384;
+    button_header.DLC = 7;
+    lane_assist_button_observe(&button_header, button);
+    button_header.DLC = 8;
+    button_header.IDE = CAN_ID_EXT;
+    lane_assist_button_observe(&button_header, button);
+    button_header.IDE = CAN_ID_STD;
+    button_header.RTR = CAN_RTR_REMOTE;
+    lane_assist_button_observe(&button_header, button);
+    button_header.RTR = CAN_RTR_DATA;
+    assert(chassis_state.lane_assist_pending == 2 && forwards == 0);
+    rejected = 1;
+    lane_assist_button_observe(&button_header, button);
+    assert(chassis_state.lane_assist_pending == 2 && forwards == 0);
+    vehicle_handle_drive_mode(&button_header, button);
+    assert(chassis_state.lane_assist_pending == 3 && forwards == 1);
+    assert((forwarded[button_byte] & button_mask) && forwarded[7] == button[7]);
+    assert(!(button[button_byte] & button_mask));
+    vehicle_handle_lane_state(&state_header, state); /* The old status cannot trigger another press. */
+    lane_assist_button_observe(&button_header, button);
+    assert(forwards == 1);
+    now = 199;
+    lane_assist_button_process();
+    assert(sends == 0);
+    now = 200;
+    send_rejected = 1;
+    lane_assist_button_process();
+    assert(sends == 0 && chassis_state.lane_assist_pending == 3);
+    lane_assist_button_process();
+    assert(sends == 1 && sent_id == button_header.StdId);
+    assert(memcmp(sent, button, 8) == 0 && chassis_state.lane_assist_pending == 0);
+    lane_assist_button_process();
+    lane_assist_button_observe(&button_header, button);
+    assert(sends == 1 && forwards == 1); /* No continuous override. */
+
+    chassis_state.lane_assist_pending = 1;
+    state[6] = 0;
+    vehicle_handle_lane_state(&state_header, state);
+    assert(chassis_state.lane_assist_pending == 0); /* Already disabled. */
+    state[6] = 2;
+    chassis_state.lane_assist_pending = 1;
+    vehicle_handle_lane_state(&state_header, state);
+    button[button_byte] |= button_mask;
+    lane_assist_button_observe(&button_header, button);
+    assert(chassis_state.lane_assist_pending == 0); /* Driver pressed first. */
+    button[button_byte] &= (uint8_t)~button_mask;
+    lane_assist_button_observe(&button_header, button);
+    assert(forwards == 1);
+#elif defined(BACCABLE_BH)
+    /* BH sees the button and state too, but must not generate a second press. */
+    settings_state.lane_assist_disabled = 1;
+    chassis_state.lane_assist_pending = 1;
+    CAN_RxHeaderTypeDef state_header = {.StdId = 0x4f6, .IDE = CAN_ID_STD,
+                                        .RTR = CAN_RTR_DATA, .DLC = 8};
+    uint8_t state[8] = {0,0,0,0,0,8,2,0};
+    unsigned before_lane = forwards;
+    vehicle_handle_lane_state(&state_header, state);
+    assert(forwards == before_lane && sends == 0 && chassis_state.lane_assist_pending == 1);
 #endif
-            assert(forwards == expected);
-            if (expected) {
-                assert(forwarded[6] == 0x80 && forwarded[5] == 8 && forwarded[7] == 0);
-                assert(data[6] == 0x82); /* Preserve the original received report. */
-                vehicle_handle_lane_state(&header, data); /* Driver enabled it again. */
-                assert(forwards == 1);
-                chassis_state.lane_assist_pending = 1;
-                data[6] = 0x82;
-                settings_state.lane_assist_disabled = 0;
-                vehicle_handle_lane_state(&header, data);
-                settings_state.lane_assist_disabled = 1;
-                header.RTR = CAN_RTR_REMOTE;
-                vehicle_handle_lane_state(&header, data);
-                header.RTR = CAN_RTR_DATA;
-                header.IDE = CAN_ID_EXT;
-                vehicle_handle_lane_state(&header, data);
-                assert(forwards == 1 && data[6] == 0x82);
-            }
-        }
-    {
-        CAN_RxHeaderTypeDef header = {.StdId =
-#if defined(BACCABLE_BH)
-                                       0x4f6,
-#else
-                                       0x547,
-#endif
-                                       .DLC = 8};
-        uint8_t data[8] = {0,0,0,0,0,8,0x82,0};
-        chassis_state.lane_assist_pending = 1;
-        rejected = 1;
-        unsigned before = forwards;
-        vehicle_handle_lane_state(&header, data);
-#if defined(BACCABLE_BH) || defined(BACCABLE_C2)
-        assert(forwards == before && chassis_state.lane_assist_pending);
-        vehicle_handle_lane_state(&header, data);
-        assert(forwards == before + 1 && !chassis_state.lane_assist_pending);
-        chassis_state.lane_assist_pending = 1;
-        data[6] = 0x80;
-        vehicle_handle_lane_state(&header, data);
-        assert(!chassis_state.lane_assist_pending); /* Already off at start. */
-        data[6] = 0x82;
-        vehicle_handle_lane_state(&header, data);
-        assert(forwards == before + 1); /* Later stalk toggle is left alone. */
-#else
-        assert(forwards == before);
-#endif
-    }
     return 0;
 }
