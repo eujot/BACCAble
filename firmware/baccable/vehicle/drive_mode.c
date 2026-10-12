@@ -194,7 +194,7 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
     // SuspensionLevel is on byte 5 bit0 and byte 6 bit7.
 }
 
-/* Wait for an enabled LKA state before offering the start-up button pulse. */
+/* Wait for an enabled LKA state before offering the start-up double-click. */
 void vehicle_handle_lane_state(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
 #if defined(BACCABLE_C2)
     if (rx_header->StdId != 0x547)
@@ -203,7 +203,7 @@ void vehicle_handle_lane_state(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
         return;
 
     if (!settings_state.lane_assist_disabled || chassis_state.lane_assist_pending == LANE_ASSIST_IDLE ||
-        chassis_state.lane_assist_pending == LANE_ASSIST_RELEASE_PENDING)
+        chassis_state.lane_assist_pending >= LANE_ASSIST_RELEASE_FIRST_PENDING)
         return;
     if (!(frame_data[6] & 0x02)) {
         chassis_state.lane_assist_pending = LANE_ASSIST_IDLE;
@@ -216,7 +216,7 @@ void vehicle_handle_lane_state(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
 #endif
 }
 
-/* Copy a released factory button report and offer one pressed report on its bus. */
+/* Copy a released factory button report and start the observed double-click. */
 void lane_assist_button_observe(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
 #if defined(BACCABLE_C2)
     const uint32_t id = 0x384;
@@ -238,8 +238,8 @@ void lane_assist_button_observe(const CAN_RxHeaderTypeDef *rx_header, uint8_t *f
     uint32_t result = can_forward(rx_header, frame_data);
     frame_data[byte] &= (uint8_t)~mask;
     if (result == HAL_OK) {
-        chassis_state.lane_assist_pressed_at = currentTime;
-        chassis_state.lane_assist_pending = LANE_ASSIST_RELEASE_PENDING;
+        chassis_state.lane_assist_step_at = currentTime;
+        chassis_state.lane_assist_pending = LANE_ASSIST_RELEASE_FIRST_PENDING;
     }
 #else
     (void)rx_header;
@@ -247,18 +247,30 @@ void lane_assist_button_observe(const CAN_RxHeaderTypeDef *rx_header, uint8_t *f
 #endif
 }
 
-/* The observed button reports return to released after roughly 100 ms. */
+/* The sniff shows press, release, press, release at roughly 100 ms intervals. */
 void lane_assist_button_process(void) {
 #if defined(BACCABLE_C2)
-    if (chassis_state.lane_assist_pending != LANE_ASSIST_RELEASE_PENDING ||
-        currentTime - chassis_state.lane_assist_pressed_at < 100U)
+    uint8_t stage = chassis_state.lane_assist_pending;
+    if (stage < LANE_ASSIST_RELEASE_FIRST_PENDING ||
+        currentTime - chassis_state.lane_assist_step_at < 100U)
         return;
     CAN_TxHeaderTypeDef header = {.StdId = 0x384,
                                   .IDE = CAN_ID_STD,
                                   .RTR = CAN_RTR_DATA,
                                   .DLC = 8,
                                   .TransmitGlobalTime = DISABLE};
-    if (can_tx(&header, chassis_state.lane_assist_release_data) == HAL_OK)
+    uint8_t data[8];
+    memcpy(data, chassis_state.lane_assist_release_data, sizeof(data));
+    if (stage == LANE_ASSIST_PRESS_SECOND_PENDING)
+        data[3] |= 0x40;
+    if (can_tx(&header, data) != HAL_OK)
+        return;
+    chassis_state.lane_assist_step_at = currentTime;
+    if (stage == LANE_ASSIST_RELEASE_FIRST_PENDING)
+        chassis_state.lane_assist_pending = LANE_ASSIST_PRESS_SECOND_PENDING;
+    else if (stage == LANE_ASSIST_PRESS_SECOND_PENDING)
+        chassis_state.lane_assist_pending = LANE_ASSIST_RELEASE_SECOND_PENDING;
+    else
         chassis_state.lane_assist_pending = LANE_ASSIST_IDLE;
 #endif
 }

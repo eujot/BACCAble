@@ -147,7 +147,7 @@ int main(void) {
     assert(forwards == 2);
 #endif
 #if defined(BACCABLE_C2)
-    /* A real button report is pressed once and explicitly released 100 ms later. */
+    /* Recorded stalk gesture: press, release, press, release at 100 ms intervals. */
     arm();
     settings_state.lane_assist_disabled = 1;
     chassis_state.lane_assist_pending = 1;
@@ -159,6 +159,9 @@ int main(void) {
     uint8_t button[8] = {0};
     button[0] = 8; button[1] = 9; button[2] = 0x8a; button[3] = 0x80;
     const uint8_t button_byte = 3, button_mask = 0x40;
+    uint8_t pressed_button[8];
+    memcpy(pressed_button, button, sizeof(button));
+    pressed_button[button_byte] |= button_mask;
     lane_assist_button_observe(&button_header, button);
     assert(forwards == 0); /* Wait for a valid, enabled status. */
     state_header.StdId = 0x4f6;
@@ -189,7 +192,7 @@ int main(void) {
     assert(chassis_state.lane_assist_pending == 2 && forwards == 0);
     vehicle_handle_drive_mode(&button_header, button);
     assert(chassis_state.lane_assist_pending == 3 && forwards == 1);
-    assert((forwarded[button_byte] & button_mask) && forwarded[7] == button[7]);
+    assert(memcmp(forwarded, pressed_button, 8) == 0);
     assert(!(button[button_byte] & button_mask));
     vehicle_handle_lane_state(&state_header, state); /* The old status cannot trigger another press. */
     lane_assist_button_observe(&button_header, button);
@@ -203,10 +206,33 @@ int main(void) {
     assert(sends == 0 && chassis_state.lane_assist_pending == 3);
     lane_assist_button_process();
     assert(sends == 1 && sent_id == button_header.StdId);
-    assert(memcmp(sent, button, 8) == 0 && chassis_state.lane_assist_pending == 0);
+    assert(memcmp(sent, button, 8) == 0 && chassis_state.lane_assist_pending == 4);
+    state[6] = 0;
+    vehicle_handle_lane_state(&state_header, state); /* The state may change mid-gesture. */
+    assert(chassis_state.lane_assist_pending == 4);
+    now = 299;
+    lane_assist_button_process();
+    assert(sends == 1);
+    now = 300;
+    send_rejected = 1;
+    lane_assist_button_process();
+    assert(sends == 1 && chassis_state.lane_assist_pending == 4);
+    lane_assist_button_process();
+    assert(sends == 2 && memcmp(sent, pressed_button, 8) == 0);
+    assert(chassis_state.lane_assist_pending == 5);
+    now = 399;
+    lane_assist_button_process();
+    assert(sends == 2);
+    now = 400;
+    send_rejected = 1;
+    lane_assist_button_process();
+    assert(sends == 2 && chassis_state.lane_assist_pending == 5);
+    lane_assist_button_process();
+    assert(sends == 3 && memcmp(sent, button, 8) == 0);
+    assert(chassis_state.lane_assist_pending == 0);
     lane_assist_button_process();
     lane_assist_button_observe(&button_header, button);
-    assert(sends == 1 && forwards == 1); /* No continuous override. */
+    assert(sends == 3 && forwards == 1); /* No continuous override. */
 
     chassis_state.lane_assist_pending = 1;
     state[6] = 0;
