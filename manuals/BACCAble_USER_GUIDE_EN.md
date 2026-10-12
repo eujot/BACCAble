@@ -25,6 +25,7 @@ are supported; a menu entry alone does not establish compatibility.
 - [Actions](#actions)
 - [Information](#information)
 - [Reading the measurements](#reading-the-measurements)
+- [Experiments (extra readings)](#experiments-extra-readings)
 - [Gasoline reading catalog](#gasoline-reading-catalog)
 - [Diesel reading catalog](#diesel-reading-catalog)
 - [USB CAN capture and diagnostics](#usb-can-capture-and-diagnostics)
@@ -121,6 +122,11 @@ Main menu
 │  ├─ Sort order             Grouped or alphabetical reading lists
 │  └─ BACCAble IPC           Temporary refresh experiments
 └─ Information               Versions, input status and IPC display test
+├─ Experiments               Extra readings from public sources (not verified on this car)
+│  ├─ Electrical
+│  ├─ Oil
+│  ├─ Engine
+│  └─ Vehicle
 ```
 
 This Settings layout applies to MY23 and to any profile after an atomic Favorite set
@@ -130,6 +136,21 @@ Page favorites, Shown pages, Favorite order, Sort order, Favorites, BACCAble IPC
 The main menu order is fixed. Page availability follows the selected engine,
 `Advanced pages` and `Shown pages`. A group without eligible pages may show
 `No pages`. The complete catalogs below include pages that are hidden by default.
+
+## Experiments (extra readings)
+
+`Experiments` is a separate main-menu section holding extra readings taken from
+public Giulia/Stelvio sources, not from this car's verified captures. It has four
+groups: `Electrical`, `Oil`, `Engine` and `Vehicle`. Browse them like Readings:
+gentle up/down picks a page, RES shows the live value, double-click returns.
+
+These pages request manufacturer diagnostic identifiers (`0x22`) from the ECM, TCM,
+BCM and IPC. Support and scaling are **not verified on your car** (the source was a
+different Giulia/Stelvio); a missing or rejected reply shows `--`. `Experiments` is
+kept apart from the ordinary Readings catalog: it does not change `Shown pages`,
+Favorite sorting or the saved settings, and its own selection is not remembered
+between restarts. Reads whose reply does not fit a single CAN frame are not
+included in this release.
 
 ## Display symbols and messages
 
@@ -999,7 +1020,7 @@ commands and bus behavior. Use explicitly save USB mode OFF for ordinary operati
 | Short RES returns to the main menu | Short RES selects; **double-click RES goes back**. |
 | Strong press skips ten parameters | Strong press jumps functional groups; Favorites moves one page. |
 | Save & Exit | Draft confirmation and hold to save; explicit retry on failure. |
-| Flat parameter/function menu | Favorites, Readings, Actions, Settings, Information. |
+| Flat parameter/function menu | Favorites, Readings, Actions, Settings, Information, Experiments. |
 | Enabling Park Mirror stores positions | `Park mirror → Enabled` and `Store position` are separate operations. |
 | Generic Battery % / BATTERY | Distinct BCM, engine ECU and native IBS SOC sources; see the battery table. |
 | OIL UN. AIR | `MultiAir temp`, I4 only. |

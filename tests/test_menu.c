@@ -251,18 +251,18 @@ static void test_display(void) {
 static void test_preferences(void) {
     MenuPreferences prefs, copy;
     menu_preferences_default(&prefs);
-    uint8_t list[64], raw[MENU_PREFS_SIZE];
+    uint8_t list[128], raw[MENU_PREFS_SIZE];
     for (unsigned e = 0; e < 2; ++e) {
         assert(menu_page_list(&prefs, e, 0, true, false, list) == (e == 0 ? 6 : 4));
         unsigned total = 0;
-        for (unsigned g = 1; g < MENU_GROUPS; ++g)
+        for (unsigned g = 1; g < MENU_GROUPS + MENU_EXPERIMENT_GROUPS; ++g)
             total += menu_page_list(&prefs, e, g, false, false, list);
         assert(total == menu_page_count(e));
         for (unsigned i = 0; i < menu_page_count(e); ++i) {
             const ParameterPage *page = &parameter_pages[e][i];
             assert(menu_page_index(e, page->id) == (int)i);
-            assert((page->id & 0x7f) > 0 && (page->id & 0x7f) <= 64);
-            assert(page->label && page->group > 0 && page->group < MENU_GROUPS);
+            assert((page->id & 0x7f) > 0 && (page->id & 0x7f) <= 127);
+            assert(page->label && page->group > 0 && page->group < MENU_GROUPS + MENU_EXPERIMENT_GROUPS);
             for (unsigned j = 0; j < i; ++j)
                 assert(parameter_pages[e][j].id != page->id);
         }
@@ -283,7 +283,7 @@ static void test_preferences(void) {
     for (unsigned i = 0; i < menu_page_count(0); ++i)
         menu_page_show(&copy, 0, i, false);
     assert(menu_page_list(&copy, 0, 0, false, false, list) == 0);
-    assert(menu_page_list(&copy, 0, 0, false, true, list) == menu_page_count(0));
+    assert(menu_page_list(&copy, 0, 0, false, true, list) == 64); /* Ordinary gasoline catalog; experiments are a separate section. */
     raw[0] = 255;
     assert(!menu_preferences_decode(&copy, raw));
 }
@@ -1018,7 +1018,7 @@ static void test_readable_screens(void) {
 /* Engine and complexity filters preserve saved identities, including temporarily unavailable favorites. */
 static void test_engine_filters(void) {
     MenuPreferences prefs, restored;
-    uint8_t raw[MENU_PREFS_SIZE], list[64];
+    uint8_t raw[MENU_PREFS_SIZE], list[128];
     menu_preferences_default(&prefs);
     seed_filtered_favorites(&prefs);
     menu_preferences_encode(&prefs, raw);
@@ -1045,7 +1045,7 @@ static void test_engine_filters(void) {
     count = menu_page_list_filtered(&prefs, 0, 0, false, false, false, false, list);
     for (unsigned i = 0; i < count; ++i)
         assert(!menu_page_advanced(0, list[i]));
-    assert(menu_page_list_filtered(&prefs, 0, 0, false, true, false, false, list) == gasoline_page_count - 2);
+    assert(menu_page_list_filtered(&prefs, 0, 0, false, true, false, false, list) == 62); /* 64 ordinary gasoline pages minus 2 V6-only. */
     assert(menu_page_index(0, 0x2f) == 46 && menu_page_index(0, 0x30) == 47);
     assert(parameter_page_elements(&parameter_pages[0][menu_page_index(0, 0x3b)]) == 2);
     assert(parameter_page_elements(&parameter_pages[0][menu_page_index(0, 0x3c)]) == 2);

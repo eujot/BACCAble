@@ -305,6 +305,28 @@ reassertion and factory arbitration remain. No new beta or hardware flash.
 
 ## Current work
 
+### Experiments readings section (public-source DIDs), 2026-10-13
+
+Added a separate main-menu `Experiments` section carrying 38 extra diagnostic
+readings derived from the danardi78 Giulia/Stelvio PID CSV, grouped `Electrical`
+(4), `Oil` (3), `Engine` (15) and `Vehicle` (16). Diesel-only items and duplicates
+were dropped; nine DIDs needing a signed or bit-level decoder (or a multi-frame
+reply) were excluded from this release. Labels are human-readable English.
+
+The stored settings format is untouched: the new pages sit at the end of the
+gasoline catalog (ids 0x41.., groups 7..10), are always visible, and drive a new
+`EXP_GROUPS` view that reuses the VALUES renderer. `parameter_pages` grew to
+`[2][104]`, `parameter_definitions` to `[134]`, the cache to 136 entries, and the
+menu list buffers to 128. `menu_page_list` lists experiments only for their own
+groups, so group 0 (`All readings`) stays the ordinary catalog. C1 flash is now
+98120/98304 bytes (184 B margin).
+
+Validation: host suite (native ASan/UBSan) and the label test pass; all four ARM
+flavours build and lint; the Lab suite (71 tests) passes after refreshing the
+`parameter_catalog.c` and `parameter_cache.c` source hashes and the dictionary
+version. The readings are **unverified on the owner's 2.0 petrol car** (the source
+was a 2.2 diesel).
+
 ### Readings next-page prefetch, 2026-10-12
 
 Task branch: `feat/readings-preview-prefetch`, implementation `6b7e839`,

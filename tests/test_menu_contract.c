@@ -217,7 +217,7 @@ static void test_entry_renderer_bounds(void) {
 /* Profile filtering preserves favorite identities without visible counters. */
 static void test_unnumbered_filtered_editors(void) {
     MenuPreferences catalog_preferences;
-    uint8_t catalog[64];
+    uint8_t catalog[128];
     menu_preferences_default(&catalog_preferences);
     const uint16_t required[2][5] = {{0x06, 0x0a, 0x0b, 0x16, 0x3b},
                                      {0x86, 0x95, 0xb8, 0x00, 0x00}};

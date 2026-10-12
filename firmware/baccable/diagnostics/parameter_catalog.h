@@ -38,8 +38,8 @@ extern float displayed_parameter_values[4];
 extern uint8_t parameter_page_count;
 extern uint8_t gasoline_page_count;
 extern uint8_t diesel_page_count;
-extern const ParameterPage parameter_pages[2][64];
-extern const ParameterDefinition parameter_definitions[100];
+extern const ParameterPage parameter_pages[2][104];
+extern const ParameterDefinition parameter_definitions[134];
 extern uint8_t selected_parameter_element;
 
 extern const char *regeneration_labels[];

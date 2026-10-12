@@ -30,6 +30,7 @@ jego sterowników. Sama obecność opcji w menu nie oznacza, że samochód ją o
 - [Akcje: Actions](#akcje-actions)
 - [Informacje: Information](#informacje-information)
 - [Jak rozumieć odczyty](#jak-rozumieć-odczyty)
+- [Experiments — dodatkowe odczyty](#experiments--dodatkowe-odczyty)
 - [Odczyty dla silników benzynowych](#odczyty-dla-silników-benzynowych)
 - [Odczyty dla silnika Diesla](#odczyty-dla-silnika-diesla)
 - [Przechwytywanie CAN i diagnostyka przez USB](#przechwytywanie-can-i-diagnostyka-przez-usb)
@@ -127,6 +128,11 @@ Menu główne
 │  ├─ Sort order             Sortowanie według grup albo alfabetycznie
 │  └─ BACCAble IPC           Tymczasowe próby odświeżania
 └─ Information               Wersje, przyciski i test wyświetlacza IPC
+├─ Experiments               Dodatkowe odczyty z publicznych źródeł (niezweryfikowane w tym aucie)
+│  ├─ Electrical
+│  ├─ Oil
+│  ├─ Engine
+│  └─ Vehicle
 ```
 
 Ten układ Settings dotyczy MY23 oraz każdego profilu po zapisaniu zestawu
@@ -138,6 +144,22 @@ Kolejność menu głównego jest stała. Dostępność stron zależy od wybraneg
 oraz ustawień `Advanced pages` i `Shown pages`. Grupa bez dostępnych stron może
 pokazać `No pages`. Pełne wykazy w dalszej części obejmują również strony
 domyślnie ukryte.
+
+## Experiments — dodatkowe odczyty
+
+`Experiments` to osobna sekcja menu głównego z dodatkowymi odczytami pochodzącymi
+z publicznych źródeł dla Giulii/Stelvio, a nie ze zweryfikowanych nagrań tego
+samochodu. Ma cztery grupy: `Electrical`, `Oil`, `Engine` i `Vehicle`. Przeglądasz
+je podobnie jak Readings: góra/dół wybiera stronę, krótki RES pokazuje bieżącą
+wartość, dwuklik wraca.
+
+Te strony odpytują identyfikatory diagnostyczne producenta (`0x22`) z ECM, TCM,
+BCM i IPC. Obsługa i skalowanie **nie są zweryfikowane w Twoim aucie** (źródłem
+był inny egzemplarz Giulii/Stelvio); brak lub odrzucenie odpowiedzi pokazuje `--`.
+Sekcja jest odseparowana od zwykłego katalogu Readings: nie zmienia `Shown pages`,
+kolejności Ulubionych ani zapisanych ustawień, a jej własny wybór nie jest
+pamiętany między restartami. Odczyty, których odpowiedź nie mieści się w jednej
+ramce CAN, nie są objęte tym wydaniem.
 
 ## Symbole i komunikaty
 
@@ -1064,7 +1086,7 @@ Po zakończeniu używaj USB mode OFF do zwykłej pracy.
 | Krótkie RES wraca do menu głównego | Krótkie RES wybiera; **dwuklik RES cofa**. |
 | Mocne naciśnięcie pomija dziesięć parametrów | Mocne naciśnięcie zmienia grupę; w Favorites przesuwa o jedną stronę. |
 | Save & Exit | Szkic, potwierdzenie i przytrzymanie, aby zapisać; jawne ponowienie po błędzie. |
-| Jedna płaska lista parametrów i funkcji | Favorites, Readings, Actions, Settings, Information. |
+| Jedna płaska lista parametrów i funkcji | Favorites, Readings, Actions, Settings, Information, Experiments. |
 | Włączenie Park Mirror zapisuje pozycje | `Park mirror → Enabled` i `Store position` to osobne operacje. |
 | Ogólne Battery % / BATTERY | Oddzielne źródła SOC: BCM, sterownik silnika i IBS. Zobacz tabelę źródeł akumulatora. |
 | OIL UN. AIR | `MultiAir temp`, tylko I4. |
