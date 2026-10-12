@@ -52,6 +52,10 @@ the release through queue rejection and board resync, and leaves C2/BH state
 reports untouched. BH no longer injects an LKA frame. The host suite, C1/C2/BH/CAN
 cppcheck lint and Arm GNU 15.2.Rel1 firmware builds pass locally. Both user
 guides and the CAN research note describe this experimental behavior.
+Implementation commit: `939e062`. The dictionary and generated CAN catalog now
+use source snapshot `939e062` (dictionary version `2026-10-13.1`); all 70 Lab
+tests pass. The candidate is on draft PR #58; integration and release await the
+vehicle check.
 
 **Vehicle acceptance remains open:** confirm a single injected C2 button pulse
 turns LKA off, original C2 `0x547` / BH `0x4F6` reports remain OFF after BACCAble
