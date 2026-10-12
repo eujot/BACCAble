@@ -281,16 +281,17 @@
     },
     {
       "id": "WIPER-HVAC-001",
-      "status": "candidate",
+      "status": "refuted",
       "role": "BH",
       "can_id": "0x2F0",
       "dlc": 8,
-      "description": "Comfort status: wipers at byte 4 bit 4 (ON 0.92 / OFF 0.29); a first wiper lead. Companion climate leads: BH 0x46A and C1 0x736 follow front defrost/fan.",
+      "description": "Historical hypothesis: BH 0x2F0 byte 4 bit 4 was proposed as a wiper-active status. The targeted three speed/off cycles contradict this mapping; the associated C1 0x736 and BH 0x46A HVAC leads remain separate unresolved observations.",
       "evidence": [],
       "contradictions": [
-        "Rain sensor / wiper strokes were previously an explicit gap; this is a lead, not a decoder."
+        "Rain sensor / wiper strokes were previously an explicit gap; this is a lead, not a decoder.",
+        "In 20261010-111025Z, byte 4 bit 4 occupancy across intermittent/slow/fast/off is 0.70/0/0.75/1.00 (run 1), 0/0.09/1.00/0 (run 2), and 0/0.22/1.00/1.00 (run 3). It remains high during some OFF windows and low during active ones; the apparent earlier correlation was a time-order/drift artefact. See docs/research/20261012-five-bundle-investigation.md."
       ],
-      "next_test": "Run the rain/wipers procedures alone with each wiper speed isolated and the washer separated."
+      "next_test": "If wiper state is still needed, record isolated stationary OFF/intermittent/slow/fast/washer states with long equal intervals and a physical lamp observation; investigate other frames without reusing 0x2F0 byte 4 bit 4."
     },
     {
       "id": "ADAS-LKA-001",
@@ -310,11 +311,102 @@
       "role": "C1",
       "can_id": "0x384",
       "dlc": 8,
-      "parts": [[1, 2, 5]],
+      "parts": [
+        [
+          1,
+          2,
+          5
+        ]
+      ],
       "description": "Drive mode (RDNA) code on the body broadcast 0x384 byte 1 bits 6..2 matches the firmware enum: N=0, D=2, A=4, Race=12. Confirmed from the 2026-10-11 dna_all_modes sessions (two sessions, three runs each, reversible against a Natural baseline). The same code is on BH 0x46C byte 7 bits 4..0; the dashboard frame BH 0x25A uses N=16, D=8, A=4, Race=1. 0x384 is a body broadcast other ECUs obey, so the mode can also be set by rewriting this field.",
       "evidence": [],
       "contradictions": [],
       "next_test": "Optional: confirm on the dashboard that a rewritten 0x384 (the firmware `Default mode` option) changes the displayed and effective driving mode."
+    },
+    {
+      "id": "LIGHT-INDICATOR-C2-42D-001",
+      "status": "supported",
+      "role": "C2",
+      "can_id": "0x42D",
+      "dlc": 5,
+      "description": "Byte 1 bit 2 is the right direction-indicator active state. It follows three right ON/OFF cycles in 20261010-104325Z and two independent cycles in 20260928-204100Z; left-only markers are a negative control and hazard activates both 0x42D and 0x42E. The message is seen about every 100 ms while active; byte 2 low nibble rolls modulo 16 and byte 3 varies with it.",
+      "evidence": [
+        {
+          "session": "20261010-104325Z",
+          "event_ids": [
+            85,
+            86,
+            87,
+            88,
+            89,
+            90,
+            97,
+            98,
+            99,
+            100,
+            101,
+            102,
+            103,
+            104,
+            105,
+            106,
+            107,
+            108
+          ]
+        },
+        {
+          "session": "20260928-204100Z",
+          "event_ids": [
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ],
+      "contradictions": [
+        "Byte 0 uses different baseline codes (0x25/0x05 in October, 0x44/0x04 in September), so do not use whole-byte equality across sessions.",
+        "RX-only recordings do not establish whether this is a switch request, requested lamp state, or physical lamp feedback."
+      ],
+      "next_test": "Confirm with independent physical right-lamp observation, and compare command timing with BH 0x46C and C2 0x73E."
+    },
+    {
+      "id": "LIGHT-INDICATOR-C2-42E-001",
+      "status": "candidate",
+      "role": "C2",
+      "can_id": "0x42E",
+      "dlc": 5,
+      "description": "Byte 1 bit 2 follows left direction-indicator active state in three October ON/OFF cycles; hazard activates it alongside 0x42D, right-only markers keep it clear. Symmetric layout to 0x42D, but only one independent left-side recording was found.",
+      "evidence": [
+        {
+          "session": "20261010-104325Z",
+          "event_ids": [
+            85,
+            86,
+            87,
+            88,
+            89,
+            90,
+            97,
+            98,
+            99,
+            100,
+            101,
+            102,
+            103,
+            104,
+            105,
+            106,
+            107,
+            108
+          ]
+        }
+      ],
+      "contradictions": [
+        "A few frames remain high immediately after a left OFF marker, consistent with marker timing or release latency; this is not a blink-phase decoder.",
+        "RX-only capture does not prove physical lamp status or actuator command."
+      ],
+      "next_test": "Repeat two left ON/OFF cycles in a separate stationary session with physical lamp observation; compare 0x42E byte 1 bit 2 to BH 0x46C and C2 0x73E."
     }
   ]
 }

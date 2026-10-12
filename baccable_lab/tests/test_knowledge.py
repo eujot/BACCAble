@@ -67,6 +67,20 @@ class KnowledgeTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             decode_frame(self.catalog, 'C1', 0x2FA, bytes(9))
 
+    def test_captured_right_indicator_across_sessions_and_layout_guards(self):
+        # October and independent September captures use different byte-0 codes.
+        for payload, expected in [('0504070600', 1), ('2500071B00', 0),
+                                  ('040401C700', 1), ('440003B000', 0)]:
+            signal = self.values('C2', 0x42D, payload)['right_indicator_active']
+            self.assertEqual(signal['value'], expected)
+            self.assertEqual(signal['origin'], 'capture')
+        for role, can_id, payload in [('C1', 0x42D, '0504070600'),
+                                     ('BH', 0x42D, '0504070600'),
+                                     ('C2', 0x42E, '0504070600'),
+                                     ('C2', 0x42D, '0504'),
+                                     ('C2', 0x42D, '050407060000')]:
+            self.assertFalse(self.values(role, can_id, payload))
+
     def test_diagnostic_soc_sources_and_intercooler(self):
         bcm = decode_frame(self.catalog, 'C1', 0x18DAF140, bytes.fromhex('0662100500004E00'))['diagnostics']
         ecm = decode_frame(self.catalog, 'C1', 0x18DAF110, bytes.fromhex('046219BD4D000000'))['diagnostics']
