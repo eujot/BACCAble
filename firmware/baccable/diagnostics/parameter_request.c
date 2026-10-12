@@ -12,6 +12,21 @@ static struct {
 /* Discard a pending reading when its screen is no longer relevant. */
 void parameter_request_cancel(void) { request.active = 0; }
 
+/* Keep an in-flight preview reply only when its value belongs to the new page. */
+void parameter_request_follow_page(void) {
+    if (request.active && request.element == 255 &&
+        settings_state.is_diesel_enabled == request.engine &&
+        dashboard_state.dashboard_page_index < parameter_page_count) {
+        const ParameterPage *page = &parameter_pages[request.engine][dashboard_state.dashboard_page_index];
+        for (unsigned i = 0; i < parameter_page_elements(page); ++i)
+            if (page->parameter_ids[i] == request.parameter) {
+                request.page = dashboard_state.dashboard_page_index;
+                return;
+            }
+    }
+    parameter_request_cancel();
+}
+
 /* Ask the vehicle for the diagnostic value selected on the current screen. */
 void parameter_request_begin(void) {
     if (settings_state.is_diesel_enabled > 1 ||

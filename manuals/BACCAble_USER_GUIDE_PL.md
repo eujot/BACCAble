@@ -284,6 +284,14 @@ W MY23 każda strona Readings pokazuje wszystkie swoje pomiary w pierwszej
 linii, także gdy zawiera dwa, trzy albo cztery pomiary. Krótszy format usuwa
 zbędne spacje i upraszcza długie podpisy, aby zmieścić się w 16 znakach. Ten sam
 format jest używany w ulubionych. Druga linia zapowiada następną stronę.
+Gdy widać ten podgląd, BACCAble odczytuje także jej wartości diagnostyczne w tle.
+Po przejściu do następnej strony od razu wykorzystuje zapamiętane wartości,
+jeśli odpowiedzi już nadeszły. Obie strony wspólnie korzystają z jednego zapytania
+co 500 ms; wspólny pomiar jest odczytywany tylko raz na cykl. Pełny cykl rozbudowanej
+pary może trwać do czterech sekund. W tym widoku wartości diagnostyczne zachowują
+ważność przez 4,5 sekundy, a odczyty z cyklicznych ramek CAN przez zwykłe trzy
+sekundy. Przy szybkim przewijaniu lub braku odpowiedzi sterownika nadal może
+pojawić się `--`.
 Na przykład `Oil 35.0mm Q 80%` mieści się dokładnie. `B 100-200 8.54s` oznacza
 najlepszy czas od 100 do 200 km/h. Na stronie czterech temperatur `O` oznacza
 olej, `W` płyn chłodzący, `I` temperaturę na wejściu intercoolera, a `X` na
