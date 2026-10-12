@@ -51,6 +51,12 @@ vehicle start, retrying only after CAN rejects the queue submission. A saved
 preference is synchronized but does not inject a frame until the next start.
 Transport-only resync leaves the current session alone. Host tests cover each
 board, repeated original reports, later driver input, queue failure and rearm.
+Implementation commit: `67c0890` on the task branch. The full Apple Clang host
+suite, cppcheck lint and Arm GNU 15.2.Rel1 builds for C1, C2, BH and CAN pass
+locally. CAN dictionary source hashes were refreshed against that commit
+(dictionary version `2026-10-12.5`); no observed signal meaning changed. All 70
+Lab tests pass. This is local software evidence; the fix has not yet been
+installed in the car.
 
 **Hardware acceptance remains open:** confirm that a single injected DNA frame
 actually latches the selected drive mode and removes the faint Natural lamp;
