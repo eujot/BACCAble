@@ -34,6 +34,29 @@ bounded changes and existing modules/tests. No model-specific workflow, mandator
 PR count or broad rewrite is needed. This handoff is a backlog, not an instruction
 to automatically flash hardware or publish every future change.
 
+## Five-bundle CAN review, 2026-10-12
+
+Reviewed `10paz1`, `10paz2`, `dnskla`, `dna` and `kla` against raw SQLite, the
+current dictionary and firmware dispatch. All observed `(bus, ID, DLC)` shapes
+were already inventoried. A newly decoded C2 `0x42D` byte 1 bit 2 tracks the
+right indicator across the October campaign and an independent September run;
+the symmetric `0x42E` left side is still a candidate from one session. Hazard
+activates both. The previous BH `0x2F0` byte 4 bit 4 wiper-state lead is refuted
+by three speed/off cycles. DNA/LKA mappings agree with the existing code, while
+rain, belt, doors, brake hold and central lock need more isolation. Evidence,
+counter checks, exact event IDs and a minimal next capture are in
+[the five-bundle investigation](../baccable_lab/docs/research/20261012-five-bundle-investigation.md).
+The dictionary and generated CAN catalog are updated in the research PR; no
+firmware or user-visible behavior changed. Physical right/left lamp verification
+and the dedicated `wipers_lights_auto` capture remain open.
+The cumulative evidence ledger retains 20 sessions / 21,354,624 frames;
+dictionary version is `2026-10-12.4`, retaining PR #55's request-handler source
+snapshot. All 70 Lab tests pass, including the new captured-payload,
+bus-isolation and exact-DLC regression. Research is prepared on
+`lab/five-bundle-release` after the merge of Readings PR #55 (`a9b5f44`).
+The next release notes are prepared in [v5-beta-22.md](releases/v5-beta-22.md);
+the release workflow and vehicle acceptance remain separate checks.
+
 ## Validated 20 ms IPC default, 2026-10-02
 
 Task branch: `fix/ipc-default-20ms`, based on master `48e4646`.
