@@ -31,7 +31,7 @@
     "firmware/baccable/diagnostics/parameter_request.c": "a94cfe516169de9f2e56a1a507ce4ffca68da7edbe1e14034c344088eddb1e67",
     "firmware/baccable/app/main.c": "56ca1d425b792d5720e4c945dadcc06fa7c16e11facf4c61b34de9911845f21e",
     "firmware/baccable/vehicle/standard_frames.c": "2f9fab6b03830b2617fc1079e070758493098d6ca314bd1b14635849e2e7aa31",
-    "firmware/baccable/diagnostics/parameter_catalog.c": "439689d27d9611f65163dae1bcd1e58e641f6a9367c1243973c1794fbaf95add",
+    "firmware/baccable/diagnostics/parameter_catalog.c": "882376126f4e2781eef5515356d1bba902d1d8b7c9799e03421ff552b2c8f21f",
     "firmware/baccable/diagnostics/parameter_cache.c": "e1657d55f50074d41cfbdbbe9ae9108ce4be345449aa62fef81ab59ca0705020",
     "docs/architecture/REFERENCE_SIGNALS.md": "fb8188e6938df5e74e23682b02e065f79db95c059e0999d2b325d07a9c94e6cf",
     "firmware/baccable/features/body.c": "8369f2f57b1b605f4786fd64a389b96c994ae4c04b7a10cd874269efd7345fb7",
