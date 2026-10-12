@@ -738,7 +738,7 @@ const ParameterPage parameter_pages[2][104] = {
          .element_count = 3},
     }};
 
-const ParameterDefinition parameter_definitions[134] = {
+const ParameterDefinition parameter_definitions[136] = {
     {
         .request_id = 0x10,
         .request_length = 4,
