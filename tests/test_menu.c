@@ -1257,6 +1257,13 @@ static void test_board_sync_retry(void) {
     assert(chassis_state.default_mode_baseline == 0x10);
     board_sync_rearm();
     assert(chassis_state.default_mode_override && chassis_state.default_mode_baseline == 0xff);
+    board_sync_restart(); /* A transport resync must not rearm the auxiliaries. */
+    for (unsigned i = 0; i < 9; ++i) board_sync_process();
+    assert(last_driver_rearm == 0);
+    board_sync_saved();
+    assert(!chassis_state.default_mode_override);
+    for (unsigned i = 0; i < 9; ++i) board_sync_process();
+    assert(last_driver_rearm == 2);
 }
 
 static void fresh_contract(void);

@@ -34,6 +34,32 @@ bounded changes and existing modules/tests. No model-specific workflow, mandator
 PR count or broad rewrite is needed. This handoff is a backlog, not an instruction
 to automatically flash hardware or publish every future change.
 
+## Beta-22 vehicle finding and start-up driver aids, 2026-10-12
+
+The owner tested beta-22 in the car. `Default mode = D` lit the Dynamic lamp,
+but the Natural lamp remained faintly lit or flickered. `Disable LKA` turned the
+assistant off, but a later left-stalk double press could not turn it back on.
+This supersedes the earlier untested status below. The installed board image
+identities and a transmit-side trace were not supplied.
+
+Source review found both defaults retransmitting on every matching status
+report: `0x384` on C1/C2, `0x46C` and `0x25A` on BH, and LKA state `0x547` on C2 /
+`0x4F6` on BH. Those reports recur; the LKA handler erased every subsequent
+enable state, explaining the blocked double press. The firmware fix on branch
+`fix/driver-aids-startup-one-shot` queues each relevant modified frame once per
+vehicle start, retrying only after CAN rejects the queue submission. A saved
+preference is synchronized but does not inject a frame until the next start.
+Transport-only resync leaves the current session alone. Host tests cover each
+board, repeated original reports, later driver input, queue failure and rearm.
+
+**Hardware acceptance remains open:** confirm that a single injected DNA frame
+actually latches the selected drive mode and removes the faint Natural lamp;
+confirm LKA starts off and a later double press turns it on without another
+BACCAble override. The current capture format observes received frames, not
+BACCAble's own transmissions. A rewritten status broadcast may be overridden by
+the body's next original broadcast; if so, find a genuine one-time request or
+another control path rather than restoring a continuous conflicting stream.
+
 ## Five-bundle CAN review, 2026-10-12
 
 Reviewed `10paz1`, `10paz2`, `dnskla`, `dna` and `kla` against raw SQLite, the
@@ -67,9 +93,10 @@ release-script checks, cppcheck and C1/C2/BH/CAN firmware builds with pinned
 Arm GNU 15.3.Rel1. The release contains BIN/HEX/ELF files for all four roles,
 `BUILD_INFO.json` and `SHA256SUMS`. Downloaded assets passed every listed
 SHA-256 check; build identity and tag both reference `02dd92c`. The release
-body matches [v5-beta-22.md](releases/v5-beta-22.md). No released image has
-yet been installed or tested in a vehicle. Readings appearance, DNA/LKA
-physical behavior and the new indicator field still need vehicle confirmation.
+body matches [v5-beta-22.md](releases/v5-beta-22.md). At release verification
+time, no image had yet been installed in a vehicle. The owner's later beta-22
+test found the DNA/LKA behaviors above. Readings appearance and the new
+indicator field still need vehicle confirmation.
 
 ## Validated 20 ms IPC default, 2026-10-02
 
@@ -333,12 +360,12 @@ lessons), the playbook anti-patterns, the dictionary (`dna_mode` notes,
 Added two owner preferences to the C1 Setup menu, driven by the 2026-10-11
 `dna_all_modes` / `lane_assist_toggle` capture sessions:
 
-- **`Default mode`** (OFF / A / D / Race) — on each start-up BACCAble rewrites the
+- **`Default mode`** (OFF / A / D / Race) — in beta-22 BACCAble repeatedly rewrites the
 drive-mode field of the body broadcasts `0x384` (C1, C2), `0x46C` and `0x25A`
 (BH) to the selected mode, the same `can_forward` way the ESC/TC feature forces
 Race. The override is armed on wake-up/save and stops as soon as the driver
 changes the mode by hand.
-- **`Disable LKA`** — holds the lane-keeping assist off by clearing byte 6 bit 1
+- **`Disable LKA`** — in beta-22 holds the lane-keeping assist off by repeatedly clearing byte 6 bit 1
 of the lane-assist state frame `0x4F6` (BH) / `0x547` (C2), the signal decoded
 from the lane-toggle sessions.
 

@@ -16,8 +16,7 @@ uint8_t drive_mode_default_field(uint8_t encoding) {
     return DEFAULT_MODE_ENCODING[encoding][mode];
 }
 
-/* Advance the start-up override from the observed raw mode: 1 = keep injecting,
- * 0 = leave the mode alone (feature off, already stopped, or the driver changed it). */
+/* Stop on a real change in the body's mode, not on our own extra CAN frame. */
 uint8_t drive_mode_default_should_apply(uint8_t raw_mode) {
     if (settings_state.default_drive_mode == 0 || settings_state.default_drive_mode > 3 ||
         !chassis_state.default_mode_override)
@@ -31,6 +30,16 @@ uint8_t drive_mode_default_should_apply(uint8_t raw_mode) {
         return 0;
     }
     return 1;
+}
+
+uint8_t drive_mode_default_pending(uint8_t encoding) {
+    return encoding <= DRIVE_MODE_ENC_IPC &&
+           !(chassis_state.default_mode_sent & (1U << encoding));
+}
+
+void drive_mode_default_queued(uint8_t encoding) {
+    if (encoding <= DRIVE_MODE_ENC_IPC)
+        chassis_state.default_mode_sent |= 1U << encoding;
 }
 
 /* Update the current driving mode and its related feature behavior. */
@@ -59,12 +68,15 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
 
         frame_data[7] = frame_checksum(frame_data, rx_header->DLC); // update CRC
         can_forward(rx_header, frame_data);                         // transmit the modified packet
-    } else if (apply_default) {
+    } else if (apply_default && drive_mode_default_pending(DRIVE_MODE_ENC_CAN)) {
         uint8_t default_mode = drive_mode_default_field(DRIVE_MODE_ENC_CAN);
         if ((frame_data[1] & 0x7C) != default_mode) {
             frame_data[1] = (frame_data[1] & ~0x7C) | default_mode;
             frame_data[7] = frame_checksum(frame_data, rx_header->DLC);
-            can_forward(rx_header, frame_data);
+            if (can_forward(rx_header, frame_data) == HAL_OK)
+                drive_mode_default_queued(DRIVE_MODE_ENC_CAN);
+        } else {
+            drive_mode_default_queued(DRIVE_MODE_ENC_CAN);
         }
     }
 
@@ -157,12 +169,15 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
 
         frame_data[7] = frame_checksum(frame_data, rx_header->DLC); // update CRC
         can_forward(rx_header, frame_data);                         // transmit the modified packet
-    } else if (apply_default) {
+    } else if (apply_default && drive_mode_default_pending(DRIVE_MODE_ENC_CAN)) {
         uint8_t default_mode = drive_mode_default_field(DRIVE_MODE_ENC_CAN);
         if ((frame_data[1] & 0x7C) != default_mode) {
             frame_data[1] = (frame_data[1] & ~0x7C) | default_mode;
             frame_data[7] = frame_checksum(frame_data, rx_header->DLC);
-            can_forward(rx_header, frame_data);
+            if (can_forward(rx_header, frame_data) == HAL_OK)
+                drive_mode_default_queued(DRIVE_MODE_ENC_CAN);
+        } else {
+            drive_mode_default_queued(DRIVE_MODE_ENC_CAN);
         }
     }
 #endif
@@ -195,9 +210,15 @@ void vehicle_handle_lane_state(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
     if (rx_header->DLC != 8 || rx_header->IDE != CAN_ID_STD || rx_header->RTR != CAN_RTR_DATA)
         return;
 
-    if (settings_state.lane_assist_disabled &&
-        (frame_data[6] & 0x02)) { // byte 6 bit 1 is the lane-assist enable flag (0 = disabled)
-        frame_data[6] &= (uint8_t)~0x02;
-        can_forward(rx_header, frame_data);
+    if (!settings_state.lane_assist_disabled || !chassis_state.lane_assist_pending)
+        return;
+    if (!(frame_data[6] & 0x02)) { /* Already off at start-up. */
+        chassis_state.lane_assist_pending = 0;
+        return;
     }
+    uint8_t original = frame_data[6];
+    frame_data[6] &= (uint8_t)~0x02;
+    if (can_forward(rx_header, frame_data) == HAL_OK)
+        chassis_state.lane_assist_pending = 0;
+    frame_data[6] = original;
 }

@@ -46,7 +46,7 @@ uint8_t settings_save(void) {
         /* A USB timeout changes runtime state, not the saved Flash record.
          * Selecting the saved mode again must still restart all three ports. */
         if (usb_modes_needs_apply()) {
-            board_sync_rearm();
+            board_sync_restart();
             usb_modes_apply();
         }
         return 0;
@@ -55,7 +55,7 @@ uint8_t settings_save(void) {
         return 255;
     memcpy(saved_settings, values, sizeof(values));
     settings_loaded = 1;
-    board_sync_rearm();
+    board_sync_saved();
     usb_modes_apply();
     return 0;
 }

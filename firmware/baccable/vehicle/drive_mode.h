@@ -15,8 +15,13 @@ void vehicle_handle_lane_state(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
 /* Raw field value that encodes the configured default mode for one frame layout. */
 uint8_t drive_mode_default_field(uint8_t encoding);
 
-/* Advance the start-up override from the observed raw mode: 1 = keep injecting,
- * 0 = leave the mode alone (feature off, already stopped, or the driver changed it). */
+/* Check the observed mode before offering the one start-up frame. */
 uint8_t drive_mode_default_should_apply(uint8_t raw_mode);
+
+/* Mark one start-up frame as queued only after CAN accepts it. */
+void drive_mode_default_queued(uint8_t encoding);
+
+/* True until this frame has been queued in the current start-up session. */
+uint8_t drive_mode_default_pending(uint8_t encoding);
 
 #endif

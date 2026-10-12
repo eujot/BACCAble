@@ -37,11 +37,14 @@ void vehicle_handle_drive_style_display(const CAN_RxHeaderTypeDef *rx_header, ui
             }
         }
     } else if (settings_state.default_drive_mode >= 1 && settings_state.default_drive_mode <= 3 &&
-               chassis_state.default_mode_override) {
+               chassis_state.default_mode_override && drive_mode_default_pending(DRIVE_MODE_ENC_IPC)) {
         uint8_t default_mode = drive_mode_default_field(DRIVE_MODE_ENC_IPC);
         if ((frame_data[0] & 0x7C) != default_mode) {
             frame_data[0] = (frame_data[0] & ~0x7C) | default_mode;
-            can_forward(rx_header, frame_data);
+            if (can_forward(rx_header, frame_data) == HAL_OK)
+                drive_mode_default_queued(DRIVE_MODE_ENC_IPC);
+        } else {
+            drive_mode_default_queued(DRIVE_MODE_ENC_IPC);
         }
     }
 #endif
@@ -88,11 +91,14 @@ void vehicle_handle_body_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_
 
             // problem as expected status_led_activity();
         }
-    } else if (apply_default) {
+    } else if (apply_default && drive_mode_default_pending(DRIVE_MODE_ENC_BODY)) {
         uint8_t default_mode = drive_mode_default_field(DRIVE_MODE_ENC_BODY);
         if ((frame_data[7] & 0x1F) != default_mode) {
             frame_data[7] = (frame_data[7] & ~0x1F) | default_mode;
-            can_forward(rx_header, frame_data);
+            if (can_forward(rx_header, frame_data) == HAL_OK)
+                drive_mode_default_queued(DRIVE_MODE_ENC_BODY);
+        } else {
+            drive_mode_default_queued(DRIVE_MODE_ENC_BODY);
         }
     }
 
