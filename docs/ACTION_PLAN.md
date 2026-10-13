@@ -120,9 +120,25 @@ request-shape and reply-length issues still need protocol validation. Full
 sources, byte formulas, examples, contradictions and a bounded next capture are
 in [the public-source cross-check](../baccable_lab/docs/research/20261013-public-giulia-can-sources.md).
 This research branch is based on the draft PR #58 source snapshot; it does not
-include a vehicle-tested firmware change. Integration and vehicle validation
-remain open. All 71 Lab unit tests and `git diff --check` pass locally; no
-firmware build is required for this passive dictionary/documentation change.
+include a vehicle-tested firmware change. The work was integrated through PR
+#59 at master merge `42e3098`. The merge CI and beta-23 release workflow passed;
+the public-source readings remain unverified in the vehicle. The source tree at
+v5-beta-23 matches the merged master tree. v5-beta-24 release notes are prepared
+on `docs/v5-beta-24-notes`; release workflow verification is pending.
+All 71 Lab unit tests and `git diff --check` passed for the research changes.
+
+## v5-beta-24 release preparation, 2026-10-13
+
+PR #59 (`feat/readings-experiments-v5-beta-23`) merged to master as `42e3098`.
+CI passed on the PR and the v5-beta-23 beta workflow completed successfully
+from source commit `4946f72`. The released beta-23 firmware source tree matches
+the merged master tree. v5-beta-24 is a new build from the integrated master
+revision, with the same firmware behavior as beta-23; see
+[the release notes](releases/v5-beta-24.md). Trigger the beta workflow from
+master with tag `v5-beta-24`, then record the resulting merge/build identity,
+workflow result and release URL here. No beta-24 image has been installed in a
+vehicle. The `Experiments` DIDs and start-up LKA gesture still need vehicle
+validation.
 
 ## Five-bundle CAN review, 2026-10-12
 
