@@ -136,6 +136,7 @@ from source commit `4946f72`. The released beta-23 firmware source tree matches
 the merged master tree. v5-beta-24 is the requested rebuild from the integrated
 master revision, with the same firmware behavior as beta-23; see
 [the release notes](releases/v5-beta-24.md) and [the published release](https://github.com/eujot/BACCAble/releases/tag/v5-beta-24).
+The release page description is kept in sync with the notes file.
 Release workflow [38430462442](https://github.com/eujot/BACCAble/actions/runs/38430462442)
 passed host tests, Lab tests, C1/C2/BH/CAN firmware builds and lint. It published
 matching board images, `BUILD_INFO.json` and `SHA256SUMS` from commit

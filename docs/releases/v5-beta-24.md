@@ -1,9 +1,11 @@
 # BACCAble v5-beta-24
 
-This beta rebuilds the firmware from the master merge of PR #59
-(`42e3098`). The firmware source tree is the same as v5-beta-23; this release
-records the merged master revision and its build identity. It adds no firmware
-behavior beyond that beta.
+This beta rebuilds the firmware from master commit `95806ba`, the merge of the
+v5-beta-24 release-notes PR. That revision includes PR #59 (`42e3098`), which
+integrated the `Experiments` menu and public-source readings. The firmware
+source tree is the same as v5-beta-23; this release records the integrated
+master revision and its build identity. It adds no firmware behavior beyond
+that beta.
 
 ## Included features
 
