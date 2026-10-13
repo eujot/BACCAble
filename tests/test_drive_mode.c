@@ -237,7 +237,13 @@ int main(void) {
     chassis_state.lane_assist_pending = 1;
     state[6] = 0;
     vehicle_handle_lane_state(&state_header, state);
-    assert(chassis_state.lane_assist_pending == 0); /* Already disabled. */
+    assert(chassis_state.lane_assist_pending == 1); /* Initial OFF is not final readiness. */
+    lane_assist_button_observe(&button_header, button);
+    assert(forwards == 1); /* Never toggle an OFF system. */
+    now += 5000;
+    lane_assist_button_process();
+    assert(chassis_state.lane_assist_pending == 0); /* Startup window expires. */
+    chassis_state.lane_assist_step_at = now;
     state[6] = 2;
     chassis_state.lane_assist_pending = 1;
     vehicle_handle_lane_state(&state_header, state);
@@ -247,6 +253,50 @@ int main(void) {
     button[button_byte] &= (uint8_t)~button_mask;
     lane_assist_button_observe(&button_header, button);
     assert(forwards == 1);
+
+    /* The actual UART command entry point permits one gesture per ignition,
+       survives initial OFF reports and never rearms on a transport-only resync. */
+    arm();
+    for (unsigned session = 0; session < 3; ++session) {
+        driver_aids_configure(0, 1, 1);
+        assert(chassis_state.lane_assist_pending == LANE_ASSIST_WAIT_STATE);
+        state[6] = 0;
+        vehicle_handle_lane_state(&state_header, state);
+        lane_assist_button_observe(&button_header, button);
+        assert(forwards == session);
+        now += 1000; /* First OFF report was before readiness. */
+        state[6] = 2;
+        vehicle_handle_lane_state(&state_header, state);
+        driver_aids_configure(0, 1, 0);
+        lane_assist_button_observe(&button_header, button);
+        assert(forwards == session + 1 && (forwarded[3] & 0x40));
+        /* A save or OFF event during a pulse still completes the release sequence. */
+        driver_aids_configure(0, 1, 2);
+        for (unsigned step = 0; step < 3; ++step) {
+            now += 100;
+            lane_assist_button_process();
+            assert(!!(sent[3] & 0x40) == (step == 1));
+        }
+        assert(sends == (session + 1) * 3 && chassis_state.lane_assist_pending == 0);
+        driver_aids_configure(0, 1, 0);
+        vehicle_handle_lane_state(&state_header, state);
+        lane_assist_button_observe(&button_header, button);
+        assert(forwards == session + 1); /* Driver may re-enable; no further injection. */
+    }
+    driver_aids_configure(0, 0, 1); /* LKA: ON means factory behavior. */
+    vehicle_handle_lane_state(&state_header, state);
+    lane_assist_button_observe(&button_header, button);
+    assert(chassis_state.lane_assist_pending == 0 && forwards == 3);
+    driver_aids_configure(0, 1, 1);
+    now += 5000;
+    vehicle_handle_lane_state(&state_header, state);
+    lane_assist_button_observe(&button_header, button);
+    assert(chassis_state.lane_assist_pending == 0 && forwards == 3);
+    now = UINT32_MAX - 1000;
+    driver_aids_configure(0, 1, 1);
+    now += 5000;
+    lane_assist_button_process();
+    assert(chassis_state.lane_assist_pending == 0); /* Deadline survives tick wrap. */
 #elif defined(BACCABLE_BH)
     /* BH sees the button and state too, but must not generate a second press. */
     settings_state.lane_assist_disabled = 1;

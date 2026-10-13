@@ -204,17 +204,6 @@ void setup_move_group(int8_t delta) {
     }
 }
 
-/* Prepare a clean screen for the selected setting. */
-static void setup_reset_page_text(uint8_t page) {
-    const SetupParam *param = setup_find_by_page(page);
-    const char *text = param ? param->menu_text : "";
-    uint8_t col = 0;
-
-    memset(dashboard_setup_screen, ' ', DASHBOARD_MESSAGE_MAX_LENGTH);
-    while (col < DASHBOARD_MESSAGE_MAX_LENGTH && text && *text)
-        dashboard_setup_screen[col++] = (uint8_t)*text++;
-}
-
 /* Find a setting by the permanent identity used in saved preferences. */
 const SetupParam *setup_find_by_flash_index(uint8_t flash_index) {
     for (uint8_t i = 0; i < setup_params_count; i++)
@@ -292,27 +281,37 @@ static const char *setup_unavailable(const SetupParam *param) {
     }
 }
 
+/* Share choice labels between the saved value and its draft. */
+static const char *setup_value_label(const SetupParam *param, uint16_t value, uint8_t extra, char number[24]) {
+    const char *label = number;
+    if (param->entry_type == UI_ENTRY_TOGGLE) label = (value != (param->flash_index == 39)) ? "ON" : "OFF";
+    else if (param->flash_index == 34) label = value ? "CAN" : extra ? "ELM327" : "OFF";
+    else if (param->flash_index == 16) label = value ? "2.2 D" : extra ? "2.9 V6" : "2.0 I4";
+    else if (param->flash_index == 20) {
+        static const char *const modes[] = {"OFF", "Auto", "Bypass", "A", "N", "D", "R", "Hybrid", "Kids"};
+        label = modes[value <= 8 ? value : 0];
+    } else if (param->flash_index == 38) {
+        static const char *const modes[] = {"OFF", "A", "D", "Race"};
+        label = modes[value <= 3 ? value : 0];
+    } else if (param->flash_index == 24) {
+        static const char *const modes[] = {"OFF", "RES", "+"};
+        label = modes[value <= 2 ? value : 0];
+    } else if (param->flash_index == 25 || param->flash_index == 26) {
+        if (!value) label = "OFF";
+        else snprintf_(number, 24, "%u %s%s", value, param->flash_index == 25 ? "lock" : "unlock", value > 1 ? "s" : "");
+    } else snprintf_(number, 24, param->value_type == SETUP_VALUE_INT8_AS_UINT8 ? "%+d" : "%d", param->value_type == SETUP_VALUE_INT8_AS_UINT8 ? (int8_t)value : (int)value);
+    return label;
+}
+
 /* Show the selected setting and its current value. */
 void setup_render_page(uint8_t page_index) {
     if (page_index >= setup_menu_pages_count())
         return;
 
     if (staged) {
-        char value[24], hint[24];
-        if (staged->entry_type == UI_ENTRY_TOGGLE) snprintf_(value, sizeof(value), "%s", stage_value ? "ON" : "OFF");
-        else if (staged->flash_index == 34) snprintf_(value, sizeof(value), "%s", stage_value ? "CAN" : stage_extra ? "ELM327" : "OFF");
-        else if (staged->flash_index == 16) snprintf_(value, sizeof(value), "%s", stage_value ? "2.2 D" : stage_extra ? "2.9 V6" : "2.0 I4");
-        else if (staged->flash_index == 20) {
-            static const char *const modes[] = {"OFF", "Auto", "Bypass", "A", "N", "D", "R", "Hybrid", "Kids"};
-            snprintf_(value, sizeof(value), "%s", modes[stage_value <= 8 ? stage_value : 0]);
-        } else if (staged->flash_index == 24) {
-            static const char *const modes[] = {"OFF", "RES", "+"};
-            snprintf_(value, sizeof(value), "%s", modes[stage_value <= 2 ? stage_value : 0]);
-        } else if (staged->flash_index == 25 || staged->flash_index == 26) {
-            if (!stage_value) snprintf_(value, sizeof(value), "OFF");
-            else snprintf_(value, sizeof(value), "%u %s%s", stage_value, staged->flash_index == 25 ? "lock" : "unlock", stage_value > 1 ? "s" : "");
-        } else snprintf_(value, sizeof(value), staged->value_type == SETUP_VALUE_INT8_AS_UINT8 ? "%+d" : "%d", staged->value_type == SETUP_VALUE_INT8_AS_UINT8 ? (int8_t)stage_value : (int)stage_value);
-        snprintf_(hint, sizeof(hint), "%s%s%s CHANGE", value, MY23_BULLET, MY23_UP MY23_DOWN);
+        char number[24], hint[24];
+        const char *value = setup_value_label(staged, stage_value, stage_extra, number);
+        snprintf_(hint, sizeof(hint), "%s" MY23_BULLET "HOLD SAVE", value);
         if (settings_state.ipc_my23_is_installed)
             menu_present_view(stage_confirm ? UI_MODE_CONFIRM : UI_MODE_EDIT, staged->menu_text, stage_confirm ? "HOLD SAVE" MY23_BULLET "2X DISCARD" : hint);
         else {
@@ -327,7 +326,6 @@ void setup_render_page(uint8_t page_index) {
         }
         return;
     }
-    setup_reset_page_text(page_index);
 
     const SetupParam *param = setup_find_by_page(page_index);
     if (!param)
@@ -339,21 +337,16 @@ void setup_render_page(uint8_t page_index) {
         ui_render_unavailable(text, sizeof(text), reason);
     else if (park_menu)
         setup_park_render(text, sizeof(text));
-    else if (param->entry_type == UI_ENTRY_NUMBER && param->value_type == SETUP_VALUE_INT8_AS_UINT8)
-        ui_render_signed_number(text, sizeof(text), param->menu_text,
-                                *(int8_t *)param->value, false);
-    else if (param->entry_type == UI_ENTRY_NUMBER)
-        ui_render_number(text, sizeof(text), param->menu_text,
-                         (param->value_type == SETUP_VALUE_INT8_AS_UINT8
-                             ? *(int8_t *)param->value : setup_get_value(param)), false);
-    else if (param->entry_type == UI_ENTRY_TOGGLE)
+    else if (param->entry_type == UI_ENTRY_TOGGLE && param->flash_index != 39)
         ui_render_checkbox(text, sizeof(text), param->menu_text, !!setup_get_value(param));
     else if (param->entry_type == UI_ENTRY_SUBMENU)
         ui_render_action(text, sizeof(text), param->menu_text);
     else {
-        if (param->render)
-            param->render();
-        return;
+        if (param->render) { param->render(); return; }
+        char number[24];
+        uint8_t extra = param->flash_index == 34 ? settings_state.usb_elm327 : settings_state.gasoline_v6;
+        ui_render_value(text, sizeof(text), param->menu_text,
+                        setup_value_label(param, setup_get_value(param), extra, number));
     }
     memset(dashboard_setup_screen, ' ', sizeof(dashboard_setup_screen));
     memcpy(dashboard_setup_screen, text, strlen(text));
@@ -417,7 +410,6 @@ void setup_stage_select(void) {
         if (!staged) return;
         stage_original = stage_value = settings_state.park_mirror;
         stage_original_extra = stage_extra = 0;
-        stage_value = !stage_value;
         return;
     }
     if (!staged) {
@@ -429,7 +421,7 @@ void setup_stage_select(void) {
         staged = param;
         stage_original = stage_value = setup_get_value(param);
         stage_original_extra = stage_extra = stage_companion(param);
-        if (param->entry_type == UI_ENTRY_NUMBER) return;
+        return;
     }
     stage_cycle(1);
 }
@@ -467,7 +459,7 @@ bool setup_stage_back(void) {
 }
 void setup_stage_save(void) {
     if (!staged && park_menu && (park_capture == 1 || park_capture == 3)) { setup_park_select(); return; }
-    if (!staged || !stage_confirm) return;
+    if (!staged) return;
     /* Conditions may have changed while the draft was being edited. */
     const char *reason = setup_unavailable(staged);
     if (reason) { menu_notice(reason); return; }

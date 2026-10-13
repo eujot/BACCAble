@@ -275,10 +275,7 @@ static void test_staged_setting_failure_and_discard(void) {
         unsigned before = settings_writes;
         menu_event(MENU_SELECT); menu_event(MENU_NEXT);
         assert(settings_state.shift_threshold == 3500 && setup_stage_active());
-        menu_event(MENU_HOLD); /* Save is unavailable without an explicit prompt. */
-        assert(settings_state.shift_threshold == 3500);
-        menu_event(MENU_BACK); /* Confirm, not exit. */
-        fail_save = true;
+        fail_save = true; /* Direct hold saves, without a preceding Back. */
         menu_event(MENU_HOLD);
         assert(settings_state.shift_threshold == 3500 && setup_stage_active());
         fail_save = false;
@@ -305,11 +302,11 @@ static void test_usb_draft_has_no_early_effect(void) {
     settings_state.usb_sniffer = settings_state.usb_elm327 = 0;
     assert(settings_save() == 0);
     unsigned applied = usb_applies, sent = commands;
-    menu_event(MENU_SELECT);
+    menu_event(MENU_SELECT); menu_event(MENU_NEXT);
     assert(!settings_state.usb_sniffer && usb_applies == applied && commands == sent);
     menu_event(MENU_BACK); menu_event(MENU_BACK);
     assert(!settings_state.usb_sniffer && usb_applies == applied);
-    menu_event(MENU_SELECT);
+    menu_event(MENU_SELECT); menu_event(MENU_NEXT);
     menu_event(MENU_BACK); menu_event(MENU_HOLD);
     assert(settings_state.usb_sniffer && usb_applies == applied + 1);
     assert(dashboard_state.baccable_dashboard_menu_visible);
@@ -344,8 +341,8 @@ static void test_double_click_and_noise(void) {
         menu_input_update(&input, 0x10, true, 0);
         menu_input_update(&input, 0x90, true, 10);
         assert(menu_input_update(&input, 0x10, true, 50) == MENU_NONE);
-        menu_input_update(&input, 0x90, true, 50 + window - 30);
-        assert(menu_input_update(&input, 0x10, true, 50 + window) == (window <= 280 ? MENU_BACK : MENU_SELECT));
+        menu_input_update(&input, 0x90, true, 50 + window);
+        assert(menu_input_update(&input, 0x10, true, 80 + window) == (window <= 280 ? MENU_BACK : MENU_NONE));
         if (window <= 280) {
             menu_input_update(&input, 0x90, true, 400);
             assert(menu_input_update(&input, 0x10, true, 450) == MENU_NONE);

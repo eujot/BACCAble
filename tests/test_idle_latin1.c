@@ -44,7 +44,7 @@ static void test_idle_commit_and_capture(void) {
     to_settings(); menu_event(MENU_SELECT);
     setup_dashboardPageIndex = setup_page_for(3); /* LED strip is a persisted boolean. */
     assert(!settings_state.led_strip_controller_enabled);
-    menu_event(MENU_SELECT);
+    menu_event(MENU_SELECT); menu_event(MENU_NEXT);
     assert(!settings_state.led_strip_controller_enabled);
     menu_event(MENU_BACK); /* Explicit confirmation. */
     menu_event(MENU_HOLD);
@@ -60,6 +60,7 @@ static void test_idle_commit_and_capture(void) {
     to_settings(); menu_event(MENU_SELECT);
     setup_dashboardPageIndex = setup_page_for(23);
     menu_event(MENU_SELECT); menu_event(MENU_SELECT); /* Stage Enabled. */
+    menu_event(MENU_NEXT);
     menu_event(MENU_BACK); menu_event(MENU_HOLD); now += 2000; menu_render();
     menu_event(MENU_BACK); /* Leave the saved Enabled editor. */
     menu_event(MENU_NEXT); menu_event(MENU_SELECT); /* Unconfirmed Store position. */

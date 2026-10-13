@@ -43,7 +43,64 @@ now schedules five builds in the full suite, instead of 26. The new
 C2 drive-mode/LKA checks and menu labels; the full 27-binary host suite remains
 the integration check. Both targets passed with Apple Clang on this Mac. This
 changes only the local test workflow, with no firmware or vehicle behavior change.
-Integration is pending; `master` does not contain this branch yet.
+Integration is pending in [PR #64](https://github.com/eujot/BACCAble/pull/64);
+`master` does not contain this branch yet.
+
+## Post-beta-24 LKA ignition and menu-save correction, 2026-10-13
+
+Implemented on `fix/lka-ignition-menu-save` and merged into `master` as
+`91da9ac` via PR #63. No new release or hardware flash.
+The owner's beta-24 report supersedes the older hardware-unknown note below:
+LKA switched off once after plugging in, but did not repeat after ignition
+cycling. Menu draft saving and its confirmation were also unreliable.
+
+Root causes and fixes:
+
+- C1 rearmed startup only after processor sleep/wake; ignition cycles with an
+  active bus/USB were missed. C1 now watches `0x1EF` low nibble: initial RUN (8)
+  or OFF (2) → RUN permits startup; cranking/unknown codes preserve the session.
+  Startup waits for RUN after wake. Transport resync retains an undelivered
+  ignition event. OFF and saved preferences cancel an unused startup window.
+- C2 no longer permanently cancels on an initial LKA OFF report. A bounded
+  5-second window after auxiliary configuration waits for enabled `0x547` and
+  released `0x384`, then sends one press/release/press/release gesture, 100 ms
+  between accepted frames. Driver input cancels waiting; completed gestures
+  do not rearm on resync. A started gesture still finishes its release steps.
+- `Disable LKA` becomes `LKA`: OFF requests the startup double-click; ON keeps
+  factory behavior. Flash slot 39 retains its inverse encoding, preserving
+  existing settings. ON does not force physical LKA activation.
+- Hold saves directly in Features, sort, slots (also the picker), membership,
+  visibility and order editors. Dirty Back asks for save/discard; clean Back
+  returns. Failed persistence retains the draft and rolls back live values.
+  Hold also retries a failed automatic exit. Actions/capture retain prompts.
+- The input recognizer no longer suppresses a deliberate hold begun immediately
+  after a double-click. A second press begun within 280 ms completes the pair
+  even if its release occurs beyond that boundary. Third short-click filtering,
+  900 ms holds and report-gap cancellation remain.
+- Entering toggle/enum/sort/mirror Enabled editors no longer changes the value.
+  DNA choice 4 (unsupported) is removed; valid draft choices have named labels.
+  `Engine` now uses the same title in the list and editor. Shared value formatting
+  removes redundant render callbacks and keeps all C1 display builds within
+  their existing memory limits; linker limits were not changed.
+
+Validation: native Clang ASan/UBSan suite and label checks; C1/C2/BH/CAN ARM
+builds and all four display combinations with full Arm GNU 15.2.Rel1; cppcheck
+for four roles. New regressions cover actual button reports through menu save,
+Flash reload/failure/discard, direct hold across editor types, three ignition
+cycles without sleep, no crank/resync retrigger, initial OFF, driver priority,
+queue rejection, deadline and tick wrap. CAN dictionary source hashes/catalog
+and both user guides are synchronized. The Lab suite includes ignition enum
+fixtures and the preserved transition ledger.
+
+Evidence: [ignition review](../baccable_lab/docs/research/20261013-ignition-lka-startup.md).
+Vehicle acceptance still required: several OFF/RUN cycles without unplugging,
+cold initialization within the 5-second readiness window, manual re-enable
+remaining enabled, already-OFF skip, USB connected/disconnected, and direct
+hold/dirty double-click/clean double-click on the actual steering buttons.
+No continuous override or claimed repeated vehicle verification.
+
+Original master checkout and its untracked beta archives/five JSON bundles were
+left untouched. Task changes and this handoff belong to the same committed branch.
 
 ## Start-up LKA button double-click candidate, 2026-10-13
 

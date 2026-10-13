@@ -43,12 +43,12 @@ MenuEvent menu_input_update(MenuInput *input, uint8_t button, bool allowed, uint
         return pending;
     }
     if (button == 0x10) {
-        bool select = input->button == 0x90 && !input->consumed;
+        bool select = input->button == 0x90 && !input->consumed && !input->suppress_click;
         input->button = button;
         input->consumed = false;
         if (!select || now - input->started < MENU_CLICK_MIN_MS)
             return pending;
-        if (input->click_pending && now - input->released_at <= MENU_DOUBLE_CLICK_MS) {
+        if (input->click_pending && input->started - input->released_at <= MENU_DOUBLE_CLICK_MS) {
             input->click_pending = false;
             input->pair_block = true;
             input->paired_at = now;
@@ -63,7 +63,8 @@ MenuEvent menu_input_update(MenuInput *input, uint8_t button, bool allowed, uint
         uint8_t previous = input->button;
         input->button = button;
         input->started = now;
-        input->consumed = button == 0x90 && input->pair_block && now - input->paired_at <= MENU_DOUBLE_CLICK_MS;
+        input->consumed = false;
+        input->suppress_click = button == 0x90 && input->pair_block && now - input->paired_at <= MENU_DOUBLE_CLICK_MS;
         if (input->pair_block && now - input->paired_at > MENU_DOUBLE_CLICK_MS) input->pair_block = false;
         if (button != 0x90) { input->click_pending = false; input->pair_block = false; }
         if (button == 0x20 && (previous == 0x18 || previous == 0x10))

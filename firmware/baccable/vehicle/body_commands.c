@@ -1,4 +1,5 @@
 #include "vehicle/body_commands.h"
+#include "features/periodic.h"
 
 /* Apply enabled locking, window and security behavior to body-control reports. */
 void vehicle_handle_body_commands(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
@@ -6,6 +7,8 @@ void vehicle_handle_body_commands(const CAN_RxHeaderTypeDef *rx_header, uint8_t 
         return;
 #if defined(BACCABLE_C1)
     if (rx_header->DLC == 8) {
+        if (rx_header->StdId == 0x1EF && rx_header->IDE == CAN_ID_STD && rx_header->RTR == CAN_RTR_DATA)
+            board_sync_ignition(frame_data[0] & 0x0F);
 
         // avoid thief to simulate engine rotation. As soon as RFHUB tells ignition is not in RUN reset
         // engineOn status stored inside baccable

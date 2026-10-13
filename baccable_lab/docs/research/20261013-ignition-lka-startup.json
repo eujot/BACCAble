@@ -1,0 +1,300 @@
+{
+  "20260928-204607Z": {
+    "counts": {
+      "8": 15317,
+      "2": 1254,
+      "10": 59
+    },
+    "transitions": [
+      {
+        "frame_id": 298,
+        "device_ms": 1156189,
+        "payload": "88 00 00 00 00 00 0E DF",
+        "code": 8,
+        "nearest_event_id": 1,
+        "nearest_event_label": "engine_stop",
+        "event_minus_frame_seconds": 22.466,
+        "event_note": ""
+      },
+      {
+        "frame_id": 116628,
+        "device_ms": 1178311,
+        "payload": "82 00 00 00 00 00 00 11",
+        "code": 2,
+        "nearest_event_id": 1,
+        "nearest_event_label": "engine_stop",
+        "event_minus_frame_seconds": 0.349,
+        "event_note": ""
+      },
+      {
+        "frame_id": 169491,
+        "device_ms": 1195193,
+        "payload": "88 00 00 00 00 00 0C E5",
+        "code": 8,
+        "nearest_event_id": 2,
+        "nearest_event_label": "ignition_on",
+        "event_minus_frame_seconds": 0.452,
+        "event_note": ""
+      },
+      {
+        "frame_id": 262363,
+        "device_ms": 1212836,
+        "payload": "8A 00 00 00 00 00 0E 65",
+        "code": 10,
+        "nearest_event_id": 2,
+        "nearest_event_label": "ignition_on",
+        "event_minus_frame_seconds": -17.22,
+        "event_note": ""
+      },
+      {
+        "frame_id": 264205,
+        "device_ms": 1213196,
+        "payload": "88 00 00 00 00 00 00 79",
+        "code": 8,
+        "nearest_event_id": 2,
+        "nearest_event_label": "ignition_on",
+        "event_minus_frame_seconds": -17.599,
+        "event_note": ""
+      },
+      {
+        "frame_id": 312795,
+        "device_ms": 1222437,
+        "payload": "82 00 00 00 00 00 0E B7",
+        "code": 2,
+        "nearest_event_id": 3,
+        "nearest_event_label": "ignition_on",
+        "event_minus_frame_seconds": 8.62,
+        "event_note": ""
+      },
+      {
+        "frame_id": 341055,
+        "device_ms": 1230639,
+        "payload": "88 00 00 00 00 00 08 91",
+        "code": 8,
+        "nearest_event_id": 3,
+        "nearest_event_label": "ignition_on",
+        "event_minus_frame_seconds": 0.386,
+        "event_note": ""
+      },
+      {
+        "frame_id": 392412,
+        "device_ms": 1240401,
+        "payload": "8A 00 00 00 00 00 00 C3",
+        "code": 10,
+        "nearest_event_id": 4,
+        "nearest_event_label": "engine_start",
+        "event_minus_frame_seconds": 0.921,
+        "event_note": ""
+      },
+      {
+        "frame_id": 396588,
+        "device_ms": 1241221,
+        "payload": "88 00 00 00 00 00 09 8C",
+        "code": 8,
+        "nearest_event_id": 4,
+        "nearest_event_label": "engine_start",
+        "event_minus_frame_seconds": 0.162,
+        "event_note": ""
+      }
+    ]
+  },
+  "20261010-111025Z": {
+    "counts": {
+      "8": 62890,
+      "2": 1500,
+      "10": 177
+    },
+    "transitions": [
+      {
+        "frame_id": 14,
+        "device_ms": 1845048,
+        "payload": "88 00 00 00 00 00 06 37",
+        "code": 8,
+        "nearest_event_id": 1,
+        "nearest_event_label": "rain_detected",
+        "event_minus_frame_seconds": 4.445,
+        "event_note": "scenario rain_sensing run 2 step 1 done"
+      },
+      {
+        "frame_id": 4023791,
+        "device_ms": 2609450,
+        "payload": "82 00 00 00 00 00 05 78",
+        "code": 2,
+        "nearest_event_id": 140,
+        "nearest_event_label": "engine_stop",
+        "event_minus_frame_seconds": 0.854,
+        "event_note": "scenario engine_start_stop run 1 step 2 done"
+      },
+      {
+        "frame_id": 4038452,
+        "device_ms": 2613010,
+        "payload": "8A 00 00 00 00 00 07 90",
+        "code": 10,
+        "nearest_event_id": 141,
+        "nearest_event_label": "engine_start",
+        "event_minus_frame_seconds": 2.201,
+        "event_note": "scenario engine_start_stop run 2 step 1 done"
+      },
+      {
+        "frame_id": 4043041,
+        "device_ms": 2613910,
+        "payload": "88 00 00 00 00 00 04 0D",
+        "code": 8,
+        "nearest_event_id": 141,
+        "nearest_event_label": "engine_start",
+        "event_minus_frame_seconds": 1.33,
+        "event_note": "scenario engine_start_stop run 2 step 1 done"
+      },
+      {
+        "frame_id": 4069208,
+        "device_ms": 2618852,
+        "payload": "82 00 00 00 00 00 0B DE",
+        "code": 2,
+        "nearest_event_id": 142,
+        "nearest_event_label": "engine_stop",
+        "event_minus_frame_seconds": 0.918,
+        "event_note": "scenario engine_start_stop run 2 step 2 done"
+      },
+      {
+        "frame_id": 4084240,
+        "device_ms": 2622493,
+        "payload": "8A 00 00 00 00 00 01 DE",
+        "code": 10,
+        "nearest_event_id": 143,
+        "nearest_event_label": "engine_start",
+        "event_minus_frame_seconds": 2.179,
+        "event_note": "scenario engine_start_stop run 3 step 1 done"
+      },
+      {
+        "frame_id": 4088662,
+        "device_ms": 2623413,
+        "payload": "88 00 00 00 00 00 0F C2",
+        "code": 8,
+        "nearest_event_id": 143,
+        "nearest_event_label": "engine_start",
+        "event_minus_frame_seconds": 1.315,
+        "event_note": "scenario engine_start_stop run 3 step 1 done"
+      },
+      {
+        "frame_id": 4116913,
+        "device_ms": 2628735,
+        "payload": "82 00 00 00 00 00 09 E4",
+        "code": 2,
+        "nearest_event_id": 144,
+        "nearest_event_label": "engine_stop",
+        "event_minus_frame_seconds": 1.07,
+        "event_note": "scenario engine_start_stop run 3 step 2 done"
+      },
+      {
+        "frame_id": 4135306,
+        "device_ms": 2633596,
+        "payload": "8A 00 00 00 00 00 0C 5F",
+        "code": 10,
+        "nearest_event_id": 144,
+        "nearest_event_label": "engine_stop",
+        "event_minus_frame_seconds": -3.806,
+        "event_note": "scenario engine_start_stop run 3 step 2 done"
+      },
+      {
+        "frame_id": 4139373,
+        "device_ms": 2634416,
+        "payload": "88 00 00 00 00 00 05 10",
+        "code": 8,
+        "nearest_event_id": 145,
+        "nearest_event_label": "park_selected",
+        "event_minus_frame_seconds": 3.407,
+        "event_note": "scenario gear_selector run 1 step 1 done"
+      },
+      {
+        "frame_id": 4383339,
+        "device_ms": 2680669,
+        "payload": "82 00 00 00 00 00 0D 90",
+        "code": 2,
+        "nearest_event_id": 153,
+        "nearest_event_label": "ignition_on",
+        "event_minus_frame_seconds": 4.733,
+        "event_note": "scenario ignition_cycle run 1 step 1 done"
+      },
+      {
+        "frame_id": 4397513,
+        "device_ms": 2684110,
+        "payload": "88 00 00 00 00 00 09 8C",
+        "code": 8,
+        "nearest_event_id": 153,
+        "nearest_event_label": "ignition_on",
+        "event_minus_frame_seconds": 1.269,
+        "event_note": "scenario ignition_cycle run 1 step 1 done"
+      },
+      {
+        "frame_id": 4420710,
+        "device_ms": 2688491,
+        "payload": "82 00 00 00 00 00 04 65",
+        "code": 2,
+        "nearest_event_id": 154,
+        "nearest_event_label": "ignition_off",
+        "event_minus_frame_seconds": 1.09,
+        "event_note": "scenario ignition_cycle run 1 step 2 done"
+      },
+      {
+        "frame_id": 4432055,
+        "device_ms": 2691492,
+        "payload": "88 00 00 00 00 00 0A AB",
+        "code": 8,
+        "nearest_event_id": 154,
+        "nearest_event_label": "ignition_off",
+        "event_minus_frame_seconds": -1.978,
+        "event_note": "scenario ignition_cycle run 1 step 2 done"
+      },
+      {
+        "frame_id": 4466357,
+        "device_ms": 2698033,
+        "payload": "82 00 00 00 00 00 01 0C",
+        "code": 2,
+        "nearest_event_id": 156,
+        "nearest_event_label": "ignition_off",
+        "event_minus_frame_seconds": 2.003,
+        "event_note": "scenario ignition_cycle run 2 step 2 done"
+      },
+      {
+        "frame_id": 4484171,
+        "device_ms": 2703274,
+        "payload": "88 00 00 00 00 00 07 2A",
+        "code": 8,
+        "nearest_event_id": 156,
+        "nearest_event_label": "ignition_off",
+        "event_minus_frame_seconds": -3.246,
+        "event_note": "scenario ignition_cycle run 2 step 2 done"
+      },
+      {
+        "frame_id": 4515966,
+        "device_ms": 2709316,
+        "payload": "82 00 00 00 00 00 05 78",
+        "code": 2,
+        "nearest_event_id": 158,
+        "nearest_event_label": "ignition_off",
+        "event_minus_frame_seconds": 1.828,
+        "event_note": "odpalimwm auto, tryb biegow manual"
+      },
+      {
+        "frame_id": 4536601,
+        "device_ms": 2715577,
+        "payload": "8A 00 00 00 00 00 0E 65",
+        "code": 10,
+        "nearest_event_id": 158,
+        "nearest_event_label": "ignition_off",
+        "event_minus_frame_seconds": -4.405,
+        "event_note": "odpalimwm auto, tryb biegow manual"
+      },
+      {
+        "frame_id": 4540943,
+        "device_ms": 2716478,
+        "payload": "88 00 00 00 00 00 0B B6",
+        "code": 8,
+        "nearest_event_id": 158,
+        "nearest_event_label": "ignition_off",
+        "event_minus_frame_seconds": -5.276,
+        "event_note": "odpalimwm auto, tryb biegow manual"
+      }
+    ]
+  }
+}
