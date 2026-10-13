@@ -1,5 +1,6 @@
 #include "app/main.h"
 #include "features/body.h"
+#include "vehicle/drive_mode.h"
 #include "features/menu.h"
 #include "features/parking.h"
 #include "features/usb_modes.h"
@@ -266,26 +267,7 @@ void board_commands_dispatch(const uint8_t *message) {
             filesystem_save_log();
             break;
         case C2_Bh_cmdSetDriverAids:
-            settings_state.default_drive_mode = message[2] <= 3 ? message[2] : 0;
-            settings_state.lane_assist_disabled = message[3] ? 1 : 0;
-            /* Transport resync preserves the session; a save ends its start-up window. */
-            if (message[4] == 1) {
-                chassis_state.default_mode_override = 1;
-                chassis_state.default_mode_sent = 0;
-                chassis_state.default_mode_baseline = 0xFF;
-#if defined(BACCABLE_C2)
-                if (chassis_state.lane_assist_pending < LANE_ASSIST_RELEASE_FIRST_PENDING)
-                    chassis_state.lane_assist_pending = settings_state.lane_assist_disabled
-                                                            ? LANE_ASSIST_WAIT_STATE
-                                                            : LANE_ASSIST_IDLE;
-#endif
-            } else if (message[4] == 2) {
-                chassis_state.default_mode_override = 0;
-#if defined(BACCABLE_C2)
-                if (chassis_state.lane_assist_pending < LANE_ASSIST_RELEASE_FIRST_PENDING)
-                    chassis_state.lane_assist_pending = LANE_ASSIST_IDLE;
-#endif
-            }
+            driver_aids_configure(message[2], message[3], message[4]);
             break;
         default:
         }

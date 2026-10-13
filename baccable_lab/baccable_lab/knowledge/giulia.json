@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "dictionary_version": "2026-10-13.4",
+  "dictionary_version": "2026-10-13.5",
   "vehicle": {
     "model": "Alfa Romeo Giulia (owner-reported)",
     "model_year": null,
@@ -15,14 +15,14 @@
     "firmware/baccable/vehicle/engine_status.c": "0437d18d2be6f44f88cb256f9f1f88da549da4fc881acddc0eb4bb7a26760038",
     "firmware/baccable/features/parking.c": "b7d16c0245879c7392c626a33ec5c1c41aa681444bd23ab544d7d0cd96456f12",
     "firmware/baccable/vehicle/controls_frames.c": "5a43bb33bb6d93ca90d89baf50086902c8e5e29965250143a88ad3d60ce9eba9",
-    "firmware/baccable/vehicle/body_commands.c": "3eb57c867cabb7169558df47969327d9137b61ff4f0212a544c61450c1fb79de",
+    "firmware/baccable/vehicle/body_commands.c": "29ca0d6ceb92f3da3064ad27e6a962028d65c55b416783714420a1848af77333",
     "firmware/baccable/vehicle/start_stop_status.c": "cae7578c5e0515316f19d6e8ef0528f0d2a7faa29fa56b59090752c428c3337d",
     "firmware/baccable/vehicle/shift_indicator.c": "2bd1d998325d152c0653b120554e724d1efcbe7e03a09bf03e2453cc626058fd",
     "firmware/baccable/vehicle/steering_controls.c": "a83dbd391f0266b3f0586812a15316587bdbce3fbb595d3c37995aa0d84bb7ba",
-    "firmware/baccable/features/menu_input.c": "573949572201141040055b2382d223b873c7338e3164bb01c138ec0faddf82ce",
+    "firmware/baccable/features/menu_input.c": "9584ff6fa864cf2986a6d58079e798a22740e929f9e82564b32bb4933034d565",
     "firmware/baccable/protocol/checksum.c": "74759417a6edd56e3b230502710a056dc0d0be535b15912bf7250afeedd06946",
     "firmware/baccable/vehicle/lighting_frames.c": "733078f1af48d86ce8d44eed4d506802378915b81950d905a77a7de01b5ccb48",
-    "firmware/baccable/vehicle/drive_mode.c": "36d6a9f737b275417fc078587a8e4c469a625d5759b487b8c54100971e2f65d5",
+    "firmware/baccable/vehicle/drive_mode.c": "6ffc81ca70c550bf414833fd05d86433394eda9078b9d642535cbf2cd9e2633b",
     "firmware/baccable/vehicle/mirrors_frames.c": "a30220fb370606ca9adcd167de590d01ac24774fb3e09229e5231dbf10842f77",
     "firmware/baccable/diagnostics/native_parameters.c": "e257eb9629d0fdbbc1cbced53d22a933b3fddb3dc2a54c9c68b82e331511e9aa",
     "firmware/baccable/features/ibs_override.c": "20a5fbd5c5d4837d1f64786e513d26c7a6f726d32a44f1dfad7abc25314a45d6",
@@ -3002,7 +3002,8 @@
           "offset": 0,
           "origin": "implementation",
           "enum": {
-            "8": "RUN"
+            "8": "RUN",
+            "2": "OFF"
           },
           "marker_rules": {
             "ignition_on": {
@@ -3034,7 +3035,8 @@
                 157
               ]
             }
-          ]
+          ],
+          "note": "OFF=2 is supported by ignition_off markers 154/156 in 20261010-111025Z and repeated cycles in 20260928-204607Z; RUN=8 was already implemented. Code 10 appears briefly around cranking and is not treated as OFF. C1 now uses initial RUN and explicit OFF to RUN for startup actions, independently of processor sleep. See docs/research/20261013-ignition-lka-startup.md and its transition ledger; marker delays and the contradictory note at event 158 are retained."
         },
         {
           "name": "lock_command",
@@ -7319,7 +7321,7 @@
           "note": "Decoded from the 2026-10-11 lane_assist_toggle recordings (12/12 toggles across two sessions); Race also clears it. Gateway-duplicated on the companion bus frame."
         }
       ],
-      "note": "This recurring state report is now observed without rewriting. The experimental start-up action sends a C2 0x384 button double-click instead; physical LKA deactivation remains unverified.",
+      "note": "Recurring state report, observed without rewriting. LKA: OFF requests one C2 0x384 stalk double-click per ignition start, waiting up to 5 seconds after auxiliary configuration for enabled state and a released button. LKA: ON leaves factory behavior. Owner reported one successful beta-24 toggle after connection and failures on later ignition cycles; the ignition rearm correction requires repeated vehicle acceptance. See docs/research/20261013-ignition-lka-startup.md.",
       "observations": [
         {
           "session": "20260926-181818Z",
@@ -7406,7 +7408,7 @@
           "note": "Decoded from the 2026-10-11 lane_assist_toggle recordings (12/12 toggles across two sessions); Race also clears it. Gateway-duplicated on the companion bus frame."
         }
       ],
-      "note": "This recurring state report is now observed without rewriting. The experimental start-up action sends a C2 0x384 button double-click instead; physical LKA deactivation remains unverified.",
+      "note": "Recurring state report, observed without rewriting. LKA: OFF requests one C2 0x384 stalk double-click per ignition start, waiting up to 5 seconds after auxiliary configuration for enabled state and a released button. LKA: ON leaves factory behavior. Owner reported one successful beta-24 toggle after connection and failures on later ignition cycles; the ignition rearm correction requires repeated vehicle acceptance. See docs/research/20261013-ignition-lka-startup.md.",
       "observations": [
         {
           "session": "20260926-181818Z",

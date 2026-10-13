@@ -23,6 +23,13 @@ class KnowledgeTests(unittest.TestCase):
     def values(self, role, can_id, data):
         return {s['name']: s for s in decode_frame(self.catalog, role, can_id, bytes.fromhex(data))['signals']}
 
+    def test_captured_ignition_off_run_and_unconfirmed_crank(self):
+        self.assertEqual(self.values('C1', 0x1EF, '8200000000000465')['ignition_command']['enum'], 'OFF')
+        self.assertEqual(self.values('C1', 0x1EF, '880000000000098C')['ignition_command']['enum'], 'RUN')
+        crank = self.values('C1', 0x1EF, '8A000000000001DE')['ignition_command']
+        self.assertEqual(crank['raw'], 10)
+        self.assertIsNone(crank['enum'])
+
     def test_source_snapshot_and_dispatcher_coverage(self):
         root = Path(__file__).resolve().parents[2]
         for path, expected in self.catalog['source_sha256'].items():

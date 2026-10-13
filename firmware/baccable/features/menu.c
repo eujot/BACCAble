@@ -1029,7 +1029,7 @@ void menu_render(void) {
     }
     case SORT_EDIT:
         menu_present_view(sort_confirm ? UI_MODE_CONFIRM : UI_MODE_EDIT, "Sort order",
-            sort_confirm ? "HOLD SAVE" MY23_BULLET "2X DISCARD" : sort_draft ? "A-Z" MY23_BULLET MY23_UP MY23_DOWN " CHANGE" : "GROUPS" MY23_BULLET MY23_UP MY23_DOWN " CHANGE");
+            sort_confirm ? "HOLD SAVE" MY23_BULLET "2X DISCARD" : sort_draft ? "A-Z" MY23_BULLET "HOLD SAVE" : "GROUPS" MY23_BULLET "HOLD SAVE");
         if (!settings_state.ipc_my23_is_installed)
             menu_present(sort_confirm ? "Hold save/2x drop" : sort_draft ? "Sort: A-Z" : "Sort: groups");
         return;
@@ -1181,13 +1181,27 @@ static void request_exit(MenuView destination, bool close) {
     persist_exit();
 }
 
+/* Accept the visible choice into the isolated favorite-set draft. */
+static __attribute__((noinline)) void favorite_choose(void) {
+    for (unsigned i = 0; i < FAVORITE_VISIBLE_PARAMS; ++i)
+        if (i != favorite_slot && favorite_draft.params[i] == favorite_pick)
+            favorite_draft.params[i] = FAVORITE_EMPTY;
+    favorite_draft.params[favorite_slot] = favorite_pick;
+    view = FAV_SLOTS;
+}
+
 /* Cancel one unfinished workflow or return to its parent after persistence. */
 static void back(void) {
     if (view == SORT_EDIT) {
         if (!sort_confirm && sort_draft != !!preferences.alphabetical) { sort_confirm = true; return; }
         sort_confirm = false; view = SETTINGS; return;
     }
-    if (view == FAV_PICK) { view = FAV_SLOTS; return; }
+    if (view == FAV_PICK) {
+        bool changed = favorite_pick != favorite_draft.params[favorite_slot];
+        favorite_choose();
+        favorite_confirm = changed && memcmp(&favorite_draft, &favorites[engine][favorite_set], sizeof(favorite_draft));
+        return;
+    }
     if (view == FAV_SLOTS) {
         if (!favorite_confirm && memcmp(&favorite_draft, &favorites[engine][favorite_set], sizeof(favorite_draft))) {
             favorite_confirm = true; return;
@@ -1238,6 +1252,45 @@ static void back(void) {
 }
 
 /* Apply one navigation gesture to the currently visible menu. */
+/* Keep editor save handling outside the navigation switch on the small C1 target. */
+static __attribute__((noinline)) void menu_hold(void) {
+    if (page_editor()) {
+        MenuPreferences original = preferences;
+        preferences = editor_draft;
+        if (view != EDIT_VISIBLE) import_page_favorites();
+        if (menu_preferences_save()) {
+            preferences = original;
+            if (view != EDIT_VISIBLE) import_page_favorites();
+            menu_notice(UI_SYMBOL_FAILURE " Save failed");
+        } else { editor_draft = preferences; editor_confirm = false; order_selected = 0; menu_notice_saved(settings[setting]); }
+        return;
+    }
+    if (view == SORT_EDIT) {
+        bool original = preferences.alphabetical;
+        preferences.alphabetical = sort_draft;
+        if (menu_preferences_save()) {
+            preferences.alphabetical = original;
+            menu_notice(UI_SYMBOL_FAILURE " Save failed");
+        } else { sort_confirm = false; menu_notice_saved("Sort order"); }
+        return;
+    }
+    if (view == SETUP) { setup_stage_save(); return; }
+    if (view == FUNCTIONS && confirmed_action == actions[function].id && currentTime - confirm_started <= 3000)
+        action_run();
+    if (view == FAV_PICK) favorite_choose();
+    if (view == FAV_SLOTS) {
+        FavoriteParameters original = favorites[engine][favorite_set];
+        bool was_atomic = atomic_favorites;
+        favorites[engine][favorite_set] = favorite_draft;
+        atomic_favorites = true;
+        if (menu_preferences_save()) {
+            favorites[engine][favorite_set] = original;
+            atomic_favorites = was_atomic;
+            menu_notice(UI_SYMBOL_FAILURE " Save failed");
+        } else { favorite_confirm = false; menu_notice_saved("Favorite slots"); }
+    }
+}
+
 void menu_event(MenuEvent event) {
     if (!event)
         return;
@@ -1256,44 +1309,8 @@ void menu_event(MenuEvent event) {
         }
         return;
     }
-    if (event == MENU_HOLD) {
-        if (page_editor() && editor_confirm) {
-            MenuPreferences original = preferences;
-            preferences = editor_draft;
-            if (view != EDIT_VISIBLE) import_page_favorites();
-            if (menu_preferences_save()) {
-                preferences = original;
-                if (view != EDIT_VISIBLE) import_page_favorites();
-                menu_notice(UI_SYMBOL_FAILURE " Save failed");
-            } else { editor_draft = preferences; editor_confirm = false; order_selected = 0; menu_notice_saved(settings[setting]); }
-        }
-        if (view == SORT_EDIT && sort_confirm) {
-            bool original = preferences.alphabetical;
-            preferences.alphabetical = sort_draft;
-            if (menu_preferences_save()) {
-                preferences.alphabetical = original;
-                menu_notice(UI_SYMBOL_FAILURE " Save failed");
-            } else { sort_confirm = false; menu_notice_saved("Sort order"); }
-        }
-        if (view == SETUP) setup_stage_save();
-        if (view == FUNCTIONS && confirmed_action == actions[function].id && currentTime - confirm_started <= 3000)
-            action_run();
-        if (view == FAV_SLOTS && favorite_confirm) {
-            FavoriteParameters original = favorites[engine][favorite_set];
-            bool was_atomic = atomic_favorites;
-            favorites[engine][favorite_set] = favorite_draft;
-            atomic_favorites = true;
-            if (menu_preferences_save()) {
-                favorites[engine][favorite_set] = original;
-                atomic_favorites = was_atomic;
-                menu_notice(UI_SYMBOL_FAILURE " Save failed");
-            } else { favorite_confirm = false; menu_notice_saved("Favorite slots"); }
-        }
-        menu_render();
-        return;
-    }
     if (save_failed) {
-        if (event == MENU_SELECT)
+        if (event == MENU_SELECT || event == MENU_HOLD)
             persist_exit();
         else if (event == MENU_BACK) {
             save_failed = false;
@@ -1301,6 +1318,11 @@ void menu_event(MenuEvent event) {
         }
         if (dashboard_state.baccable_dashboard_menu_visible)
             menu_render();
+        return;
+    }
+    if (event == MENU_HOLD) {
+        menu_hold();
+        menu_render();
         return;
     }
     if (event != MENU_SELECT)
@@ -1395,11 +1417,7 @@ void menu_event(MenuEvent event) {
         case FAV_SLOTS:
             if (!favorite_confirm) { favorite_pick = favorite_draft.params[favorite_slot]; view = FAV_PICK; } break;
         case FAV_PICK:
-            /* A measurement appears once; replacing slots changes the configured order. */
-            for (unsigned i = 0; i < FAVORITE_VISIBLE_PARAMS; ++i)
-                if (i != favorite_slot && favorite_draft.params[i] == favorite_pick) favorite_draft.params[i] = FAVORITE_EMPTY;
-            favorite_draft.params[favorite_slot] = favorite_pick;
-            view = FAV_SLOTS; break;
+            favorite_choose(); break;
         case ROOT:
             switch (root) {
             case 0:
@@ -1473,7 +1491,7 @@ void menu_event(MenuEvent event) {
             case 6: ipc_option = 0; view = IPC_OPTIONS; break;
             case 5: favorite_set = 0; view = FAV_SETS; break;
             case 4:
-                sort_draft = !preferences.alphabetical; sort_confirm = false; view = SORT_EDIT;
+                sort_draft = preferences.alphabetical; sort_confirm = false; view = SORT_EDIT;
                 break;
             }
             break;

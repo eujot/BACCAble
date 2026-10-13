@@ -3,20 +3,32 @@
 #if defined(BACCABLE_C1)
 static uint8_t next_option;
 /* 0 = transport resync, 1 = vehicle start, 2 = saved for the next start. */
-static uint8_t driver_aids_action = 1;
+static uint8_t driver_aids_action;
+/* RFHUB 0x1EF: 2 = OFF, 8 = RUN. Preserve the session through cranking (10). */
+static uint8_t ignition_state;
 
 /* Restart auxiliary-board configuration after a save, wake-up or diagnostic session. */
 void board_sync_restart(void) {
     next_option = 0;
-    driver_aids_action = 0;
     runtime_state.instruct_slave_boards_trigger_enabled = 1;
 }
 
-/* A new vehicle session permits one set of start-up CAN frames. */
+/* After wake-up wait for actual RUN, rather than treating bus activity as ignition. */
 void board_sync_rearm(void) {
     board_sync_restart();
-    driver_aids_action = 1;
-    chassis_state.default_mode_override = 1;
+    ignition_state = 0;
+    driver_aids_action = 0;
+    chassis_state.default_mode_override = 0;
+}
+
+/* Ignition cycles do not require CAN silence or a processor sleep/wake cycle. */
+void board_sync_ignition(unsigned code) {
+    if (code != 2 && code != 8) return;
+    if (code == ignition_state) return;
+    ignition_state = code;
+    board_sync_restart();
+    driver_aids_action = code == 8 ? 1 : 2;
+    chassis_state.default_mode_override = code == 8;
     chassis_state.default_mode_sent = 0;
     chassis_state.default_mode_baseline = 0xFF;
 }

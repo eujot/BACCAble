@@ -16,7 +16,7 @@ typedef struct {
     uint32_t started, last_seen, repeated_at, released_at, paired_at;
     uint32_t reports_seen, stream_gaps, max_gap_ms;
     uint8_t button;
-    bool armed, consumed, repeating, click_pending, pair_block;
+    bool armed, consumed, repeating, click_pending, pair_block, suppress_click;
 } MenuInput;
 #define MENU_DOUBLE_CLICK_MS 280U
 #define MENU_LONG_PRESS_MS 900U
