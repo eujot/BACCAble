@@ -16,8 +16,7 @@ uint8_t drive_mode_default_field(uint8_t encoding) {
     return DEFAULT_MODE_ENCODING[encoding][mode];
 }
 
-/* Advance the start-up override from the observed raw mode: 1 = keep injecting,
- * 0 = leave the mode alone (feature off, already stopped, or the driver changed it). */
+/* Stop on a real change in the body's mode, not on our own extra CAN frame. */
 uint8_t drive_mode_default_should_apply(uint8_t raw_mode) {
     if (settings_state.default_drive_mode == 0 || settings_state.default_drive_mode > 3 ||
         !chassis_state.default_mode_override)
@@ -31,6 +30,16 @@ uint8_t drive_mode_default_should_apply(uint8_t raw_mode) {
         return 0;
     }
     return 1;
+}
+
+uint8_t drive_mode_default_pending(uint8_t encoding) {
+    return encoding <= DRIVE_MODE_ENC_IPC &&
+           !(chassis_state.default_mode_sent & (1U << encoding));
+}
+
+void drive_mode_default_queued(uint8_t encoding) {
+    if (encoding <= DRIVE_MODE_ENC_IPC)
+        chassis_state.default_mode_sent |= 1U << encoding;
 }
 
 /* Update the current driving mode and its related feature behavior. */
@@ -59,18 +68,22 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
 
         frame_data[7] = frame_checksum(frame_data, rx_header->DLC); // update CRC
         can_forward(rx_header, frame_data);                         // transmit the modified packet
-    } else if (apply_default) {
+    } else if (apply_default && drive_mode_default_pending(DRIVE_MODE_ENC_CAN)) {
         uint8_t default_mode = drive_mode_default_field(DRIVE_MODE_ENC_CAN);
         if ((frame_data[1] & 0x7C) != default_mode) {
             frame_data[1] = (frame_data[1] & ~0x7C) | default_mode;
             frame_data[7] = frame_checksum(frame_data, rx_header->DLC);
-            can_forward(rx_header, frame_data);
+            if (can_forward(rx_header, frame_data) == HAL_OK)
+                drive_mode_default_queued(DRIVE_MODE_ENC_CAN);
+        } else {
+            drive_mode_default_queued(DRIVE_MODE_ENC_CAN);
         }
     }
 
 #endif
 
 #if defined(BACCABLE_C2)
+    lane_assist_button_observe(rx_header, frame_data);
     // on C2 can bus, msg 0x384 contains, in byte3, bit6 contains left stalk button press status (LANE
     // indicator button)
     if ((frame_data[3] & 0x40) == 0x40) { // left stalk button was pressed (lane following indicator)
@@ -157,12 +170,15 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
 
         frame_data[7] = frame_checksum(frame_data, rx_header->DLC); // update CRC
         can_forward(rx_header, frame_data);                         // transmit the modified packet
-    } else if (apply_default) {
+    } else if (apply_default && drive_mode_default_pending(DRIVE_MODE_ENC_CAN)) {
         uint8_t default_mode = drive_mode_default_field(DRIVE_MODE_ENC_CAN);
         if ((frame_data[1] & 0x7C) != default_mode) {
             frame_data[1] = (frame_data[1] & ~0x7C) | default_mode;
             frame_data[7] = frame_checksum(frame_data, rx_header->DLC);
-            can_forward(rx_header, frame_data);
+            if (can_forward(rx_header, frame_data) == HAL_OK)
+                drive_mode_default_queued(DRIVE_MODE_ENC_CAN);
+        } else {
+            drive_mode_default_queued(DRIVE_MODE_ENC_CAN);
         }
     }
 #endif
@@ -178,26 +194,83 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
     // SuspensionLevel is on byte 5 bit0 and byte 6 bit7.
 }
 
-/* CAN ID 0x000004F6 (BH) and 0x00000547 (C2). */
-/* Experimental state override; physical assist deactivation remains unverified. */
+/* Wait for an enabled LKA state before offering the start-up double-click. */
 void vehicle_handle_lane_state(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
-#if defined(BACCABLE_BH)
-    if (rx_header->StdId != 0x4F6)
-        return;
-#elif defined(BACCABLE_C2)
+#if defined(BACCABLE_C2)
     if (rx_header->StdId != 0x547)
         return;
-#else
-    (void)rx_header;
-    (void)frame_data;
-    return;
-#endif
     if (rx_header->DLC != 8 || rx_header->IDE != CAN_ID_STD || rx_header->RTR != CAN_RTR_DATA)
         return;
 
-    if (settings_state.lane_assist_disabled &&
-        (frame_data[6] & 0x02)) { // byte 6 bit 1 is the lane-assist enable flag (0 = disabled)
-        frame_data[6] &= (uint8_t)~0x02;
-        can_forward(rx_header, frame_data);
+    if (!settings_state.lane_assist_disabled || chassis_state.lane_assist_pending == LANE_ASSIST_IDLE ||
+        chassis_state.lane_assist_pending >= LANE_ASSIST_RELEASE_FIRST_PENDING)
+        return;
+    if (!(frame_data[6] & 0x02)) {
+        chassis_state.lane_assist_pending = LANE_ASSIST_IDLE;
+        return;
     }
+    chassis_state.lane_assist_pending = LANE_ASSIST_WAIT_BUTTON;
+#else
+    (void)rx_header;
+    (void)frame_data;
+#endif
+}
+
+/* Copy a released factory button report and start the observed double-click. */
+void lane_assist_button_observe(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
+#if defined(BACCABLE_C2)
+    const uint32_t id = 0x384;
+    const uint8_t byte = 3, mask = 0x40;
+    if (rx_header->StdId != id || rx_header->DLC != 8 || rx_header->IDE != CAN_ID_STD ||
+        rx_header->RTR != CAN_RTR_DATA || !settings_state.lane_assist_disabled)
+        return;
+    if (frame_data[byte] & mask) {
+        /* A driver press wins over the pending start-up action. */
+        if (chassis_state.lane_assist_pending == LANE_ASSIST_WAIT_STATE ||
+            chassis_state.lane_assist_pending == LANE_ASSIST_WAIT_BUTTON)
+            chassis_state.lane_assist_pending = LANE_ASSIST_IDLE;
+        return;
+    }
+    if (chassis_state.lane_assist_pending != LANE_ASSIST_WAIT_BUTTON)
+        return;
+    memcpy(chassis_state.lane_assist_release_data, frame_data, 8);
+    frame_data[byte] |= mask;
+    uint32_t result = can_forward(rx_header, frame_data);
+    frame_data[byte] &= (uint8_t)~mask;
+    if (result == HAL_OK) {
+        chassis_state.lane_assist_step_at = currentTime;
+        chassis_state.lane_assist_pending = LANE_ASSIST_RELEASE_FIRST_PENDING;
+    }
+#else
+    (void)rx_header;
+    (void)frame_data;
+#endif
+}
+
+/* The sniff shows press, release, press, release at roughly 100 ms intervals. */
+void lane_assist_button_process(void) {
+#if defined(BACCABLE_C2)
+    uint8_t stage = chassis_state.lane_assist_pending;
+    if (stage < LANE_ASSIST_RELEASE_FIRST_PENDING ||
+        currentTime - chassis_state.lane_assist_step_at < 100U)
+        return;
+    CAN_TxHeaderTypeDef header = {.StdId = 0x384,
+                                  .IDE = CAN_ID_STD,
+                                  .RTR = CAN_RTR_DATA,
+                                  .DLC = 8,
+                                  .TransmitGlobalTime = DISABLE};
+    uint8_t data[8];
+    memcpy(data, chassis_state.lane_assist_release_data, sizeof(data));
+    if (stage == LANE_ASSIST_PRESS_SECOND_PENDING)
+        data[3] |= 0x40;
+    if (can_tx(&header, data) != HAL_OK)
+        return;
+    chassis_state.lane_assist_step_at = currentTime;
+    if (stage == LANE_ASSIST_RELEASE_FIRST_PENDING)
+        chassis_state.lane_assist_pending = LANE_ASSIST_PRESS_SECOND_PENDING;
+    else if (stage == LANE_ASSIST_PRESS_SECOND_PENDING)
+        chassis_state.lane_assist_pending = LANE_ASSIST_RELEASE_SECOND_PENDING;
+    else
+        chassis_state.lane_assist_pending = LANE_ASSIST_IDLE;
+#endif
 }

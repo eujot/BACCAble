@@ -1,6 +1,6 @@
 # BACCAble action plan and agent handoff
 
-Last updated: **2026-10-12** (dated verification boundaries below). This is the single source of planned work,
+Last updated: **2026-10-13** (dated verification boundaries below). This is the single source of planned work,
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
@@ -33,6 +33,71 @@ the maintained Polish user guide. Use small,
 bounded changes and existing modules/tests. No model-specific workflow, mandatory
 PR count or broad rewrite is needed. This handoff is a backlog, not an instruction
 to automatically flash hardware or publish every future change.
+
+## Start-up LKA button double-click candidate, 2026-10-13
+
+The `kla` and `dnskla` recordings distinguish a momentary left-stalk button
+report from recurring LKA state. In `kla`, C2 `0x384` byte 3 bit 6 rises at
+24.207 s and returns at 24.316 s, rises again at 24.423 s and returns at
+24.528 s; the state on C2 `0x547` changes to OFF at 24.528 s and continues to
+be reported. BH `0x5A0` also shows the button, but
+sending pulses on both buses could create two actions if the vehicle bridges
+them. The earlier single-press candidate did not reproduce the recorded gesture.
+
+The candidate on `fix/driver-aids-startup-one-shot` replaces the one-shot state
+rewrite with a C2 `0x384` double-click: press, release, press, release, roughly
+100 ms between steps. It waits until C2 `0x547` reports LKA enabled, skips the action
+if already off, cancels a pending action when the driver presses first, retains
+the remaining steps through queue rejection and board resync, and leaves C2/BH state
+reports untouched. BH no longer injects an LKA frame. The host suite, C1/C2/BH/CAN
+cppcheck lint and Arm GNU 15.2.Rel1 firmware builds pass locally. Both user
+guides and the CAN research note describe this experimental behavior.
+Initial implementation commit: `939e062`; double-click correction: `25e518b`.
+The dictionary and generated CAN catalog use source snapshot `25e518b` and
+dictionary version `2026-10-13.2`; all 70 Lab tests pass. The candidate is on
+draft PR #58; integration and release await the
+vehicle check.
+
+**Vehicle acceptance remains open:** confirm an injected C2 button double-click
+turns LKA off, original C2 `0x547` / BH `0x4F6` reports remain OFF after BACCAble
+stops transmitting, and a later driver double-click can turn LKA on. If the gesture does
+not latch, capture the controller-side input and do not restore a continuous
+status override. The default DNA-mode one-shot check in the section below also
+remains open. No firmware image from this branch has been installed in the car.
+
+## Beta-22 vehicle finding and start-up driver aids, 2026-10-12
+
+The owner tested beta-22 in the car. `Default mode = D` lit the Dynamic lamp,
+but the Natural lamp remained faintly lit or flickered. `Disable LKA` turned the
+assistant off, but a later left-stalk double press could not turn it back on.
+This supersedes the earlier untested status below. The installed board image
+identities and a transmit-side trace were not supplied.
+
+Source review found both defaults retransmitting on every matching status
+report: `0x384` on C1/C2, `0x46C` and `0x25A` on BH, and LKA state `0x547` on C2 /
+`0x4F6` on BH. Those reports recur; the LKA handler erased every subsequent
+enable state, explaining the blocked double press. The initial firmware fix on
+branch `fix/driver-aids-startup-one-shot` queued each relevant modified frame once
+per vehicle start, retrying only after CAN rejected the queue submission. Its LKA
+part was superseded by the C2 button-pulse candidate above. A saved
+preference is synchronized but does not inject a frame until the next start.
+Transport-only resync leaves the current session alone. Host tests cover each
+board, repeated original reports, later driver input, queue failure and rearm.
+Implementation commit: `67c0890` on the task branch. The full Apple Clang host
+suite, cppcheck lint and Arm GNU 15.2.Rel1 builds for C1, C2, BH and CAN pass
+locally. CAN dictionary source hashes were refreshed against that commit
+(dictionary version `2026-10-12.5`); no observed signal meaning changed. All 70
+Lab tests pass. This is local software evidence; the fix has not yet been
+installed in the car. [PR #58](https://github.com/eujot/BACCAble/pull/58) is a
+draft; merge and release are pending vehicle acceptance. Its host CI job passed;
+the firmware and lint jobs were pending when this handoff was recorded.
+
+**Hardware acceptance remains open:** confirm that a single injected DNA frame
+actually latches the selected drive mode and removes the faint Natural lamp;
+confirm the LKA pulse as specified above. The current capture format observes received frames, not
+BACCAble's own transmissions. A rewritten status broadcast may be overridden by
+the body's next original broadcast; if so, find a genuine one-time request or
+another control path rather than restoring a continuous conflicting stream.
 
 ## Five-bundle CAN review, 2026-10-12
 
@@ -67,9 +132,10 @@ release-script checks, cppcheck and C1/C2/BH/CAN firmware builds with pinned
 Arm GNU 15.3.Rel1. The release contains BIN/HEX/ELF files for all four roles,
 `BUILD_INFO.json` and `SHA256SUMS`. Downloaded assets passed every listed
 SHA-256 check; build identity and tag both reference `02dd92c`. The release
-body matches [v5-beta-22.md](releases/v5-beta-22.md). No released image has
-yet been installed or tested in a vehicle. Readings appearance, DNA/LKA
-physical behavior and the new indicator field still need vehicle confirmation.
+body matches [v5-beta-22.md](releases/v5-beta-22.md). At release verification
+time, no image had yet been installed in a vehicle. The owner's later beta-22
+test found the DNA/LKA behaviors above. Readings appearance and the new
+indicator field still need vehicle confirmation.
 
 ## Validated 20 ms IPC default, 2026-10-02
 
@@ -333,12 +399,12 @@ lessons), the playbook anti-patterns, the dictionary (`dna_mode` notes,
 Added two owner preferences to the C1 Setup menu, driven by the 2026-10-11
 `dna_all_modes` / `lane_assist_toggle` capture sessions:
 
-- **`Default mode`** (OFF / A / D / Race) — on each start-up BACCAble rewrites the
+- **`Default mode`** (OFF / A / D / Race) — in beta-22 BACCAble repeatedly rewrites the
 drive-mode field of the body broadcasts `0x384` (C1, C2), `0x46C` and `0x25A`
 (BH) to the selected mode, the same `can_forward` way the ESC/TC feature forces
 Race. The override is armed on wake-up/save and stops as soon as the driver
 changes the mode by hand.
-- **`Disable LKA`** — holds the lane-keeping assist off by clearing byte 6 bit 1
+- **`Disable LKA`** — in beta-22 holds the lane-keeping assist off by repeatedly clearing byte 6 bit 1
 of the lane-assist state frame `0x4F6` (BH) / `0x547` (C2), the signal decoded
 from the lane-toggle sessions.
 

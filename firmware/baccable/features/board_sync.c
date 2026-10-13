@@ -2,22 +2,30 @@
 #include "features/periodic.h"
 #if defined(BACCABLE_C1)
 static uint8_t next_option;
-static uint8_t rearm_default = 1;
+/* 0 = transport resync, 1 = vehicle start, 2 = saved for the next start. */
+static uint8_t driver_aids_action = 1;
 
 /* Restart auxiliary-board configuration after a save, wake-up or diagnostic session. */
 void board_sync_restart(void) {
     next_option = 0;
+    driver_aids_action = 0;
     runtime_state.instruct_slave_boards_trigger_enabled = 1;
 }
 
-/* Only wake-up and saved preferences may restart the default-mode override. */
+/* A new vehicle session permits one set of start-up CAN frames. */
 void board_sync_rearm(void) {
     board_sync_restart();
-    rearm_default = 1;
-    /* A fresh wake-up or save re-arms the start-up drive mode and lets the driver
-     * change it again by hand. */
+    driver_aids_action = 1;
     chassis_state.default_mode_override = 1;
+    chassis_state.default_mode_sent = 0;
     chassis_state.default_mode_baseline = 0xFF;
+}
+
+/* Saving a preference applies it on the next vehicle start, not mid-session. */
+void board_sync_saved(void) {
+    board_sync_restart();
+    driver_aids_action = 2;
+    chassis_state.default_mode_override = 0;
 }
 
 /* Deliver every enabled-feature preference, retrying when the board link is busy. */
@@ -70,7 +78,7 @@ void board_sync_process(void) {
         command[1] = C2_Bh_cmdSetDriverAids;
         command[2] = settings_state.default_drive_mode;
         command[3] = settings_state.lane_assist_disabled;
-        command[4] = rearm_default;
+        command[4] = driver_aids_action;
         length = 5;
         break;
     default:
@@ -79,7 +87,7 @@ void board_sync_process(void) {
         return;
     }
     if (board_uart_send(command, length)) {
-        if (next_option == 7) rearm_default = 0;
+        if (next_option == 7) driver_aids_action = 0;
         ++next_option;
     }
 }

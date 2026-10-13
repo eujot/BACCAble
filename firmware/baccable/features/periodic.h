@@ -4,6 +4,7 @@ void exhaust_process(void);
 void board_sync_process(void);
 void board_sync_restart(void);
 void board_sync_rearm(void);
+void board_sync_saved(void);
 void led_strip_process(void);
 void drivetrain_process(void);
 void dashboard_feedback_process(void);

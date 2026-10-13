@@ -303,7 +303,7 @@
       "contradictions": [
         "The 2026-10-10 campaign planned the lane procedures on the assumption that LKA is toggled from a menu; the owner's confirmation of the left-stalk double-click supersedes that assumption."
       ],
-      "next_test": "Confirm the BH 0x4F6 / C2 0x547 byte 6 bit 1 meaning against the dashboard lane-assist lamp on the car, and verify that clearing the bit through the firmware `Disable LKA` option really disables the assist."
+      "next_test": "Verify in the car that one C2 0x384 double-click sequence (press, release, press, release) from the firmware disables LKA, the original C2 0x547 / BH 0x4F6 reports remain OFF afterward, and a later driver double-click can re-enable it. Confirm the state bit against the dashboard lamp."
     },
     {
       "id": "DNA-MODE-001",
@@ -318,10 +318,10 @@
           5
         ]
       ],
-      "description": "Drive mode (RDNA) code on the body broadcast 0x384 byte 1 bits 6..2 matches the firmware enum: N=0, D=2, A=4, Race=12. Confirmed from the 2026-10-11 dna_all_modes sessions (two sessions, three runs each, reversible against a Natural baseline). The same code is on BH 0x46C byte 7 bits 4..0; the dashboard frame BH 0x25A uses N=16, D=8, A=4, Race=1. 0x384 is a body broadcast other ECUs obey, so the mode can also be set by rewriting this field.",
+      "description": "Drive mode (RDNA) code on the body broadcast 0x384 byte 1 bits 6..2 matches the firmware enum: N=0, D=2, A=4, Race=12. Confirmed from the 2026-10-11 dna_all_modes sessions (two sessions, three runs each, reversible against a Natural baseline). The same code is on BH 0x46C byte 7 bits 4..0; the dashboard frame BH 0x25A uses N=16, D=8, A=4, Race=1. These are recurring mode broadcasts. Rewriting one copy may influence listeners but has not been shown to change the body's stored mode.",
       "evidence": [],
       "contradictions": [],
-      "next_test": "Optional: confirm on the dashboard that a rewritten 0x384 (the firmware `Default mode` option) changes the displayed and effective driving mode."
+      "next_test": "Verify whether a single rewritten 0x384 changes the body's selected mode and whether original mode reports remain at the requested value after BACCAble stops transmitting."
     },
     {
       "id": "LIGHT-INDICATOR-C2-42D-001",

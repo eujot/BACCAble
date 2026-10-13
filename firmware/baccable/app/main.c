@@ -139,6 +139,7 @@ int main(void) {
         ibs_override_process();
 #elif defined(BACCABLE_C2)
         chassis_process();
+        lane_assist_button_process();
         parking_process();
 #elif defined(BACCABLE_BH)
         body_process();

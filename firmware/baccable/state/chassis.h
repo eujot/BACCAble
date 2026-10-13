@@ -39,12 +39,30 @@ typedef struct {
 
     uint8_t stability_inverted;
 
-    /* 1 while the configured default drive mode is being injected; 0 once the
-     * driver changed the mode by hand (until the next wake-up / save). */
+    /* 1 while the start-up mode may still be sent; 0 after a manual change. */
     uint8_t default_mode_override;
+
+    /* Each bus frame gets at most one successful start-up injection. */
+    uint8_t default_mode_sent;
 
     /* Raw drive-mode field seen when the override was armed; 0xFF = not sampled yet. */
     uint8_t default_mode_baseline;
+
+    /* Start-up LKA double-click state; see LANE_ASSIST_* below. */
+    uint8_t lane_assist_pending;
+#if defined(BACCABLE_C2)
+    uint8_t lane_assist_release_data[8];
+    uint32_t lane_assist_step_at;
+#endif
 } ChassisState;
+
+enum {
+    LANE_ASSIST_IDLE = 0,
+    LANE_ASSIST_WAIT_STATE = 1,
+    LANE_ASSIST_WAIT_BUTTON = 2,
+    LANE_ASSIST_RELEASE_FIRST_PENDING = 3,
+    LANE_ASSIST_PRESS_SECOND_PENDING = 4,
+    LANE_ASSIST_RELEASE_SECOND_PENDING = 5,
+};
 extern ChassisState chassis_state;
 #endif
