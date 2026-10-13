@@ -99,6 +99,31 @@ BACCAble's own transmissions. A rewritten status broadcast may be overridden by
 the body's next original broadcast; if so, find a genuine one-time request or
 another control path rather than restoring a continuous conflicting stream.
 
+## Public Giulia CAN source cross-check, 2026-10-13
+
+Racelogic's Giulia Type 952 channel file supplies bit positions and scales for
+previously inventoried C1/C2 `0x0DE` steering angle, `0x0EE` four wheel speeds,
+`0x101` brake pedal position and `0x0FC` accelerator pedal position. Compared
+these layouts with October steering/braking markers and a September driving
+capture. The passive Lab dictionary now decodes them with exact DLC guards;
+the generated CAN catalog and captured-payload tests track the same layouts.
+The existing C1 `0x0FC` RPM layout independently agrees with that source.
+Wheel means are about 5.7% above BACCAble's existing vehicle-speed reading;
+physical wheel-speed scale remains open. Racelogic's driver-belt bit `0x257`
+conflicts with local fastened/unfastened markers and was **not** promoted.
+
+Compared a community Giulia/Stelvio diagnostic PID CSV with the current
+firmware catalog: 137 distinct ECU/DID pairs, 47 already catalogued and 90
+external-only leads. The five bundles have no new complete positive DID replies;
+external entries have not been enabled in firmware. The current tire-pressure
+request-shape and reply-length issues still need protocol validation. Full
+sources, byte formulas, examples, contradictions and a bounded next capture are
+in [the public-source cross-check](../baccable_lab/docs/research/20261013-public-giulia-can-sources.md).
+This research branch is based on the draft PR #58 source snapshot; it does not
+include a vehicle-tested firmware change. Integration and vehicle validation
+remain open. All 71 Lab unit tests and `git diff --check` pass locally; no
+firmware build is required for this passive dictionary/documentation change.
+
 ## Five-bundle CAN review, 2026-10-12
 
 Reviewed `10paz1`, `10paz2`, `dnskla`, `dna` and `kla` against raw SQLite, the
@@ -279,6 +304,28 @@ but cannot guarantee atomic physical screen replacement. The existing one-second
 reassertion and factory arbitration remain. No new beta or hardware flash.
 
 ## Current work
+
+### Experiments readings section (public-source DIDs), 2026-10-13
+
+Added a separate main-menu `Experiments` section carrying 38 extra diagnostic
+readings derived from the danardi78 Giulia/Stelvio PID CSV, grouped `Electrical`
+(4), `Oil` (3), `Engine` (15) and `Vehicle` (16). Diesel-only items and duplicates
+were dropped; nine DIDs needing a signed or bit-level decoder (or a multi-frame
+reply) were excluded from this release. Labels are human-readable English.
+
+The stored settings format is untouched: the new pages sit at the end of the
+gasoline catalog (ids 0x41.., groups 7..10), are always visible, and drive a new
+`EXP_GROUPS` view that reuses the VALUES renderer. `parameter_pages` grew to
+`[2][104]`, `parameter_definitions` to `[134]`, the cache to 136 entries, and the
+menu list buffers to 128. `menu_page_list` lists experiments only for their own
+groups, so group 0 (`All readings`) stays the ordinary catalog. C1 flash is now
+98120/98304 bytes (184 B margin).
+
+Validation: host suite (native ASan/UBSan) and the label test pass; all four ARM
+flavours build and lint; the Lab suite (71 tests) passes after refreshing the
+`parameter_catalog.c` and `parameter_cache.c` source hashes and the dictionary
+version. The readings are **unverified on the owner's 2.0 petrol car** (the source
+was a 2.2 diesel).
 
 ### Readings next-page prefetch, 2026-10-12
 

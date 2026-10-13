@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "dictionary_version": "2026-10-13.2",
+  "dictionary_version": "2026-10-13.4",
   "vehicle": {
     "model": "Alfa Romeo Giulia (owner-reported)",
     "model_year": null,
@@ -31,8 +31,8 @@
     "firmware/baccable/diagnostics/parameter_request.c": "a94cfe516169de9f2e56a1a507ce4ffca68da7edbe1e14034c344088eddb1e67",
     "firmware/baccable/app/main.c": "56ca1d425b792d5720e4c945dadcc06fa7c16e11facf4c61b34de9911845f21e",
     "firmware/baccable/vehicle/standard_frames.c": "2f9fab6b03830b2617fc1079e070758493098d6ca314bd1b14635849e2e7aa31",
-    "firmware/baccable/diagnostics/parameter_catalog.c": "df4e0c9beb1044eb0c3627455f80666b4a5edf912aa677623ec4d36b168151b3",
-    "firmware/baccable/diagnostics/parameter_cache.c": "bbe6c024bfa9c3b76780a5932322d0ab2b2a2e54f8127f970b999731f0027452",
+    "firmware/baccable/diagnostics/parameter_catalog.c": "882376126f4e2781eef5515356d1bba902d1d8b7c9799e03421ff552b2c8f21f",
+    "firmware/baccable/diagnostics/parameter_cache.c": "e1657d55f50074d41cfbdbbe9ae9108ce4be345449aa62fef81ab59ca0705020",
     "docs/architecture/REFERENCE_SIGNALS.md": "fb8188e6938df5e74e23682b02e065f79db95c059e0999d2b325d07a9c94e6cf",
     "firmware/baccable/features/body.c": "8369f2f57b1b605f4786fd64a389b96c994ae4c04b7a10cd874269efd7345fb7",
     "firmware/baccable/features/ipc_display_test.c": "af47a187e2e3a85965e12afb4a3b83c3d2754ffde648d81a046ee26af66b8e9c",
@@ -2124,6 +2124,268 @@
     },
     {
       "role": "C1",
+      "can_id": "0x0DE",
+      "title": "Steering angle (external mapping)",
+      "sources": [
+        {
+          "path": "baccable_lab/docs/research/20261013-public-giulia-can-sources.md"
+        }
+      ],
+      "signals": [
+        {
+          "name": "steering_angle",
+          "parts": [
+            [
+              0,
+              0,
+              8
+            ],
+            [
+              1,
+              0,
+              8
+            ]
+          ],
+          "unit": "deg",
+          "scale": -0.1,
+          "offset": 720,
+          "origin": "capture",
+          "note": "Racelogic Giulia Type 952 REF bit layout, corroborated by recorded steering sweeps; external vehicle variant and physical sign remain unverified."
+        }
+      ],
+      "note": "Recorded on both buses. Angle follows alternating steering-input markers; no left/right sign was independently labelled.",
+      "exact_dlc": 6,
+      "observations": [
+        {
+          "session": "20260926-181705Z",
+          "frames": 3495
+        },
+        {
+          "session": "20260926-181818Z",
+          "frames": 23196
+        },
+        {
+          "session": "20260926-182645Z",
+          "frames": 13347
+        },
+        {
+          "session": "20260927-135053Z",
+          "frames": 6945
+        },
+        {
+          "session": "20260927-185147Z",
+          "frames": 18127
+        },
+        {
+          "session": "20260928-203436Z",
+          "frames": 28458
+        },
+        {
+          "session": "20260928-204100Z",
+          "frames": 30399
+        },
+        {
+          "session": "20260928-204607Z",
+          "frames": 31569
+        },
+        {
+          "session": "20261010-104325Z",
+          "frames": 51766
+        },
+        {
+          "session": "20261010-110504Z",
+          "frames": 628
+        },
+        {
+          "session": "20261010-110821Z",
+          "frames": 12147
+        },
+        {
+          "session": "20261010-111025Z",
+          "frames": 128259
+        },
+        {
+          "session": "20261011-190746Z",
+          "frames": 18034
+        },
+        {
+          "session": "20261011-191050Z",
+          "frames": 6999
+        },
+        {
+          "session": "20261011-191202Z",
+          "frames": 5576
+        }
+      ]
+    },
+    {
+      "role": "C1",
+      "can_id": "0x0EE",
+      "title": "Four wheel speeds (external mapping)",
+      "sources": [
+        {
+          "path": "baccable_lab/docs/research/20261013-public-giulia-can-sources.md"
+        }
+      ],
+      "signals": [
+        {
+          "name": "wheel_speed_rr",
+          "parts": [
+            [
+              4,
+              0,
+              1
+            ],
+            [
+              5,
+              0,
+              8
+            ],
+            [
+              6,
+              4,
+              4
+            ]
+          ],
+          "unit": "km/h",
+          "scale": 0.066214,
+          "offset": 0,
+          "origin": "capture",
+          "note": "Racelogic Giulia Type 952 REF bit layout; synchronized driving capture supports motion and small inter-wheel spread, but wheel mean is about 5.7% above the existing vehicle-speed decoder. Physical calibration is not independently verified."
+        },
+        {
+          "name": "wheel_speed_rl",
+          "parts": [
+            [
+              3,
+              0,
+              6
+            ],
+            [
+              4,
+              1,
+              7
+            ]
+          ],
+          "unit": "km/h",
+          "scale": 0.066214,
+          "offset": 0,
+          "origin": "capture",
+          "note": "Racelogic Giulia Type 952 REF bit layout; synchronized driving capture supports motion and small inter-wheel spread, but wheel mean is about 5.7% above the existing vehicle-speed decoder. Physical calibration is not independently verified."
+        },
+        {
+          "name": "wheel_speed_fr",
+          "parts": [
+            [
+              1,
+              0,
+              3
+            ],
+            [
+              2,
+              0,
+              8
+            ],
+            [
+              3,
+              6,
+              2
+            ]
+          ],
+          "unit": "km/h",
+          "scale": 0.066214,
+          "offset": 0,
+          "origin": "capture",
+          "note": "Racelogic Giulia Type 952 REF bit layout; synchronized driving capture supports motion and small inter-wheel spread, but wheel mean is about 5.7% above the existing vehicle-speed decoder. Physical calibration is not independently verified."
+        },
+        {
+          "name": "wheel_speed_fl",
+          "parts": [
+            [
+              0,
+              0,
+              8
+            ],
+            [
+              1,
+              3,
+              5
+            ]
+          ],
+          "unit": "km/h",
+          "scale": 0.066214,
+          "offset": 0,
+          "origin": "capture",
+          "note": "Racelogic Giulia Type 952 REF bit layout; synchronized driving capture supports motion and small inter-wheel spread, but wheel mean is about 5.7% above the existing vehicle-speed decoder. Physical calibration is not independently verified."
+        }
+      ],
+      "note": "Racelogic Giulia Type 952 REF bit layout; synchronized driving capture supports motion and small inter-wheel spread, but wheel mean is about 5.7% above the existing vehicle-speed decoder. Physical calibration is not independently verified.",
+      "exact_dlc": 8,
+      "observations": [
+        {
+          "session": "20260926-181705Z",
+          "frames": 3487
+        },
+        {
+          "session": "20260926-181818Z",
+          "frames": 23148
+        },
+        {
+          "session": "20260926-182645Z",
+          "frames": 25177
+        },
+        {
+          "session": "20260927-135053Z",
+          "frames": 7182
+        },
+        {
+          "session": "20260927-185147Z",
+          "frames": 18090
+        },
+        {
+          "session": "20260928-203436Z",
+          "frames": 28400
+        },
+        {
+          "session": "20260928-204100Z",
+          "frames": 30335
+        },
+        {
+          "session": "20260928-204607Z",
+          "frames": 33192
+        },
+        {
+          "session": "20261010-104325Z",
+          "frames": 93136
+        },
+        {
+          "session": "20261010-110504Z",
+          "frames": 637
+        },
+        {
+          "session": "20261010-110821Z",
+          "frames": 12129
+        },
+        {
+          "session": "20261010-111025Z",
+          "frames": 128958
+        },
+        {
+          "session": "20261011-190746Z",
+          "frames": 18003
+        },
+        {
+          "session": "20261011-191050Z",
+          "frames": 6986
+        },
+        {
+          "session": "20261011-191202Z",
+          "frames": 5564
+        }
+      ]
+    },
+    {
+      "role": "C1",
       "can_id": "0x0FB",
       "title": "Engine torque",
       "sources": [
@@ -2226,6 +2488,9 @@
         {
           "path": "firmware/baccable/vehicle/engine_status.c",
           "symbol": "vehicle_handle_engine_status"
+        },
+        {
+          "path": "baccable_lab/docs/research/20261013-public-giulia-can-sources.md"
         }
       ],
       "signals": [
@@ -2358,6 +2623,26 @@
               ]
             }
           ]
+        },
+        {
+          "name": "accelerator_pedal_position",
+          "parts": [
+            [
+              2,
+              0,
+              5
+            ],
+            [
+              3,
+              4,
+              4
+            ]
+          ],
+          "unit": "%",
+          "scale": 0.1969,
+          "offset": 0,
+          "origin": "capture",
+          "note": "Racelogic Giulia Type 952 REF layout. In a driving capture the C1 field correlates with the existing 0x412 accelerator reading (r=0.932), but differs in level; do not treat the two as identical."
         }
       ],
       "note": "",
@@ -2422,16 +2707,20 @@
           "session": "20261011-191202Z",
           "frames": 5572
         }
-      ]
+      ],
+      "exact_dlc": 8
     },
     {
       "role": "C1",
       "can_id": "0x101",
-      "title": "Vehicle speed / assisted braking",
+      "title": "Vehicle speed / braking",
       "sources": [
         {
           "path": "firmware/baccable/vehicle/telemetry_frames.c",
           "symbol": "vehicle_handle_vehicle_speed"
+        },
+        {
+          "path": "baccable_lab/docs/research/20261013-public-giulia-can-sources.md"
         }
       ],
       "signals": [
@@ -2473,6 +2762,26 @@
           "offset": 0,
           "origin": "implementation",
           "note": "ACC/ESC/ASR intervention flag; not the driver brake pedal."
+        },
+        {
+          "name": "brake_pedal_position",
+          "parts": [
+            [
+              2,
+              0,
+              4
+            ],
+            [
+              3,
+              0,
+              8
+            ]
+          ],
+          "unit": "%",
+          "scale": 0.1,
+          "offset": 0,
+          "origin": "capture",
+          "note": "Racelogic Giulia Type 952 REF layout; three marked brake ON/OFF cycles on both buses agree. Samples near full press can exceed 100% slightly; preserve the measured value."
         }
       ],
       "note": "",
@@ -2537,7 +2846,8 @@
           "session": "20261011-191202Z",
           "frames": 5564
         }
-      ]
+      ],
+      "exact_dlc": 8
     },
     {
       "role": "C1",
@@ -5292,6 +5602,260 @@
     },
     {
       "role": "C2",
+      "can_id": "0x0DE",
+      "title": "Steering angle (external mapping)",
+      "sources": [
+        {
+          "path": "baccable_lab/docs/research/20261013-public-giulia-can-sources.md"
+        }
+      ],
+      "signals": [
+        {
+          "name": "steering_angle",
+          "parts": [
+            [
+              0,
+              0,
+              8
+            ],
+            [
+              1,
+              0,
+              8
+            ]
+          ],
+          "unit": "deg",
+          "scale": -0.1,
+          "offset": 720,
+          "origin": "capture",
+          "note": "Racelogic Giulia Type 952 REF bit layout, corroborated by recorded steering sweeps; external vehicle variant and physical sign remain unverified."
+        }
+      ],
+      "note": "Recorded on both buses. Angle follows alternating steering-input markers; no left/right sign was independently labelled.",
+      "exact_dlc": 6,
+      "observations": [
+        {
+          "session": "20260926-181818Z",
+          "frames": 23205
+        },
+        {
+          "session": "20260926-182645Z",
+          "frames": 13346
+        },
+        {
+          "session": "20260927-135053Z",
+          "frames": 6945
+        },
+        {
+          "session": "20260927-185147Z",
+          "frames": 18129
+        },
+        {
+          "session": "20260928-203436Z",
+          "frames": 28458
+        },
+        {
+          "session": "20260928-204100Z",
+          "frames": 30396
+        },
+        {
+          "session": "20260928-204607Z",
+          "frames": 31570
+        },
+        {
+          "session": "20261010-104325Z",
+          "frames": 51762
+        },
+        {
+          "session": "20261010-110504Z",
+          "frames": 633
+        },
+        {
+          "session": "20261010-110821Z",
+          "frames": 12164
+        },
+        {
+          "session": "20261010-111025Z",
+          "frames": 128350
+        },
+        {
+          "session": "20261011-190746Z",
+          "frames": 18049
+        },
+        {
+          "session": "20261011-191050Z",
+          "frames": 6998
+        },
+        {
+          "session": "20261011-191202Z",
+          "frames": 5583
+        }
+      ]
+    },
+    {
+      "role": "C2",
+      "can_id": "0x0EE",
+      "title": "Four wheel speeds (external mapping)",
+      "sources": [
+        {
+          "path": "baccable_lab/docs/research/20261013-public-giulia-can-sources.md"
+        }
+      ],
+      "signals": [
+        {
+          "name": "wheel_speed_rr",
+          "parts": [
+            [
+              4,
+              0,
+              1
+            ],
+            [
+              5,
+              0,
+              8
+            ],
+            [
+              6,
+              4,
+              4
+            ]
+          ],
+          "unit": "km/h",
+          "scale": 0.066214,
+          "offset": 0,
+          "origin": "capture",
+          "note": "Racelogic Giulia Type 952 REF bit layout; synchronized driving capture supports motion and small inter-wheel spread, but wheel mean is about 5.7% above the existing vehicle-speed decoder. Physical calibration is not independently verified."
+        },
+        {
+          "name": "wheel_speed_rl",
+          "parts": [
+            [
+              3,
+              0,
+              6
+            ],
+            [
+              4,
+              1,
+              7
+            ]
+          ],
+          "unit": "km/h",
+          "scale": 0.066214,
+          "offset": 0,
+          "origin": "capture",
+          "note": "Racelogic Giulia Type 952 REF bit layout; synchronized driving capture supports motion and small inter-wheel spread, but wheel mean is about 5.7% above the existing vehicle-speed decoder. Physical calibration is not independently verified."
+        },
+        {
+          "name": "wheel_speed_fr",
+          "parts": [
+            [
+              1,
+              0,
+              3
+            ],
+            [
+              2,
+              0,
+              8
+            ],
+            [
+              3,
+              6,
+              2
+            ]
+          ],
+          "unit": "km/h",
+          "scale": 0.066214,
+          "offset": 0,
+          "origin": "capture",
+          "note": "Racelogic Giulia Type 952 REF bit layout; synchronized driving capture supports motion and small inter-wheel spread, but wheel mean is about 5.7% above the existing vehicle-speed decoder. Physical calibration is not independently verified."
+        },
+        {
+          "name": "wheel_speed_fl",
+          "parts": [
+            [
+              0,
+              0,
+              8
+            ],
+            [
+              1,
+              3,
+              5
+            ]
+          ],
+          "unit": "km/h",
+          "scale": 0.066214,
+          "offset": 0,
+          "origin": "capture",
+          "note": "Racelogic Giulia Type 952 REF bit layout; synchronized driving capture supports motion and small inter-wheel spread, but wheel mean is about 5.7% above the existing vehicle-speed decoder. Physical calibration is not independently verified."
+        }
+      ],
+      "note": "Racelogic Giulia Type 952 REF bit layout; synchronized driving capture supports motion and small inter-wheel spread, but wheel mean is about 5.7% above the existing vehicle-speed decoder. Physical calibration is not independently verified.",
+      "exact_dlc": 8,
+      "observations": [
+        {
+          "session": "20260926-181818Z",
+          "frames": 23155
+        },
+        {
+          "session": "20260926-182645Z",
+          "frames": 25179
+        },
+        {
+          "session": "20260927-135053Z",
+          "frames": 7184
+        },
+        {
+          "session": "20260927-185147Z",
+          "frames": 18092
+        },
+        {
+          "session": "20260928-203436Z",
+          "frames": 28400
+        },
+        {
+          "session": "20260928-204100Z",
+          "frames": 30332
+        },
+        {
+          "session": "20260928-204607Z",
+          "frames": 33194
+        },
+        {
+          "session": "20261010-104325Z",
+          "frames": 93129
+        },
+        {
+          "session": "20261010-110504Z",
+          "frames": 640
+        },
+        {
+          "session": "20261010-110821Z",
+          "frames": 12139
+        },
+        {
+          "session": "20261010-111025Z",
+          "frames": 128967
+        },
+        {
+          "session": "20261011-190746Z",
+          "frames": 18012
+        },
+        {
+          "session": "20261011-191050Z",
+          "frames": 6985
+        },
+        {
+          "session": "20261011-191202Z",
+          "frames": 5572
+        }
+      ]
+    },
+    {
+      "role": "C2",
       "can_id": "0x0FC",
       "title": "Engine status / RPM",
       "sources": [
@@ -5302,6 +5866,9 @@
         {
           "path": "firmware/baccable/features/parking.c",
           "symbol": "parking_observe"
+        },
+        {
+          "path": "baccable_lab/docs/research/20261013-public-giulia-can-sources.md"
         }
       ],
       "signals": [
@@ -5434,6 +6001,26 @@
               ]
             }
           ]
+        },
+        {
+          "name": "accelerator_pedal_position",
+          "parts": [
+            [
+              2,
+              0,
+              5
+            ],
+            [
+              3,
+              4,
+              4
+            ]
+          ],
+          "unit": "%",
+          "scale": 0.1969,
+          "offset": 0,
+          "origin": "capture",
+          "note": "Racelogic Giulia Type 952 REF layout. In a driving capture the C1 field correlates with the existing 0x412 accelerator reading (r=0.932), but differs in level; do not treat the two as identical."
         }
       ],
       "note": "",
@@ -5493,6 +6080,99 @@
         {
           "session": "20261011-191202Z",
           "frames": 5583
+        }
+      ],
+      "exact_dlc": 8
+    },
+    {
+      "role": "C2",
+      "can_id": "0x101",
+      "title": "Brake pedal position (external mapping)",
+      "sources": [
+        {
+          "path": "baccable_lab/docs/research/20261013-public-giulia-can-sources.md"
+        }
+      ],
+      "signals": [
+        {
+          "name": "brake_pedal_position",
+          "parts": [
+            [
+              2,
+              0,
+              4
+            ],
+            [
+              3,
+              0,
+              8
+            ]
+          ],
+          "unit": "%",
+          "scale": 0.1,
+          "offset": 0,
+          "origin": "capture",
+          "note": "Racelogic Giulia Type 952 REF layout; three marked brake ON/OFF cycles on both buses agree. Samples near full press can exceed 100% slightly; preserve the measured value."
+        }
+      ],
+      "note": "Same field placement as C1 in three recorded brake ON/OFF cycles; other C1 fields are not assumed to share C2 semantics.",
+      "exact_dlc": 8,
+      "observations": [
+        {
+          "session": "20260926-181818Z",
+          "frames": 23154
+        },
+        {
+          "session": "20260926-182645Z",
+          "frames": 25179
+        },
+        {
+          "session": "20260927-135053Z",
+          "frames": 7183
+        },
+        {
+          "session": "20260927-185147Z",
+          "frames": 18092
+        },
+        {
+          "session": "20260928-203436Z",
+          "frames": 28399
+        },
+        {
+          "session": "20260928-204100Z",
+          "frames": 30332
+        },
+        {
+          "session": "20260928-204607Z",
+          "frames": 33194
+        },
+        {
+          "session": "20261010-104325Z",
+          "frames": 93128
+        },
+        {
+          "session": "20261010-110504Z",
+          "frames": 640
+        },
+        {
+          "session": "20261010-110821Z",
+          "frames": 12138
+        },
+        {
+          "session": "20261010-111025Z",
+          "frames": 128967
+        },
+        {
+          "session": "20261011-190746Z",
+          "frames": 18011
+        },
+        {
+          "session": "20261011-191050Z",
+          "frames": 6984
+        },
+        {
+          "session": "20261011-191202Z",
+          "frames": 5572
         }
       ]
     },
@@ -20911,8 +21591,8 @@
       "role": "C1",
       "can_id": "0x0DE",
       "dlc": 6,
-      "title": null,
-      "coverage": "unmapped",
+      "title": "Steering angle (external mapping)",
+      "coverage": "broadcast_dictionary",
       "frames": 378945,
       "sessions": [
         "20260926-181705Z",
@@ -20936,8 +21616,8 @@
       "role": "C1",
       "can_id": "0x0EE",
       "dlc": 8,
-      "title": null,
-      "coverage": "unmapped",
+      "title": "Four wheel speeds (external mapping)",
+      "coverage": "broadcast_dictionary",
       "frames": 434424,
       "sessions": [
         "20260926-181705Z",
@@ -21191,7 +21871,7 @@
       "role": "C1",
       "can_id": "0x101",
       "dlc": 8,
-      "title": "Vehicle speed / assisted braking",
+      "title": "Vehicle speed / braking",
       "coverage": "broadcast_dictionary",
       "frames": 434421,
       "sessions": [
@@ -23737,8 +24417,8 @@
       "role": "C2",
       "can_id": "0x0DE",
       "dlc": 6,
-      "title": null,
-      "coverage": "unmapped",
+      "title": "Steering angle (external mapping)",
+      "coverage": "broadcast_dictionary",
       "frames": 375588,
       "sessions": [
         "20260926-181818Z",
@@ -23785,8 +24465,8 @@
       "role": "C2",
       "can_id": "0x0EE",
       "dlc": 8,
-      "title": null,
-      "coverage": "unmapped",
+      "title": "Four wheel speeds (external mapping)",
+      "coverage": "broadcast_dictionary",
       "frames": 430980,
       "sessions": [
         "20260926-181818Z",
@@ -23929,8 +24609,8 @@
       "role": "C2",
       "can_id": "0x101",
       "dlc": 8,
-      "title": null,
-      "coverage": "unmapped",
+      "title": "Brake pedal position (external mapping)",
+      "coverage": "broadcast_dictionary",
       "frames": 430973,
       "sessions": [
         "20260926-181818Z",

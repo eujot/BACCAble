@@ -4,7 +4,7 @@ float displayed_parameter_values[4];
 
 uint8_t parameter_page_count = 0;
 
-uint8_t gasoline_page_count = 64;
+uint8_t gasoline_page_count = 102;
 uint8_t diesel_page_count = 60;
 uint8_t selected_parameter_element = 0;
 
@@ -18,7 +18,7 @@ uint8_t selected_parameter_element = 0;
 
 // format string $x.yf for float params where y is decimal part and x is integer part
 // format string $enum for enumerator values derived from specific enum arrays
-const ParameterPage parameter_pages[2][64] = {
+const ParameterPage parameter_pages[2][104] = {
     {
         {.id = 0x01,
          .group = 5,
@@ -355,6 +355,82 @@ const ParameterPage parameter_pages[2][64] = {
          .name = "MF$4.0f MA$3.0fC",
          .parameter_ids = {90, 32},
          .element_count = 0},
+        {.id = 0x41, .group = 7, .label = "IPC brightness",
+         .name = "$4.0f", .parameter_ids = {87, 87, 0, 0}, .element_count = 1}, /* 0x0104 DA60F1 */
+        {.id = 0x42, .group = 7, .label = "Light switch",
+         .name = "$5.0f", .parameter_ids = {88, 88, 0, 0}, .element_count = 1}, /* 0x0133 DA40F1 */
+        {.id = 0x43, .group = 7, .label = "Battery V",
+         .name = "$5.2f", .parameter_ids = {89, 89, 0, 0}, .element_count = 1}, /* 0x2B0D DA10F1 */
+        {.id = 0x44, .group = 7, .label = "Battery temp",
+         .name = "$4.0f", .parameter_ids = {90, 90, 0, 0}, .element_count = 1}, /* 0x2B0F DA10F1 */
+        {.id = 0x45, .group = 8, .label = "Oil press ok",
+         .name = "$4.0f", .parameter_ids = {91, 91, 0, 0}, .element_count = 1}, /* 0x194D DA10F1 */
+        {.id = 0x46, .group = 8, .label = "Oil pressure",
+         .name = "$4.0f", .parameter_ids = {92, 92, 0, 0}, .element_count = 1}, /* 0x194F DA10F1 */
+        {.id = 0x47, .group = 8, .label = "Oil service km",
+         .name = "$5.0f", .parameter_ids = {93, 93, 0, 0}, .element_count = 1}, /* 0x3810 DA10F1 */
+        {.id = 0x48, .group = 9, .label = "Fuel level",
+         .name = "$4.1f", .parameter_ids = {94, 94, 0, 0}, .element_count = 1}, /* 0x1001 DA10F1 */
+        {.id = 0x49, .group = 9, .label = "Adv pilot",
+         .name = "$5.1f", .parameter_ids = {95, 95, 0, 0}, .element_count = 1}, /* 0x18C1 DA10F1 */
+        {.id = 0x4A, .group = 9, .label = "Adv pre",
+         .name = "$5.1f", .parameter_ids = {96, 96, 0, 0}, .element_count = 1}, /* 0x18C2 DA10F1 */
+        {.id = 0x4B, .group = 9, .label = "Adv after",
+         .name = "$5.1f", .parameter_ids = {97, 97, 0, 0}, .element_count = 1}, /* 0x18C4 DA10F1 */
+        {.id = 0x4C, .group = 9, .label = "Adv post",
+         .name = "$5.1f", .parameter_ids = {98, 98, 0, 0}, .element_count = 1}, /* 0x18C5 DA10F1 */
+        {.id = 0x4D, .group = 9, .label = "Adv main",
+         .name = "$5.1f", .parameter_ids = {99, 99, 0, 0}, .element_count = 1}, /* 0x18C6 DA10F1 */
+        {.id = 0x4E, .group = 9, .label = "Spark cmd",
+         .name = "$5.2f", .parameter_ids = {100, 100, 0, 0}, .element_count = 1}, /* 0x190B DA10F1 */
+        {.id = 0x4F, .group = 9, .label = "Throttle 1",
+         .name = "$5.2f", .parameter_ids = {101, 101, 0, 0}, .element_count = 1}, /* 0x1924 DA10F1 */
+        {.id = 0x50, .group = 9, .label = "Throttle 2",
+         .name = "$5.2f", .parameter_ids = {102, 102, 0, 0}, .element_count = 1}, /* 0x1925 DA10F1 */
+        {.id = 0x51, .group = 9, .label = "Throttle 3",
+         .name = "$5.2f", .parameter_ids = {103, 103, 0, 0}, .element_count = 1}, /* 0x1926 DA10F1 */
+        {.id = 0x52, .group = 9, .label = "Air mass",
+         .name = "$5.1f", .parameter_ids = {104, 104, 0, 0}, .element_count = 1}, /* 0x193C DA10F1 */
+        {.id = 0x53, .group = 9, .label = "Air mass req",
+         .name = "$5.1f", .parameter_ids = {105, 105, 0, 0}, .element_count = 1}, /* 0x193D DA10F1 */
+        {.id = 0x54, .group = 9, .label = "Air pressure",
+         .name = "$5.0f", .parameter_ids = {106, 106, 0, 0}, .element_count = 1}, /* 0x1956 DA10F1 */
+        {.id = 0x55, .group = 9, .label = "Turbo status",
+         .name = "$4.0f", .parameter_ids = {107, 107, 0, 0}, .element_count = 1}, /* 0x1963 DA10F1 */
+        {.id = 0x56, .group = 9, .label = "Max rpm",
+         .name = "$4.0f", .parameter_ids = {108, 108, 0, 0}, .element_count = 1}, /* 0x2005 DA10F1 */
+        {.id = 0x57, .group = 10, .label = "DNA (TCM)",
+         .name = "$4.0f", .parameter_ids = {109, 109, 0, 0}, .element_count = 1}, /* 0x0518 DA18F1 */
+        {.id = 0x58, .group = 10, .label = "Forced regen",
+         .name = "$4.0f", .parameter_ids = {110, 110, 0, 0}, .element_count = 1}, /* 0x18EC DA10F1 */
+        {.id = 0x59, .group = 10, .label = "Clutch",
+         .name = "$4.0f", .parameter_ids = {111, 111, 0, 0}, .element_count = 1}, /* 0x1923 DA10F1 */
+        {.id = 0x5A, .group = 10, .label = "Cruise sw 1",
+         .name = "$5.0f", .parameter_ids = {112, 112, 0, 0}, .element_count = 1}, /* 0x192A DA10F1 */
+        {.id = 0x5B, .group = 10, .label = "Gear (TCM)",
+         .name = "$4.0f", .parameter_ids = {113, 113, 0, 0}, .element_count = 1}, /* 0x192D DA10F1 */
+        {.id = 0x5C, .group = 10, .label = "Cruise sw 2",
+         .name = "$5.0f", .parameter_ids = {114, 114, 0, 0}, .element_count = 1}, /* 0x1961 DA10F1 */
+        {.id = 0x5D, .group = 10, .label = "Start&Stop",
+         .name = "$4.0f", .parameter_ids = {115, 115, 0, 0}, .element_count = 1}, /* 0x1B00 DA10F1 */
+        {.id = 0x5E, .group = 10, .label = "S&S request",
+         .name = "$4.0f", .parameter_ids = {116, 116, 0, 0}, .element_count = 1}, /* 0x1B02 DA10F1 */
+        {.id = 0x5F, .group = 10, .label = "S&S disabled",
+         .name = "$5.0f", .parameter_ids = {117, 117, 0, 0}, .element_count = 1}, /* 0x1B0C DA10F1 */
+        {.id = 0x60, .group = 10, .label = "Odometer",
+         .name = "$5.1f", .parameter_ids = {118, 118, 0, 0}, .element_count = 1}, /* 0x2001 DA10F1 */
+        {.id = 0x61, .group = 10, .label = "Progr status",
+         .name = "$4.0f", .parameter_ids = {119, 119, 0, 0}, .element_count = 1}, /* 0x2003 DA10F1 */
+        {.id = 0x62, .group = 10, .label = "Regen hi-flow",
+         .name = "$4.0f", .parameter_ids = {120, 120, 0, 0}, .element_count = 1}, /* 0x3835 DA10F1 */
+        {.id = 0x63, .group = 10, .label = "Cycle %",
+         .name = "$5.2f", .parameter_ids = {121, 121, 0, 0}, .element_count = 1}, /* 0x392B DA10F1 */
+        {.id = 0x64, .group = 10, .label = "Cycle count",
+         .name = "$5.0f", .parameter_ids = {122, 122, 0, 0}, .element_count = 1}, /* 0x392C DA10F1 */
+        {.id = 0x65, .group = 10, .label = "Low press time",
+         .name = "$5.0f", .parameter_ids = {123, 123, 0, 0}, .element_count = 1}, /* 0x3969 DA10F1 */
+        {.id = 0x66, .group = 10, .label = "Cruise sw 3",
+         .name = "$5.0f", .parameter_ids = {124, 124, 0, 0}, .element_count = 1}, /* 0x3975 DA10F1 */
     },
     {
         {.id = 0x81,
@@ -662,7 +738,7 @@ const ParameterPage parameter_pages[2][64] = {
          .element_count = 3},
     }};
 
-const ParameterDefinition parameter_definitions[100] = {
+const ParameterDefinition parameter_definitions[136] = {
     {
         .request_id = 0x10,
         .request_length = 4,
@@ -1658,6 +1734,120 @@ const ParameterDefinition parameter_definitions[100] = {
     {.request_id = 0x23, .response_id = 0x41a, .value_length = 1, .scale = 1}, // 95
     {.request_id = 0x24, .response_id = 0x41a, .value_length = 1, .scale = 1}, // 96
 
+    {.request_id = 0x18DA60F1, .request_length = 4, .request_data = SWAP_UINT32(0x03220104),
+     .response_id = 0x18DAF160, .value_length = 1, .value_offset = 0,
+     .raw_offset = 0, .scale = 1.0f, .scaled_offset = 0},
+    {.request_id = 0x18DA40F1, .request_length = 4, .request_data = SWAP_UINT32(0x03220133),
+     .response_id = 0x18DAF140, .value_length = 2, .value_offset = 0,
+     .raw_offset = 0, .scale = 1.0f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x03222B0D),
+     .response_id = 0x18DAF110, .value_length = 2, .value_offset = 0,
+     .raw_offset = 0, .scale = 0.001f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x03222B0F),
+     .response_id = 0x18DAF110, .value_length = 1, .value_offset = 0,
+     .raw_offset = -40, .scale = 1.0f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x0322194D),
+     .response_id = 0x18DAF110, .value_length = 1, .value_offset = 0,
+     .raw_offset = 0, .scale = 1.0f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x0322194F),
+     .response_id = 0x18DAF110, .value_length = 1, .value_offset = 0,
+     .raw_offset = 0, .scale = 1.0f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x03223810),
+     .response_id = 0x18DAF110, .value_length = 2, .value_offset = 0,
+     .raw_offset = 0, .scale = 10.0f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x03221001),
+     .response_id = 0x18DAF110, .value_length = 1, .value_offset = 0,
+     .raw_offset = 0, .scale = 0.39215686f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x032218C1),
+     .response_id = 0x18DAF110, .value_length = 2, .value_offset = 0,
+     .raw_offset = 0, .scale = 0.016f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x032218C2),
+     .response_id = 0x18DAF110, .value_length = 2, .value_offset = 0,
+     .raw_offset = 0, .scale = 0.016f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x032218C4),
+     .response_id = 0x18DAF110, .value_length = 2, .value_offset = 0,
+     .raw_offset = 0, .scale = 0.016f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x032218C5),
+     .response_id = 0x18DAF110, .value_length = 2, .value_offset = 0,
+     .raw_offset = 0, .scale = 0.016f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x032218C6),
+     .response_id = 0x18DAF110, .value_length = 2, .value_offset = 0,
+     .raw_offset = 0, .scale = 0.016f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x0322190B),
+     .response_id = 0x18DAF110, .value_length = 2, .value_offset = 0,
+     .raw_offset = 0, .scale = 0.0015259022f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x03221924),
+     .response_id = 0x18DAF110, .value_length = 2, .value_offset = 0,
+     .raw_offset = 0, .scale = 0.0015259022f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x03221925),
+     .response_id = 0x18DAF110, .value_length = 2, .value_offset = 0,
+     .raw_offset = 0, .scale = 0.0015259022f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x03221926),
+     .response_id = 0x18DAF110, .value_length = 2, .value_offset = 0,
+     .raw_offset = 0, .scale = 0.0040690104f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x0322193C),
+     .response_id = 0x18DAF110, .value_length = 2, .value_offset = 0,
+     .raw_offset = 0, .scale = 0.33333333f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x0322193D),
+     .response_id = 0x18DAF110, .value_length = 2, .value_offset = 0,
+     .raw_offset = 0, .scale = 0.33333333f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x03221956),
+     .response_id = 0x18DAF110, .value_length = 2, .value_offset = 0,
+     .raw_offset = -32768, .scale = 1.0f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x03221963),
+     .response_id = 0x18DAF110, .value_length = 1, .value_offset = 0,
+     .raw_offset = 0, .scale = 1.0f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x03222005),
+     .response_id = 0x18DAF110, .value_length = 1, .value_offset = 0,
+     .raw_offset = 0, .scale = 1.0f, .scaled_offset = 0},
+    {.request_id = 0x18DA18F1, .request_length = 4, .request_data = SWAP_UINT32(0x03220518),
+     .response_id = 0x18DAF118, .value_length = 1, .value_offset = 0,
+     .raw_offset = 0, .scale = 1.0f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x032218EC),
+     .response_id = 0x18DAF110, .value_length = 1, .value_offset = 0,
+     .raw_offset = 0, .scale = 1.0f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x03221923),
+     .response_id = 0x18DAF110, .value_length = 1, .value_offset = 0,
+     .raw_offset = 0, .scale = 1.0f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x0322192A),
+     .response_id = 0x18DAF110, .value_length = 2, .value_offset = 0,
+     .raw_offset = 0, .scale = 1.0f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x0322192D),
+     .response_id = 0x18DAF110, .value_length = 1, .value_offset = 0,
+     .raw_offset = 0, .scale = 1.0f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x03221961),
+     .response_id = 0x18DAF110, .value_length = 2, .value_offset = 0,
+     .raw_offset = 0, .scale = 1.0f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x03221B00),
+     .response_id = 0x18DAF110, .value_length = 1, .value_offset = 0,
+     .raw_offset = 0, .scale = 1.0f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x03221B02),
+     .response_id = 0x18DAF110, .value_length = 1, .value_offset = 0,
+     .raw_offset = 0, .scale = 1.0f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x03221B0C),
+     .response_id = 0x18DAF110, .value_length = 4, .value_offset = 0,
+     .raw_offset = 0, .scale = 1.0f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x03222001),
+     .response_id = 0x18DAF110, .value_length = 3, .value_offset = 0,
+     .raw_offset = 0, .scale = 0.1f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x03222003),
+     .response_id = 0x18DAF110, .value_length = 1, .value_offset = 0,
+     .raw_offset = 0, .scale = 1.0f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x03223835),
+     .response_id = 0x18DAF110, .value_length = 1, .value_offset = 0,
+     .raw_offset = 0, .scale = 1.0f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x0322392B),
+     .response_id = 0x18DAF110, .value_length = 2, .value_offset = 0,
+     .raw_offset = 0, .scale = 0.0015259022f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x0322392C),
+     .response_id = 0x18DAF110, .value_length = 2, .value_offset = 0,
+     .raw_offset = 0, .scale = 1.0f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x03223969),
+     .response_id = 0x18DAF110, .value_length = 2, .value_offset = 0,
+     .raw_offset = 0, .scale = 1.0f, .scaled_offset = 0},
+    {.request_id = 0x18DA10F1, .request_length = 4, .request_data = SWAP_UINT32(0x03223975),
+     .response_id = 0x18DAF110, .value_length = 2, .value_offset = 0,
+     .raw_offset = 0, .scale = 1.0f, .scaled_offset = 0},
 };
 
 const char *regeneration_labels[] = {"NONE      ", "DPF LO    ", "DPF HI    ", "NSC De-NOx",

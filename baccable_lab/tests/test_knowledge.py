@@ -49,6 +49,22 @@ class KnowledgeTests(unittest.TestCase):
         self.assertAlmostEqual(self.values('C1', 0x41A, '004E00009C400000')['battery_current']['value'], 0)
         self.assertEqual(self.values('C1', 0x41A, '007F000000000000')['battery_soc']['value'], 127)
 
+    def test_public_giulia_layouts_against_captured_payloads_and_dlc(self):
+        for role in ('C1', 'C2'):
+            self.assertAlmostEqual(self.values(role, 0x0DE, '1C0797D00D8C')['steering_angle']['value'], 2.5)
+            wheels = self.values(role, 0x0EE, '1CA8E5873A3A00CD')
+            for name, expected in [('wheel_speed_rr', 61.446592), ('wheel_speed_rl', 61.24795),
+                                   ('wheel_speed_fr', 60.784452), ('wheel_speed_fl', 60.718238)]:
+                self.assertAlmostEqual(wheels[name]['value'], expected)
+            brake_payload, brake_value = ('000003ED9FC00FD6', 100.5) if role == 'C1' else ('000003EC00078A80', 100.4)
+            self.assertAlmostEqual(self.values(role, 0x101, brake_payload)['brake_pedal_position']['value'], brake_value)
+            self.assertAlmostEqual(self.values(role, 0x0FC, '14A4C322183FDE10')['accelerator_pedal_position']['value'], 9.845)
+            self.assertFalse(self.values(role, 0x0DE, '1C0797D00D8C00'))
+            self.assertFalse(self.values(role, 0x0EE, '1CA8E5873A3A00'))
+            self.assertFalse(self.values(role, 0x101, '000003ED9FC00F'))
+        self.assertNotIn('vehicle_speed', self.values('C2', 0x101, '000003ED9FC00FD6'))
+        self.assertFalse(self.values('BH', 0x0EE, '1CA8E5873A3A00CD'))
+
     def test_bus_specific_light_fields_and_origin(self):
         c1 = self.values('C1', 0x73E, '0080020000000000')
         c2 = self.values('C2', 0x73E, '0080020000000000')

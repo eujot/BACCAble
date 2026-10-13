@@ -3,8 +3,8 @@
 #if defined(BACCABLE_C1)
     #include "app/powertrain.h"
     #include <string.h>
-static float values[100], peaks[100];
-static uint8_t peak_valid[(100 + 7) / 8];
+static float values[136], peaks[136];
+static uint8_t peak_valid[(136 + 7) / 8];
 static bool hold;
 
 /* Start a new maximum-hold interval without discarding live measurements. */
@@ -18,8 +18,8 @@ void parameter_peak_enable(bool enabled) {
 
 /* Report whether the display is retaining maximum readings. */
 bool parameter_peak_enabled(void) { return hold; }
-static uint32_t updated[100];
-static uint8_t valid[(100 + 7) / 8];
+static uint32_t updated[136];
+static uint8_t valid[(136 + 7) / 8];
 static uint32_t rpm_updated;
 static uint8_t rpm_valid;
 

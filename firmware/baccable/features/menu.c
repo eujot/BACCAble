@@ -17,6 +17,7 @@ typedef enum {
     ROOT,
     FAVORITES,
     GROUPS,
+    EXP_GROUPS,
     VALUES,
     FUNCTIONS,
     SETTINGS,
@@ -85,7 +86,7 @@ static ActionRequest requests[ACTION_COUNT];
 static const uint8_t ipc_test_sources[] = {0x06, 0x09, 0x21};
 static const char *const ipc_test_source_labels[] = {"USB source", "Bluetooth source", "CarPlay source"};
 static const char *const ipc_test_patterns[] = {"UTF glyphs", "Line 1 length", "Line 2 length", "Both lines"};
-static const char *const roots[] = {"Favorites", "Readings", "Actions", "Settings", "Information"};
+static const char *const roots[] = {"Favorites", "Readings", "Actions", "Settings", "Information", "Experiments"};
 static const char *const settings[] = {"Features",   "Page favorites", "Shown pages",
                                        "Favorite order", "Sort order", "Favorites", "BACCAble IPC"};
 static char peer_versions[2][DASHBOARD_MESSAGE_MAX_LENGTH - 2];
@@ -115,7 +116,12 @@ static MenuInput input;
 static MenuView view = FAVORITES;
 static uint8_t gasoline_v6, advanced_pages;
 static uint8_t root, group = 1, function, setting, info, editor_page, engine;
-static uint8_t list[64], list_count, selection, order_selected;
+static uint8_t list[128], list_count, selection, order_selected;
+static const char *const experiment_group_names[MENU_EXPERIMENT_GROUPS] = {
+    "Electrical", "Oil", "Engine", "Vehicle"};
+static uint8_t exp_group;
+/* Remembered page for a group; experimental groups are not persisted. */
+static uint16_t group_last_page(uint8_t g) { return g < MENU_GROUPS ? preferences.last[engine][g] : 0; }
 static uint8_t setup_last, fault_index;
 static uint8_t ipc_test_source, ipc_test_entry, ipc_test_pattern;
 /* Experimental display options never enter settings_state or Flash records. */
@@ -452,7 +458,7 @@ void menu_engine_changed(void) {
     dashboard_state.dashboard_page_index = 0;
     if (view == FAVORITES || view == VALUES || view == EDIT_FAVORITES || view == EDIT_VISIBLE ||
         view == ORDER_FAVORITES)
-        build_pages(view == FAVORITES ? preferences.last_favorite[engine] : preferences.last[engine][group]);
+        build_pages(view == FAVORITES ? preferences.last_favorite[engine] : group_last_page(group));
 }
 
 /* Import the saved catalog page without flattening its measurements. */
@@ -671,7 +677,7 @@ static void select_page(void) {
     uint16_t id = parameter_pages[engine][index].id;
     if (view == FAVORITES)
         preferences.last_favorite[engine] = id;
-    else
+    else if (group < MENU_GROUPS) /* Experimental groups are not persisted. */
         preferences.last[engine][group] = id;
     if (reading_preview()) parameter_request_follow_page();
     else parameter_request_cancel();
@@ -710,7 +716,7 @@ static void build_pages(uint16_t selected) {
 /* Open favorites or a parameter group at its remembered page. */
 static void open_pages(bool favorite) {
     view = favorite ? FAVORITES : VALUES;
-    build_pages(favorite ? preferences.last_favorite[engine] : preferences.last[engine][group]);
+    build_pages(favorite ? preferences.last_favorite[engine] : group_last_page(group));
 }
 
 /* Show an automatic result without changing the user's visibility preferences. */
@@ -922,7 +928,7 @@ void menu_render(void) {
     switch (view) {
     case ROOT:
         if (settings_state.ipc_my23_is_installed) {
-            menu_present_view(UI_MODE_LIST, roots[root], roots[(root + 1) % 5]); return;
+            menu_present_view(UI_MODE_LIST, roots[root], roots[(root + 1) % (sizeof(roots) / sizeof(roots[0]))]); return;
         }
         snprintf_(text, sizeof(text), UI_SYMBOL_ENTER " %s", roots[root]);
         break;
@@ -931,6 +937,13 @@ void menu_render(void) {
             menu_present_view(UI_MODE_LIST, menu_group_names[group], menu_group_names[(group + 1) % MENU_GROUPS]); return;
         }
         snprintf_(text, sizeof(text), UI_SYMBOL_ENTER " %s", menu_group_names[group]);
+        break;
+    case EXP_GROUPS:
+        if (settings_state.ipc_my23_is_installed) {
+            menu_present_view(UI_MODE_LIST, experiment_group_names[exp_group],
+                              experiment_group_names[(exp_group + 1) % MENU_EXPERIMENT_GROUPS]); return;
+        }
+        snprintf_(text, sizeof(text), UI_SYMBOL_ENTER " %s", experiment_group_names[exp_group]);
         break;
     case FAVORITES:
     case VALUES:
@@ -1218,7 +1231,7 @@ static void back(void) {
     } else if (view == SETTINGS) {
         request_exit(ROOT, false);
     } else if (view == VALUES)
-        view = GROUPS;
+        view = group >= MENU_GROUPS ? EXP_GROUPS : GROUPS;
     else
         view = ROOT;
     parameter_request_cancel();
@@ -1313,6 +1326,9 @@ void menu_event(MenuEvent event) {
         case GROUPS:
             group = wrap(group, MENU_GROUPS, direction);
             break;
+        case EXP_GROUPS:
+            exp_group = wrap(exp_group, MENU_EXPERIMENT_GROUPS, direction);
+            break;
         case FUNCTIONS:
             function_move(direction, jump);
             break;
@@ -1350,8 +1366,13 @@ void menu_event(MenuEvent event) {
         case EDIT_FAVORITES:
         case EDIT_VISIBLE:
             if (jump && view != FAVORITES) {
-                group = wrap(group, MENU_GROUPS, direction);
-                build_pages(is_editor() ? 0 : preferences.last[engine][group]);
+                if (group >= MENU_GROUPS) {
+                    group = MENU_GROUPS + wrap(group - MENU_GROUPS, MENU_EXPERIMENT_GROUPS, direction);
+                    build_pages(0);
+                } else {
+                    group = wrap(group, MENU_GROUPS, direction);
+                    build_pages(is_editor() ? 0 : preferences.last[engine][group]);
+                }
             } else {
                 selection = wrap(selection, list_count, direction);
                 select_page();
@@ -1396,10 +1417,19 @@ void menu_event(MenuEvent event) {
             case 4:
                 view = INFO;
                 break;
+            case 5:
+                exp_group = 0;
+                view = EXP_GROUPS;
+                break;
             }
             break;
         case GROUPS:
             open_pages(false);
+            break;
+        case EXP_GROUPS:
+            group = MENU_GROUPS + exp_group;
+            view = VALUES;
+            build_pages(0);
             break;
         case FAVORITES:
         case VALUES:
@@ -1511,7 +1541,7 @@ void menu_button(uint8_t button, bool allowed) {
     #ifndef HIDE_DASHBOARD_MENU
     MenuEvent event = menu_input_update(&input, button, allowed, currentTime);
     bool repeat_allowed = allowed && !save_failed && dashboard_state.baccable_dashboard_menu_visible &&
-                          (view == FAVORITES || view == VALUES || view == GROUPS ||
+                          (view == FAVORITES || view == VALUES || view == GROUPS || view == EXP_GROUPS ||
                            view == SETTINGS || view == SETUP || view == IPC_OPTIONS || view == IPC_TEST_MENU ||
                            view == IPC_TEST_ACTIVE || view == SORT_EDIT || view == FAV_SETS || view == FAV_SLOTS || view == FAV_PICK || is_editor() ||
                            (view == ORDER_FAVORITES && !order_selected));
