@@ -7,6 +7,13 @@ Known source compilation blockers are recorded in [ACTION_PLAN.md](../docs/ACTIO
 Run `make -C tests -j2 test`. Assertions and ASan/UBSan failures stop the test run
 and fail CI. The cases run in their existing order, once per executable.
 
+For menu iterations, run `make -C tests -j2 CC=/usr/bin/clang test-menu-fast`.
+It runs the legacy and MY23 menu suites, shared button-input tests, C2 drive-mode
+tests (including the LKA startup action), and the menu-label check. Run the full
+`test` target before merging; the fast target does not cover other boards or
+display widths. Changes to the menu fixture `.c` files rebuild only the menu
+suite variants.
+
 In GitHub, open **Actions → workflow run → Summary → Host regression scenarios**.
 The table lists scenario results and distinguishes 18/24-character menu/catalog
 builds, independently compiled MY23 defaults, normal/large BH display output
@@ -52,7 +59,7 @@ interruption, CAN queue retry and the command lease that releases a stale test.
 
 ### MY23 menu and shared input
 
-The full target executes 24 binaries, including `test_menu_my23` and
+The full target executes 27 binaries, including `test_menu_my23` and
 `test_menu_my23_large` independently of legacy width, plus dedicated C2/BH
 screen-reception builds. Keep a single `test` recipe in the Makefile; later
 rules may append prerequisites but must not replace its execution list.

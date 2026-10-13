@@ -2,7 +2,7 @@ CC := clang
 FIRMWARE := ../firmware/baccable
 CPPFLAGS := -I$(FIRMWARE)
 CFLAGS := -std=c11 -Wall -Wextra -Werror -g -O1 -fsanitize=address,undefined -fno-omit-frame-pointer
-HEADERS := test_my23_ui.c test_idle_latin1.c test_menu_contract.c test_report.h test_setup_ui.c test_unified_ui.c $(shell find stubs $(FIRMWARE)/app $(FIRMWARE)/protocol $(FIRMWARE)/diagnostics $(FIRMWARE)/storage $(FIRMWARE)/features $(FIRMWARE)/transport $(FIRMWARE)/platform $(FIRMWARE)/USB_DEVICE/App $(FIRMWARE)/third_party/printf -name '*.h')
+HEADERS := test_report.h $(shell find stubs $(FIRMWARE)/app $(FIRMWARE)/protocol $(FIRMWARE)/diagnostics $(FIRMWARE)/storage $(FIRMWARE)/features $(FIRMWARE)/transport $(FIRMWARE)/platform $(FIRMWARE)/USB_DEVICE/App $(FIRMWARE)/third_party/printf -name '*.h')
 SOURCES := test_core.c $(FIRMWARE)/protocol/slcan_codec.c $(FIRMWARE)/diagnostics/uds_decode.c \
  $(FIRMWARE)/storage/record_store.c
 
@@ -58,7 +58,13 @@ build/test_core: $(SOURCES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(SOURCES) -lm -o $@
 
-.PHONY: test labels
+.PHONY: test test-menu-fast labels
+
+test-menu-fast: build/test_menu build/test_menu_my23 build/test_input_repeat build/test_drive_mode_c2 labels
+	./build/test_menu
+	./build/test_menu_my23
+	./build/test_input_repeat
+	./build/test_drive_mode_c2
 
 labels:
 	python3 test_menu_labels.py
@@ -96,10 +102,11 @@ MENU_SOURCES := test_menu.c $(addprefix $(FIRMWARE)/, features/menu.c features/m
  diagnostics/parameter_cache.c diagnostics/parameter_request.c diagnostics/parameter_catalog.c \
  protocol/checksum.c vehicle/steering_controls.c diagnostics/uds_decode.c diagnostics/fault_reader.c settings/persistence.c settings/setup_menu.c settings/setup_entries.c \
  third_party/printf/printf.c)
-build/test_menu: $(MENU_SOURCES) $(HEADERS) Makefile
+MENU_FIXTURES := test_my23_ui.c test_idle_latin1.c test_menu_contract.c test_setup_ui.c test_unified_ui.c
+build/test_menu: $(MENU_SOURCES) $(MENU_FIXTURES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC1_FLAVOR=1 -DGIT_VERSION=\"test\" $(MENU_SOURCES) -lm -o $@
-build/test_menu_large: $(MENU_SOURCES) $(HEADERS) Makefile
+build/test_menu_large: $(MENU_SOURCES) $(MENU_FIXTURES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC1_FLAVOR=1 -DLARGE_DISPLAY -DGIT_VERSION=\"test\" $(MENU_SOURCES) -lm -o $@
 
@@ -136,7 +143,7 @@ build/test_menu_diagnostics: test_menu_diagnostics.c $(FIRMWARE)/features/menu_d
 
 test: build/test_menu_diagnostics
 
-build/test_menu_debug: $(MENU_SOURCES) $(HEADERS) Makefile
+build/test_menu_debug: $(MENU_SOURCES) $(MENU_FIXTURES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC1_FLAVOR=1 -DMENU_DIAGNOSTICS -DGIT_VERSION=\"test\" $(MENU_SOURCES) -lm -o $@
 
@@ -160,10 +167,10 @@ build/test_usb_lifecycle: $(USB_LIFECYCLE_SOURCES) $(shell find usb_lifecycle_st
 test: build/test_usb_lifecycle
 
 # IPC generation and legacy transport width are independent build preferences.
-build/test_menu_my23: $(MENU_SOURCES) $(HEADERS) Makefile
+build/test_menu_my23: $(MENU_SOURCES) $(MENU_FIXTURES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC1_FLAVOR=1 -DIPC_MY23_IS_INSTALLED -DGIT_VERSION=\"test\" $(MENU_SOURCES) -lm -o $@
-build/test_menu_my23_large: $(MENU_SOURCES) $(HEADERS) Makefile
+build/test_menu_my23_large: $(MENU_SOURCES) $(MENU_FIXTURES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC1_FLAVOR=1 -DIPC_MY23_IS_INSTALLED -DLARGE_DISPLAY -DGIT_VERSION=\"test\" $(MENU_SOURCES) -lm -o $@
 test: build/test_menu_my23 build/test_menu_my23_large
