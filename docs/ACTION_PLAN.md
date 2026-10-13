@@ -124,7 +124,8 @@ include a vehicle-tested firmware change. The work was integrated through PR
 #59 at master merge `42e3098`. The merge CI and beta-23 release workflow passed;
 the public-source readings remain unverified in the vehicle. The source tree at
 v5-beta-23 matches the merged master tree. v5-beta-24 release notes are prepared
-on `docs/v5-beta-24-notes`; release workflow verification is pending.
+on `docs/v5-beta-24-notes`; v5-beta-24 is now published from master commit
+`95806ba`.
 All 71 Lab unit tests and `git diff --check` passed for the research changes.
 
 ## v5-beta-24 release preparation, 2026-10-13
@@ -132,12 +133,15 @@ All 71 Lab unit tests and `git diff --check` passed for the research changes.
 PR #59 (`feat/readings-experiments-v5-beta-23`) merged to master as `42e3098`.
 CI passed on the PR and the v5-beta-23 beta workflow completed successfully
 from source commit `4946f72`. The released beta-23 firmware source tree matches
-the merged master tree. v5-beta-24 is a new build from the integrated master
-revision, with the same firmware behavior as beta-23; see
-[the release notes](releases/v5-beta-24.md). Trigger the beta workflow from
-master with tag `v5-beta-24`, then record the resulting merge/build identity,
-workflow result and release URL here. No beta-24 image has been installed in a
-vehicle. The `Experiments` DIDs and start-up LKA gesture still need vehicle
+the merged master tree. v5-beta-24 is the requested rebuild from the integrated
+master revision, with the same firmware behavior as beta-23; see
+[the release notes](releases/v5-beta-24.md) and [the published release](https://github.com/eujot/BACCAble/releases/tag/v5-beta-24).
+Release workflow [38430462442](https://github.com/eujot/BACCAble/actions/runs/38430462442)
+passed host tests, Lab tests, C1/C2/BH/CAN firmware builds and lint. It published
+matching board images, `BUILD_INFO.json` and `SHA256SUMS` from commit
+`95806ba23157787bf6a3718d0aea12bbf3f450a7` using Arm GNU 15.3.Rel1. Every
+downloaded asset passed its SHA-256 check. No beta-24 image has been installed
+in a vehicle. The `Experiments` DIDs and start-up LKA gesture still need vehicle
 validation.
 
 ## Five-bundle CAN review, 2026-10-12
