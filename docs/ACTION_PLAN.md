@@ -1,6 +1,6 @@
 # BACCAble action plan and agent handoff
 
-Last updated: **2026-10-13** (dated verification boundaries below). This is the single source of planned work,
+Last updated: **2026-10-14** (dated verification boundaries below). This is the single source of planned work,
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
@@ -34,10 +34,22 @@ bounded changes and existing modules/tests. No model-specific workflow, mandator
 PR count or broad rewrite is needed. This handoff is a backlog, not an instruction
 to automatically flash hardware or publish every future change.
 
+## Faster host menu test iteration, 2026-10-14
+
+Branch `build/targeted-menu-tests` narrows the five included menu fixture `.c`
+dependencies to the five menu binaries. A dry run after a `test_setup_ui.c` change
+now schedules five builds in the full suite, instead of 26. The new
+`test-menu-fast` target runs the legacy and MY23 menu suites, shared button input,
+C2 drive-mode/LKA checks and menu labels; the full 27-binary host suite remains
+the integration check. Both targets passed with Apple Clang on this Mac. This
+changes only the local test workflow, with no firmware or vehicle behavior change.
+Integration is pending in [PR #64](https://github.com/eujot/BACCAble/pull/64);
+`master` does not contain this branch yet.
+
 ## Post-beta-24 LKA ignition and menu-save correction, 2026-10-13
 
-Implemented on `fix/lka-ignition-menu-save`, based on master `a0c677b`, in
-`/tmp/baccable-lka-menu-fix`. Pending PR review; no new release or hardware flash.
+Implemented on `fix/lka-ignition-menu-save` and merged into `master` as
+`91da9ac` via PR #63. No new release or hardware flash.
 The owner's beta-24 report supersedes the older hardware-unknown note below:
 LKA switched off once after plugging in, but did not repeat after ignition
 cycling. Menu draft saving and its confirmation were also unreliable.

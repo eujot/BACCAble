@@ -92,7 +92,16 @@ python3 tests/test_menu_labels.py
 python3 .github/scripts/test-ci.py
 ```
 
-`make test` builds and runs 24 native executables, including both legacy menu
+For menu, button and LKA changes, use the faster iteration check first:
+
+```sh
+/usr/bin/make -C tests -j2 CC=/usr/bin/clang test-menu-fast
+```
+
+It runs legacy/MY23 menu suites, input repeat, C2 drive-mode/LKA and label
+checks. The full `test` target remains the integration check before merging.
+
+`make test` builds and runs 27 native executables, including both legacy menu
 widths, both MY23 compiled defaults, normal/large BH display output, UART,
 USB C2/BH mode recovery and the real ST USB lifecycle under ASan/UBSan.
 `test_setup_ui.c`, `test_unified_ui.c`, `test_menu_contract.c`,
