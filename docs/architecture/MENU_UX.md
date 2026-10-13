@@ -46,9 +46,9 @@ CC and ACC must both be disabled, with a fresh released report to arm input.
 | Input | Timing and behavior |
 | --- | --- |
 | Click | Released after at least 30 ms; deferred until the double-click window expires |
-| Double-click | Two short releases within 280 ms; emits `MENU_BACK`, without an earlier SELECT |
+| Double-click | Second press starts within 280 ms of the first release; emits `MENU_BACK`, without an earlier SELECT |
 | Hold | 900 ms of continued reports; emits `MENU_HOLD` once, never SELECT on release |
-| Third rapid click | Consumed during the 280 ms suppression window after a pair |
+| Third rapid click | Short click suppressed for 280 ms after a pair; a continued hold still emits HOLD |
 | Gentle direction | Immediate peer navigation; repeat after 500 ms, then every 180 ms |
 | Strong direction | Functional-group navigation; no repeat |
 | Report gap | Over 300 ms cancels the gesture/pending click; a release rearms input |
@@ -57,8 +57,9 @@ Polling occurs in `menu_process`, so the final click need not wait for another
 button transition. Unsigned elapsed-time comparisons handle tick wrap. Scrolling
 cancels a pending pair, and a hold cancels it too. No menu has a private double
 click timer. `MENU_SELECT`, `MENU_BACK`, `MENU_HOLD` are the shared semantic events.
-A hold opens Favorites when closed. Within the menu, a hold acts only on a shown
-SAVE/APPLY/STORE prompt; it is never an invisible alternate navigation command.
+A hold opens Favorites when closed. In an editor it saves directly, with or
+without a preceding Back confirmation. Actions and mirror capture still require
+their displayed APPLY/STORE prompt.
 
 ## Draft and confirmation ownership
 
@@ -71,6 +72,8 @@ Engine and USB drafts include their companion setting bit.
 
 | State/event | Result |
 | --- | --- |
+| Enter editor | Copy saved value without cycling it |
+| Draft + hold | Persist directly; remain in editor with saved feedback |
 | Unchanged draft + Back | Return immediately to the Features list |
 | Dirty draft + first Back | Remain on setting, show confirmation |
 | Confirmation + hold | Persist; apply only after success; show saved feedback and remain on setting |
@@ -87,13 +90,13 @@ Except Read BCM faults and Peak hold, actions first show a prompt, then require
 a hold within three seconds. Another click cannot execute that confirmation.
 
 Membership, visibility and page-order editors use isolated MenuPreferences
-drafts and explicit confirmation/save/discard. Confirmation locks editing. A
+drafts and the same direct-hold/Back-confirmation rules. Confirmation locks editing. A
 failed save rolls back live preferences and imported sets while retaining the
 draft. A successful save stays in the editor. Legacy membership/order editors
 are hidden whenever MY23 or atomic sets own live Favorites; before that switch,
 committed legacy edits regenerate imported sets in the same storage transaction.
 Changed settings and menu preferences are independent storage domains. A failed automatic exit shows
-`× Save failed: RES`; SELECT retries the remembered destination, Back cancels the
+`× Save failed: RES`; SELECT or HOLD retries the remembered destination, Back cancels the
 exit, and idle never retries silently. Ordinary views idle after 30 s, editors
 after 60 s; live readings stay open and active fault work postpones inactivity.
 
@@ -105,7 +108,7 @@ above the next item. Slot labels use the catalog page names, with only the two
 visible slots selectable.
 Long generic notices continue onto L2 instead of replacing useful text with a
 static Back footer. A long active title ends with `…`.
-Settings show draft values with `▲▼ CHANGE`; confirmation shows
+Settings show draft values with `HOLD SAVE`; confirmation shows
 `HOLD SAVE•2X DISCARD` and saved feedback `✓ SAVED`. Every Reading keeps its
 catalog measurements on L1, including multi-value pages; L2 previews the next
 page. `dashboard_format_my23_page()` selects compact templates only in MY23,

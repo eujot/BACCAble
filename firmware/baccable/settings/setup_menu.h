@@ -76,7 +76,7 @@ void setup_stage_save(void);
 void setup_cancel_edit(void);
 bool setup_in_workflow(void);
 
-// Enter/change the selected draft; explicit Back confirmation and Hold save it.
+// Enter without changing the value; Hold saves, Back confirms a dirty draft.
 void setup_select_page(uint8_t page_index);
 
 #endif /* BACCABLE_C1 */

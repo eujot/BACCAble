@@ -1,8 +1,8 @@
 # BACCAble — in-car user guide
 
-This guide describes the current dashboard-menu firmware source. The display
-MY23 layout and navigation changes described below are a candidate based on
-**v5-beta-19** and the pending readability correction. It starts after BACCAble has been installed and
+This guide describes the current dashboard-menu firmware source. It includes the pending
+**post-v5-beta-24 LKA and menu-save correction**, which still requires vehicle
+acceptance testing. It starts after BACCAble has been installed and
 connected to the vehicle. Installation, wiring and firmware flashing are outside
 its scope. Use a matching C1/C2/BH firmware set.
 
@@ -42,9 +42,9 @@ are supported; a menu entry alone does not establish compatibility.
 4. **Double-click RES** to return to the main menu. Use up/down to find `Settings`,
    click RES, then enter `Features`.
 5. Select `Engine`. Choose `2.0 I4`, `2.9 V6` or `2.2 D` with clicks or up/down.
-   Double-click to show the save/discard prompt, then hold RES to save. The
+   Hold RES to save directly, or double-click to show the save/discard prompt. The
    screen remains on that setting. Double-click again to return to Features.
-6. Check `MY23 IPC` against the installed instrument panel. MY23 uses two lines
+6. Check `MY23 display` against the installed instrument panel. MY23 uses two lines
    regardless of the legacy 18/24-character build option. Build and flash a
    matching C1/C2/BH set; this candidate introduces a longer screen packet.
 
@@ -60,22 +60,25 @@ RES and the ACC distance button have the same menu role when CC and ACC are off.
 | --- | --- |
 | Hold RES for about 0.9 s with the menu closed | Open Favorites. |
 | Click RES and release | Enter/use an item or edit its draft. A reading does not react. |
-| Double-click RES | Request Back. Two short releases must fall within 0.28 s. |
-| Hold RES in a displayed SAVE/APPLY/STORE prompt | Save the setting or confirm that operation. A hold elsewhere has no action. |
+| Double-click RES | Request Back. Start the second press within 0.28 s of the first release. |
+| Hold RES for about 0.9 s in an editor | Save the displayed draft directly, including after a save/discard prompt. |
+| Hold RES in a displayed APPLY/STORE prompt | Confirm that action or mirror capture. |
 | Gentle down/up | Next/previous item or change the draft. Lists wrap. |
 | Hold gentle down/up | Repeat after 0.5 s, then every 0.18 s; no repeats in Actions or while reordering a page favorite. |
 | Stronger down/up | Jump between functional groups; in a draft, adjust its value. |
 
 A click is resolved after the double-click window, so a single click has a short
 intentional delay. Presses shorter than 30 ms are rejected. A third rapid click
-following a double-click is consumed. Scrolling cancels a pending click pair.
+following a double-click is consumed; a deliberate hold immediately after it still works. Scrolling cancels a pending click pair.
 After a gap over 0.3 s in button reports, release the button and try again.
 Releasing a hold never also clicks. A stronger direction can first register a
 normal item step before its group jump.
 
 ### Returning, inactivity and saving
 
-Double-click returns one level. With an unchanged setting it returns immediately.
+Entering an editor shows the saved value without changing it. Hold RES in an
+editor to save directly; no preceding double-click is required. Double-click
+returns one level. With an unchanged setting it returns immediately.
 With a changed draft, the first double-click shows `HOLD SAVE•2X DISCARD` on MY23
 (`Hold save/2x drop` on legacy). Hold RES to persist and apply; the setting stays
 visible with saved feedback. A separate double-click returns. Double-click in
@@ -94,7 +97,7 @@ same draft, confirmation, hold-to-save and discard rules. Saving stays in the
 editor; a separate double-click returns to Settings. Timeout discards unfinished
 changes. Remembered reading positions are persisted when leaving ordinary views.
 If `× Save failed: RES` appears during
-an exit, click to retry that exit or double-click to cancel it and remain in the
+an exit, click or hold to retry that exit or double-click to cancel it and remain in the
 current view. Waiting does not automatically retry.
 
 ## Menu structure
@@ -156,7 +159,7 @@ included in this release.
 
 MY23 has **16 visible glyphs in line 1 and 22 in line 2**. A list shows the
 current item with `›` above the next item. Editors show a setting and its draft
-value, with `▲▼ CHANGE`. Confirmation and saved feedback use the second line.
+value, with `HOLD SAVE`. Confirmation and saved feedback use the second line.
 Live Favorites show one complete selected reading page on each line. Readings
 show one page in the first line and preview the next page in the second line.
 `✓` means saved; `×` means a local failure.
@@ -264,8 +267,8 @@ these sets follows the same steps below.
    appears in line 2. An empty primary hides that favorite.
    To change order, replace the slots; assigning a page already in another
    slot clears its old position. Editing is available only in Settings.
-4. Double-click for the save prompt. Hold to save, or double-click again to
-   discard. A successful save stays at the selected slot; double-click to leave.
+4. Hold to save directly, also while choosing a slot value. Alternatively,
+   double-click for the save prompt, then hold to save or double-click to discard. A successful save stays at the selected slot; double-click to leave.
 5. Open main-menu `Favorites` to view live values. On legacy, a configured set
    shows its primary page on the single line.
 
@@ -326,12 +329,13 @@ prompt. `Auto rotate` advances the live list every five seconds.
 
 Open `Settings → Features`. The tables follow the actual browsing order.
 The group headings below explain stronger up/down jumps; they are not extra
-submenus. For an on/off setting, short RES toggles `O`/`Ø`. For a named choice,
-short RES cycles its values.
+submenus. Short RES opens the editor at the saved value. Once inside, clicks
+or up/down change on/off and named choices. `LKA` displays `OFF` or `ON`
+explicitly; the other switches use their checkbox in the list.
 
 For **Launch Nm**, **Shift RPM** and **Pedal trim**, click to edit and use
-up/down to adjust. Double-click for confirmation, then hold to save or
-double-click again to discard. Switches and named choices use the same explicit
+up/down to adjust. Hold to save directly. Double-click instead to show
+confirmation; hold there to save or double-click again to discard. Switches and named choices use the same explicit
 workflow; their draft does not control the car before successful persistence.
 
 ### Display group
@@ -366,7 +370,7 @@ workflow; their draft does not control the car before successful persistence.
 | `Virtual ACC` | Off / on | Use a compatible standard cruise-control pad for ACC functions. It requires an ACC-capable, correctly configured vehicle; it does not add radar or ACC capability. |
 | `ACC resume` | OFF / RES / + | Select whether BACCAble sends automatic RES or gentle-up requests while ACC is engaged and holding a stationary car. This can allow the car to resume movement; see [assistance controls](#acc-and-has-controls). |
 | `Virtual HAS` | Off / on | Permit simulated Highway Assist button presses through the action or a double press of the lane button. Requires compatible, configured vehicle assistance equipment. |
-| `Disable LKA` | Off / on | At vehicle start-up, if C2 reports LKA enabled, send a left-stalk double-click on C2 `0x384`: press, release, press, release, about 100 ms apart. The firmware leaves the recurring LKA state reports unchanged and skips the gesture if LKA is already off or the driver presses the button first. A later driver press is left alone. The double-click method still needs a vehicle test to confirm that LKA switches off and can later be switched on again. Saving a changed preference takes effect on the next start-up. |
+| `LKA` | OFF / ON | **OFF** requests LKA off once at each ignition start. C1 recognizes OFF → RUN on `0x1EF`, including starts without device sleep; cranking does not start a second session. After configuration reaches C2, it waits up to 5 s for LKA ON on `0x547` and a released stalk report, then sends one C2 `0x384` double-click: press, release, press, release, about 100 ms apart. Initial OFF reports are allowed while waiting; no click is sent while LKA is off. A driver press cancels the pending action. **ON** keeps factory behavior and sends no automatic click; it does not forcibly enable LKA. Saving applies this preference at the next ignition start. No later periodic override is sent. Existing `Disable LKA: ON` becomes `LKA: OFF`, preserving the saved intent. Beta 24 was reported to work once after connection, but failed on later ignition cycles; this correction still needs repeated vehicle testing. |
 
 ### Drivetrain group
 
@@ -389,8 +393,8 @@ workflow; their draft does not control the car before successful persistence.
 | `CAN routing` | Off / on | Expose selected native CAN reports through the firmware's diagnostic routing mechanism for compatible diagnostic clients. It is not the USB capture switch. |
 | `DTC clear action` | Off / on | Permit the multi-controller `Clear DTCs` action. |
 | `BCM fault reader` | Off / on | Permit `Read BCM faults`, which reads the Body Control Module only. |
-| `Engine profile` (shown as `Engine`) | 2.0 I4 / 2.9 V6 / 2.2 D | Select the engine-specific reading catalog. Switching discards cached measurements and temporarily filters incompatible favorites. |
-| `USB mode` | OFF / CAN / ELM327 | Select normal operation, binary CAN capture, or ELM-compatible diagnostics. ELM327 is offered in builds with that support. Modes are exclusive. Confirm the draft with a double-click, then hold RES at the save prompt to apply. |
+| `Engine` | 2.0 I4 / 2.9 V6 / 2.2 D | Select the engine-specific reading catalog. Switching discards cached measurements and temporarily filters incompatible favorites. |
+| `USB mode` | OFF / CAN / ELM327 | Select normal operation, binary CAN capture, or ELM-compatible diagnostics. ELM327 is offered in builds with that support. Modes are exclusive. Hold RES in the editor to save and apply, or double-click for confirmation first. |
 
 Feature permissions and vehicle states are different: enabling `Dyno action`,
 for example, merely makes its action available. Some actions are omitted when
@@ -1002,7 +1006,7 @@ commands and bus behavior. Use explicitly save USB mode OFF for ordinary operati
 | `No favorites` / `No pages` | Add compatible favorites or restore page visibility. Double-click RES still returns. |
 | A value shows `--` | Wait for fresh reports, check ignition/engine conditions and ECU compatibility. USB diagnostics can suspend normal queries. A displayed catalog entry is not a guarantee that the ECU implements it. |
 | `Batt BCM SOC --` or `Batt charge --%` | Compare the independent sources using Battery sources. Do not treat missing SOC as 0%, and do not use IBS override as a repair. |
-| Setting reverts after a restart | Use the explicit confirmation and hold to save. Resolve `× Save failed: RES`; unsaved RAM changes are not persistent. |
+| Setting reverts after a restart | Hold RES in the editor to save; a preceding double-click is optional. Resolve `× Save failed: RES`; unsaved RAM changes are not persistent. |
 | `! Disabled in setup` | Enable the associated permission under Features, then return. |
 | `! Stop the car`, `! Enable Dyno`, `! Release brake`, `! Reset ESC`, `! Disable launch` | Satisfy the specific action condition. For brakes, use the documented disarm/release sequence. |
 | `! Request pending` | Wait for the outstanding request result; do not assume it was executed or cancelled. |

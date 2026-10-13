@@ -194,6 +194,32 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
     // SuspensionLevel is on byte 5 bit0 and byte 6 bit7.
 }
 
+/* Apply auxiliary-board preferences and the master ignition-session event. */
+void driver_aids_configure(uint8_t mode, uint8_t disable_lka, uint8_t action) {
+    settings_state.default_drive_mode = mode <= 3 ? mode : 0;
+    settings_state.lane_assist_disabled = disable_lka ? 1 : 0;
+    /* Transport resync preserves the session; a save ends its start-up window. */
+    if (action == 1) {
+        chassis_state.default_mode_override = 1;
+        chassis_state.default_mode_sent = 0;
+        chassis_state.default_mode_baseline = 0xFF;
+#if defined(BACCABLE_C2)
+        if (chassis_state.lane_assist_pending < LANE_ASSIST_RELEASE_FIRST_PENDING) {
+            chassis_state.lane_assist_step_at = currentTime;
+            chassis_state.lane_assist_pending = settings_state.lane_assist_disabled
+                                                    ? LANE_ASSIST_WAIT_STATE
+                                                    : LANE_ASSIST_IDLE;
+        }
+#endif
+    } else if (action == 2) {
+        chassis_state.default_mode_override = 0;
+#if defined(BACCABLE_C2)
+        if (chassis_state.lane_assist_pending < LANE_ASSIST_RELEASE_FIRST_PENDING)
+            chassis_state.lane_assist_pending = LANE_ASSIST_IDLE;
+#endif
+    }
+}
+
 /* Wait for an enabled LKA state before offering the start-up double-click. */
 void vehicle_handle_lane_state(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
 #if defined(BACCABLE_C2)
@@ -202,14 +228,14 @@ void vehicle_handle_lane_state(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
     if (rx_header->DLC != 8 || rx_header->IDE != CAN_ID_STD || rx_header->RTR != CAN_RTR_DATA)
         return;
 
+    lane_assist_button_process();
     if (!settings_state.lane_assist_disabled || chassis_state.lane_assist_pending == LANE_ASSIST_IDLE ||
         chassis_state.lane_assist_pending >= LANE_ASSIST_RELEASE_FIRST_PENDING)
         return;
-    if (!(frame_data[6] & 0x02)) {
-        chassis_state.lane_assist_pending = LANE_ASSIST_IDLE;
-        return;
-    }
-    chassis_state.lane_assist_pending = LANE_ASSIST_WAIT_BUTTON;
+    /* Initial OFF reports can precede system readiness. Only act on a current ON
+       report, within the bounded start-up window; never toggle an OFF system. */
+    chassis_state.lane_assist_pending = frame_data[6] & 0x02
+                                          ? LANE_ASSIST_WAIT_BUTTON : LANE_ASSIST_WAIT_STATE;
 #else
     (void)rx_header;
     (void)frame_data;
@@ -224,6 +250,7 @@ void lane_assist_button_observe(const CAN_RxHeaderTypeDef *rx_header, uint8_t *f
     if (rx_header->StdId != id || rx_header->DLC != 8 || rx_header->IDE != CAN_ID_STD ||
         rx_header->RTR != CAN_RTR_DATA || !settings_state.lane_assist_disabled)
         return;
+    lane_assist_button_process();
     if (frame_data[byte] & mask) {
         /* A driver press wins over the pending start-up action. */
         if (chassis_state.lane_assist_pending == LANE_ASSIST_WAIT_STATE ||
@@ -251,6 +278,11 @@ void lane_assist_button_observe(const CAN_RxHeaderTypeDef *rx_header, uint8_t *f
 void lane_assist_button_process(void) {
 #if defined(BACCABLE_C2)
     uint8_t stage = chassis_state.lane_assist_pending;
+    if (stage == LANE_ASSIST_WAIT_STATE || stage == LANE_ASSIST_WAIT_BUTTON) {
+        if (currentTime - chassis_state.lane_assist_step_at >= 5000U)
+            chassis_state.lane_assist_pending = LANE_ASSIST_IDLE;
+        return;
+    }
     if (stage < LANE_ASSIST_RELEASE_FIRST_PENDING ||
         currentTime - chassis_state.lane_assist_step_at < 100U)
         return;

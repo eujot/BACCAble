@@ -442,7 +442,7 @@ static void test_automatic_persistence(void) {
     assert(settings_writes == 0 && preference_writes == 0 && usb_applies == 0);
     assert(strstr(screen, "Features"));
     for (unsigned i = 0; i < 4; ++i) menu_event(MENU_NEXT);
-    menu_event(MENU_SELECT); menu_event(MENU_BACK); menu_event(MENU_HOLD);
+    menu_event(MENU_SELECT); menu_event(MENU_NEXT); menu_event(MENU_BACK); menu_event(MENU_HOLD);
     assert(preference_writes == 1 && settings_writes == 0 && usb_applies == 0);
     menu_event(MENU_BACK); menu_event(MENU_BACK); menu_event(MENU_BACK);
     assert(preference_writes == 1);
@@ -461,7 +461,7 @@ static void test_automatic_persistence(void) {
     assert(preference_writes == 1 && strstr(screen, "Save failed"));
     menu_event(MENU_SELECT);
     assert(settings_writes == 1 && preference_writes == 2 && usb_applies == 1);
-    fail_type = 0; menu_event(MENU_SELECT);
+    fail_type = 0; menu_event(MENU_HOLD); /* Hold retries the remembered exit too. */
     assert(preference_writes == 3 && settings_writes == 1 && usb_applies == 1);
     menu_event(MENU_BACK); assert(preference_writes == 3);
 
@@ -936,9 +936,11 @@ static void expect_reading(uint8_t engine, uint16_t id, float first, float secon
 }
 static void expect_setup(uint8_t id, const char *expected) {
     const SetupParam *param = setup_find_by_flash_index(id);
-    assert(param && param->render);
+    assert(param);
     memset(dashboard_setup_screen, 'X', sizeof(dashboard_setup_screen));
-    param->render();
+    if (param->render) param->render();
+    else setup_render_page(setup_page_for(id));
+    if (memcmp(dashboard_setup_screen, expected, strlen(expected))) fprintf(stderr, "Setup %u expected [%s], got [%.*s]\n", id, expected, DASHBOARD_MESSAGE_MAX_LENGTH, dashboard_setup_screen);
     assert(!memcmp(dashboard_setup_screen, expected, strlen(expected)));
     for (unsigned i = strlen(expected); i < sizeof(dashboard_setup_screen); ++i)
         assert(dashboard_setup_screen[i] == ' ');
@@ -1062,10 +1064,12 @@ static void test_engine_filters(void) {
     fresh_menu();
     uint8_t profile_page = setup_page_for(16);
     setup_select_page(profile_page);
+    setup_move_page(1);
     assert(!settings_state.is_diesel_enabled && !settings_state.gasoline_v6);
     assert(setup_stage_back()); setup_stage_save();
     assert(!settings_state.is_diesel_enabled && settings_state.gasoline_v6);
     expect_setup(16, "Engine: 2.9 V6");
+    setup_select_page(profile_page); /* The render helper returned to the list. */
     uint16_t values[SETUP_FLASH_PARAM_BUFFER_SIZE] = {0};
     settings_state.advanced_pages = 1;
     setup_fill_flash_params(values);
@@ -1237,6 +1241,7 @@ static void test_board_sync_retry(void) {
     runtime_state.all_processors_wakeup_time = 0;
     commands = 0;
     board_sync_rearm();
+    board_sync_ignition(8);
     for (unsigned option = 0; option < 8; ++option) {
         uart_busy = true;
         board_sync_process();
@@ -1256,10 +1261,11 @@ static void test_board_sync_retry(void) {
     assert(last_driver_rearm == 0 && !chassis_state.default_mode_override);
     assert(chassis_state.default_mode_baseline == 0x10);
     board_sync_rearm();
+    board_sync_ignition(8);
     assert(chassis_state.default_mode_override && chassis_state.default_mode_baseline == 0xff);
-    board_sync_restart(); /* A transport resync must not rearm the auxiliaries. */
+    board_sync_restart(); /* Preserve an undelivered ignition event across transport resync. */
     for (unsigned i = 0; i < 9; ++i) board_sync_process();
-    assert(last_driver_rearm == 0);
+    assert(last_driver_rearm == 1);
     board_sync_saved();
     assert(!chassis_state.default_mode_override);
     for (unsigned i = 0; i < 9; ++i) board_sync_process();
@@ -1285,6 +1291,9 @@ int main(void) {
     const char *suite = "menu-18";
 #endif
     const HostTest tests[] = {
+        HOST_TEST(test_lka_save_gestures),
+        HOST_TEST(test_ignition_sessions_without_sleep),
+        HOST_TEST(test_direct_hold_other_editors),
         HOST_TEST(test_my23_glyph_budget),
         HOST_TEST(test_render_interval_after_event),
         HOST_TEST(test_ipc_options_are_volatile),

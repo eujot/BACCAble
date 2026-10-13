@@ -100,7 +100,7 @@ ChassisState chassis_state = {
 
     .stability_inverted = 0,
 
-    .default_mode_override = 1,
+    .default_mode_override = 0,
 
     .default_mode_sent = 0,
 

@@ -1,8 +1,8 @@
 # BACCAble — instrukcja obsługi w samochodzie
 
 Ta instrukcja opisuje menu na zestawie wskaźników i funkcje w bieżącym kodzie
-firmware. Opisane niżej zmiany układu MY23 i nawigacji przygotowano na bazie
-**v5-beta-18**. Wymagają jeszcze próby w samochodzie i nowego wydania. Instrukcja dotyczy urządzenia już zamontowanego
+firmware. Uwzględnia przygotowywaną **poprawkę LKA i zapisu menu po v5-beta-24**.
+Ta poprawka wymaga jeszcze próby w samochodzie. Instrukcja dotyczy urządzenia już zamontowanego
 i podłączonego do samochodu. Nie obejmuje montażu, okablowania ani wgrywania
 oprogramowania. Kontrolery C1, C2 i BH powinny mieć pasujący do siebie zestaw
 oprogramowania z tego samego wydania.
@@ -47,9 +47,10 @@ jego sterowników. Sama obecność opcji w menu nie oznacza, że samochód ją o
 4. **Naciśnij RES dwukrotnie**, aby wrócić do menu głównego. Przyciskami góra/dół
    wybierz `Settings`, naciśnij RES i otwórz `Features`.
 5. W `Engine` wybierz `2.0 I4`, `2.9 V6` lub `2.2 D` krótkimi naciśnięciami albo
-   góra/dół. Dwuklik pokaże pytanie o zapis. Przytrzymaj RES, aby zapisać.
+   góra/dół. Przytrzymaj RES, aby zapisać bezpośrednio, lub wykonaj dwuklik,
+   aby wyświetlić pytanie o zapis.
    Ustawienie pozostanie na ekranie; osobny dwuklik wróci do listy Features.
-6. Sprawdź `MY23 IPC`. Profil MY23 korzysta z dwóch linii niezależnie od opcji
+6. Sprawdź `MY23 display`. Profil MY23 korzysta z dwóch linii niezależnie od opcji
    kompilacji 18/24 znaków dla starszego ekranu. Wgraj zgodny zestaw C1/C2/BH;
    ta poprawka wprowadza dłuższy pakiet przesyłania ekranu.
 
@@ -66,21 +67,25 @@ Przy wyłączonych CC i ACC przycisk odstępu ACC działa w menu tak samo jak RE
 | --- | --- |
 | Przytrzymanie RES przez około 0,9 s przy zamkniętym menu | Otwiera Favorites. |
 | Krótkie RES i puszczenie | Otwiera lub używa pozycji albo zmienia szkic ustawienia. Strona odczytu nie reaguje. |
-| Dwuklik RES | Powrót. Dwa krótkie puszczenia przycisku muszą nastąpić w odstępie do 0,28 s. |
-| Przytrzymanie RES przy widocznym pytaniu SAVE/APPLY/STORE | Zapisuje ustawienie lub zatwierdza operację. W innych miejscach nic nie wykonuje. |
+| Dwuklik RES | Powrót. Rozpocznij drugie naciśnięcie do 0,28 s po pierwszym puszczeniu. |
+| Przytrzymanie RES przez około 0,9 s w edytorze | Zapisuje widoczny szkic bezpośrednio, również po pytaniu o zapis. |
+| Przytrzymanie RES przy widocznym pytaniu APPLY/STORE | Zatwierdza akcję lub zapis pozycji lusterek. |
 | Lekkie dół/góra | Następna/poprzednia pozycja albo zmiana szkicu. Listy zawijają się. |
 | Przytrzymanie lekkiego dół/góra | Powtarza po 0,5 s, następnie co 0,18 s. Bez powtarzania w Actions ani przy przesuwaniu ulubionej strony. |
 | Mocniejsze dół/góra | Zmienia grupę; podczas edycji zmienia wartość szkicu. |
 
 Pojedyncze naciśnięcie jest wykonywane po zakończeniu okna dwukliku, więc ma
 krótkie celowe opóźnienie. Naciśnięcia krótsze niż 30 ms są pomijane. Trzecie
-szybkie naciśnięcie po dwukliku nie wykonuje dodatkowej akcji. Przewijanie anuluje
+szybkie naciśnięcie po dwukliku nie wykonuje dodatkowej akcji; celowe
+przytrzymanie rozpoczęte zaraz po dwukliku nadal działa. Przewijanie anuluje
 oczekującą parę naciśnięć. Po przerwie ponad 0,3 s w komunikatach o przyciskach
 puść przycisk i spróbuj ponownie. Puszczenie po przytrzymaniu nie wybiera pozycji.
 Mocniejsze naciśnięcie może najpierw wykonać zwykły krok, potem zmianę grupy.
 
 ### Powrót, bezczynność i zapisywanie
 
+Wejście do edytora pokazuje zapisaną wartość i samo jej nie zmienia. Przytrzymanie
+RES w edytorze zapisuje bezpośrednio — wcześniejszy dwuklik nie jest wymagany.
 Dwuklik cofa o jeden poziom. Bez zmian wraca od razu. Po zmianie szkicu pierwszy
 dwuklik pokazuje `HOLD SAVE•2X DISCARD` na MY23 albo `Hold save/2x drop` na
 starszym ekranie. Przytrzymanie zapisuje i stosuje zmianę; ustawienie zostaje
@@ -99,7 +104,7 @@ odrzucane. Aktywny odczyt lub kasowanie błędów opóźnia automatyczny powrót
 Edytory `Page favorites`, `Favorite order` i `Shown pages` mają takie same
 szkice, potwierdzenie, zapis przytrzymaniem i odrzucanie. Zapis zostawia Cię
 w edytorze; osobny dwuklik wraca do Settings. Bezczynność odrzuca niezapisane
-zmiany. Zapamiętane strony odczytów są zapisywane przy wyjściu ze zwykłych widoków. Przy `× Save failed: RES` krótkie RES ponawia
+zmiany. Zapamiętane strony odczytów są zapisywane przy wyjściu ze zwykłych widoków. Przy `× Save failed: RES` krótkie RES lub przytrzymanie ponawia
 zapis i wyjście, a dwuklik anuluje próbę wyjścia i zostawia bieżący widok.
 Samo czekanie nie ponawia zapisu.
 
@@ -170,7 +175,7 @@ odczyt podpisany `Batt BCM SOC`.
 
 MY23 ma **16 widocznych znaków w pierwszej linii i 22 w drugiej**. Lista
 pokazuje bieżącą pozycję z `›`, a pod nią następną. Edytor pokazuje ustawienie
-oraz szkic wartości z `▲▼ CHANGE`. Druga linia zawiera również pytanie o zapis
+oraz szkic wartości z `HOLD SAVE`. Druga linia zawiera również pytanie o zapis
 lub jego wynik. Ulubione pokazują po jednej wybranej stronie odczytów w każdej
 linii. Readings pokazuje bieżącą stronę w pierwszej linii, a nazwę następnej
 strony w drugiej.
@@ -281,8 +286,9 @@ numer jak strona domyślna. Edycja tych zestawów przebiega według poniższych 
    a Slot 2 w drugiej. Pusty slot główny ukrywa cały widok.
    Kolejność zmieniasz przez zastępowanie slotów. Strona już obecna w innym
    slocie jest z niego usuwany. Edycja jest dostępna wyłącznie w Settings.
-4. Dwuklik otwiera pytanie o zapis. Przytrzymaj, aby zapisać, albo wykonaj
-   następny dwuklik, aby odrzucić. Udany zapis pozostawia wybrany slot na ekranie;
+4. Przytrzymanie zapisuje bezpośrednio, również podczas wybierania wartości slotu.
+   Możesz też wykonać dwuklik, aby zobaczyć pytanie, a następnie przytrzymać,
+   aby zapisać, lub wykonać kolejny dwuklik, aby odrzucić. Udany zapis pozostawia wybrany slot na ekranie;
    osobny dwuklik wraca.
 5. Bieżące wartości zobaczysz w `Favorites` menu głównego. Starszy ekran
    pokazuje główną stronę zapisanego zestawu w jednej linii.
@@ -350,12 +356,14 @@ strony do zestawu. `Sort order` ma własny szkic i potwierdzenie zapisu.
 
 Otwórz `Settings → Features`. Tabele zachowują rzeczywistą kolejność opcji.
 Poniższe nagłówki grup wyjaśniają działanie mocniejszych naciśnięć góra/dół — nie
-są dodatkowymi podmenu. Przy ustawieniu włącz/wyłącz krótkie RES zmienia `O`/`Ø`.
-Przy liście nazwanych wartości krótkie RES wybiera kolejną wartość.
+są dodatkowymi podmenu. Krótkie RES otwiera edytor z zapisaną wartością.
+Dopiero w edytorze kolejne naciśnięcia lub góra/dół zmieniają przełączniki i
+nazwane wartości. `LKA` pokazuje wprost `OFF` lub `ON`; pozostałe przełączniki
+korzystają z symbolu zaznaczenia na liście.
 
 Dla **Launch Nm**, **Shift RPM** i **Pedal trim** krótkie RES rozpoczyna edycję,
-a góra/dół zmienia szkic. Dwuklik otwiera potwierdzenie; przytrzymanie zapisuje,
-a kolejny dwuklik odrzuca. Przełączniki i nazwane wartości działają tak samo.
+a góra/dół zmienia szkic. Przytrzymanie zapisuje bezpośrednio. Dwuklik otwiera
+pytanie o zapis; przytrzymanie zapisuje, a kolejny dwuklik odrzuca. Przełączniki i nazwane wartości działają tak samo.
 Szkic nie steruje samochodem przed udanym zapisem.
 
 ### Grupa wyświetlania
@@ -390,7 +398,7 @@ Szkic nie steruje samochodem przed udanym zapisem.
 | `Virtual ACC` | Wyłączona / włączona | Pozwala obsługiwać ACC zgodnym panelem przycisków zwykłego tempomatu. Samochód musi już mieć potrzebny sprzęt i konfigurację ACC. Funkcja nie zastępuje radaru ani innych brakujących elementów. |
 | `ACC resume` | OFF / RES / + | Wybiera automatyczne wysyłanie RES albo lekkiego naciśnięcia w górę, gdy ACC jest aktywny i utrzymuje zatrzymany samochód. Może to umożliwić ponowne ruszenie. Zobacz [obsługę ACC i HAS](#obsługa-acc-i-has). |
 | `Virtual HAS` | Wyłączona / włączona | Udostępnia symulowane naciśnięcie przycisku Highway Assist przez akcję lub podwójne naciśnięcie przycisku asystenta pasa. Wymaga zgodnego i skonfigurowanego wyposażenia samochodu. |
-| `Disable LKA` | Wyłączona / włączona | Przy uruchomieniu samochodu, jeśli C2 zgłasza włączony asystent pasa, BACCAble wysyła dwuklik przycisku na lewej manetce w ramce C2 `0x384`: naciśnięcie, puszczenie, naciśnięcie, puszczenie, w odstępach około 100 ms. Nie zmienia cyklicznych ramek stanu LKA i pomija dwuklik, jeśli asystent jest już wyłączony albo kierowca pierwszy naciśnie przycisk. Późniejszych naciśnięć kierowcy nie zmienia. Skuteczność dwukliku oraz możliwość ponownego włączenia LKA trzeba sprawdzić w samochodzie. Zmiana ustawienia po zapisie zaczyna działać przy następnym uruchomieniu. |
+| `LKA` | OFF / ON | **OFF** zleca wyłączenie LKA raz przy każdym włączeniu zapłonu. C1 rozpoznaje OFF → RUN w `0x1EF`, także bez uśpienia urządzenia; rozruch nie rozpoczyna drugiej sesji. Po otrzymaniu konfiguracji C2 czeka do 5 s na włączone LKA w `0x547` i puszczony przycisk manetki, potem wysyła jeden dwuklik C2 `0x384`: naciśnięcie, puszczenie, naciśnięcie, puszczenie, co około 100 ms. Początkowe raporty OFF nie kończą oczekiwania; gdy LKA jest wyłączone, dwuklik nie jest wysyłany. Naciśnięcie kierowcy anuluje oczekującą akcję. **ON** pozostawia działanie fabryczne i nie wysyła automatycznego dwukliku; nie wymusza włączenia LKA. Zapisane ustawienie działa od następnego włączenia zapłonu. Później nie ma cyklicznego nadpisywania. Dotychczasowe `Disable LKA: ON` staje się `LKA: OFF`, zachowując intencję zapisanego ustawienia. Użytkownik potwierdził jednorazowe działanie bety 24 po podłączeniu i brak działania po kolejnych cyklach zapłonu; tę poprawkę trzeba jeszcze sprawdzić wielokrotnie w samochodzie. |
 
 ### Grupa układu napędowego
 
@@ -413,8 +421,8 @@ Szkic nie steruje samochodem przed udanym zapisem.
 | `CAN routing` | Wyłączona / włączona | Udostępnia wybrane zwykłe komunikaty CAN przez mechanizm diagnostyczny BACCAble zgodnym programom diagnostycznym. To nie jest przełącznik przechwytywania przez USB. |
 | `DTC clear action` | Wyłączona / włączona | Udostępnia `Clear DTCs`, czyli wysyłanie poleceń kasowania błędów do wielu sterowników. |
 | `BCM fault reader` | Wyłączona / włączona | Udostępnia `Read BCM faults`, czyli odczyt błędów wyłącznie sterownika nadwozia BCM. |
-| `Engine profile` (wyświetlane jako `Engine`) | 2.0 I4 / 2.9 V6 / 2.2 D | Wybiera zestaw odczytów dla silnika. Zmiana usuwa pomiary przechowywane chwilowo w pamięci i tymczasowo ukrywa niepasujące ulubione. |
-| `USB mode` | OFF / CAN / ELM327 | Wybiera zwykłą pracę, binarne przechwytywanie CAN albo diagnostykę zgodną z częścią funkcji ELM327. ELM327 jest dostępny w wersjach z jego obsługą. Jednocześnie działa tylko jeden tryb. Wykonaj dwuklik, a przy pytaniu o zapis przytrzymaj RES, aby zapisać i zastosować zmianę. |
+| `Engine` | 2.0 I4 / 2.9 V6 / 2.2 D | Wybiera zestaw odczytów dla silnika. Zmiana usuwa pomiary przechowywane chwilowo w pamięci i tymczasowo ukrywa niepasujące ulubione. |
+| `USB mode` | OFF / CAN / ELM327 | Wybiera zwykłą pracę, binarne przechwytywanie CAN albo diagnostykę zgodną z częścią funkcji ELM327. ELM327 jest dostępny w wersjach z jego obsługą. Jednocześnie działa tylko jeden tryb. Przytrzymaj RES w edytorze, aby zapisać i zastosować zmianę, lub najpierw wykonaj dwuklik, aby zobaczyć pytanie o zapis. |
 
 Udostępnienie funkcji i jej rzeczywiste włączenie w samochodzie to różne rzeczy.
 Na przykład `Dyno action` pozwala dopiero wybrać odpowiednią akcję. Część akcji
@@ -1068,7 +1076,7 @@ Po zakończeniu używaj USB mode OFF do zwykłej pracy.
 | `No favorites` / `No pages` | Dodaj zgodne ulubione lub przywróć widoczność stron. Dwuklik RES nadal pozwala wrócić. |
 | Odczyt pokazuje `--` | Poczekaj na aktualne dane, sprawdź stan zapłonu/silnika i obsługę przez ECU. Diagnostyka USB może wstrzymywać zwykłe zapytania. Obecność strony nie gwarantuje, że sterownik obsługuje jej parametr. |
 | `Batt BCM SOC --` lub `Batt charge --%` | Porównaj niezależne źródła na Battery sources. Nie traktuj braku SOC jak 0% i nie używaj IBS override jako naprawy odczytu. |
-| Ustawienie wraca do poprzedniej wartości po restarcie | Użyj potwierdzenia i przytrzymania, aby zapisać. Rozwiąż problem `× Save failed: RES`. Zmiany pozostawione tylko w pamięci roboczej nie są trwałe. |
+| Ustawienie wraca do poprzedniej wartości po restarcie | Przytrzymaj RES w edytorze, aby zapisać; wcześniejszy dwuklik jest opcjonalny. Rozwiąż problem `× Save failed: RES`. Zmiany pozostawione tylko w pamięci roboczej nie są trwałe. |
 | `! Disabled in setup` | Włącz odpowiednie ustawienie w Features i wróć. |
 | `! Stop the car`, `! Enable Dyno`, `! Release brake`, `! Reset ESC`, `! Disable launch` | Spełnij wskazany warunek: zatrzymaj auto, włącz Dyno, zwolnij wymuszone hamowanie, przywróć normalny stan ESC albo wyłącz wspomaganie startu. Przy hamulcach stosuj opisaną procedurę wyłączenia wspomagania i zwolnienia. |
 | `! Request pending` | Poczekaj na wynik oczekującego polecenia. Nie zakładaj, że już wykonano je albo anulowano. |

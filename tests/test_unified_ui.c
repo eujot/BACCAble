@@ -221,6 +221,7 @@ static void test_permission_guards(void) {
         assert(dashboard_setup_screen[0] == '!');
         *active[i] = 0;
         setup_select_page(page);
+        setup_move_page(1);
         assert(*(uint8_t *)param->value == 1); /* Draft only. */
         setup_accept_draft();
         assert(*(uint8_t *)param->value == 0);
