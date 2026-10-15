@@ -6,14 +6,17 @@ implementation; they are not separate backlogs. Update this file after each task
 
 ## v5-beta-25 release preparation, 2026-10-15
 
-Prepared [v5-beta-25 release notes](releases/v5-beta-25.md) on
-`docs/v5-beta-25-release`, based on `origin/master` at `0cd14c7` (which includes
-PR #63's ignition-cycle and menu-save correction and PR #64's host test
-iteration update). The release includes the integrated v5-beta-24 firmware
-features plus PR #63. It has not been built or published as v5-beta-25 yet;
-merge this notes and handoff change to master, then run the beta workflow with
-tag `v5-beta-25`. Vehicle acceptance remains open for the ignition cycles,
-startup LKA gesture, driver re-enable and menu button gestures.
+Prepared [v5-beta-25 release notes](releases/v5-beta-25.md) in PR #65 and
+merged to master as `75295f2`. This includes PR #63's ignition-cycle and
+menu-save correction and PR #64's host test iteration update, plus the firmware
+features in v5-beta-24. Beta workflow [38763208470](https://github.com/eujot/BACCAble/actions/runs/38763208470)
+passed host tests, Lab tests, release checks, lint and C1/C2/BH/CAN builds with
+Arm GNU 15.3.Rel1. [v5-beta-25](https://github.com/eujot/BACCAble/releases/tag/v5-beta-25)
+was published from `75295f2`; `BUILD_INFO.json` matches that commit and every
+downloaded release asset passed `SHA256SUMS`. The release page includes the
+maintained notes. No image has been installed in a vehicle. Ignition cycling,
+the startup LKA gesture, driver re-enable and menu button gestures remain open
+for vehicle acceptance.
 
 ## Start here
 
