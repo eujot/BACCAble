@@ -4,6 +4,17 @@ Last updated: **2026-10-14** (dated verification boundaries below). This is the 
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
+## v5-beta-25 release preparation, 2026-10-15
+
+Prepared [v5-beta-25 release notes](releases/v5-beta-25.md) on
+`docs/v5-beta-25-release`, based on `origin/master` at `0cd14c7` (which includes
+PR #63's ignition-cycle and menu-save correction and PR #64's host test
+iteration update). The release includes the integrated v5-beta-24 firmware
+features plus PR #63. It has not been built or published as v5-beta-25 yet;
+merge this notes and handoff change to master, then run the beta workflow with
+tag `v5-beta-25`. Vehicle acceptance remains open for the ignition cycles,
+startup LKA gesture, driver re-enable and menu button gestures.
+
 ## Start here
 
 1. Read this file, then inspect `git status --short`, the current commit and the
