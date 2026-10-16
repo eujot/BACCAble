@@ -4,6 +4,37 @@ Last updated: **2026-10-16** (dated verification boundaries below). This is the 
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
+## Oil bar animation, 2026-10-16
+
+Implemented on the same local `feat/oil-level-readings` branch as `5730dc9`.
+The owner selected delivery of every adjacent position over a 20 ms C1 animation
+that could skip steps during transmission. BH now recognizes oil bars and moves
+one character toward the latest target only after the previous step has reached
+the CAN queue. Both Full and Delta retain each active step across repeated C1
+updates and failed offers; radio restart resends that same step. Each line is
+independent. Missing/unknown bars and initial appearance are not interpolated.
+C1 numeric readings, status, polling, UART protocol and IPC pace settings are
+unchanged. At default Quick 20ms + Full, each 13-fragment MY23 step takes about
+260 ms without radio/queue delay. Queue acceptance is not IPC acknowledgment.
+
+Validation: the complete 27-binary Apple Clang ASan/UBSan suite passed. New tests
+cover all four widths, Full/Delta, decreasing/increasing positions and arrows,
+changing direction, both lines, missing-data removal, repeated submissions,
+failed offers, radio restart and real BH CAN output at 20 ms fragment intervals.
+Both targeted BH display suites also passed after refining the 77-to-74 mm
+example. All 16 C1/C2/BH/CAN × legacy18/legacy24/MY23/MY23-large builds passed
+with full Arm GNU 15.2.Rel1 and `VERSION=oil-animation`. C1 uses 98,084 / 98,256
+bytes flash for 18/24 columns (48 bytes spare in the largest build); BH uses
+33,644 / 33,528 bytes. The small C1 size difference from the preceding handoff
+includes the longer version string. No flash limit was increased.
+
+Both user guides and the menu technical guide document timing and animation.
+Dictionary provenance and its generated readable catalog include the new helper;
+20 Lab knowledge tests passed. Integration remains local only: no release,
+merge or flashing. Vehicle acceptance must check visible steps in both directions,
+radio interference and Full/Delta behavior using an updated BH image. Existing
+master checkout captures/release folders remain untouched.
+
 ## Oil level readings and drivetrain setup, 2026-10-16
 
 Implemented locally on `feat/oil-level-readings`, commit `18abb97`, based on
