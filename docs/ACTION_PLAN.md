@@ -1,8 +1,38 @@
 # BACCAble action plan and agent handoff
 
-Last updated: **2026-10-14** (dated verification boundaries below). This is the single source of planned work,
+Last updated: **2026-10-16** (dated verification boundaries below). This is the single source of planned work,
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
+
+## Oil level readings and drivetrain setup, 2026-10-16
+
+Implemented locally on `feat/oil-level-readings`, commit `18abb97`, based on
+`origin/master` at `b515420`, in `/private/tmp/baccable-oil-level`.
+`Oil level` shows mm with LOW/OK/HIGH; `Oil level bar` is a separate Favorite
+page filling the selected line (MY23 16/22, legacy 18/24). Both use existing ECU
+measurements and cache expiry. Engine + new `Drivetrain` (Not set/RWD/Q4) select
+the four owner-supplied ranges; V6 has no range. Settings slot 40 and spare
+visibility bytes preserve old record sizes and saved page identities. Both
+user guides and menu/catalog technical guides describe the change.
+
+Validation: full 27-binary native Apple Clang suite with ASan/UBSan and menu
+label checks passed, including new oil thresholds, unavailable data, saved
+visibility, setting validation/draft save, both Favorite slots and stale cache.
+All four C1 display profiles and C2/BH/CAN compiled with the documented full
+Arm GNU 15.2.Rel1 toolchain (`VERSION=oil-level`). C1 flash (text + data) is
+98,084 bytes for 18 columns and 98,252 for 24 columns, against 98,304 available;
+the largest build has only 52 bytes spare. Catalog arrays now use their actual
+lengths rather than padded diesel entries; no linker limit was raised. Future
+release builds must recheck this tight limit with the pinned CI compiler and
+release version string. C2/BH/CAN flash: 29,856 / 33,216 / 25,196 bytes.
+The 20 Lab knowledge tests passed after refreshing source provenance and the
+readable dictionary; CAN decoding and research hypotheses were not changed.
+
+Integration/release: local committed task branch only; no PR, merge, release or
+flashing. Vehicle acceptance remains open for glyphs, line widths, actual ECU
+height availability, power-cycle persistence and the owner-supplied limits.
+The user's master checkout and its pre-existing untracked captures/release
+folders remain untouched. This change does not claim a vehicle test.
 
 ## v5-beta-25 release preparation, 2026-10-15
 
