@@ -31,8 +31,9 @@ includes the longer version string. No flash limit was increased.
 Both user guides and the menu technical guide document timing and animation.
 Dictionary provenance and its generated readable catalog include the new helper;
 20 Lab knowledge tests passed. Integration is pending in
-[PR #67](https://github.com/eujot/BACCAble/pull/67), targeting `master`; remote
-CI is pending. No merge, release or flashing has been performed. Vehicle acceptance must check visible steps in both directions,
+[PR #67](https://github.com/eujot/BACCAble/pull/67), merged to `master` at
+`9743823`. Its GitHub CI passed host tests, lint and all four firmware builds.
+`v5-beta-26` release preparation follows below; no firmware has been flashed. Vehicle acceptance must check visible steps in both directions,
 radio interference and Full/Delta behavior using an updated BH image. Existing
 master checkout captures/release folders remain untouched.
 
@@ -61,10 +62,19 @@ The 20 Lab knowledge tests passed after refreshing source provenance and the
 readable dictionary; CAN decoding and research hypotheses were not changed.
 
 Integration/release: submitted with the animation in
-[PR #67](https://github.com/eujot/BACCAble/pull/67); no merge, release or flashing. Vehicle acceptance remains open for glyphs, line widths, actual ECU
+[PR #67](https://github.com/eujot/BACCAble/pull/67), merged to `master` at
+`9743823`. Vehicle acceptance remains open for glyphs, line widths, actual ECU
 height availability, power-cycle persistence and the owner-supplied limits.
 The user's master checkout and its pre-existing untracked captures/release
 folders remain untouched. This change does not claim a vehicle test.
+
+## v5-beta-26 release, 2026-10-16
+
+Release notes are in [v5-beta-26.md](releases/v5-beta-26.md). Firmware PR #67
+was merged to `master` at `9743823ba6180ce9f6f9c3f6b8d3001fdd6c77e2`; GitHub CI
+workflow [38926808326](https://github.com/eujot/BACCAble/actions/runs/38926808326)
+passed host tests, lint and C1/C2/BH/CAN builds. The source has not been flashed
+to a vehicle. Oil ranges and display behavior remain open for vehicle acceptance.
 
 ## v5-beta-25 release preparation, 2026-10-15
 
