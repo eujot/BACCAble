@@ -395,8 +395,12 @@ static void test_temporary_pace_and_lease(void) {
     now += 1; body_process(); assert(transmitted_count == before + 1);
 }
 
+#include "test_oil_animation.c"
+
 int main(void) {
     const HostTest tests[] = {
+        HOST_TEST(test_oil_animation_steps),
+        HOST_TEST(test_oil_animation_both_lines),
         HOST_TEST(test_menu_footer_and_periodic_reassert),
         HOST_TEST(test_my23_fixed_fields_and_unicode_under_each_source),
         HOST_TEST(test_source_tracking_guard_and_missing_final),
@@ -405,6 +409,7 @@ int main(void) {
         HOST_TEST(test_utf_and_line_lengths_under_each_source),
         HOST_TEST(test_full_snapshot_and_latest_pending),
         HOST_TEST(test_temporary_pace_and_lease),
+        HOST_TEST(test_oil_animation_can_pacing),
     };
     host_tests_run(DASHBOARD_MESSAGE_MAX_LENGTH == 24 ? "body-display-24" : "body-display-18", tests, sizeof(tests) / sizeof(tests[0]));
 }

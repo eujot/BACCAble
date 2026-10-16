@@ -271,7 +271,8 @@ persisted draft workflow. Radio restoration and the separate IPC test patterns s
 Full is the default: one immutable 39-byte image is sent in order, with one
 replaceable latest target waiting behind it. Repeated submissions and failed
 CAN queue offers cannot splice new content into the active image. Radio restart
-abandons it and starts the latest complete target at fragment zero. A profile
+normally abandons it and starts the latest complete target at fragment zero;
+an oil animation instead resends its current step. A profile
 switch resets the stream to avoid changing encoding in an active image. Delta
 retains the earlier changed-fragment behavior for comparison. Neither mode can
 guarantee an atomic visual swap at the IPC: CAN queue acceptance is not display
@@ -325,3 +326,26 @@ Unknown setup/V6 never produces an OK judgment; missing/expired data produces
 field offsets and page IDs are preserved. Older firmware may clear these spare
 visibility bytes when saving. Catalog arrays now have their actual lengths to
 avoid paying flash space for empty diesel entries.
+
+### Oil bar animation at the BH fragment queue
+
+`oil_bar_animation.c` recognizes the complete bar shape and exactly one marker
+(including off-scale arrows). It derives an adjacent position from the previous
+accepted screen and the latest target. The first appearance, unavailable data
+and unrelated text are never interpolated. Only the bar is animated; other text
+comes from the latest C1 target. Each line is independent, at widths 16/22 or 18/24.
+
+`display_stream.c` freezes that step in `active` in both Full and Delta modes.
+It advances only after all fragments needed for that step have been accepted by
+the CAN queue. Repeated targets, failed offers and keepalives cannot skip a step;
+a radio restart resends the current oil step from fragment zero. A newer target
+can reverse direction after the current step finishes. Ordinary Delta screens
+retain their existing replaceable-target and cursor behavior.
+
+C1 rendering and measurement polling are unchanged. The BH fragment interval
+remains 20 ms by default, so a 13-fragment Full MY23 step takes about 260 ms
+without arbitration/queue delay. Delta can need one or two changed fragments
+for the bar alone. This guarantees the order of queued steps, not IPC hardware
+acknowledgment or an atomic physical screen swap. Host tests check both directions,
+off-scale transitions, target reversal, both lines/widths, retries, radio restart,
+missing-data removal and the production 20 ms CAN pacing path.

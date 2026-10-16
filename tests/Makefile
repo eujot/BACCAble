@@ -98,7 +98,7 @@ build/test_drive_mode_bh: $(DRIVE_MODE_SOURCES) $(HEADERS) Makefile
 test: build/test_drive_mode build/test_drive_mode_c2 build/test_drive_mode_bh
 
 MENU_SOURCES := test_menu.c $(addprefix $(FIRMWARE)/, features/menu.c features/menu_model.c \
- features/menu_input.c features/my23_ui.c features/favorite_parameters.c features/ui_entry.c features/menu_diagnostics.c features/display_stream.c features/ibs_override.c features/board_sync.c features/dashboard.c features/dashboard_format.c features/oil_level.c \
+ features/menu_input.c features/my23_ui.c features/favorite_parameters.c features/ui_entry.c features/menu_diagnostics.c features/display_stream.c features/oil_bar_animation.c features/ibs_override.c features/board_sync.c features/dashboard.c features/dashboard_format.c features/oil_level.c \
  diagnostics/parameter_cache.c diagnostics/parameter_request.c diagnostics/parameter_catalog.c \
  protocol/checksum.c vehicle/steering_controls.c diagnostics/uds_decode.c diagnostics/fault_reader.c settings/persistence.c settings/setup_menu.c settings/setup_entries.c \
  third_party/printf/printf.c)
@@ -149,11 +149,11 @@ build/test_menu_debug: $(MENU_SOURCES) $(MENU_FIXTURES) $(HEADERS) Makefile
 
 test: build/test_menu_debug
 
-BODY_DISPLAY_SOURCES := test_body_display.c $(FIRMWARE)/features/body.c $(FIRMWARE)/features/display_stream.c $(FIRMWARE)/features/my23_ui.c $(FIRMWARE)/features/ipc_display_test.c $(FIRMWARE)/state/display.c
-build/test_body_display: $(BODY_DISPLAY_SOURCES) $(HEADERS) Makefile
+BODY_DISPLAY_SOURCES := test_body_display.c $(FIRMWARE)/features/body.c $(FIRMWARE)/features/display_stream.c $(FIRMWARE)/features/oil_bar_animation.c $(FIRMWARE)/features/my23_ui.c $(FIRMWARE)/features/ipc_display_test.c $(FIRMWARE)/state/display.c
+build/test_body_display: test_oil_animation.c $(BODY_DISPLAY_SOURCES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DBH_FLAVOR=1 $(BODY_DISPLAY_SOURCES) -o $@
-build/test_body_display_large: $(BODY_DISPLAY_SOURCES) $(HEADERS) Makefile
+build/test_body_display_large: test_oil_animation.c $(BODY_DISPLAY_SOURCES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DBH_FLAVOR=1 -DLARGE_DISPLAY $(BODY_DISPLAY_SOURCES) -o $@
 test: build/test_body_display build/test_body_display_large

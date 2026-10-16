@@ -361,6 +361,21 @@ For `2.9 V6`, no range is defined: `?` / `No oil range`.
 Missing, expired or invalid samples show `Oil -- mm`; no last-known point is retained.
 Existing favorites remain saved. The bar and numeric page can be hidden independently.
 
+The point moves one character at a time in either direction. BH finishes sending
+each step before starting the next; a new measurement changes the destination,
+without skipping intermediate positions. First appearance and return after an
+unavailable reading show the current position directly. The numeric value and
+LOW/OK/HIGH remain the latest ECU reading; intermediate points are animation,
+not additional measurements. Both Favorite lines animate independently.
+
+`Quick 20ms` is the interval between CAN fragments, not complete screens.
+With default `Write Full`, a MY23 step uses 13 fragments: about 260 ms with no
+bus/radio delay. `Write Delta` sends only changed fragments and also finishes
+each step before advancing. CAN retries and radio interruptions retain the
+pending step. Refresh speed still follows `BACCAble IPC`; animation does not
+change that setting. Actual IPC appearance requires a vehicle check.
+
+
 ## Settings: Features
 
 Open `Settings → Features`. The tables follow the actual browsing order.

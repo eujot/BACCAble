@@ -388,6 +388,21 @@ Dla `2.9 V6` nie określono zakresu: pojawia się `?` / `No oil range`.
 Brak, przeterminowanie lub nieprawidłowa próbka daje `Oil -- mm`; stary punkt nie pozostaje.
 Dotychczasowe ulubione pozostają zapisane. Pasek i odczyt liczbowy można ukrywać osobno.
 
+Punkt przesuwa się po jednym znaku w obie strony. BH kończy wysyłanie każdego
+kroku przed rozpoczęciem następnego. Nowy pomiar zmienia cel ruchu, bez pomijania
+pośrednich pozycji. Przy pierwszym wyświetleniu oraz po powrocie z braku danych
+punkt pojawia się od razu w bieżącym miejscu. Liczba i LOW/OK/HIGH nadal pokazują
+najnowszy odczyt ECU; pośrednie pozycje są animacją, a nie dodatkowymi pomiarami.
+Obie linie Favorites animują się niezależnie.
+
+`Quick 20ms` oznacza odstęp między fragmentami CAN, a nie pełnymi ekranami.
+Przy domyślnym `Write Full` krok MY23 wymaga 13 fragmentów, czyli około 260 ms
+bez opóźnień magistrali lub radia. `Write Delta` wysyła tylko zmienione fragmenty
+i również kończy krok przed przejściem dalej. Ponowienie wysyłki CAN i przerwanie
+przez radio zachowują bieżący krok. Szybkość nadal wynika z `BACCAble IPC`;
+animacja nie zmienia tego ustawienia. Wygląd na liczniku wymaga próby w samochodzie.
+
+
 ## Ustawienia: Features
 
 Otwórz `Settings → Features`. Tabele zachowują rzeczywistą kolejność opcji.
