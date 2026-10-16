@@ -21,6 +21,9 @@ local full Arm GNU 15.2.Rel1 toolchain, and cppcheck lint passed for all four
 flavors. C1 flash is 98,084 bytes (18 columns) or 98,256 bytes (24 columns),
 leaving 48 bytes in the larger profile; pinned CI compiler sizing may differ.
 This is a source fix, not a vehicle verification.
+PR #70's first CI run found stale Lab source checksums for three changed
+diagnostic files. Their reviewed source hashes were refreshed; no signal layout,
+diagnostic definition, evidence or hypothesis was changed.
 Vehicle acceptance remains open for the affected experimental pages and any
 other examples reported by the owner; their source DIDs and scaling are not
 verified on this car.
