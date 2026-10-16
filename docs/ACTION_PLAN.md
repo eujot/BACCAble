@@ -30,12 +30,12 @@ includes the longer version string. No flash limit was increased.
 
 Both user guides and the menu technical guide document timing and animation.
 Dictionary provenance and its generated readable catalog include the new helper;
-20 Lab knowledge tests passed. Integration is pending in
-[PR #67](https://github.com/eujot/BACCAble/pull/67), merged to `master` at
-`9743823`. Its GitHub CI passed host tests, lint and all four firmware builds.
-`v5-beta-26` release preparation follows below; no firmware has been flashed. Vehicle acceptance must check visible steps in both directions,
-radio interference and Full/Delta behavior using an updated BH image. Existing
-master checkout captures/release folders remain untouched.
+20 Lab knowledge tests passed. PR #67 merged to `master` at `9743823`; its GitHub
+CI passed host tests, lint and all four firmware builds. The `v5-beta-26` beta
+release and release notes are published as recorded below. No firmware has been
+flashed. Vehicle acceptance must check visible steps in both directions, radio
+interference and Full/Delta behavior using an updated BH image. The user's master
+checkout's pre-existing capture/release files remain untouched.
 
 ## Oil level readings and drivetrain setup, 2026-10-16
 
@@ -70,11 +70,17 @@ folders remain untouched. This change does not claim a vehicle test.
 
 ## v5-beta-26 release, 2026-10-16
 
-Release notes are in [v5-beta-26.md](releases/v5-beta-26.md). Firmware PR #67
-was merged to `master` at `9743823ba6180ce9f6f9c3f6b8d3001fdd6c77e2`; GitHub CI
-workflow [38926808326](https://github.com/eujot/BACCAble/actions/runs/38926808326)
-passed host tests, lint and C1/C2/BH/CAN builds. The source has not been flashed
-to a vehicle. Oil ranges and display behavior remain open for vehicle acceptance.
+Release notes are in [v5-beta-26.md](releases/v5-beta-26.md) and on the
+[GitHub release page](https://github.com/eujot/BACCAble/releases/tag/v5-beta-26).
+Notes PR #68 merged to `master` at `850b1a7d32949fa81709df3272f0fbad5b1dfd71`.
+The beta workflow [38927961378](https://github.com/eujot/BACCAble/actions/runs/38927961378)
+passed host tests, lint, UI profile matrix, firmware-size checks and C1/C2/BH/CAN
+builds using Arm GNU 15.3.Rel1. Release `v5-beta-26` was published as
+`beta-850b1a7` from that commit. Downloaded BIN/HEX/ELF images and `BUILD_INFO.json`
+all passed the published `SHA256SUMS` verification. C1 flash is 97,836 / 98,304
+bytes; C2/BH/CAN use 29,612 / 33,644 / 25,200 bytes. The source has not been
+flashed to a vehicle. Oil ranges, ECU sample availability and display behavior
+remain open for vehicle acceptance.
 
 ## v5-beta-25 release preparation, 2026-10-15
 
