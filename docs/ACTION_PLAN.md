@@ -4,13 +4,15 @@ Last updated: **2026-10-16** (dated verification boundaries below). This is the 
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
-## v5-beta-27 release preparation, 2026-10-16
+## v5-beta-27 release, 2026-10-16
 
-Prepared [v5-beta-27 release notes](releases/v5-beta-27.md) for the separate
-`Oil bar glyphs` IPC display test. Source commit `36c3680` passed GitHub CI
-(workflow [38929868326](https://github.com/eujot/BACCAble/actions/runs/38929868326));
-the release workflow must repeat the pinned checks and publish the beta assets.
-The vehicle glyph comparison remains open; no release image has been installed.
+Published [v5-beta-27](https://github.com/eujot/BACCAble/releases/tag/v5-beta-27)
+from `cf1fc2378c6854b96af7f4ecdc61f424d750a00d`. The beta adds the separate
+`Oil bar glyphs` IPC display test; see [release notes](releases/v5-beta-27.md).
+Workflow [38930474144](https://github.com/eujot/BACCAble/actions/runs/38930474144)
+passed host tests, lint and C1/C2/BH/CAN builds. `BUILD_INFO.json` identifies
+the tagged commit and all downloaded artifacts passed `SHA256SUMS`. The vehicle
+glyph comparison remains open; no release image has been installed in a vehicle.
 
 ## Oil bar glyph CI provenance fix, 2026-10-16
 
