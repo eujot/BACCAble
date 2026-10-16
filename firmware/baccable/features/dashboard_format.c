@@ -1,5 +1,6 @@
 #include "app/powertrain.h"
 #include "features/ui_glyphs.h"
+#include "features/oil_level.h"
 #include <stdbool.h>
 #if defined(BACCABLE_C1)
 
@@ -167,7 +168,6 @@ static const char *my23_template(const ParameterPage *page) {
     case 0x29: case 0xb1: return "Belt $enum";
     case 0x2c: case 0xb4: return "Best0-100 $2.2fs";
     case 0x2d: case 0xb5: return "B 100-200 $2.2fs";
-    case 0x31: case 0x9a: return "Oil lev $3.1fmm";
     case 0x39: return "O$3.0fW$3.0fI$3.0fX$3.0f";
     case 0x3a: case 0xbc: return "Oil$3.0f W$3.0f G$3.0f";
     case 0x3c: case 0xb9: return "IBS B0$3.0f B1$3.0f";
@@ -188,6 +188,7 @@ static const char *my23_template(const ParameterPage *page) {
 
 /* Padded numeric fields aid legacy alignment but waste MY23 columns. */
 void dashboard_format_my23_page(const ParameterPage *page, const float *values, char *result) {
+    if (oil_level_format(page, values[0], 16, result)) return;
     dashboard_format_values(my23_template(page), values, page->parameter_ids, result);
     size_t read = 0, write = 0;
     while (result[read]) {

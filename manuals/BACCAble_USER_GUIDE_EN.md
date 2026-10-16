@@ -1,8 +1,8 @@
 # BACCAble — in-car user guide
 
-This guide describes the current dashboard-menu firmware source. It includes the pending
-**post-v5-beta-24 LKA and menu-save correction**, which still requires vehicle
-acceptance testing. It starts after BACCAble has been installed and
+This guide describes the current dashboard-menu firmware source, including the
+unreleased **oil level readings and drivetrain setting** after v5-beta-25.
+The new oil display still requires vehicle acceptance testing. It starts after BACCAble has been installed and
 connected to the vehicle. Installation, wiring and firmware flashing are outside
 its scope. Use a matching C1/C2/BH firmware set.
 
@@ -325,6 +325,42 @@ wraparound; IPC display-test lists and Shown pages do the same.
 selection. `Sort order` changes catalog ordering through its own draft/save
 prompt. `Auto rotate` advances the live list every five seconds.
 
+### Oil level and bar
+
+Under `Settings > Features`, save `Engine` and `Drivetrain`. Both oil readings
+are in `Readings > Engine`, with no `Advanced pages` requirement. The former
+gasoline `Oil height` keeps its saved identity and is now called `Oil level`.
+
+- `Oil level`: for example `Oil 77.0mm OK`; `LOW` is below the minimum,
+  `HIGH` above the maximum, and both boundary values are `OK`.
+- `Oil level bar`: fills the available line width. `[` and `]` mark the minimum
+  and maximum; `=` marks the interval. The point `•` marks the current reading
+  on MY23; legacy displays use `*`. `<` or `>` indicates a value off the scale.
+
+In `Settings > Favorites`, select these as two separate readings in line 1 and
+line 2, in either order. MY23 uses 16 characters on line 1 and 22 on line 2;
+legacy uses its configured 18/24-character line. Example for 2.0 I4 RWD:
+
+```text
+Oil 77.0mm OK
+----[=====•======]----
+```
+
+| Engine | Drivetrain | OK interval (mm, inclusive) |
+| --- | --- | --- |
+| 2.0 I4 | RWD | 72–82 |
+| 2.0 I4 | Q4 | 67–77 |
+| 2.2 D | RWD | 61–65 |
+| 2.2 D | Q4 | 79–84 |
+
+These reference limits were supplied by the owner; they have not been independently
+verified in this change. The display reuses the existing ECU oil-height measurement
+and does not establish whether the vehicle's measurement conditions are satisfied.
+`Not set` shows `?` beside the numeric value and `Set drivetrain` in the bar.
+For `2.9 V6`, no range is defined: `?` / `No oil range`.
+Missing, expired or invalid samples show `Oil -- mm`; no last-known point is retained.
+Existing favorites remain saved. The bar and numeric page can be hidden independently.
+
 ## Settings: Features
 
 Open `Settings → Features`. The tables follow the actual browsing order.
@@ -394,6 +430,7 @@ workflow; their draft does not control the car before successful persistence.
 | `DTC clear action` | Off / on | Permit the multi-controller `Clear DTCs` action. |
 | `BCM fault reader` | Off / on | Permit `Read BCM faults`, which reads the Body Control Module only. |
 | `Engine` | 2.0 I4 / 2.9 V6 / 2.2 D | Select the engine-specific reading catalog. Switching discards cached measurements and temporarily filters incompatible favorites. |
+| `Drivetrain` | Not set / RWD / Q4 | Select the drivetrain used with `Engine` for oil-level limits; default `Not set`. Save the choice by holding RES. This is not a gearbox setting. |
 | `USB mode` | OFF / CAN / ELM327 | Select normal operation, binary CAN capture, or ELM-compatible diagnostics. ELM327 is offered in builds with that support. Modes are exclusive. Hold RES in the editor to save and apply, or double-click for confirmation first. |
 
 Feature permissions and vehicle states are different: enabling `Dyno action`,
@@ -789,7 +826,8 @@ present them in a different order.
 | Pedal map | Other | B / A / N / D / R; pedal-controller reply, or unavailable marker. | — |
 | Ignition cyl 5 | Eng | °; cylinder 5 ignition correction. **V6 only.** | — |
 | Ignition cyl 6 | Eng | °; cylinder 6 ignition correction. **V6 only.** | — |
-| Oil height | Eng | mm; ECU oil-level height. | A |
+| Oil level | Eng | mm; ECU oil height with LOW / OK / HIGH for the selected engine and drivetrain. | — |
+| Oil level bar | Eng | Full-width oil-height bar with reference limits. | — |
 | Misfires total | Eng | count; ECU-reported total misfires. | — |
 | Misfires cyl 1 | Eng | count; cylinder 1 misfires. | A |
 | Misfires cyl 2 | Eng | count; cylinder 2 misfires. | A |
@@ -839,7 +877,8 @@ supported by an individual ECU version.
 | Oil quality | Eng | %; ECU oil-quality estimate. | A |
 | Oil temp | Temp | °C; native engine oil temperature. | — |
 | Oil pressure | Eng | bar; native engine oil pressure. | — |
-| Oil level | Eng | mm; ECU oil-level height. | — |
+| Oil level | Eng | mm; ECU oil height with LOW / OK / HIGH for the selected engine and drivetrain. | — |
+| Oil level bar | Eng | Full-width oil-height bar with reference limits. | — |
 | AdBlue volume | DPF | L; AdBlue quantity. **SCR equipment required.** | — |
 | AdBlue level | DPF | %; AdBlue tank level. **SCR equipment required.** | — |
 | Gearbox temp | Temp | °C; transmission temperature. | — |

@@ -7,8 +7,10 @@ and [Polish](../../manuals/BACCAble_USER_GUIDE_PL.md). Apply the
 [AGENTS.md maintenance rule](../../AGENTS.md#keep-both-user-guides-current)
 in the same change as the implementation.
 
-All **64 gasoline and 60 diesel pages** retain their IDs, physical order,
-parameter IDs, templates and scales. Classification is a browsing policy, not
+The original **64 gasoline and 60 diesel pages** retain their IDs, physical order,
+parameter IDs and scales. Oil height page 0x31 is now `Oil level`, with a
+status renderer shared with diesel 0x9a. New ordinary pages 0x67 / 0xbd add
+`Oil level bar`; the existing experimental gasoline pages stay in place. Classification is a browsing policy, not
 proof that every ECU supports every inherited diagnostic request.
 
 ## Profile and compatibility
@@ -141,7 +143,8 @@ or sources, not identical duplicates.
 | `0x2e` | Pedal map | I4 / V6 | Default | Measurement/status |
 | `0x2f` | Ignition cyl 5 | V6 only | Default | Measurement/status |
 | `0x30` | Ignition cyl 6 | V6 only | Default | Measurement/status |
-| `0x31` | Oil height | I4 / V6 | Advanced | Overlap: dedicated reading |
+| `0x31` | Oil level | I4 / V6 | Default | Height and LOW / OK / HIGH; V6 range unknown |
+| `0x67` | Oil level bar | I4 / V6 | Default | Full-width height bar; V6 range unknown |
 | `0x32` | Misfires total | I4 / V6 | Default | Overlap: dedicated reading |
 | `0x33` | Misfires cyl 1 | I4 / V6 | Advanced | Overlap: dedicated reading; V6 only cylinders 1–4 |
 | `0x34` | Misfires cyl 2 | I4 / V6 | Advanced | Overlap: dedicated reading; V6 only cylinders 1–4 |
@@ -182,7 +185,8 @@ or sources, not identical duplicates.
 | `0x97` | Oil quality | Diesel | Advanced | Overlap: dedicated reading |
 | `0x98` | Oil temp | Diesel | Default | Overlap: dedicated reading |
 | `0x99` | Oil pressure | Diesel | Default | Overlap: dedicated reading |
-| `0x9a` | Oil level | Diesel | Default | Overlap: dedicated reading |
+| `0x9a` | Oil level | Diesel | Default | Height and LOW / OK / HIGH |
+| `0xbd` | Oil level bar | Diesel | Default | Full-width height bar |
 | `0x9b` | AdBlue volume | Diesel with SCR | Default | Measurement/status |
 | `0x9c` | AdBlue level | Diesel with SCR | Default | Measurement/status |
 | `0x9d` | Gearbox temp | Diesel | Default | Overlap: dedicated reading |

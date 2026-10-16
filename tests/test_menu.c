@@ -283,11 +283,12 @@ static void test_preferences(void) {
     for (unsigned i = 0; i < menu_page_count(0); ++i)
         menu_page_show(&copy, 0, i, false);
     assert(menu_page_list(&copy, 0, 0, false, false, list) == 0);
-    assert(menu_page_list(&copy, 0, 0, false, true, list) == 64); /* Ordinary gasoline catalog; experiments are a separate section. */
+    assert(menu_page_list(&copy, 0, 0, false, true, list) == 65); /* Ordinary gasoline catalog; experiments are a separate section. */
     raw[0] = 255;
     assert(!menu_preferences_decode(&copy, raw));
 }
 static void fresh_menu(void) {
+    settings_state.drivetrain = 0;
     settings_state.is_diesel_enabled = 0;
     settings_state.ipc_my23_is_installed = 0;
     settings_state.gasoline_v6 = 0;
@@ -1047,7 +1048,7 @@ static void test_engine_filters(void) {
     count = menu_page_list_filtered(&prefs, 0, 0, false, false, false, false, list);
     for (unsigned i = 0; i < count; ++i)
         assert(!menu_page_advanced(0, list[i]));
-    assert(menu_page_list_filtered(&prefs, 0, 0, false, true, false, false, list) == 62); /* 64 ordinary gasoline pages minus 2 V6-only. */
+    assert(menu_page_list_filtered(&prefs, 0, 0, false, true, false, false, list) == 63); /* 65 ordinary gasoline pages minus 2 V6-only. */
     assert(menu_page_index(0, 0x2f) == 46 && menu_page_index(0, 0x30) == 47);
     assert(parameter_page_elements(&parameter_pages[0][menu_page_index(0, 0x3b)]) == 2);
     assert(parameter_page_elements(&parameter_pages[0][menu_page_index(0, 0x3c)]) == 2);
@@ -1279,6 +1280,7 @@ static void fresh_contract(void);
 #include "test_menu_contract.c"
 #include "test_idle_latin1.c"
 #include "test_my23_ui.c"
+#include "test_oil_level.c"
 
 int main(void) {
 #ifdef MENU_DIAGNOSTICS
@@ -1291,6 +1293,8 @@ int main(void) {
     const char *suite = "menu-18";
 #endif
     const HostTest tests[] = {
+        HOST_TEST(test_oil_level),
+        HOST_TEST(test_oil_favorites),
         HOST_TEST(test_lka_save_gestures),
         HOST_TEST(test_ignition_sessions_without_sleep),
         HOST_TEST(test_direct_hold_other_editors),

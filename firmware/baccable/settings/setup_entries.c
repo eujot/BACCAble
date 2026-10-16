@@ -302,6 +302,8 @@ const SetupParam setup_params[] = {
     SETUP_PROFILE(SETUP_FLASH_DIESEL_PARAMS, "Engine", DEFAULT_DIESEL_PARAMS,
                                settings_state.is_diesel_enabled, NULL),
 
+    SETUP_ENUM8(40, "Drivetrain", 2, 0, settings_state.drivetrain, NULL),
+
     // Driver assistance and comfort
     SETUP_TOGGLE(SETUP_FLASH_ODOMETER_BLINK, "Stop odo blink", DEFAULT_ODOMETER_BLINK,
                         settings_state.disable_odometer_blink),

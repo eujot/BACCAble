@@ -287,6 +287,10 @@ static const char *setup_value_label(const SetupParam *param, uint16_t value, ui
     if (param->entry_type == UI_ENTRY_TOGGLE) label = (value != (param->flash_index == 39)) ? "ON" : "OFF";
     else if (param->flash_index == 34) label = value ? "CAN" : extra ? "ELM327" : "OFF";
     else if (param->flash_index == 16) label = value ? "2.2 D" : extra ? "2.9 V6" : "2.0 I4";
+    else if (param->flash_index == 40) {
+        static const char *const choices[] = {"Not set", "RWD", "Q4"};
+        label = choices[value <= 2 ? value : 0];
+    }
     else if (param->flash_index == 20) {
         static const char *const modes[] = {"OFF", "Auto", "Bypass", "A", "N", "D", "R", "Hybrid", "Kids"};
         label = modes[value <= 8 ? value : 0];

@@ -308,3 +308,20 @@ use the two visible reading pages, compare USB/Bluetooth/CarPlay, change radio t
 exercise holds and double-clicks, and check responsiveness without flicker.
 Observe the actual IPC and an independent BH TX trace for alignment, timing and
 radio arbitration. A host CAN queue acceptance is not an IPC acknowledgement.
+
+## Oil height pages
+
+`Oil level` keeps gasoline page 0x31 / diesel 0x9a; `Oil level bar` adds 0x67 /
+0xbd using the same cached measurements (89 / 64). Favorites select each page
+independently, deduplicate requests and format the bar to the actual 16/22 MY23
+or 18/24 legacy slot width. MY23 bullet token 0x81 uses the existing Unicode
+mapping to U+2022; no new glyph protocol is introduced.
+
+`Drivetrain` uses the final existing settings halfword (40): 0 unknown, 1 RWD,
+2 Q4. Engine and drivetrain select owner-supplied limits in `oil_level.c`.
+Unknown setup/V6 never produces an OK judgment; missing/expired data produces
+`Oil -- mm`. Gasoline visibility bit 64 uses previously spare preference byte
+74 (byte 75 reserves the same extension for diesel). Existing 80-byte records,
+field offsets and page IDs are preserved. Older firmware may clear these spare
+visibility bytes when saving. Catalog arrays now have their actual lengths to
+avoid paying flash space for empty diesel entries.

@@ -4,8 +4,6 @@ float displayed_parameter_values[4];
 
 uint8_t parameter_page_count = 0;
 
-uint8_t gasoline_page_count = 102;
-uint8_t diesel_page_count = 60;
 uint8_t selected_parameter_element = 0;
 
 #ifdef LARGE_DISPLAY
@@ -18,8 +16,8 @@ uint8_t selected_parameter_element = 0;
 
 // format string $x.yf for float params where y is decimal part and x is integer part
 // format string $enum for enumerator values derived from specific enum arrays
-const ParameterPage parameter_pages[2][104] = {
-    {
+/* Separate arrays avoid unused flash entries in the shorter diesel catalog. */
+static const ParameterPage gasoline_pages[] = {
         {.id = 0x01,
          .group = 5,
          .label = "Power / torque",
@@ -261,8 +259,8 @@ const ParameterPage parameter_pages[2][104] = {
          .element_count = 0},
         {.id = 0x31,
          .group = 1,
-         .label = "Oil height",
-         .name = "Oil level $3.1fmm",
+         .label = "Oil level",
+         .name = "Oil level",
          .parameter_ids = {89, 89},
          .element_count = 0},
         {.id = 0x32,
@@ -431,8 +429,10 @@ const ParameterPage parameter_pages[2][104] = {
          .name = "$5.0f", .parameter_ids = {123, 123, 0, 0}, .element_count = 1}, /* 0x3969 DA10F1 */
         {.id = 0x66, .group = 10, .label = "Cruise sw 3",
          .name = "$5.0f", .parameter_ids = {124, 124, 0, 0}, .element_count = 1}, /* 0x3975 DA10F1 */
-    },
-    {
+        {.id = 0x67, .group = 1, .label = "Oil level bar",
+         .name = "Oil level bar", .parameter_ids = {89, 89}, .element_count = 1},
+};
+static const ParameterPage diesel_pages[] = {
         {.id = 0x81,
          .group = 5,
          .label = "Power / torque",
@@ -561,7 +561,7 @@ const ParameterPage parameter_pages[2][104] = {
         {.id = 0x9a,
          .group = 1,
          .label = "Oil level",
-         .name = "Oil level $3.1fmm",
+         .name = "Oil level",
          .parameter_ids = {64, 64}}, // Oil quantity in mm
         {.id = 0x9b,
          .group = 4,
@@ -736,7 +736,12 @@ const ParameterPage parameter_pages[2][104] = {
          .name = "Oil$3.0f W$3.0f G$3.0fC",
          .parameter_ids = {5, 68, 33},
          .element_count = 3},
-    }};
+        {.id = 0xbd, .group = 1, .label = "Oil level bar",
+         .name = "Oil level bar", .parameter_ids = {64, 64}, .element_count = 1},
+};
+const uint8_t gasoline_page_count = sizeof(gasoline_pages) / sizeof(gasoline_pages[0]);
+const uint8_t diesel_page_count = sizeof(diesel_pages) / sizeof(diesel_pages[0]);
+const ParameterPage *const parameter_pages[2] = {gasoline_pages, diesel_pages};
 
 const ParameterDefinition parameter_definitions[136] = {
     {

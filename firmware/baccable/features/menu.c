@@ -1,4 +1,5 @@
 #include "features/menu.h"
+#include "features/oil_level.h"
 #include "features/body.h"
 #include "features/ui_entry.h"
 #include "features/menu_diagnostics.h"
@@ -490,7 +491,7 @@ static unsigned favorite_queries(const FavoriteParameters *favorite, uint8_t ids
     }
     return count;
 }
-static void format_favorite_page(uint8_t id, uint32_t max_age, char out[DASHBOARD_MESSAGE_MAX_LENGTH + 1]) {
+static void format_favorite_page(uint8_t id, uint32_t max_age, unsigned width, char out[25]) {
     const ParameterPage *page = favorite_page(engine, gasoline_v6, id);
     out[0] = 0;
     if (!page) return;
@@ -498,18 +499,19 @@ static void format_favorite_page(uint8_t id, uint32_t max_age, char out[DASHBOAR
     for (unsigned i = 0; i < parameter_page_elements(page); ++i)
         values[i] = parameter_cache_get_max_age(page->parameter_ids[i], currentTime,
             parameter_definitions[page->parameter_ids[i]].request_id > 255 ? max_age : 3000U);
+    if (oil_level_format(page, values[0], width, out)) return;
     if (settings_state.ipc_my23_is_installed)
         dashboard_format_my23_page(page, values, out);
     else
         dashboard_format_values(page->name, values, page->parameter_ids, out);
 }
 static __attribute__((noinline)) void present_favorite(const FavoriteParameters *favorite) {
-    char first[DASHBOARD_MESSAGE_MAX_LENGTH + 1], second[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
+    char first[25], second[25];
     uint8_t ids[8];
     uint32_t max_age = (favorite_queries(favorite, ids) + 1U) * 500U;
     if (max_age < 3000U) max_age = 3000U;
-    format_favorite_page(favorite->params[0], max_age, first);
-    format_favorite_page(favorite->params[1], max_age, second);
+    format_favorite_page(favorite->params[0], max_age, settings_state.ipc_my23_is_installed ? 16 : DASHBOARD_MESSAGE_MAX_LENGTH, first);
+    format_favorite_page(favorite->params[1], max_age, settings_state.ipc_my23_is_installed ? 22 : DASHBOARD_MESSAGE_MAX_LENGTH, second);
     menu_present_lines(first, second);
 }
 /* Convert beta-19 atomic measurement IDs to their dedicated catalog pages. */

@@ -77,6 +77,8 @@ void menu_preferences_encode(const MenuPreferences *prefs, uint8_t data[MENU_PRE
         for (unsigned i = 0; i < MENU_GROUPS; ++i)
             put16(data, &offset, prefs->last[e][i]);
         put16(data, &offset, prefs->last_favorite[e]);
+        /* Spare bytes extend visibility without shifting old saved fields. */
+        data[74 + e] = prefs->hidden[e][8];
         memcpy(data + offset, prefs->hidden[e], 8);
         offset += 8;
     }
@@ -102,6 +104,7 @@ bool menu_preferences_decode(MenuPreferences *prefs, const uint8_t data[MENU_PRE
         for (unsigned i = 0; i < MENU_GROUPS; ++i)
             prefs->last[e][i] = get16(data, &offset);
         prefs->last_favorite[e] = get16(data, &offset);
+        prefs->hidden[e][8] = data[74 + e];
         memcpy(prefs->hidden[e], data + offset, 8);
         offset += 8;
     }
@@ -112,8 +115,9 @@ bool menu_preferences_decode(MenuPreferences *prefs, const uint8_t data[MENU_PRE
 bool menu_page_visible(const MenuPreferences *prefs, uint8_t engine, uint8_t index) {
     if (index >= menu_page_count(engine))
         return false;
-    unsigned slot = (parameter_pages[engine][index].id & 0x7f) - 1;
-    if (slot >= 64)
+    unsigned slot = parameter_pages[engine][index].id == 0x67 ? 64 :
+                    (parameter_pages[engine][index].id & 0x7f) - 1;
+    if (parameter_pages[engine][index].group >= MENU_GROUPS || slot >= 72)
         return true; /* Experimental pages are always available. */
     return !(prefs->hidden[engine][slot / 8] & (1U << (slot % 8)));
 }
@@ -122,8 +126,9 @@ bool menu_page_visible(const MenuPreferences *prefs, uint8_t engine, uint8_t ind
 void menu_page_show(MenuPreferences *prefs, uint8_t engine, uint8_t index, bool visible) {
     if (index >= menu_page_count(engine))
         return;
-    unsigned slot = (parameter_pages[engine][index].id & 0x7f) - 1;
-    if (slot >= 64)
+    unsigned slot = parameter_pages[engine][index].id == 0x67 ? 64 :
+                    (parameter_pages[engine][index].id & 0x7f) - 1;
+    if (parameter_pages[engine][index].group >= MENU_GROUPS || slot >= 72)
         return;
     uint8_t mask = 1U << (slot % 8);
     if (visible)
@@ -188,7 +193,7 @@ bool menu_page_advanced(uint8_t engine, uint8_t index) {
     if (index >= menu_page_count(engine))
         return false;
     static const uint8_t ids[] = {0x02, 0x03, 0x05, 0x06, 0x0c, 0x0e, 0x0f, 0x13, 0x19, 0x1b, 0x1c,
-                                  0x1d, 0x21, 0x22, 0x29, 0x31, 0x33, 0x34, 0x35, 0x36, 0x38, 0x39,
+                                  0x1d, 0x21, 0x22, 0x29, 0x33, 0x34, 0x35, 0x36, 0x38, 0x39,
                                   0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f, 0x40, 0x82, 0x83, 0x85, 0x86,
                                   0x89, 0x91, 0x92, 0x93, 0x97, 0xa1, 0xa2, 0xa3, 0xa4, 0xa7, 0xa9,
                                   0xac, 0xad, 0xb1, 0xb8, 0xb9, 0xba, 0xbb, 0xbc};
