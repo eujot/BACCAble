@@ -36,9 +36,9 @@ static inline unsigned parameter_page_elements(const ParameterPage *page) {
 
 extern float displayed_parameter_values[4];
 extern uint8_t parameter_page_count;
-extern uint8_t gasoline_page_count;
-extern uint8_t diesel_page_count;
-extern const ParameterPage parameter_pages[2][104];
+extern const uint8_t gasoline_page_count;
+extern const uint8_t diesel_page_count;
+extern const ParameterPage *const parameter_pages[2];
 extern const ParameterDefinition parameter_definitions[136];
 extern uint8_t selected_parameter_element;
 

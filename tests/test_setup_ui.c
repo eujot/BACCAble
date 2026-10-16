@@ -13,6 +13,8 @@ static uint8_t setup_page_for(uint8_t slot) {
         static const char *const pedal[] = {"OFF", "Auto", "Bypass", "A", "N", "D", "R", "Hybrid", "Kids"};
         static const char *const acc[] = {"OFF", "RES", "+"};
         static const char *const dna[] = {"OFF", "A", "D", "Race"};
+        static const char *const drivetrain[] = {"Not set", "RWD", "Q4"};
+        if (slot == 40) label = drivetrain[value];
         if (slot == 16) label = value ? "2.2 D" : settings_state.gasoline_v6 ? "2.9 V6" : "2.0 I4";
         if (slot == 20) label = pedal[value];
         if (slot == 24) label = acc[value];
@@ -47,8 +49,8 @@ static void setup_accept_draft(void) {
 }
 static void test_setup_ui(void) {
     fresh_menu();
-    const uint8_t enum_slots[] = {16, 20, 24, 25, 26, 38};
-    const uint8_t enum_sizes[] = {3, 9, 3, 3, 3, 4};
+    const uint8_t enum_slots[] = {16, 20, 24, 25, 26, 38, 40};
+    const uint8_t enum_sizes[] = {3, 9, 3, 3, 3, 4, 3};
     for (unsigned entry = 0; entry < sizeof(enum_slots); ++entry) {
         const SetupParam *param = setup_find_by_flash_index(enum_slots[entry]);
         assert(param->entry_type == UI_ENTRY_ENUM);

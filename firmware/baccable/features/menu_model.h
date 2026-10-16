@@ -11,7 +11,7 @@ typedef struct {
     uint16_t favorites[2][MENU_FAVORITES];
     uint16_t last[2][MENU_GROUPS];
     uint16_t last_favorite[2];
-    uint8_t hidden[2][8];
+    uint8_t hidden[2][9];
     uint8_t alphabetical;
 } MenuPreferences;
 extern const char *const menu_group_names[MENU_GROUPS];

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "dictionary_version": "2026-10-13.5",
+  "dictionary_version": "2026-10-16.2",
   "vehicle": {
     "model": "Alfa Romeo Giulia (owner-reported)",
     "model_year": null,
@@ -8,7 +8,7 @@
     "vin": null,
     "scope": "This checkout and these sessions only; not a universal Alfa Romeo or cross-model DBC."
   },
-  "firmware_source_commit": "25e518be8e5823920b63287263e86a743e0ba8f4",
+  "firmware_source_commit": "5730dc95eb1b9cdc366b1193952c2257d9fd42d0",
   "source_sha256": {
     "firmware/baccable/vehicle/display_frames.c": "db2ee467c1d0436044b2f991140c76457d88b849425eadf9eaea123dc8e634e7",
     "firmware/baccable/vehicle/telemetry_frames.c": "83ef051370d33eb44ca25b213242e05f60523a9c45b40339b41bde33e0234aa1",
@@ -31,13 +31,14 @@
     "firmware/baccable/diagnostics/parameter_request.c": "a94cfe516169de9f2e56a1a507ce4ffca68da7edbe1e14034c344088eddb1e67",
     "firmware/baccable/app/main.c": "56ca1d425b792d5720e4c945dadcc06fa7c16e11facf4c61b34de9911845f21e",
     "firmware/baccable/vehicle/standard_frames.c": "2f9fab6b03830b2617fc1079e070758493098d6ca314bd1b14635849e2e7aa31",
-    "firmware/baccable/diagnostics/parameter_catalog.c": "882376126f4e2781eef5515356d1bba902d1d8b7c9799e03421ff552b2c8f21f",
+    "firmware/baccable/diagnostics/parameter_catalog.c": "af0620e27b5346aff24763ec14b123d65764291c4597dffdd6c5c32fd859691a",
     "firmware/baccable/diagnostics/parameter_cache.c": "e1657d55f50074d41cfbdbbe9ae9108ce4be345449aa62fef81ab59ca0705020",
     "docs/architecture/REFERENCE_SIGNALS.md": "fb8188e6938df5e74e23682b02e065f79db95c059e0999d2b325d07a9c94e6cf",
     "firmware/baccable/features/body.c": "8369f2f57b1b605f4786fd64a389b96c994ae4c04b7a10cd874269efd7345fb7",
     "firmware/baccable/features/ipc_display_test.c": "af47a187e2e3a85965e12afb4a3b83c3d2754ffde648d81a046ee26af66b8e9c",
     "firmware/baccable/features/my23_ui.c": "6e5c772adfe061fc10c37e84908886858ac483b45b97aae207d6c2bb4b3814f2",
-    "firmware/baccable/features/display_stream.c": "8c0d81d7c0b723e200a89231eb50d2ef87de1cb52267a66046daaecca33184f0"
+    "firmware/baccable/features/display_stream.c": "fc58c7270c56c0295d364a5ff0333a5e6b22174c935a9b9b377f54147a15e3dd",
+    "firmware/baccable/features/oil_bar_animation.c": "6cc953261ef3a50fccecbd80f13639e98d477acb14e6a7210b43b6fe57cd6d6a"
   },
   "byte_convention": "Zero-based byte indexes; bit 0 is LSB. Parts are concatenated in listed most-significant-first order; physical = raw * scale + offset.",
   "capture_limits": [
@@ -8880,6 +8881,11 @@
           "engine": "diesel",
           "page_id": "0x9a",
           "label": "Oil level"
+        },
+        {
+          "engine": "diesel",
+          "page_id": "0xbd",
+          "label": "Oil level bar"
         }
       ],
       "source": "firmware/baccable/diagnostics/parameter_catalog.c",
@@ -9439,7 +9445,7 @@
         {
           "engine": "gasoline",
           "page_id": "0x31",
-          "label": "Oil height"
+          "label": "Oil level"
         },
         {
           "engine": "gasoline",
@@ -9450,6 +9456,11 @@
           "engine": "gasoline",
           "page_id": "0x3f",
           "label": "Oil volume/mm"
+        },
+        {
+          "engine": "gasoline",
+          "page_id": "0x67",
+          "label": "Oil level bar"
         }
       ],
       "source": "firmware/baccable/diagnostics/parameter_catalog.c",

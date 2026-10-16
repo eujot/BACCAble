@@ -1,8 +1,70 @@
 # BACCAble action plan and agent handoff
 
-Last updated: **2026-10-14** (dated verification boundaries below). This is the single source of planned work,
+Last updated: **2026-10-16** (dated verification boundaries below). This is the single source of planned work,
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
+
+## Oil bar animation, 2026-10-16
+
+Implemented on the same local `feat/oil-level-readings` branch as `5730dc9`.
+The owner selected delivery of every adjacent position over a 20 ms C1 animation
+that could skip steps during transmission. BH now recognizes oil bars and moves
+one character toward the latest target only after the previous step has reached
+the CAN queue. Both Full and Delta retain each active step across repeated C1
+updates and failed offers; radio restart resends that same step. Each line is
+independent. Missing/unknown bars and initial appearance are not interpolated.
+C1 numeric readings, status, polling, UART protocol and IPC pace settings are
+unchanged. At default Quick 20ms + Full, each 13-fragment MY23 step takes about
+260 ms without radio/queue delay. Queue acceptance is not IPC acknowledgment.
+
+Validation: the complete 27-binary Apple Clang ASan/UBSan suite passed. New tests
+cover all four widths, Full/Delta, decreasing/increasing positions and arrows,
+changing direction, both lines, missing-data removal, repeated submissions,
+failed offers, radio restart and real BH CAN output at 20 ms fragment intervals.
+Both targeted BH display suites also passed after refining the 77-to-74 mm
+example. All 16 C1/C2/BH/CAN × legacy18/legacy24/MY23/MY23-large builds passed
+with full Arm GNU 15.2.Rel1 and `VERSION=oil-animation`. C1 uses 98,084 / 98,256
+bytes flash for 18/24 columns (48 bytes spare in the largest build); BH uses
+33,644 / 33,528 bytes. The small C1 size difference from the preceding handoff
+includes the longer version string. No flash limit was increased.
+
+Both user guides and the menu technical guide document timing and animation.
+Dictionary provenance and its generated readable catalog include the new helper;
+20 Lab knowledge tests passed. Integration is pending in
+[PR #67](https://github.com/eujot/BACCAble/pull/67), targeting `master`; remote
+CI is pending. No merge, release or flashing has been performed. Vehicle acceptance must check visible steps in both directions,
+radio interference and Full/Delta behavior using an updated BH image. Existing
+master checkout captures/release folders remain untouched.
+
+## Oil level readings and drivetrain setup, 2026-10-16
+
+Implemented locally on `feat/oil-level-readings`, commit `18abb97`, based on
+`origin/master` at `b515420`, in `/private/tmp/baccable-oil-level`.
+`Oil level` shows mm with LOW/OK/HIGH; `Oil level bar` is a separate Favorite
+page filling the selected line (MY23 16/22, legacy 18/24). Both use existing ECU
+measurements and cache expiry. Engine + new `Drivetrain` (Not set/RWD/Q4) select
+the four owner-supplied ranges; V6 has no range. Settings slot 40 and spare
+visibility bytes preserve old record sizes and saved page identities. Both
+user guides and menu/catalog technical guides describe the change.
+
+Validation: full 27-binary native Apple Clang suite with ASan/UBSan and menu
+label checks passed, including new oil thresholds, unavailable data, saved
+visibility, setting validation/draft save, both Favorite slots and stale cache.
+All four C1 display profiles and C2/BH/CAN compiled with the documented full
+Arm GNU 15.2.Rel1 toolchain (`VERSION=oil-level`). C1 flash (text + data) is
+98,084 bytes for 18 columns and 98,252 for 24 columns, against 98,304 available;
+the largest build has only 52 bytes spare. Catalog arrays now use their actual
+lengths rather than padded diesel entries; no linker limit was raised. Future
+release builds must recheck this tight limit with the pinned CI compiler and
+release version string. C2/BH/CAN flash: 29,856 / 33,216 / 25,196 bytes.
+The 20 Lab knowledge tests passed after refreshing source provenance and the
+readable dictionary; CAN decoding and research hypotheses were not changed.
+
+Integration/release: submitted with the animation in
+[PR #67](https://github.com/eujot/BACCAble/pull/67); no merge, release or flashing. Vehicle acceptance remains open for glyphs, line widths, actual ECU
+height availability, power-cycle persistence and the owner-supplied limits.
+The user's master checkout and its pre-existing untracked captures/release
+folders remain untouched. This change does not claim a vehicle test.
 
 ## v5-beta-25 release preparation, 2026-10-15
 

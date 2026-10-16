@@ -1,8 +1,8 @@
 # BACCAble — instrukcja obsługi w samochodzie
 
 Ta instrukcja opisuje menu na zestawie wskaźników i funkcje w bieżącym kodzie
-firmware. Uwzględnia przygotowywaną **poprawkę LKA i zapisu menu po v5-beta-24**.
-Ta poprawka wymaga jeszcze próby w samochodzie. Instrukcja dotyczy urządzenia już zamontowanego
+firmware. Uwzględnia niewydane jeszcze **odczyty poziomu oleju i ustawienie napędu**
+po v5-beta-25. Nowy ekran oleju wymaga jeszcze próby w samochodzie. Instrukcja dotyczy urządzenia już zamontowanego
 i podłączonego do samochodu. Nie obejmuje montażu, okablowania ani wgrywania
 oprogramowania. Kontrolery C1, C2 i BH powinny mieć pasujący do siebie zestaw
 oprogramowania z tego samego wydania.
@@ -352,6 +352,57 @@ przejściu z końca listy na początek.
 strony do zestawu. `Sort order` ma własny szkic i potwierdzenie zapisu.
 `Auto rotate` zmienia bieżący widok co pięć sekund.
 
+### Poziom oleju i pasek
+
+W `Settings > Features` zapisz `Engine` i `Drivetrain`. Oba odczyty oleju są
+w `Readings > Engine`, bez konieczności włączania `Advanced pages`. Dotychczasowy
+benzynowy `Oil height` zachowuje zapisany identyfikator i nazywa się teraz `Oil level`.
+
+- `Oil level`: np. `Oil 77.0mm OK`; `LOW` oznacza poziom poniżej minimum,
+  `HIGH` powyżej maksimum. Obie wartości graniczne należą do `OK`.
+- `Oil level bar`: zajmuje całą dostępną szerokość linii. `[` i `]` oznaczają
+  minimum i maksimum, a `=` przedział między nimi. Punkt `•` wskazuje bieżący
+  odczyt na MY23; starsze wyświetlacze używają `*`. `<` lub `>` oznacza wynik poza skalą.
+
+W `Settings > Favorites` wybierz je jako dwa osobne odczyty w linii 1 i 2,
+w dowolnej kolejności. MY23 wykorzystuje 16 znaków w linii 1 i 22 w linii 2;
+starszy wyświetlacz ma skonfigurowaną linię 18/24 znaków. Przykład dla 2.0 I4 RWD:
+
+```text
+Oil 77.0mm OK
+----[=====•======]----
+```
+
+| Engine | Drivetrain | Zakres OK (mm, wraz z granicami) |
+| --- | --- | --- |
+| 2.0 I4 | RWD | 72–82 |
+| 2.0 I4 | Q4 | 67–77 |
+| 2.2 D | RWD | 61–65 |
+| 2.2 D | Q4 | 79–84 |
+
+Zakresy referencyjne podał właściciel; nie zostały niezależnie potwierdzone w tej
+zmianie. Ekran korzysta z istniejącego pomiaru wysokości oleju z ECU i nie potwierdza,
+że samochód spełnia warunki poprawnego pomiaru.
+`Not set` wyświetla `?` obok wartości liczbowej i `Set drivetrain` zamiast paska.
+Dla `2.9 V6` nie określono zakresu: pojawia się `?` / `No oil range`.
+Brak, przeterminowanie lub nieprawidłowa próbka daje `Oil -- mm`; stary punkt nie pozostaje.
+Dotychczasowe ulubione pozostają zapisane. Pasek i odczyt liczbowy można ukrywać osobno.
+
+Punkt przesuwa się po jednym znaku w obie strony. BH kończy wysyłanie każdego
+kroku przed rozpoczęciem następnego. Nowy pomiar zmienia cel ruchu, bez pomijania
+pośrednich pozycji. Przy pierwszym wyświetleniu oraz po powrocie z braku danych
+punkt pojawia się od razu w bieżącym miejscu. Liczba i LOW/OK/HIGH nadal pokazują
+najnowszy odczyt ECU; pośrednie pozycje są animacją, a nie dodatkowymi pomiarami.
+Obie linie Favorites animują się niezależnie.
+
+`Quick 20ms` oznacza odstęp między fragmentami CAN, a nie pełnymi ekranami.
+Przy domyślnym `Write Full` krok MY23 wymaga 13 fragmentów, czyli około 260 ms
+bez opóźnień magistrali lub radia. `Write Delta` wysyła tylko zmienione fragmenty
+i również kończy krok przed przejściem dalej. Ponowienie wysyłki CAN i przerwanie
+przez radio zachowują bieżący krok. Szybkość nadal wynika z `BACCAble IPC`;
+animacja nie zmienia tego ustawienia. Wygląd na liczniku wymaga próby w samochodzie.
+
+
 ## Ustawienia: Features
 
 Otwórz `Settings → Features`. Tabele zachowują rzeczywistą kolejność opcji.
@@ -422,6 +473,7 @@ Szkic nie steruje samochodem przed udanym zapisem.
 | `DTC clear action` | Wyłączona / włączona | Udostępnia `Clear DTCs`, czyli wysyłanie poleceń kasowania błędów do wielu sterowników. |
 | `BCM fault reader` | Wyłączona / włączona | Udostępnia `Read BCM faults`, czyli odczyt błędów wyłącznie sterownika nadwozia BCM. |
 | `Engine` | 2.0 I4 / 2.9 V6 / 2.2 D | Wybiera zestaw odczytów dla silnika. Zmiana usuwa pomiary przechowywane chwilowo w pamięci i tymczasowo ukrywa niepasujące ulubione. |
+| `Drivetrain` | Not set / RWD / Q4 | Wybiera napęd, który wraz z `Engine` określa zakres poziomu oleju; domyślnie `Not set`. Przytrzymaj RES, aby zapisać. To nie jest ustawienie skrzyni biegów. |
 | `USB mode` | OFF / CAN / ELM327 | Wybiera zwykłą pracę, binarne przechwytywanie CAN albo diagnostykę zgodną z częścią funkcji ELM327. ELM327 jest dostępny w wersjach z jego obsługą. Jednocześnie działa tylko jeden tryb. Przytrzymaj RES w edytorze, aby zapisać i zastosować zmianę, lub najpierw wykonaj dwuklik, aby zobaczyć pytanie o zapis. |
 
 Udostępnienie funkcji i jej rzeczywiste włączenie w samochodzie to różne rzeczy.
@@ -848,7 +900,8 @@ do sterownika. Ten sam parametr z dwóch takich źródeł może mieć różną d
 | Pedal map | Other | B / A / N / D / R; mapa zgłoszona przez kontroler pedału albo znacznik braku odczytu. | — |
 | Ignition cyl 5 | Eng | °; korekta zapłonu cylindra 5. **Tylko V6.** | — |
 | Ignition cyl 6 | Eng | °; korekta zapłonu cylindra 6. **Tylko V6.** | — |
-| Oil height | Eng | mm; wysokość poziomu oleju według ECU. | A |
+| Oil level | Eng | mm; wysokość oleju z ECU i LOW / OK / HIGH dla wybranego silnika i napędu. | — |
+| Oil level bar | Eng | Pasek wysokości oleju na całą linię z granicami zakresu. | — |
 | Misfires total | Eng | Całkowita liczba wypadnięć zapłonu zgłoszona przez ECU. | — |
 | Misfires cyl 1 | Eng | Liczba wypadnięć zapłonu w cylindrze 1. | A |
 | Misfires cyl 2 | Eng | Liczba wypadnięć zapłonu w cylindrze 2. | A |
@@ -898,7 +951,8 @@ diagnostyczne mogą nie być obsługiwane przez daną wersję sterownika.
 | Oil quality | Eng | %; ocena jakości oleju według ECU. | A |
 | Oil temp | Temp | °C; temperatura oleju silnikowego z komunikatów CAN. | — |
 | Oil pressure | Eng | bar; ciśnienie oleju silnikowego z komunikatów CAN. | — |
-| Oil level | Eng | mm; wysokość poziomu oleju według ECU. | — |
+| Oil level | Eng | mm; wysokość oleju z ECU i LOW / OK / HIGH dla wybranego silnika i napędu. | — |
+| Oil level bar | Eng | Pasek wysokości oleju na całą linię z granicami zakresu. | — |
 | AdBlue volume | DPF | L; ilość AdBlue. **Wymagany układ SCR.** | — |
 | AdBlue level | DPF | %; poziom AdBlue w zbiorniku. **Wymagany układ SCR.** | — |
 | Gearbox temp | Temp | °C; temperatura skrzyni biegów. | — |

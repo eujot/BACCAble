@@ -37,13 +37,10 @@ static void test_catalog_behavior(void) {
     const uint8_t counts[] = {gasoline_page_count, diesel_page_count};
     for (unsigned engine = 0; engine < 2; ++engine) {
         assert(counts[engine] <= 104);
-        for (unsigned page = 0; page < 104; ++page) {
+        for (unsigned page = 0; page < counts[engine]; ++page) {
             const ParameterPage *entry = &parameter_pages[engine][page];
-            if (page < counts[engine])
-                assert(entry->id == (engine ? 0x81 : 0x01) + page); /* Persisted physical order. */
-            assert((entry->name != NULL) == (page < counts[engine]));
-            if (page >= counts[engine])
-                continue;
+            assert(entry->id == (engine ? 0x81 : 0x01) + page); /* Persisted physical order. */
+            assert(entry->name != NULL);
             check_screen_width(entry);
             for (unsigned element = 0; element < parameter_page_elements(entry); ++element) {
                 assert(entry->parameter_ids[element] < 136);

@@ -20,7 +20,7 @@ typedef struct {
     uint8_t offered[DISPLAY_FRAGMENT_SIZE];
     uint16_t known, forced, dirty;
     uint8_t cursor, fragment, count;
-    bool valid, offering, full, transferring;
+    bool valid, offering, full, transferring, animating;
 } DisplayStream;
 void display_stream_set_full(DisplayStream *stream, bool full);
 void display_stream_submit(DisplayStream *stream, const uint8_t *text);
