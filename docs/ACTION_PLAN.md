@@ -30,8 +30,9 @@ includes the longer version string. No flash limit was increased.
 
 Both user guides and the menu technical guide document timing and animation.
 Dictionary provenance and its generated readable catalog include the new helper;
-20 Lab knowledge tests passed. Integration remains local only: no release,
-merge or flashing. Vehicle acceptance must check visible steps in both directions,
+20 Lab knowledge tests passed. Integration is pending in
+[PR #67](https://github.com/eujot/BACCAble/pull/67), targeting `master`; remote
+CI is pending. No merge, release or flashing has been performed. Vehicle acceptance must check visible steps in both directions,
 radio interference and Full/Delta behavior using an updated BH image. Existing
 master checkout captures/release folders remain untouched.
 
@@ -59,8 +60,8 @@ release version string. C2/BH/CAN flash: 29,856 / 33,216 / 25,196 bytes.
 The 20 Lab knowledge tests passed after refreshing source provenance and the
 readable dictionary; CAN decoding and research hypotheses were not changed.
 
-Integration/release: local committed task branch only; no PR, merge, release or
-flashing. Vehicle acceptance remains open for glyphs, line widths, actual ECU
+Integration/release: submitted with the animation in
+[PR #67](https://github.com/eujot/BACCAble/pull/67); no merge, release or flashing. Vehicle acceptance remains open for glyphs, line widths, actual ECU
 height availability, power-cycle persistence and the owner-supplied limits.
 The user's master checkout and its pre-existing untracked captures/release
 folders remain untouched. This change does not claim a vehicle test.
