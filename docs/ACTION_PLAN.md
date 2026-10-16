@@ -4,6 +4,27 @@ Last updated: **2026-10-16** (dated verification boundaries below). This is the 
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
+## OBD catalog bound fix, 2026-10-16
+
+On `fix/obd-catalog-bound`, corrected a shared stale limit of 100 parameter IDs
+in display formatting, diagnostic request selection, cache access and Favorite
+query selection. The catalog contains 136 definitions; experimental gasoline
+pages using IDs 100–124 could previously show a literal `$` template and never
+receive a value. These paths now share the catalog count. No DID, scaling or CAN
+dictionary meaning was changed. Valid UDS replies can populate these fields;
+missing, rejected, stale or unsupported replies still show `--`.
+
+Validation: the complete Apple Clang ASan/UBSan host suite and focused menu suite
+passed, including new request/cache/display checks for parameter IDs 100 and 124
+on legacy and MY23 screens. All 16 C1/C2/BH/CAN display profiles built with the
+local full Arm GNU 15.2.Rel1 toolchain, and cppcheck lint passed for all four
+flavors. C1 flash is 98,084 bytes (18 columns) or 98,256 bytes (24 columns),
+leaving 48 bytes in the larger profile; pinned CI compiler sizing may differ.
+This is a source fix, not a vehicle verification.
+Vehicle acceptance remains open for the affected experimental pages and any
+other examples reported by the owner; their source DIDs and scaling are not
+verified on this car.
+
 ## v5-beta-27 release, 2026-10-16
 
 Published [v5-beta-27](https://github.com/eujot/BACCAble/releases/tag/v5-beta-27)

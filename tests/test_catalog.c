@@ -43,7 +43,7 @@ static void test_catalog_behavior(void) {
             assert(entry->name != NULL);
             check_screen_width(entry);
             for (unsigned element = 0; element < parameter_page_elements(entry); ++element) {
-                assert(entry->parameter_ids[element] < 136);
+                assert(entry->parameter_ids[element] < PARAMETER_DEFINITION_COUNT);
                 const ParameterDefinition *parameter = &parameter_definitions[entry->parameter_ids[element]];
                 assert(parameter->request_id);
                 assert(isfinite(parameter->scale));

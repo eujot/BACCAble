@@ -42,7 +42,7 @@ void parameter_request_begin(void) {
 void parameter_request_begin_id(uint8_t id, uint8_t element) {
     if (request.active && currentTime - request.started < 500) return;
     request.active = 0;
-    if (id >= 100)
+    if (id >= PARAMETER_DEFINITION_COUNT)
         return;
     const ParameterDefinition *parameter = &parameter_definitions[id];
     if (parameter->request_id <= 0xff || parameter->request_length != 4)

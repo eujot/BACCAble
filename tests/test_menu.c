@@ -347,6 +347,24 @@ static void reply_parameter(uint8_t id) {
     CAN_RxHeaderTypeDef header = {.IDE = CAN_ID_EXT, .ExtId = p->response_id, .DLC = 8};
     parameter_request_receive(&header, reply);
 }
+static void test_high_obd_parameter_pages(void) {
+    const uint8_t pages[] = {0x4e, 0x66};
+    const uint8_t ids[] = {100, 124};
+    for (unsigned i = 0; i < 2; ++i) {
+        preview_pair(pages[i], pages[i], i == 0);
+        assert(!strchr(screen, '$'));
+        unsigned before = queries;
+        now += 150;
+        menu_process();
+        assert(queries == before + 1);
+        assert(query_ecu == parameter_definitions[ids[i]].request_id);
+        reply_parameter(ids[i]);
+        assert(isfinite(parameter_cache_get(ids[i], now)));
+        assert(isfinite(displayed_parameter_values[0]));
+        assert(!strchr(screen, '$'));
+        assert(strpbrk(screen, "0123456789"));
+    }
+}
 static void test_readings_preview_prefetch(void) {
     for (unsigned in_flight = 0; in_flight < 2; ++in_flight) {
         preview_pair(0x12, 0x15, true); /* Oil / gearbox temperature. */
@@ -1362,6 +1380,7 @@ int main(void) {
         HOST_TEST(test_maximum_hold),
         HOST_TEST(test_board_sync_retry),
         HOST_TEST(test_shipped_favorite_pairs),
+        HOST_TEST(test_high_obd_parameter_pages),
         HOST_TEST(test_readings_preview_prefetch),
         HOST_TEST(test_engine_filters),
         HOST_TEST(test_action_availability)

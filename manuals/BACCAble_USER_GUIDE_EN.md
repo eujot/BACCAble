@@ -154,6 +154,8 @@ kept apart from the ordinary Readings catalog: it does not change `Shown pages`,
 Favorite sorting or the saved settings, and its own selection is not remembered
 between restarts. Reads whose reply does not fit a single CAN frame are not
 included in this release.
+Numeric fields on these pages show a value when a valid reply arrives; they show
+`--` while the value is unavailable.
 
 ## Display symbols and messages
 

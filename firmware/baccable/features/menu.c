@@ -483,7 +483,7 @@ static unsigned favorite_queries(const FavoriteParameters *favorite, uint8_t ids
         if (!page) continue;
         for (unsigned i = 0; i < parameter_page_elements(page); ++i) {
             uint8_t id = page->parameter_ids[i];
-            if (id >= 100 || parameter_definitions[id].request_id <= 255) continue;
+            if (id >= PARAMETER_DEFINITION_COUNT || parameter_definitions[id].request_id <= 255) continue;
             unsigned j = 0;
             while (j < count && ids[j] != id) ++j;
             if (j == count) ids[count++] = id;

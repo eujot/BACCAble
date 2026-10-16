@@ -165,6 +165,8 @@ Sekcja jest odseparowana od zwykłego katalogu Readings: nie zmienia `Shown page
 kolejności Ulubionych ani zapisanych ustawień, a jej własny wybór nie jest
 pamiętany między restartami. Odczyty, których odpowiedź nie mieści się w jednej
 ramce CAN, nie są objęte tym wydaniem.
+Pola liczbowe na tych stronach pokazują wartość po otrzymaniu poprawnej odpowiedzi,
+a przy jej braku pokazują `--`.
 
 ## Symbole i komunikaty
 
