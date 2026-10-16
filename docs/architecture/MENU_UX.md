@@ -187,6 +187,14 @@ beta-19 atomic formatter had printed as a decimal. Both Readings and Favorites
 now use the catalog enum formatter, which displays the unknown marker `-`.
 Raw CAN state and the CAN dictionary layout are unchanged.
 
+## Experimental parameter bounds
+
+The parameter catalog contains 136 definitions. Display formatting, request
+selection and cache bounds all use `PARAMETER_DEFINITION_COUNT`; a stale limit
+of 100 had left some experimental numeric templates visible as `$` and prevented
+requests or cache updates for those pages. A valid single-frame UDS reply can now
+populate the field; missing or rejected replies still display `--`.
+
 ## Readings preview polling
 
 MY23 Readings polls the selected page and the actual next visible page from the

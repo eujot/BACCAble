@@ -3,8 +3,8 @@
 #if defined(BACCABLE_C1)
     #include "app/powertrain.h"
     #include <string.h>
-static float values[136], peaks[136];
-static uint8_t peak_valid[(136 + 7) / 8];
+static float values[PARAMETER_DEFINITION_COUNT], peaks[PARAMETER_DEFINITION_COUNT];
+static uint8_t peak_valid[(PARAMETER_DEFINITION_COUNT + 7) / 8];
 static bool hold;
 
 /* Start a new maximum-hold interval without discarding live measurements. */
@@ -18,8 +18,8 @@ void parameter_peak_enable(bool enabled) {
 
 /* Report whether the display is retaining maximum readings. */
 bool parameter_peak_enabled(void) { return hold; }
-static uint32_t updated[136];
-static uint8_t valid[(136 + 7) / 8];
+static uint32_t updated[PARAMETER_DEFINITION_COUNT];
+static uint8_t valid[(PARAMETER_DEFINITION_COUNT + 7) / 8];
 static uint32_t rpm_updated;
 static uint8_t rpm_valid;
 
@@ -32,7 +32,7 @@ void parameter_cache_reset(void) {
 
 /* Remember a fresh measurement and invalidate unavailable values. */
 void parameter_cache_put(uint8_t id, float value, uint32_t now) {
-    if (id >= 100)
+    if (id >= PARAMETER_DEFINITION_COUNT)
         return;
     values[id] = value;
     updated[id] = now;
@@ -54,7 +54,7 @@ float parameter_cache_get(uint8_t id, uint32_t now) {
 float parameter_cache_get_max_age(uint8_t id, uint32_t now, uint32_t max_age) {
     if (id == 11 || id == 12 || id == 16)
         return native_parameter_read(id);
-    if (id >= 100 || !(valid[id / 8] & (1U << (id % 8))) || now - updated[id] > max_age)
+    if (id >= PARAMETER_DEFINITION_COUNT || !(valid[id / 8] & (1U << (id % 8))) || now - updated[id] > max_age)
         return NAN;
     /* Status enums and run statistics stay live even while numerical readings are held. */
     return hold && (peak_valid[id / 8] & (1U << (id % 8))) && id != 6 && id != 8 && id != 9 && id != 10 &&

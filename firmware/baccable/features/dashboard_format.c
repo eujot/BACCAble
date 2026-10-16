@@ -102,7 +102,7 @@ void dashboard_format_values(const char *template, const float *values, const ui
     for (const char *text = template; *text && length < DASHBOARD_MESSAGE_MAX_LENGTH;) {
         bool numeric = number_placeholder(text);
         bool enumeration = !strncmp(text, "$enum", 5);
-        if (element >= 4 || paramId[element] >= 100 || (!numeric && !enumeration)) {
+        if (element >= 4 || paramId[element] >= PARAMETER_DEFINITION_COUNT || (!numeric && !enumeration)) {
             if (text == celsius && length && text[-1] == ' ')
                 result[length - 1] = UI_GLYPH_DEGREE; /* Reuse the optional unit gap. */
             else if (text == celsius && degrees < 4)

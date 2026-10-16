@@ -3,6 +3,8 @@
 #include "app/build_config.h"
 #include "stm32f0xx_hal.h"
 
+#define PARAMETER_DEFINITION_COUNT 136U
+
 // this is used to invert bytes order in a 32 bit integer
 #define SWAP_UINT32(x)                                                                                       \
     (((uint32_t)(x) >> 24) & 0x000000FF) | (((uint32_t)(x) >> 8) & 0x0000FF00) |                             \
@@ -39,7 +41,7 @@ extern uint8_t parameter_page_count;
 extern const uint8_t gasoline_page_count;
 extern const uint8_t diesel_page_count;
 extern const ParameterPage *const parameter_pages[2];
-extern const ParameterDefinition parameter_definitions[136];
+extern const ParameterDefinition parameter_definitions[PARAMETER_DEFINITION_COUNT];
 extern uint8_t selected_parameter_element;
 
 extern const char *regeneration_labels[];

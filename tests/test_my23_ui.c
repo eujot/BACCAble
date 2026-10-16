@@ -45,6 +45,7 @@ static void test_my23_reading_formats_fit(void) {
                 dashboard_format_my23_page(page, samples[s], text);
                 size_t length = strlen(text);
                 assert(length <= MY23_L1_VISIBLE);
+                assert(!strchr(text, '$'));
                 assert(!length || (text[0] != ' ' && text[length - 1] != ' '));
                 assert(!strstr(text, "  "));
             }

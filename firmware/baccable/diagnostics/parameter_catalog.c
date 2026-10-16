@@ -743,7 +743,7 @@ const uint8_t gasoline_page_count = sizeof(gasoline_pages) / sizeof(gasoline_pag
 const uint8_t diesel_page_count = sizeof(diesel_pages) / sizeof(diesel_pages[0]);
 const ParameterPage *const parameter_pages[2] = {gasoline_pages, diesel_pages};
 
-const ParameterDefinition parameter_definitions[136] = {
+const ParameterDefinition parameter_definitions[PARAMETER_DEFINITION_COUNT] = {
     {
         .request_id = 0x10,
         .request_length = 4,
