@@ -6,7 +6,7 @@
 
 /* Reserved first payload byte in a BH screen packet; ordinary labels are printable. */
 #define IPC_TEST_SENTINEL 0x01U
-#define IPC_TEST_PATTERN_COUNT 4U
+#define IPC_TEST_PATTERN_COUNT 5U
 #define IPC_TEST_REFRESH_MS 3000U
 #define IPC_TEST_LEASE_MS 5000U
 

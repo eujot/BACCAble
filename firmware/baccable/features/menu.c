@@ -86,7 +86,7 @@ static ActionRequest requests[ACTION_COUNT];
 #endif
 static const uint8_t ipc_test_sources[] = {0x06, 0x09, 0x21};
 static const char *const ipc_test_source_labels[] = {"USB source", "Bluetooth source", "CarPlay source"};
-static const char *const ipc_test_patterns[] = {"UTF glyphs", "Line 1 length", "Line 2 length", "Both lines"};
+static const char *const ipc_test_patterns[] = {"UTF glyphs", "Line 1 length", "Line 2 length", "Both lines", "Oil bar glyphs"};
 static const char *const roots[] = {"Favorites", "Readings", "Actions", "Settings", "Information", "Experiments"};
 static const char *const settings[] = {"Features",   "Page favorites", "Shown pages",
                                        "Favorite order", "Sort order", "Favorites", "BACCAble IPC"};

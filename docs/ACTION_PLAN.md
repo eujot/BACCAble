@@ -4,6 +4,15 @@ Last updated: **2026-10-16** (dated verification boundaries below). This is the 
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
+## Oil bar UTF-8 glyph test entry, 2026-10-16
+
+Added a separate `Oil bar glyphs` pattern after the four existing IPC display
+test patterns, preserving their pattern IDs. It sends candidate horizontal
+lines, fractional block ticks, fill-density blocks and point markers through the
+existing BH Unicode display test. Updated both user guides and the menu guide.
+The display/font result depends on vehicle hardware and source; no glyph has been
+promoted into normal oil-bar rendering. Hardware comparison remains open.
+
 ## Oil bar animation, 2026-10-16
 
 Implemented on the same local `feat/oil-level-readings` branch as `5730dc9`.

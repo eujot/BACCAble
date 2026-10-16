@@ -711,11 +711,12 @@ For an IPC test, park safely, open `Information → IPC display test`, and choos
 `USB source`, `Bluetooth source`, or `CarPlay source` with short RES. The selected
 entry has the usual checked mark. This selects only the **display-message code**
 (`0x06`, `0x09`, or the `0x21` observed during the CarPlay capture); it does not
-change the vehicle's audio source. Run the same four tests under each code:
+change the vehicle's audio source. Run the same five tests under each code:
 
 | Test entry | Text sent by BH | What to inspect |
 | --- | --- | --- |
 | `UTF glyphs` | First line `UTF A: ° ± × Ą Ł`; second line `UTF B: • € Ω Ж 中` | Which 16-bit characters the IPC can draw under this source. A missing glyph does not prove the CAN transfer failed. |
+| `Oil bar glyphs` | First line `Bars: ─ ━ ═  Ticks: ▏▎▍▌▋▊▉█`; second line `Fill: ░▒▓█  Point: ·•●◉■` | Compare line, tick, fill and point glyphs as candidates for the oil bar. Visibility depends on the IPC and selected source; this test does not change the oil bar. |
 | `Line 1 length` | A 48-character ruler starting `123456789A123456789B…` on line one; `L1: 48 chars` on line two | Where the first line clips, wraps or scrolls. `A`, `B`, `C`, `D` mark positions 10, 20, 30, 40. |
 | `Line 2 length` | `L2: 48 chars` on line one; the same 48-character ruler on line two | Where the smaller line clips, wraps or scrolls. |
 | `Both lines` | `TOP:12345678901234567890` and `BOTTOM:12345678901234567` | Whether both 24-character lines coexist and how each is rendered. |

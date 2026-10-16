@@ -199,8 +199,17 @@ static void test_utf_and_line_lengths_under_each_source(void) {
             } else if (pattern == 2) {
                 assert(split == 12 && second - split - 1 == 48);
                 assert(chars[split + 10] == 'A' && chars[split + 20] == 'B');
-            } else {
+            } else if (pattern == 3) {
                 assert(split == 24 && second - split - 1 == 24);
+            } else {
+                bool horizontal = false, ticks = false, fill = false, point = false;
+                for (unsigned i = 0; i < frames * 3; ++i) {
+                    horizontal |= chars[i] == 0x2500;
+                    ticks |= chars[i] == 0x258F && i + 7 < frames * 3 && chars[i + 7] == 0x2588;
+                    fill |= chars[i] == 0x2591 && i + 3 < frames * 3 && chars[i + 3] == 0x2588;
+                    point |= chars[i] == 0x25CF;
+                }
+                assert(horizontal && ticks && fill && point);
             }
         }
     }

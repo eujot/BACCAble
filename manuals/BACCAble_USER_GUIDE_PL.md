@@ -760,11 +760,12 @@ Zatrzymaj samochód w bezpiecznym miejscu i otwórz `Information → IPC display
 Krótkim RES wybierz `USB source`, `Bluetooth source` albo `CarPlay source`;
 zaznaczona pozycja ma zwykły symbol wyboru. Wybierasz w ten sposób tylko **kod
 komunikatu na ekranie** (`0x06`, `0x09` albo `0x21` zaobserwowany w sesji CarPlay),
-a nie rzeczywiste źródło dźwięku. Uruchom te same cztery próby dla każdego kodu:
+a nie rzeczywiste źródło dźwięku. Uruchom te same pięć prób dla każdego kodu:
 
 | Pozycja testu | Tekst wysyłany przez BH | Co sprawdzić |
 | --- | --- | --- |
 | `UTF glyphs` | Pierwsza linia `UTF A: ° ± × Ą Ł`; druga `UTF B: • € Ω Ж 中` | Które znaki 16-bitowe wyświetlacz potrafi narysować przy tym źródle. Brak znaku nie dowodzi, że nie dotarła ramka CAN. |
+| `Oil bar glyphs` | Pierwsza linia `Bars: ─ ━ ═  Ticks: ▏▎▍▌▋▊▉█`; druga `Fill: ░▒▓█  Point: ·•●◉■` | Porównaj kreski, podziałkę, wypełnienie i znaczniki jako możliwe znaki paska oleju. Widoczność zależy od IPC i wybranego źródła; test nie zmienia wyglądu paska oleju. |
 | `Line 1 length` | Linijka 48 znaków zaczynająca się od `123456789A123456789B…` w pierwszej linii; `L1: 48 chars` w drugiej | W którym miejscu pierwsza linia jest ucinana, zawijana albo przewijana. `A`, `B`, `C`, `D` oznaczają pozycje 10, 20, 30, 40. |
 | `Line 2 length` | `L2: 48 chars` w pierwszej linii; ta sama linijka 48 znaków w drugiej | Gdzie kończy się widoczny tekst mniejszej linii. |
 | `Both lines` | `TOP:12345678901234567890` oraz `BOTTOM:12345678901234567` | Czy obie linie po 24 znaki są wyświetlane jednocześnie i jak wyglądają. |

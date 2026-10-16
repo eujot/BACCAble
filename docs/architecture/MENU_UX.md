@@ -349,3 +349,14 @@ for the bar alone. This guarantees the order of queued steps, not IPC hardware
 acknowledgment or an atomic physical screen swap. Host tests check both directions,
 off-scale transitions, target reversal, both lines/widths, retries, radio restart,
 missing-data removal and the production 20 ms CAN pacing path.
+
+
+## Oil bar glyph test pattern
+
+The Information → IPC display test menu appends `Oil bar glyphs` after the
+existing four pattern entries, so prior pattern numbers and content remain
+stable. It sends Unicode BMP candidates for horizontal boundaries (`─ ━ ═`),
+fractional ticks (`▏▎▍▌▋▊▉█`), fill density (`░▒▓█`) and markers (`·•●◉■`) to
+the selected IPC source. BH transmits each code point as a 16-bit character.
+This is a visual comparison pattern only: it does not change the oil bar's
+rendering or imply that every IPC font supports the glyphs.

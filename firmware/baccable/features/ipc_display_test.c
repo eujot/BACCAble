@@ -42,10 +42,22 @@ static void prepare(uint8_t pattern) {
         append_ascii("L2: 48 chars");
         append('\r');
         append_ruler();
-    } else {
+    } else if (pattern == 3) {
         append_ascii("TOP:12345678901234567890");
         append('\r');
         append_ascii("BOTTOM:12345678901234567");
+    } else {
+        /* Compare boundary, tick, fill and point shapes for the oil bar. */
+        append_ascii("Bars: ");
+        append(0x2500); append(' '); append(0x2501); append(' '); append(0x2550);
+        append_ascii("  Ticks: ");
+        append(0x258F); append(0x258E); append(0x258D); append(0x258C);
+        append(0x258B); append(0x258A); append(0x2589); append(0x2588);
+        append('\r');
+        append_ascii("Fill: ");
+        append(0x2591); append(0x2592); append(0x2593); append(0x2588);
+        append_ascii("  Point: ");
+        append(0x00B7); append(0x2022); append(0x25CF); append(0x25C9); append(0x25A0);
     }
 }
 
