@@ -4,6 +4,18 @@ Last updated: **2026-10-16** (dated verification boundaries below). This is the 
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
+## Oil bar glyph CI provenance fix, 2026-10-16
+
+The first CI run after adding `Oil bar glyphs` exposed two stale expectations:
+the lab's `giulia.json` source snapshot held the previous SHA-256 for
+`ipc_display_test.c`, and the MY23 menu test expected wraparound to the former
+last pattern (`Both lines`). Refreshed the source hash and updated the menu
+expectation to the new last pattern. No CAN signal meaning or capture evidence
+changed. Validation passed: 72 Lab tests, the release-script regression tests,
+menu-label checks, the complete host suite, cppcheck for C1/C2/BH/CAN and all
+16 firmware display-profile builds using local Arm GNU 15.2.Rel1 (CI pins
+15.3.Rel1).
+
 ## Oil bar UTF-8 glyph test entry, 2026-10-16
 
 Added a separate `Oil bar glyphs` pattern after the four existing IPC display

@@ -432,7 +432,7 @@ static void test_my23_remaining_list_previews(void) {
     for(unsigned i=0;i<9;++i) menu_event(MENU_NEXT);
     menu_event(MENU_SELECT); /* IPC test source/pattern list. */
     expect_my23_list(MY23_SAVED "USB source", "Bluetooth source");
-    menu_event(MENU_PREVIOUS); expect_my23_list("Both lines", "USB source");
+    menu_event(MENU_PREVIOUS); expect_my23_list("Oil bar glyphs", "USB source");
     menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_NEXT);
     expect_my23_list("UTF glyphs", "Line 1 length");
     menu_present("1234567890123456›•▲▼✓×°±→…");
