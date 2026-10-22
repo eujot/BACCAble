@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "dictionary_version": "2026-10-16.2",
+  "dictionary_version": "2026-10-23.1",
   "vehicle": {
     "model": "Alfa Romeo Giulia (owner-reported)",
     "model_year": null,
@@ -254,10 +254,10 @@
             "4": "AllWeather",
             "1": "Race"
           },
-          "note": "Confirmed from the 2026-10-11 dna_all_modes sessions (three runs each): N=16, D=8, A=4, Race=1 (mask 0x7C, byte 0). Dashboard presentation broadcast."
+          "note": "Confirmed from the 2026-10-11 dna_all_modes sessions (three runs each): N=16, D=8, A=4, Race=1 (mask 0x7C, byte 0). Dashboard presentation broadcast. Re-analysis 2026-10-23: five successful Race entries across six marked attempts; 191050Z event 12 remained D. See docs/research/20261023-dna-selector.md; scenario completion is not acceptance."
         }
       ],
-      "note": "",
+      "note": "2026-10-23 capture evidence: byte 1 settles at 00 in N/A, 10 in D and 20 in Race (hex); meaning unresolved. Current firmware rewrites only byte 0. See DNA-RELATED-25A-001 and docs/research/20261023-dna-selector.md.",
       "observations": [
         {
           "session": "20260926-181818Z",
@@ -1510,7 +1510,7 @@
             "4": "AllWeather",
             "12": "Race"
           },
-          "note": "Confirmed from the 2026-10-11 dna_all_modes sessions (three runs each, reversible, Natural baseline): N=0, D=2, A=4, Race=12. This is a recurring body broadcast. BACCAble can retransmit a changed copy, but the beta-22 vehicle test did not establish that this changes the body's stored mode."
+          "note": "Confirmed from the 2026-10-11 dna_all_modes sessions (three runs each, reversible, Natural baseline): N=0, D=2, A=4, Race=12. This is a recurring body broadcast. BACCAble can retransmit a changed copy, but the beta-22 vehicle test did not establish that this changes the body's stored mode. Re-analysis 2026-10-23: five successful Race entries across six marked attempts; 191050Z event 12 remained D. See docs/research/20261023-dna-selector.md; scenario completion is not acceptance."
         },
         {
           "name": "indicator_request",
@@ -3739,7 +3739,7 @@
             "4": "AllWeather",
             "12": "Race"
           },
-          "note": "Confirmed from the 2026-10-11 dna_all_modes sessions (three runs each, reversible, Natural baseline): N=0, D=2, A=4, Race=12. This is a recurring body broadcast. BACCAble can retransmit a changed copy, but the beta-22 vehicle test did not establish that this changes the body's stored mode."
+          "note": "Confirmed from the 2026-10-11 dna_all_modes sessions (three runs each, reversible, Natural baseline): N=0, D=2, A=4, Race=12. This is a recurring body broadcast. BACCAble can retransmit a changed copy, but the beta-22 vehicle test did not establish that this changes the body's stored mode. Re-analysis 2026-10-23: five successful Race entries across six marked attempts; 191050Z event 12 remained D. See docs/research/20261023-dna-selector.md; scenario completion is not acceptance."
         },
         {
           "name": "lane_stalk_button",
@@ -3861,7 +3861,7 @@
           ]
         }
       ],
-      "note": "",
+      "note": "2026-10-23 re-analysis: all 2,099 C1/C2 samples in the two DNA captures have byte 7=00; none matches the firmware J1850 payload CRC. Current default-mode rewriting is inconsistent with this captured layout. See docs/research/20261023-dna-selector.md.",
       "observations": [
         {
           "session": "20260926-181705Z",
@@ -4980,7 +4980,7 @@
           "origin": "implementation"
         }
       ],
-      "note": "",
+      "note": "2026-10-23 capture evidence: byte 4 bits 6:3 decode as N=0, D=2, A=1, Race=6 in both DNA sessions. All 286 samples match J1850 CRC in byte 7. The existing decoder enum is retained; new mode associations are capture evidence, not actuator validation. See docs/research/20261023-dna-selector.md.",
       "observations": [
         {
           "session": "20260926-181705Z",
@@ -6511,7 +6511,7 @@
             "4": "AllWeather",
             "12": "Race"
           },
-          "note": "Confirmed from the 2026-10-11 dna_all_modes sessions (three runs each, reversible, Natural baseline): N=0, D=2, A=4, Race=12. This is a recurring body broadcast. BACCAble can retransmit a changed copy, but the beta-22 vehicle test did not establish that this changes the body's stored mode."
+          "note": "Confirmed from the 2026-10-11 dna_all_modes sessions (three runs each, reversible, Natural baseline): N=0, D=2, A=4, Race=12. This is a recurring body broadcast. BACCAble can retransmit a changed copy, but the beta-22 vehicle test did not establish that this changes the body's stored mode. Re-analysis 2026-10-23: five successful Race entries across six marked attempts; 191050Z event 12 remained D. See docs/research/20261023-dna-selector.md; scenario completion is not acceptance."
         },
         {
           "name": "lane_stalk_button",
@@ -6634,7 +6634,7 @@
           ]
         }
       ],
-      "note": "",
+      "note": "2026-10-23 re-analysis: all 2,099 C1/C2 samples in the two DNA captures have byte 7=00; none matches the firmware J1850 payload CRC. Current default-mode rewriting is inconsistent with this captured layout. See docs/research/20261023-dna-selector.md.",
       "observations": [
         {
           "session": "20260926-181818Z",
@@ -9645,9 +9645,9 @@
     {
       "can_id": "0x4AE",
       "role": "C1",
-      "topic": "Low-rate counter/heartbeat (no payload state)",
-      "source": "docs/research/20261010-scenario-sessions.md",
-      "status": "candidate bits on this frame are counter-phase artefacts; exclude byte 6 / byte 7 from scoring"
+      "topic": "Mode/assistance-related payload plus counter/checksum",
+      "source": "docs/research/20261023-dna-selector.md",
+      "status": "Earlier no-payload-state claim superseded: byte 3 varies with Race and manual LKA; exclude only bytes 6/7 from state searches. See DNA-RELATED-4AE-001."
     },
     {
       "can_id": "0x15A",
@@ -9732,6 +9732,34 @@
       "topic": "Left direction indicator active state; hazard companion of C2 0x42D",
       "source": "docs/research/20261012-five-bundle-investigation.md",
       "status": "candidate: byte 1 bit 2 follows three left ON/OFF cycles and three hazard cycles in one October session; an independent left-side session and physical lamp check are still needed"
+    },
+    {
+      "can_id": "0x384",
+      "role": "C1",
+      "topic": "DNA-384-CRC-001",
+      "source": "docs/research/20261023-dna-selector.md",
+      "status": "supported: The firmware J1850 payload CRC does not match any of 2,099 C1/C2 0x384 frames in the two October-11 DNA captures; byte 7 is always zero. The same algorithm matches all 286 C1 0x5A8 frames. Current default-mode rewriting invents a nonzero byte 7 on the observed layout. This does not establish ECU rejection or universality across vehicles."
+    },
+    {
+      "can_id": "0x1FC",
+      "role": "C1",
+      "topic": "DNA-RELATED-1FC-001",
+      "source": "docs/research/20261023-dna-selector.md",
+      "status": "candidate: C1/C2 byte 0 correlates with settled N/A=0x50, D=0x40, Race=0x60 in both captures. Mode-dependent response; no evidence it is a selector command. Existing damping/differential reference interpretation remains unvalidated."
+    },
+    {
+      "can_id": "0x25A",
+      "role": "BH",
+      "topic": "DNA-RELATED-25A-001",
+      "source": "docs/research/20261023-dna-selector.md",
+      "status": "candidate: Byte 1 settles at N/A=0x00, D=0x10, Race=0x20 and can lag the known byte-0 mode field. This is not an identified knob press/release signal. Existing firmware only rewrites byte 0."
+    },
+    {
+      "can_id": "0x73C",
+      "role": "C1",
+      "topic": "DNA-RELATED-73C-001",
+      "source": "docs/research/20261023-dna-selector.md",
+      "status": "candidate: Byte 1 is 0x07 during all five Race episodes and 0x9F outside Race in the DNA captures. Existing ACC status decoding uses byte 7; no physical meaning or control-command role is assigned to byte 1."
     }
   ],
   "confidence_policy": {

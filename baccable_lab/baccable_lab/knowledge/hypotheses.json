@@ -163,14 +163,59 @@
     },
     {
       "id": "COUNTER-HEARTBEAT-001",
-      "status": "supported",
+      "status": "superseded",
       "role": "C1",
       "can_id": "0x4AE",
       "dlc": 8,
       "description": "Constant prefix 00 00 00 20 60 00 followed by a 4-bit rolling counter (byte 6, modulus 16) and its check byte (byte 7). Carries no payload state; candidate bits on it are phase artefacts (bundle top hits are here).",
-      "evidence": [],
-      "contradictions": [],
-      "next_test": "Exclude byte 6 and byte 7 from candidate scoring on low-rate frames; confirm the modulus over a long baseline."
+      "evidence": [
+        {
+          "session": "20261011-190746Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18
+          ],
+          "report": "docs/research/20261023-dna-selector.md"
+        },
+        {
+          "session": "20261011-191050Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "report": "docs/research/20261023-dna-selector.md"
+        }
+      ],
+      "contradictions": [
+        "2026-10-23 raw re-analysis: byte 3 is 0xA5 in all five observed Race entries, 0x20 with LKA enabled outside Race, and 0x00 with manually disabled LKA in D. The claim that the whole payload carries no state is false. Counter/checksum exclusion still applies to bytes 6/7; see DNA-RELATED-4AE-001."
+      ],
+      "next_test": "Preserve the counter/checksum finding; investigate byte 3 independently of counter phase. See docs/research/20261023-dna-selector.md."
     },
     {
       "id": "COUNTER-HEARTBEAT-002",
@@ -319,9 +364,48 @@
         ]
       ],
       "description": "Drive mode (RDNA) code on the body broadcast 0x384 byte 1 bits 6..2 matches the firmware enum: N=0, D=2, A=4, Race=12. Confirmed from the 2026-10-11 dna_all_modes sessions (two sessions, three runs each, reversible against a Natural baseline). The same code is on BH 0x46C byte 7 bits 4..0; the dashboard frame BH 0x25A uses N=16, D=8, A=4, Race=1. These are recurring mode broadcasts. Rewriting one copy may influence listeners but has not been shown to change the body's stored mode.",
-      "evidence": [],
-      "contradictions": [],
-      "next_test": "Verify whether a single rewritten 0x384 changes the body's selected mode and whether original mode reports remain at the requested value after BACCAble stops transmitting."
+      "evidence": [
+        {
+          "session": "20261011-190746Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "report": "docs/research/20261023-dna-selector.md"
+        },
+        {
+          "session": "20261011-191050Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "report": "docs/research/20261023-dna-selector.md"
+        }
+      ],
+      "contradictions": [
+        "Raw re-analysis on 2026-10-23 found five successful Race entries across six marked attempts; 191050Z event 12 says Race but all recorded mode reports stay Dynamic until capture end. Event 1 in that session begins with Dynamic already selected. Original markers remain unchanged."
+      ],
+      "next_test": "Identify knob deflection/hold/release separately; verify original post-request mode reports. Current one-shot CRC insertion into 0x384 conflicts with all 2,099 captured frames; see docs/research/20261023-dna-selector.md."
     },
     {
       "id": "LIGHT-INDICATOR-C2-42D-001",
@@ -407,6 +491,247 @@
         "RX-only capture does not prove physical lamp status or actuator command."
       ],
       "next_test": "Repeat two left ON/OFF cycles in a separate stationary session with physical lamp observation; compare 0x42E byte 1 bit 2 to BH 0x46C and C2 0x73E."
+    },
+    {
+      "id": "DNA-384-CRC-001",
+      "status": "supported",
+      "role": "C1",
+      "can_id": "0x384",
+      "description": "The firmware J1850 payload CRC does not match any of 2,099 C1/C2 0x384 frames in the two October-11 DNA captures; byte 7 is always zero. The same algorithm matches all 286 C1 0x5A8 frames. Current default-mode rewriting invents a nonzero byte 7 on the observed layout. This does not establish ECU rejection or universality across vehicles.",
+      "evidence": [
+        {
+          "session": "20261011-190746Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "report": "docs/research/20261023-dna-selector.md"
+        },
+        {
+          "session": "20261011-191050Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "report": "docs/research/20261023-dna-selector.md"
+        }
+      ],
+      "contradictions": [],
+      "next_test": "Preserve byte 7 for this demonstrated layout when implementing the next change; verify acceptance separately and retain CRC on 0x5A8."
+    },
+    {
+      "id": "DNA-RELATED-1FC-001",
+      "status": "candidate",
+      "role": "C1",
+      "can_id": "0x1FC",
+      "description": "C1/C2 byte 0 correlates with settled N/A=0x50, D=0x40, Race=0x60 in both captures. Mode-dependent response; no evidence it is a selector command. Existing damping/differential reference interpretation remains unvalidated.",
+      "evidence": [
+        {
+          "session": "20261011-190746Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "report": "docs/research/20261023-dna-selector.md"
+        },
+        {
+          "session": "20261011-191050Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "report": "docs/research/20261023-dna-selector.md"
+        }
+      ],
+      "contradictions": [],
+      "next_test": "Isolate damping/selector controls and establish the sender before assigning physical meaning."
+    },
+    {
+      "id": "DNA-RELATED-4AE-001",
+      "status": "candidate",
+      "role": "C1",
+      "can_id": "0x4AE",
+      "description": "C1/C2/BH byte 3 correlates with Race=0xA5, enabled LKA outside Race=0x20, and manually disabled LKA in Dynamic=0x00 in 190746Z. Its state content refutes the older all-counter claim; bytes 6/7 still roll/check. Individual bit meanings remain unresolved.",
+      "evidence": [
+        {
+          "session": "20261011-190746Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18
+          ],
+          "report": "docs/research/20261023-dna-selector.md"
+        },
+        {
+          "session": "20261011-191050Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "report": "docs/research/20261023-dna-selector.md"
+        }
+      ],
+      "contradictions": [],
+      "next_test": "Separate Race and manual LKA changes; do not forge this byte as a mode request."
+    },
+    {
+      "id": "DNA-RELATED-25A-001",
+      "status": "candidate",
+      "role": "BH",
+      "can_id": "0x25A",
+      "description": "Byte 1 settles at N/A=0x00, D=0x10, Race=0x20 and can lag the known byte-0 mode field. This is not an identified knob press/release signal. Existing firmware only rewrites byte 0.",
+      "evidence": [
+        {
+          "session": "20261011-190746Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "report": "docs/research/20261023-dna-selector.md"
+        },
+        {
+          "session": "20261011-191050Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "report": "docs/research/20261023-dna-selector.md"
+        }
+      ],
+      "contradictions": [],
+      "next_test": "Record knob press/hold/release boundaries and distinguish presentation/feedback from an input."
+    },
+    {
+      "id": "DNA-RELATED-73C-001",
+      "status": "candidate",
+      "role": "C1",
+      "can_id": "0x73C",
+      "description": "Byte 1 is 0x07 during all five Race episodes and 0x9F outside Race in the DNA captures. Existing ACC status decoding uses byte 7; no physical meaning or control-command role is assigned to byte 1.",
+      "evidence": [
+        {
+          "session": "20261011-190746Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "report": "docs/research/20261023-dna-selector.md"
+        },
+        {
+          "session": "20261011-191050Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "report": "docs/research/20261023-dna-selector.md"
+        }
+      ],
+      "contradictions": [],
+      "next_test": "Correlate with independent ACC availability/status observations before interpreting byte 1."
     }
   ]
 }

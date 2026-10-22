@@ -4,6 +4,40 @@ Last updated: **2026-10-23** (dated verification boundaries below). This is the 
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
+## DNA selector raw-capture review, 2026-10-23
+
+Analysis-only branch `research/dna-selector-analysis`, based on `aa81111`.
+Re-read 1,319,285 frames from `20261011-190746Z` and `20261011-191050Z`
+with read-only SQLite/WAL handling and unchanged input fingerprints. Report:
+[baccable_lab DNA analysis](../baccable_lab/docs/research/20261023-dna-selector.md),
+with a reproducible script and a raw transition/evidence JSON alongside it.
+
+Confirmed the known DNA fields and five successful Race entries among six
+marked attempts. C1 device-time D-to-Race intervals are 2.502–2.910 s; physical
+knob deflection/release is not independently identified. Transmission 0x5A8
+reports N/D/A/Race as 0/2/1/6. Race coincides with 0x4AF stability fields and
+LKA state changes. New related byte candidates remain hypotheses. Superseded
+COUNTER-HEARTBEAT-001's claim that all of 0x4AE is a counter: byte 3 changes
+with Race and manual LKA, while bytes 6/7 retain counter/checksum behavior.
+Updated dictionary notes and generated catalog without new executable layouts.
+
+Concrete firmware mismatch for follow-up: Default mode adds J1850 CRC to
+0x384 byte 7, but all 2,099 captured C1/C2 reports end in zero and none matches
+that CRC. Positive control: all 286 0x5A8 frames do match. BH 0x25A byte 1 also
+changes with factory mode, whereas the current rewrite touches only byte 0.
+The existing one-shot queue operation does not prove a latched body selection;
+no verified momentary knob request is established. Do not reinstate continuous
+contradictory broadcasts as a production fix. Next: separately mark knob
+press/hold/release, establish the actual control path, and require persistent
+original reports after a request before reporting success. Preserve unrelated
+fields and bus-specific layouts; no global CRC removal.
+
+Validation: 72 existing Lab tests passed; generated dictionary is current.
+No firmware/menu behavior changed, no hardware transmission or installation,
+no PR/push/release. Hardware acceptance is UNKNOWN. Existing untracked capture
+bundles and release directories remain untouched. Findings and handoff are
+committed on this research branch, not copied into master.
+
 ## Experiments audit and corrections, 2026-10-23
 
 Follow-up on `feat/pelican-experiments`, auditing `ab057dd` against the pinned
