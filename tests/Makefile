@@ -7,6 +7,7 @@ SOURCES := test_core.c $(FIRMWARE)/protocol/slcan_codec.c $(FIRMWARE)/diagnostic
  $(FIRMWARE)/storage/record_store.c
 
 test: build/test_core build/test_transport build/test_catalog build/test_menu build/test_menu_large build/test_uart_menu build/test_input_repeat build/test_engine_status build/test_exhaust labels
+	./build/test_fatfs
 	./build/test_core
 	./build/test_transport
 	./build/test_catalog
@@ -102,7 +103,7 @@ MENU_SOURCES := test_menu.c $(addprefix $(FIRMWARE)/, features/menu.c features/m
  diagnostics/parameter_cache.c diagnostics/parameter_request.c diagnostics/parameter_catalog.c diagnostics/experiments.c \
  protocol/checksum.c vehicle/steering_controls.c diagnostics/uds_decode.c diagnostics/fault_reader.c settings/persistence.c settings/setup_menu.c settings/setup_entries.c \
  third_party/printf/printf.c)
-MENU_FIXTURES := test_oil_level.c test_my23_ui.c test_idle_latin1.c test_menu_contract.c test_setup_ui.c test_unified_ui.c
+MENU_FIXTURES := test_experiments.c test_experiment_vectors.h test_oil_level.c test_my23_ui.c test_idle_latin1.c test_menu_contract.c test_setup_ui.c test_unified_ui.c
 build/test_menu: $(MENU_SOURCES) $(MENU_FIXTURES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC1_FLAVOR=1 -DGIT_VERSION=\"test\" $(MENU_SOURCES) -lm -o $@
@@ -183,3 +184,8 @@ build/test_uart_rx_bh: test_uart_menu.c $(FIRMWARE)/transport/board_uart.c $(HEA
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DBH_FLAVOR=1 test_uart_menu.c $(FIRMWARE)/transport/board_uart.c -o $@
 test: build/test_uart_rx_c2 build/test_uart_rx_bh
+
+build/test_fatfs: test_fatfs.c $(FIRMWARE)/third_party/fatfs/ff.c $(FIRMWARE)/third_party/fatfs/ff.h $(FIRMWARE)/third_party/fatfs/ffconf.h Makefile
+	@mkdir -p build
+	$(CC) $(CPPFLAGS) $(CFLAGS) -Wno-unused-function test_fatfs.c $(FIRMWARE)/third_party/fatfs/ff.c -o $@
+test: build/test_fatfs

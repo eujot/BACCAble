@@ -76,13 +76,16 @@ bool usb_modes_needs_apply(void) { return usb_needs_apply; }
 void usb_modes_apply(void) { ++usb_applies; usb_needs_apply = false; }
 void status_led_error(void) {}
 void status_led_activity(void) {}
-static uint8_t query_payload[4];
+static uint8_t query_payload[8];
+static uint32_t query_dlc;
+static bool query_fail;
 static uint32_t query_ecu;
 uint32_t can_tx(CAN_TxHeaderTypeDef *header, uint8_t *data) {
+    query_dlc = header->DLC;
     query_ecu = header->IDE == CAN_ID_EXT ? header->ExtId : header->StdId;
     memcpy(query_payload, data, sizeof(query_payload));
     ++queries;
-    return HAL_OK;
+    return query_fail ? HAL_ERROR : HAL_OK;
 }
 uint32_t can_forward(const CAN_RxHeaderTypeDef *header, uint8_t *data) {
     (void)header;
@@ -387,10 +390,6 @@ static void test_experiment_replies(void) {
     memcpy(first + 2, payload, 6);
     experiment_receive(&extended, first);
     assert(query_payload[0] == 0x30); /* Flow control for ISO-TP. */
-    uint8_t wrong_order[8] = {0x22};
-    experiment_receive(&extended, wrong_order);
-    experiment_format(wheel, value, sizeof(value));
-    assert(strstr(value, "--"));
     for (unsigned offset = 6, sequence = 1; offset < 31; offset += 7, ++sequence) {
         uint8_t consecutive[8] = {(uint8_t)(0x20 | sequence)};
         unsigned count = 31 - offset < 7 ? 31 - offset : 7;
@@ -1335,6 +1334,7 @@ static void fresh_contract(void);
 #include "test_idle_latin1.c"
 #include "test_my23_ui.c"
 #include "test_oil_level.c"
+#include "test_experiments.c"
 
 int main(void) {
 #ifdef MENU_DIAGNOSTICS
@@ -1417,6 +1417,9 @@ int main(void) {
         HOST_TEST(test_board_sync_retry),
         HOST_TEST(test_shipped_favorite_pairs),
         HOST_TEST(test_experiment_replies),
+        HOST_TEST(test_experiment_catalog),
+        HOST_TEST(test_experiment_transport),
+        HOST_TEST(test_experiment_menu),
         HOST_TEST(test_readings_preview_prefetch),
         HOST_TEST(test_engine_filters),
         HOST_TEST(test_action_availability)

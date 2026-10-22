@@ -533,6 +533,7 @@ static uint8_t page_for_old_measurement(uint8_t profile, uint8_t id) {
 
 /* Restore the user's menu layout or start with useful defaults. */
 void menu_init(void) {
+    experiment_cancel();
     memset(&input, 0, sizeof(input));
     memset(requests, 0, sizeof(requests));
     setup_cancel_edit();
@@ -618,6 +619,12 @@ static bool is_editor(void) { return view == EDIT_FAVORITES || view == EDIT_VISI
 bool menu_parameters_active(void) {
     return dashboard_state.baccable_dashboard_menu_visible && (view == VALUES || view == FAVORITES) &&
            list_count;
+}
+
+/* Grant Experiments the diagnostic bus only while its value screen is visible. */
+bool menu_experiments_active(void) {
+    return dashboard_state.baccable_dashboard_menu_visible && view == EXP_VALUES &&
+           !diagnostics_state.clear_faults_request && !fault_reader_busy();
 }
 
 /* Only MY23 Readings exposes the following page as a second-line preview. */
@@ -1148,6 +1155,7 @@ void menu_render(void) {
 
 /* Release the display, retrying a rejected clear until the UART accepts it. */
 static void close_menu(void) {
+    experiment_cancel();
     dashboard_state.baccable_dashboard_menu_visible = 0;
     parameter_request_cancel();
     confirmed_action = 255;
@@ -1609,8 +1617,10 @@ void menu_process(void) {
         menu_engine_changed();
     if (close_pending)
         dashboard_clear();
-    if (!dashboard_state.baccable_dashboard_menu_visible)
+    if (!dashboard_state.baccable_dashboard_menu_visible) {
+        experiment_cancel();
         return;
+    }
     bool editor = view == SETTINGS || view == SETUP || view == IPC_OPTIONS || view == IPC_TEST_MENU ||
                   view == IPC_TEST_ACTIVE || view == SORT_EDIT || view == FAV_SETS || view == FAV_SLOTS || view == FAV_PICK || is_editor() || view == ORDER_FAVORITES;
     /* Reading screens are intentionally persistent; active diagnostics get a fresh grace period. */
@@ -1629,7 +1639,9 @@ void menu_process(void) {
         if (!save_failed)
             return;
     }
-    if (view == EXP_VALUES && !diagnostics_state.clear_faults_request) experiment_process();
+    if (menu_experiments_active()) experiment_process();
+    else if (view != EXP_VALUES) experiment_cancel();
+    else experiment_select(experiment_group_signal(exp_group, exp_position));
     if (menu_parameters_active() && settings_state.rotate_readings && currentTime - page_changed >= 5000) {
         selection = wrap(selection, list_count, 1);
         select_page();

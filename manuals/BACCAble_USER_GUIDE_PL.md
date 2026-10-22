@@ -171,9 +171,18 @@ na przykład `FL P BCM 2.35bar`. Na MY23 grupa jest w pierwszej linii,
 a nazwa i wartość w drugiej. W nazwach opon FL/FR/RL/RR oznaczają koło,
 `P` ciśnienie, `t` temperaturę, a AC/740/742/BCM rozróżniają źródła.
 Dwuklik RES wraca do listy grup. `--` oznacza
-brak świeżej, kompletnej i poprawnej odpowiedzi; pojawia się też po trzech
-sekundach bez nowej odpowiedzi. Obsługiwane są odpowiedzi jedno- i wieloramkowe
-ISO-TP. Odpytuje się tylko aktualnie widoczny DID.
+brak świeżej, kompletnej i poprawnej odpowiedzi. Pojawia się też po odmowie
+sterownika, błędzie transmisji lub przekroczeniu czasu kolejnego odświeżenia.
+Obsługiwane są odpowiedzi jedno- i wieloramkowe ISO-TP, również długie odpowiedzi
+z dodatkowymi polami. Odpytuje się tylko aktualnie widoczny DID. Pierwsze zapytanie
+jest wysyłane od razu, kolejne poprawne odczyty zgodnie z odstępem podanym w źródle
+(0,1–5 sekund, a stałe identyfikatory raz dziennie). Nieudane odczyty są ponawiane
+po około sekundzie. Wartość pozostaje do kolejnego planowanego odświeżenia,
+z maksymalnie pięcioma sekundami na odpowiedź. Wyjście z ekranu anuluje zapytanie.
+`Shift gear` rozpoznaje wyłącznie kody N/P/R; pozostałe pokazuje jako `--`.
+`Lat a` / `Long a` pokazują przyspieszenie w m/s2 z dwoma miejscami po przecinku,
+a `FL spd`, `FR spd`, `RL spd` i `RR spd` prędkości poszczególnych kół.
+Przeliczenia uwzględniają dolne i górne limity źródła; temperatura skrzyni jest w C.
 
 Są to wyłącznie odczyty `0x22`, oddzielone od zwykłych `Readings`.
 Nie można dodać ich do Favorites; nie zmieniają `Shown pages` ani zapisanych
@@ -1007,13 +1016,13 @@ diagnostyczne mogą nie być obsługiwane przez daną wersję sterownika.
 
 ## Przechwytywanie CAN i diagnostyka przez USB
 
-**Przed wgraniem tej wersji C1 skopiuj pliki z dysku USB C1.**
-Aby zmieścić 64 sygnały, obszar aplikacji C1 zwiększono z 96 do 100 KiB,
-a dysk USB zmniejszono z 20 do 16 KiB. Pierwsze 4 KiB starego dysku zajmie
-firmware, więc wcześniejsze pliki nie zostaną zachowane. Przy pierwszym
-uruchomieniu nowy, niesformatowany dysk zostanie zainicjowany. Obszar zapisanych
-ustawień pozostaje bez zmian.
-
+Obszar aplikacji C1 zwiększono z 96 do 100 KiB, a zarezerwowany obszar plików
+USB zmniejszono z 20 do 16 KiB. Standardowe firmware C1 korzysta z szeregowego USB
+i **nie udostępnia tego dysku**. Jeśli używasz własnej kompilacji C1 z włączonym
+dyskiem USB, skopiuj jego pliki przed wgraniem: pierwsze 4 KiB starego obszaru
+zajmie aplikacja. Biblioteka systemu plików obsługuje teraz formatowanie i odczyt
+małych dysków FAT12. Obszar ustawień pozostał bez zmian. Pojemność nagrań CAN
+nie zmienia się, ponieważ nagrania są zapisywane na komputerze.
 
 USB nie jest potrzebne do zwykłej obsługi menu. Tryby USB działające w aplikacji
 różnią się od **bootloadera DFU** układu STM32, który służy do wgrywania

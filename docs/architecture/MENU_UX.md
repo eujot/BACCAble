@@ -42,7 +42,13 @@ The [catalog audit](CATALOG_AUDIT.md) describes the legacy reading model.
 signals. A single named value is shown per screen; MY23 puts the group on line 1
 and name/value on line 2. Only the selected DID is polled. The screens are not
 ordinary reading pages, Favorites or persisted preferences. C1 reassembles
-bounded ISO-TP replies, validates service/DID and decodes OBDb MSB-first fields.
+ISO-TP replies of up to 4095 bytes, retaining only a 40-byte prefix while
+validating every frame through the declared end. It checks source ID/service/DID,
+aborts reordered/truncated transfers, accepts NRC 0x78 within a bounded five-second
+transaction, and decodes OBDb MSB-first fields. Requests are padded to eight CAN
+bytes. Flow control requests a 5 ms separation time to protect the small receive
+FIFO. The source refresh intervals and null/range rules apply; failed attempts
+retry after one second. All resulting labels/values fit 18 characters.
 Vehicle compatibility and scaling still require physical confirmation.
 
 ## Central button recognizer

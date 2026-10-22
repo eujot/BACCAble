@@ -24,7 +24,7 @@ synthetic files and a temporary Git remote; they never publish to GitHub.
 Each build records compiler identity, source commit, version, extra preprocessor
 flags and Flash/static RAM usage in `build-info-FLAVOR.json`. Flash is text +
 data; static RAM is data + bss, excluding runtime stack/heap. Defaults match the
-linker regions: C1 96 KiB Flash, other roles 64 KiB; RAM 16 KiB.
+linker regions: C1 100 KiB Flash, other roles 64 KiB; RAM 16 KiB.
 
 Repository variables `FLASH_LIMIT_C1`, `RAM_LIMIT_C1` (and C2/BH/CAN equivalents)
 can set stricter byte budgets. Exceeding a budget fails CI. This is an absolute

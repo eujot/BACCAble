@@ -1,8 +1,58 @@
 # BACCAble action plan and agent handoff
 
-Last updated: **2026-10-22** (dated verification boundaries below). This is the single source of planned work,
+Last updated: **2026-10-23** (dated verification boundaries below). This is the single source of planned work,
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
+
+## Experiments audit and corrections, 2026-10-23
+
+Follow-up on `feat/pelican-experiments`, auditing `ab057dd` against the pinned
+OBDb snapshot and the Pelican format/command documentation. Corrected defects:
+
+- `Shift gear` incorrectly shared ordinary gear codes: values such as 1, 11 or
+  13 could be shown as a gear, reverse or park. It now accepts only the source's
+  0/221/238 state map. Source limits for model year, wheel speed, acceleration
+  and transmission temperature are applied; acceleration retains two decimals.
+- The fixed 40-byte response limit rejected longer valid messages. The reader
+  now retains a 40-byte prefix while consuming and validating the full ISO-TP
+  response, up to 4095 bytes. Reordered/short continuation frames abort the
+  transfer. NRC 0x78 extends waiting within a five-second total bound; definitive
+  negative replies invalidate the value. Requests use eight-byte padding and
+  flow control requests 5 ms separation. Failed queue offers/read attempts retry.
+- Polling every 500 ms ignored source intervals (100 ms through one day).
+  Polling now follows each command's interval after success, retries failures
+  after one second, and retains the value until the next expected refresh.
+  Menu ownership gates reception and polling; exit, hidden screens and fault
+  operations cannot leave the old reader issuing flow control.
+- Wheel-speed/acceleration labels could clip the result on the 18-character
+  display. Shorter labels retain the complete value and unit on every profile.
+- CI still enforced the old 96 KiB C1 limit after the linker moved to 100 KiB.
+  Updated the default reporting budget and build documentation to 100 KiB.
+- The bundled FatFs refused formatting/mounting volumes below 64 KiB. Added a
+  narrowly configured small FAT12 formatting path and compatible mount check;
+  this covers the new 16 KiB reserve and existing 52 KiB C2/BH volumes.
+
+Correction to the preceding handoff: **standard C1 does not enable mass
+storage**, so the 20-to-16 KiB change affects its reserved optional file area.
+Custom C1 mass-storage builds must back up old files before flashing. Standard
+serial CAN capture writes to the host and does not lose capture capacity.
+Both user guides now explain this and the revised labels/refresh behavior.
+
+Validation: full Apple Clang ASan/UBSan host suite, 72 Lab tests, eight
+release-script tests, cppcheck for C1/C2/BH/CAN, and all 16 board/display-profile
+builds passed with local Arm GNU 15.2.Rel1. The C1 size-report gate passes at
+101,340/102,400 flash bytes (1,060 bytes spare); the large display uses 101,308
+bytes. These are local builds, not pinned CI or hardware verification. New tests include 192 independent
+source-derived wire/value vectors (three per signal), separate shift enums,
+long replies, counter/tick wrap, reordered fragments, negative/pending responses,
+queue failure/retry, freshness, menu ownership and both display profiles.
+FatFs tests format, label, write, remount and read 16–64 KiB volumes.
+
+Vehicle acceptance remains open. The source does not provide a receive ID for
+request 0x742; matching positive service/DID selects the sender for that transfer.
+The test reply address for that command is explicitly synthetic. Software tests
+do not establish ECU support or physical accuracy on the owner's car. Test
+source limits, the 5 ms flow-control pacing and USB mounting on hardware.
 
 ## Pelican Giulia Experiments replacement, 2026-10-22
 

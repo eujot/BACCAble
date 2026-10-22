@@ -162,8 +162,17 @@ name/value on line 2. In tire labels, FL/FR/RL/RR identify wheel position,
 `P` pressure, `t` temperature, and AC/740/742/BCM distinguish source variants.
 Double-click RES to return to the group list. The value
 shows `--` until a fresh, complete, valid reply arrives; it also returns to
-`--` after three seconds without one. Both single-frame and multi-frame ISO-TP
-replies are supported. Only the currently displayed DID is polled.
+`--` if the ECU rejects the read, a transfer fails or the next refresh times out.
+Both single-frame and multi-frame ISO-TP replies are supported, including long
+responses containing extra fields. Only the currently displayed DID is polled.
+The first request is immediate; subsequent successful reads follow the source
+interval (0.1–5 seconds, or once per day for fixed identifiers). Failed reads
+retry after about one second. A value is retained until its next scheduled
+refresh, with at most five seconds of reply grace. Leaving the screen cancels
+its transaction. `Shift gear` accepts only N/P/R codes; other codes show `--`.
+`Lat a` / `Long a` show acceleration in m/s2 with two decimals; `FL spd`,
+`FR spd`, `RL spd` and `RR spd` show individual wheel speeds. The conversions
+include the source minimum/maximum limits; transmission temperature is in C.
 
 These are read-only `0x22` queries, separate from ordinary `Readings`.
 They cannot be added to Favorites and do not affect `Shown pages` or saved
@@ -948,13 +957,13 @@ supported by an individual ECU version.
 
 ## USB CAN capture and diagnostics
 
-**Before flashing this C1 candidate, copy any files from the C1 USB disk.**
-To fit the 64 experimental signals, the C1 application flash allocation grows
-from 96 to 100 KiB and its USB disk shrinks from 20 to 16 KiB. The old disk's
-first 4 KiB are reused by firmware, so its previous contents are not preserved.
-On first boot an unformatted new disk is initialized. Saved settings records
-remain in their existing flash area.
-
+The C1 application allocation grows from 96 to 100 KiB; its reserved USB
+file area shrinks from 20 to 16 KiB. Standard C1 firmware uses serial USB and
+**does not expose this disk**. If a custom C1 build enabled mass storage, copy
+its files before flashing: the old area's first 4 KiB become application flash.
+Small FAT12 volumes can now be formatted and mounted by the bundled filesystem.
+Saved settings remain in their existing flash area; CAN capture capacity is
+unaffected because captures are written on the computer.
 
 USB is optional for normal menu use. Runtime USB modes are different from the
 STM32 **DFU bootloader** used for flashing: seeing a device in `dfu-util --list`
