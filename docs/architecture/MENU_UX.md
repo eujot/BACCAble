@@ -32,11 +32,18 @@ can override it. `LARGE_DISPLAY` independently chooses the legacy 18/24-characte
 width. MY23 always has budgets `MY23_L1_VISIBLE = 16` and
 `MY23_L2_VISIBLE = 22`. Those are visible glyph counts, not UTF-8 byte limits.
 
-The main menu remains Favorites, Readings, Actions, Settings, Information.
+The main menu is Favorites, Readings, Actions, Settings, Information, Experiments.
 MY23/atomic Settings contains Features, Favorites, Shown pages, Sort order, BACCAble IPC.
 Legacy before its first five-slot save retains Features, Page favorites,
 Shown pages, Favorite order, Sort order, Favorites, BACCAble IPC. Existing catalogs, engine gates and page IDs are retained.
 The [catalog audit](CATALOG_AUDIT.md) describes the legacy reading model.
+
+`Experiments` has nine source-defined groups and 64 manufacturer `0x22`
+signals. A single named value is shown per screen; MY23 puts the group on line 1
+and name/value on line 2. Only the selected DID is polled. The screens are not
+ordinary reading pages, Favorites or persisted preferences. C1 reassembles
+bounded ISO-TP replies, validates service/DID and decodes OBDb MSB-first fields.
+Vehicle compatibility and scaling still require physical confirmation.
 
 ## Central button recognizer
 
@@ -189,7 +196,7 @@ Raw CAN state and the CAN dictionary layout are unchanged.
 
 ## Experimental parameter bounds
 
-The parameter catalog contains 136 definitions. Display formatting, request
+The ordinary parameter catalog contains 98 definitions. Display formatting, request
 selection and cache bounds all use `PARAMETER_DEFINITION_COUNT`; a stale limit
 of 100 had left some experimental numeric templates visible as `$` and prevented
 requests or cache updates for those pages. A valid single-frame UDS reply can now

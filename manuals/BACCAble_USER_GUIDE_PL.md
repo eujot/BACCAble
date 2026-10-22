@@ -1,8 +1,8 @@
 # BACCAble — instrukcja obsługi w samochodzie
 
 Ta instrukcja opisuje menu na zestawie wskaźników i funkcje w bieżącym kodzie
-firmware. Uwzględnia niewydane jeszcze **odczyty poziomu oleju i ustawienie napędu**
-po v5-beta-25. Nowy ekran oleju wymaga jeszcze próby w samochodzie. Instrukcja dotyczy urządzenia już zamontowanego
+firmware. Uwzględnia niewydane jeszcze **odczyty poziomu oleju, ustawienie napędu i Pelican Experiments**
+po v5-beta-27. Nowy ekran oleju i odczyty diagnostyczne wymagają jeszcze próby w samochodzie. Instrukcja dotyczy urządzenia już zamontowanego
 i podłączonego do samochodu. Nie obejmuje montażu, okablowania ani wgrywania
 oprogramowania. Kontrolery C1, C2 i BH powinny mieć pasujący do siebie zestaw
 oprogramowania z tego samego wydania.
@@ -132,12 +132,17 @@ Menu główne
 │  ├─ Shown pages            Pokazywanie i ukrywanie stron w Readings
 │  ├─ Sort order             Sortowanie według grup albo alfabetycznie
 │  └─ BACCAble IPC           Tymczasowe próby odświeżania
-└─ Information               Wersje, przyciski i test wyświetlacza IPC
-├─ Experiments               Dodatkowe odczyty z publicznych źródeł (niezweryfikowane w tym aucie)
-│  ├─ Electrical
-│  ├─ Oil
-│  ├─ Engine
-│  └─ Vehicle
+├─ Information               Wersje, przyciski i test wyświetlacza IPC
+└─ Experiments               64 sygnały diagnostyczne producenta
+   ├─ Battery                1 sygnał
+   ├─ Control                4 sygnały
+   ├─ Details                1 sygnał
+   ├─ Doors                  5 sygnałów
+   ├─ GPS                    3 sygnały
+   ├─ Movement               4 sygnały
+   ├─ Orientation            2 sygnały
+   ├─ Tires                  38 sygnałów
+   └─ Transmission           6 sygnałów
 ```
 
 Ten układ Settings dotyczy MY23 oraz każdego profilu po zapisaniu zestawu
@@ -152,21 +157,30 @@ domyślnie ukryte.
 
 ## Experiments — dodatkowe odczyty
 
-`Experiments` to osobna sekcja menu głównego z dodatkowymi odczytami pochodzącymi
-z publicznych źródeł dla Giulii/Stelvio, a nie ze zweryfikowanych nagrań tego
-samochodu. Ma cztery grupy: `Electrical`, `Oil`, `Engine` i `Vehicle`. Przeglądasz
-je podobnie jak Readings: góra/dół wybiera stronę, krótki RES pokazuje bieżącą
-wartość, dwuklik wraca.
+`Experiments` zawiera 64 sygnały diagnostyczne producenta z
+[listy Pelican dla Giulii](https://pelican.clutch.engineering/cars/alfa-romeo/giulia/parameters).
+Podłączony do niej [zestaw OBDb Alfa-Romeo](https://github.com/OBDb/Alfa-Romeo/blob/main/signalsets/v3/default.json)
+(CC BY-SA 4.0) podaje identyfikatory zapytań, położenie bitów i przeliczniki.
+Dziewięć grup odpowiada źródłu: `Battery`, `Control`, `Details`, `Doors`,
+`GPS`, `Movement`, `Orientation`, `Tires` i `Transmission`.
+Zastępują wcześniejsze eksperymentalne strony DID silnika benzynowego.
 
-Te strony odpytują identyfikatory diagnostyczne producenta (`0x22`) z ECM, TCM,
-BCM i IPC. Obsługa i skalowanie **nie są zweryfikowane w Twoim aucie** (źródłem
-był inny egzemplarz Giulii/Stelvio); brak lub odrzucenie odpowiedzi pokazuje `--`.
-Sekcja jest odseparowana od zwykłego katalogu Readings: nie zmienia `Shown pages`,
-kolejności Ulubionych ani zapisanych ustawień, a jej własny wybór nie jest
-pamiętany między restartami. Odczyty, których odpowiedź nie mieści się w jednej
-ramce CAN, nie są objęte tym wydaniem.
-Pola liczbowe na tych stronach pokazują wartość po otrzymaniu poprawnej odpowiedzi,
-a przy jej braku pokazują `--`.
+Otwórz grupę krótkim RES. Lekkie góra/dół zmienia sygnał, mocniejsze zmienia
+grupę. Każdy ekran pokazuje jedną krótką angielską nazwę i przeliczoną wartość,
+na przykład `FL P BCM 2.35bar`. Na MY23 grupa jest w pierwszej linii,
+a nazwa i wartość w drugiej. W nazwach opon FL/FR/RL/RR oznaczają koło,
+`P` ciśnienie, `t` temperaturę, a AC/740/742/BCM rozróżniają źródła.
+Dwuklik RES wraca do listy grup. `--` oznacza
+brak świeżej, kompletnej i poprawnej odpowiedzi; pojawia się też po trzech
+sekundach bez nowej odpowiedzi. Obsługiwane są odpowiedzi jedno- i wieloramkowe
+ISO-TP. Odpytuje się tylko aktualnie widoczny DID.
+
+Są to wyłącznie odczyty `0x22`, oddzielone od zwykłych `Readings`.
+Nie można dodać ich do Favorites; nie zmieniają `Shown pages` ani zapisanych
+ustawień. Dostępność sygnałów i przeliczniki **nie zostały sprawdzone w tym
+samochodzie**. Inny sterownik lub wersja oprogramowania może nie obsługiwać DID
+albo mieć inny układ odpowiedzi. Przy braku poprawnych danych ekran nie
+podstawia wymyślonej wartości.
 
 ## Symbole i komunikaty
 
@@ -992,6 +1006,14 @@ diagnostyczne mogą nie być obsługiwane przez daną wersję sterownika.
 | Oil/water/gear C | Temp | °C × 3; temperatura oleju z komunikatów CAN, płynu chłodzącego z ECU i skrzyni biegów. | A |
 
 ## Przechwytywanie CAN i diagnostyka przez USB
+
+**Przed wgraniem tej wersji C1 skopiuj pliki z dysku USB C1.**
+Aby zmieścić 64 sygnały, obszar aplikacji C1 zwiększono z 96 do 100 KiB,
+a dysk USB zmniejszono z 20 do 16 KiB. Pierwsze 4 KiB starego dysku zajmie
+firmware, więc wcześniejsze pliki nie zostaną zachowane. Przy pierwszym
+uruchomieniu nowy, niesformatowany dysk zostanie zainicjowany. Obszar zapisanych
+ustawień pozostaje bez zmian.
+
 
 USB nie jest potrzebne do zwykłej obsługi menu. Tryby USB działające w aplikacji
 różnią się od **bootloadera DFU** układu STM32, który służy do wgrywania

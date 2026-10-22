@@ -12,6 +12,7 @@
 #include "app/powertrain.h"
 #include "diagnostics/parameter_cache.h"
 #include "diagnostics/parameter_request.h"
+#include "diagnostics/experiments.h"
 #include "storage/flash_records.h"
 #include <assert.h>
 #include <stdio.h>
@@ -78,7 +79,7 @@ void status_led_activity(void) {}
 static uint8_t query_payload[4];
 static uint32_t query_ecu;
 uint32_t can_tx(CAN_TxHeaderTypeDef *header, uint8_t *data) {
-    query_ecu = header->ExtId;
+    query_ecu = header->IDE == CAN_ID_EXT ? header->ExtId : header->StdId;
     memcpy(query_payload, data, sizeof(query_payload));
     ++queries;
     return HAL_OK;
@@ -347,23 +348,58 @@ static void reply_parameter(uint8_t id) {
     CAN_RxHeaderTypeDef header = {.IDE = CAN_ID_EXT, .ExtId = p->response_id, .DLC = 8};
     parameter_request_receive(&header, reply);
 }
-static void test_high_obd_parameter_pages(void) {
-    const uint8_t pages[] = {0x4e, 0x66};
-    const uint8_t ids[] = {100, 124};
-    for (unsigned i = 0; i < 2; ++i) {
-        preview_pair(pages[i], pages[i], i == 0);
-        assert(!strchr(screen, '$'));
-        unsigned before = queries;
-        now += 150;
-        menu_process();
-        assert(queries == before + 1);
-        assert(query_ecu == parameter_definitions[ids[i]].request_id);
-        reply_parameter(ids[i]);
-        assert(isfinite(parameter_cache_get(ids[i], now)));
-        assert(isfinite(displayed_parameter_values[0]));
-        assert(!strchr(screen, '$'));
-        assert(strpbrk(screen, "0123456789"));
+static void test_experiment_replies(void) {
+    char value[32];
+    uint8_t battery = experiment_group_signal(0, 0);
+    assert(experiment_group_count(0) == 1);
+    experiment_select(battery);
+    experiment_process();
+    assert(query_ecu == 0x6B4);
+    assert(query_payload[1] == 0x22 && query_payload[2] == 0xD4 && query_payload[3] == 0x10);
+    CAN_RxHeaderTypeDef standard = {.IDE = CAN_ID_STD, .StdId = 0x694, .DLC = 8};
+    uint8_t battery_reply[8] = {5, 0x62, 0xD4, 0x10, 0xC8, 0x00, 0, 0};
+    battery_reply[3] = 0x11; /* Ignore a positive reply for another DID. */
+    experiment_receive(&standard, battery_reply);
+    experiment_format(battery, value, sizeof(value));
+    assert(strstr(value, "--"));
+    battery_reply[3] = 0x10;
+    experiment_receive(&standard, battery_reply);
+    experiment_format(battery, value, sizeof(value));
+    assert(strstr(value, "100.0%"));
+
+    uint8_t door = experiment_group_signal(3, 3); /* Driver door is bit 6. */
+    experiment_select(door);
+    experiment_process();
+    CAN_RxHeaderTypeDef extended = {.IDE = CAN_ID_EXT, .ExtId = 0x18DAF1C7, .DLC = 8};
+    uint8_t door_reply[8] = {4, 0x62, 0x03, 0x02, 0x02, 0, 0, 0};
+    experiment_receive(&extended, door_reply);
+    experiment_format(door, value, sizeof(value));
+    assert(strstr(value, "YES"));
+
+    uint8_t wheel = experiment_group_signal(5, 0);
+    experiment_select(wheel);
+    experiment_process();
+    assert(query_ecu == 0x18DA30F1);
+    uint8_t payload[31] = {0x62, 0x29, 0x62};
+    payload[3 + 14] = 0x01; payload[3 + 15] = 0x60; /* 352 / 16 = 22 km/h. */
+    extended.ExtId = 0x18DAF130;
+    uint8_t first[8] = {0x10, 31};
+    memcpy(first + 2, payload, 6);
+    experiment_receive(&extended, first);
+    assert(query_payload[0] == 0x30); /* Flow control for ISO-TP. */
+    uint8_t wrong_order[8] = {0x22};
+    experiment_receive(&extended, wrong_order);
+    experiment_format(wheel, value, sizeof(value));
+    assert(strstr(value, "--"));
+    for (unsigned offset = 6, sequence = 1; offset < 31; offset += 7, ++sequence) {
+        uint8_t consecutive[8] = {(uint8_t)(0x20 | sequence)};
+        unsigned count = 31 - offset < 7 ? 31 - offset : 7;
+        memcpy(consecutive + 1, payload + offset, count);
+        experiment_receive(&extended, consecutive);
     }
+    experiment_format(wheel, value, sizeof(value));
+    assert(strstr(value, "22.0km/h"));
+    experiment_cancel();
 }
 static void test_readings_preview_prefetch(void) {
     for (unsigned in_flight = 0; in_flight < 2; ++in_flight) {
@@ -1210,7 +1246,7 @@ static void test_action_request_labels(void) {
 
 static void test_cache_flags(void) {
     parameter_cache_reset();
-    const uint8_t ids[] = {0, 7, 8, 31, 32, 95, 96, 99};
+    const uint8_t ids[] = {0, 7, 8, 31, 32, 95, 96, 97};
     for (unsigned i = 0; i < sizeof(ids); ++i) {
         assert(isnan(parameter_cache_get(ids[i], 0)));
         parameter_cache_put(ids[i], i + 0.5f, UINT32_MAX - 100);
@@ -1228,7 +1264,7 @@ static void test_cache_flags(void) {
     parameter_cache_put(255, 1, 0);
     assert(isnan(parameter_cache_get(255, 0)));
     parameter_cache_reset();
-    assert(isnan(parameter_cache_get(99, 0)));
+    assert(isnan(parameter_cache_get(97, 0)));
 }
 /* Hold numerical peaks without freezing status readings or showing stale measurements. */
 static void test_maximum_hold(void) {
@@ -1380,7 +1416,7 @@ int main(void) {
         HOST_TEST(test_maximum_hold),
         HOST_TEST(test_board_sync_retry),
         HOST_TEST(test_shipped_favorite_pairs),
-        HOST_TEST(test_high_obd_parameter_pages),
+        HOST_TEST(test_experiment_replies),
         HOST_TEST(test_readings_preview_prefetch),
         HOST_TEST(test_engine_filters),
         HOST_TEST(test_action_availability)

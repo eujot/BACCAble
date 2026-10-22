@@ -3,7 +3,7 @@
 #include "app/build_config.h"
 #include "stm32f0xx_hal.h"
 
-#define PARAMETER_DEFINITION_COUNT 136U
+#define PARAMETER_DEFINITION_COUNT 98U
 
 // this is used to invert bytes order in a 32 bit integer
 #define SWAP_UINT32(x)                                                                                       \

@@ -39,7 +39,7 @@ static void test_catalog_behavior(void) {
         assert(counts[engine] <= 104);
         for (unsigned page = 0; page < counts[engine]; ++page) {
             const ParameterPage *entry = &parameter_pages[engine][page];
-            assert(entry->id == (engine ? 0x81 : 0x01) + page); /* Persisted physical order. */
+            assert(entry->id == (engine ? 0x81 + page : page == 64 ? 0x67 : 0x01 + page));
             assert(entry->name != NULL);
             check_screen_width(entry);
             for (unsigned element = 0; element < parameter_page_elements(entry); ++element) {

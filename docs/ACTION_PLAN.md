@@ -1,8 +1,36 @@
 # BACCAble action plan and agent handoff
 
-Last updated: **2026-10-16** (dated verification boundaries below). This is the single source of planned work,
+Last updated: **2026-10-22** (dated verification boundaries below). This is the single source of planned work,
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
+
+## Pelican Giulia Experiments replacement, 2026-10-22
+
+Branch `feat/pelican-experiments` replaces the 38 old experimental gasoline
+pages with 64 read-only manufacturer signals from the Pelican Giulia list and
+its linked OBDb Alfa-Romeo `signalsets/v3/default.json` (CC BY-SA 4.0; source
+snapshot SHA-256 `c28314008a46d69169e0746919c9d5798b92df6eff727591836a60b30a9db59d`).
+Nine groups follow that source. The C1-only reader sends `0x22` requests for
+the selected signal, checks response IDs/service/DID, reassembles bounded
+ISO-TP replies, extracts MSB-first fields, applies source conversions and
+shows one named value. The ordinary catalog and Favorites remain separate.
+Both guides and the catalog/menu technical guides were updated.
+
+To fit C1, its application allocation grows from 96 to 100 KiB and the USB
+disk shrinks from 20 to 16 KiB. The old disk's first 4 KiB become application
+flash, so users must back up C1 USB files before flashing. Settings record
+addresses are unchanged. Local ARM GNU 15.2.Rel1 C1 image uses 101,080 of
+102,400 flash bytes, leaving 1,320 bytes; the pinned CI toolchain may size
+differently.
+
+Validation: complete native Apple Clang ASan/UBSan host suite, 72 Lab tests,
+and C1/C2/BH/CAN firmware builds with the full local ARM toolchain passed.
+Tests cover a rejected DID, 11-bit and 29-bit response IDs, bit extraction,
+ISO-TP flow control and out-of-order frame handling. Physical acceptance
+remains open for every manufacturer signal, ECU address and conversion on
+the owner's vehicle; the external catalog is a source specification, not
+a verified recording. Check CAN/USB behavior and the smaller C1 mass-storage
+volume on hardware before release.
 
 ## OBD catalog bound fix, 2026-10-16
 

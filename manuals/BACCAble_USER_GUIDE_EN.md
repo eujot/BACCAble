@@ -1,8 +1,8 @@
 # BACCAble — in-car user guide
 
 This guide describes the current dashboard-menu firmware source, including the
-unreleased **oil level readings and drivetrain setting** after v5-beta-25.
-The new oil display still requires vehicle acceptance testing. It starts after BACCAble has been installed and
+unreleased **oil level readings, drivetrain setting and Pelican Experiments** after v5-beta-27.
+The new oil display and diagnostic experiments still require vehicle acceptance testing. It starts after BACCAble has been installed and
 connected to the vehicle. Installation, wiring and firmware flashing are outside
 its scope. Use a matching C1/C2/BH firmware set.
 
@@ -124,12 +124,17 @@ Main menu
 │  ├─ Shown pages            Show/hide pages in Readings
 │  ├─ Sort order             Grouped or alphabetical reading lists
 │  └─ BACCAble IPC           Temporary refresh experiments
-└─ Information               Versions, input status and IPC display test
-├─ Experiments               Extra readings from public sources (not verified on this car)
-│  ├─ Electrical
-│  ├─ Oil
-│  ├─ Engine
-│  └─ Vehicle
+├─ Information               Versions, input status and IPC display test
+└─ Experiments               64 public-source manufacturer diagnostic signals
+   ├─ Battery                1 signal
+   ├─ Control                4 signals
+   ├─ Details                1 signal
+   ├─ Doors                  5 signals
+   ├─ GPS                    3 signals
+   ├─ Movement               4 signals
+   ├─ Orientation            2 signals
+   ├─ Tires                  38 signals
+   └─ Transmission           6 signals
 ```
 
 This Settings layout applies to MY23 and to any profile after an atomic Favorite set
@@ -142,20 +147,29 @@ The main menu order is fixed. Page availability follows the selected engine,
 
 ## Experiments (extra readings)
 
-`Experiments` is a separate main-menu section holding extra readings taken from
-public Giulia/Stelvio sources, not from this car's verified captures. It has four
-groups: `Electrical`, `Oil`, `Engine` and `Vehicle`. Browse them like Readings:
-gentle up/down picks a page, RES shows the live value, double-click returns.
+`Experiments` contains 64 manufacturer diagnostic signals from the
+[Pelican Giulia list](https://pelican.clutch.engineering/cars/alfa-romeo/giulia/parameters),
+whose linked [OBDb Alfa-Romeo signal set](https://github.com/OBDb/Alfa-Romeo/blob/main/signalsets/v3/default.json)
+supplies the request IDs, bit fields and conversions (CC BY-SA 4.0).
+The nine groups follow that source: `Battery`, `Control`, `Details`, `Doors`,
+`GPS`, `Movement`, `Orientation`, `Tires` and `Transmission`.
+They replace the previous experimental gasoline DID pages.
 
-These pages request manufacturer diagnostic identifiers (`0x22`) from the ECM, TCM,
-BCM and IPC. Support and scaling are **not verified on your car** (the source was a
-different Giulia/Stelvio); a missing or rejected reply shows `--`. `Experiments` is
-kept apart from the ordinary Readings catalog: it does not change `Shown pages`,
-Favorite sorting or the saved settings, and its own selection is not remembered
-between restarts. Reads whose reply does not fit a single CAN frame are not
-included in this release.
-Numeric fields on these pages show a value when a valid reply arrives; they show
-`--` while the value is unavailable.
+Open a group with RES; gentle up/down moves between its signals and stronger
+up/down changes group. Each screen shows one short English name and its decoded
+value, such as `FL P BCM 2.35bar`. On MY23 the group is on line 1 and the
+name/value on line 2. In tire labels, FL/FR/RL/RR identify wheel position,
+`P` pressure, `t` temperature, and AC/740/742/BCM distinguish source variants.
+Double-click RES to return to the group list. The value
+shows `--` until a fresh, complete, valid reply arrives; it also returns to
+`--` after three seconds without one. Both single-frame and multi-frame ISO-TP
+replies are supported. Only the currently displayed DID is polled.
+
+These are read-only `0x22` queries, separate from ordinary `Readings`.
+They cannot be added to Favorites and do not affect `Shown pages` or saved
+settings. Signal availability and conversions have **not been verified in this
+vehicle**. Different ECU/software variants may omit a DID or return a different
+layout; no value is fabricated when the response is missing or invalid.
 
 ## Display symbols and messages
 
@@ -933,6 +947,14 @@ supported by an individual ECU version.
 | Oil/water/gear C | Temp | °C × 3; native oil, ECU coolant and gearbox temperatures. | A |
 
 ## USB CAN capture and diagnostics
+
+**Before flashing this C1 candidate, copy any files from the C1 USB disk.**
+To fit the 64 experimental signals, the C1 application flash allocation grows
+from 96 to 100 KiB and its USB disk shrinks from 20 to 16 KiB. The old disk's
+first 4 KiB are reused by firmware, so its previous contents are not preserved.
+On first boot an unformatted new disk is initialized. Saved settings records
+remain in their existing flash area.
+
 
 USB is optional for normal menu use. Runtime USB modes are different from the
 STM32 **DFU bootloader** used for flashing: seeing a device in `dfu-util --list`
