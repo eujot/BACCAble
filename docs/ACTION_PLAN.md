@@ -6,7 +6,7 @@ implementation; they are not separate backlogs. Update this file after each task
 
 ## BH default drive-mode gesture, 2026-10-23
 
-Implementation branch `feat/bh-default-drive-mode`, based on research `5a6f43a`,
+Implementation commit `00b4b99` on `feat/bh-default-drive-mode`, based on research `5a6f43a`,
 isolated worktree `/private/tmp/baccable-bh-default-mode`. Default mode now uses
 the supported BH 0x256 input waveform instead of rewriting selected-mode
 reports. Choices cycle A/N/D/Race; flash slot 38 keeps 0=N/passive (formerly
@@ -45,9 +45,9 @@ cancellation, resync/duplicate requests, no response and tick wrap. Existing
 C2 LKA and ESC/TC behavior checks pass. All 16 firmware board/display profiles
 built with full Arm GNU 15.2.Rel1, VERSION=bh-dna; cppcheck passed all flavors.
 Largest C1 flash 102,236/102,400 bytes (164 spare), data+bss 15,700/16,384;
-pinned CI/release identity sizing remains required. Dictionary source provenance
-and the passive input description are refreshed in the follow-up evidence
-commit; no captured bit layout changes.
+pinned CI/release identity sizing remains required. All 73 Lab tests also passed after updating dispatcher coverage to 34 IDs.
+Dictionary source provenance and the supported input description now reference
+00b4b99; generated catalog is current. No captured bit layout changes.
 
 No push/PR/merge/release/flash. Hardware acceptance is UNKNOWN: test A/D/Race
 from an actual fresh startup, automatic release, observed factory/transmission

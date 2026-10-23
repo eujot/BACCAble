@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "dictionary_version": "2026-10-23.3",
+  "dictionary_version": "2026-10-23.4",
   "vehicle": {
     "model": "Alfa Romeo Giulia (owner-reported)",
     "model_year": null,
@@ -8,9 +8,9 @@
     "vin": null,
     "scope": "This checkout and these sessions only; not a universal Alfa Romeo or cross-model DBC."
   },
-  "firmware_source_commit": "80fdb133685c0b8a9986bac0c458262440f10fc7",
+  "firmware_source_commit": "00b4b99eba246fa2b9a87dfd0c20ce46333eb5fa",
   "source_sha256": {
-    "firmware/baccable/vehicle/display_frames.c": "34e9799877944bcf854e39b365f9d99e90e6516bf59f715738e241c9a17649f8",
+    "firmware/baccable/vehicle/display_frames.c": "04022cce8ba4b06ac6337244167a158599498816a03a82dd73b87564e51deee9",
     "firmware/baccable/vehicle/telemetry_frames.c": "83ef051370d33eb44ca25b213242e05f60523a9c45b40339b41bde33e0234aa1",
     "firmware/baccable/vehicle/engine_status.c": "0437d18d2be6f44f88cb256f9f1f88da549da4fc881acddc0eb4bb7a26760038",
     "firmware/baccable/features/parking.c": "b7d16c0245879c7392c626a33ec5c1c41aa681444bd23ab544d7d0cd96456f12",
@@ -22,15 +22,15 @@
     "firmware/baccable/features/menu_input.c": "9584ff6fa864cf2986a6d58079e798a22740e929f9e82564b32bb4933034d565",
     "firmware/baccable/protocol/checksum.c": "74759417a6edd56e3b230502710a056dc0d0be535b15912bf7250afeedd06946",
     "firmware/baccable/vehicle/lighting_frames.c": "733078f1af48d86ce8d44eed4d506802378915b81950d905a77a7de01b5ccb48",
-    "firmware/baccable/vehicle/drive_mode.c": "4e591ebdd48d41f753d6a21fc63dd60c1f416cf93406a463f67898e0c91c24ab",
+    "firmware/baccable/vehicle/drive_mode.c": "1d85ce9070e2ffd26dc0da9b377c964597331df7b3ae5a5e2bb930366ff6e27d",
     "firmware/baccable/vehicle/mirrors_frames.c": "29f39b069635e06167bc971d19886a9855fdb7e2f7786ef2cf737b60eef554e1",
     "firmware/baccable/diagnostics/native_parameters.c": "e257eb9629d0fdbbc1cbced53d22a933b3fddb3dc2a54c9c68b82e331511e9aa",
     "firmware/baccable/features/ibs_override.c": "20a5fbd5c5d4837d1f64786e513d26c7a6f726d32a44f1dfad7abc25314a45d6",
     "firmware/baccable/features/usb_modes.c": "25501a4ac4b3ca52a3884c25c66b27928c44db91f19b79ca13eb2218e0cce7f1",
     "firmware/baccable/diagnostics/uds_decode.c": "25ab4028b943ba1e6bb825019be4208fb4a4739742a314aa8942e9b2708efae4",
     "firmware/baccable/diagnostics/parameter_request.c": "09dcd9c40c48d9b816d70cacc549532b19345ff471998b42c2ea11b4bc8e4832",
-    "firmware/baccable/app/main.c": "966939a1200d851f21140460224a3470f59735eb3e7f43e2acc641068577b9ba",
-    "firmware/baccable/vehicle/standard_frames.c": "2f9fab6b03830b2617fc1079e070758493098d6ca314bd1b14635849e2e7aa31",
+    "firmware/baccable/app/main.c": "f34497ec9508cc9409afc3610b9b7811e4ec82cd6bdc9715c4a25ffa86a10e64",
+    "firmware/baccable/vehicle/standard_frames.c": "7eb9cb5f260c021de69154a4b350eaacffe909a6cf42eeff9dcb44b838bcb1d9",
     "firmware/baccable/diagnostics/parameter_catalog.c": "14a710feaf2440ef6dc15a750c6fa957edf9172f224a512d8fe1a355a64f8417",
     "firmware/baccable/diagnostics/parameter_cache.c": "f8a4418ddb715498c04dad012d480bc53d2aab79300f8d471c6bb6380b4477fe",
     "docs/architecture/REFERENCE_SIGNALS.md": "fb8188e6938df5e74e23682b02e065f79db95c059e0999d2b325d07a9c94e6cf",
@@ -39,8 +39,11 @@
     "firmware/baccable/features/my23_ui.c": "6e5c772adfe061fc10c37e84908886858ac483b45b97aae207d6c2bb4b3814f2",
     "firmware/baccable/features/display_stream.c": "fc58c7270c56c0295d364a5ff0333a5e6b22174c935a9b9b377f54147a15e3dd",
     "firmware/baccable/features/oil_bar_animation.c": "6cc953261ef3a50fccecbd80f13639e98d477acb14e6a7210b43b6fe57cd6d6a",
-    "firmware/baccable/features/drive_mode_check.c": "c83b3f1608ee106142798de651f51a850baebd30f91cdf7a3117b845d7c1837a",
-    "firmware/baccable/features/board_sync.c": "3fae16452187bd88060b8e013e225ed2a29f2941695a00832c77aea0395ccba9"
+    "firmware/baccable/features/drive_mode_check.c": "0f3897e8435118018fe022fd631efc669ebc64217c942f16ce061f358d9c5aea",
+    "firmware/baccable/features/board_sync.c": "92de9f889382adb283196b8698f9386c75d233a5a3aec1a1e89f69f302e424a1",
+    "firmware/baccable/features/dna_selector.c": "0b3032a566d34541fe59cad386144d47c3b58b6e2e8272df19f705619ba82742",
+    "firmware/baccable/app/board_commands.c": "0613e802dfdc10f7b7c5ac6a9845811a068dbf198c666dac8c7a3816bb77a8e1",
+    "firmware/baccable/transport/board_uart.h": "5c83a62e828125b57e77390e027b04fd633455cfc4f9d0715e8a4d753ed00bcb"
   },
   "byte_convention": "Zero-based byte indexes; bit 0 is LSB. Parts are concatenated in listed most-significant-first order; physical = raw * scale + offset.",
   "capture_limits": [
@@ -230,7 +233,12 @@
       "role": "BH",
       "can_id": "0x256",
       "title": "DNA selector momentary direction",
-      "sources": [],
+      "sources": [
+        {
+          "path": "firmware/baccable/features/dna_selector.c",
+          "symbol": "dna_selector_observe"
+        }
+      ],
       "exact_dlc": 4,
       "signals": [
         {
@@ -254,7 +262,7 @@
           "note": "Supported by all 36 directional pulses in three sessions: eight N-to-D transitions follow raw byte 0=40 by 108-112 ms on BH; reverse direction uses 20. These are transient inputs, not selected-mode codes. Raw 3 is unobserved and remains unnamed. Source ECU identity and successful replay remain unverified. See docs/research/20261023-dna-all-sessions.md."
         }
       ],
-      "note": "BH-only DLC 4. C1 0x256/DLC 8 is a different message. Other bytes must be preserved: October-10 also contains 00 80 00 00 without directional input. Resting period is about 250 ms, with event-driven extra reports. Five held inputs precede Race after about 1.2 s. No firmware handler/injection is added by this decoder.",
+      "note": "BH-only DLC 4. C1 0x256/DLC 8 is a different message. Other bytes must be preserved: October-10 also contains 00 80 00 00 without directional input. Resting period is about 250 ms, with event-driven extra reports. Five held inputs precede Race after about 1.2 s. Commit 00b4b99 adds a BH startup selector handler: 200 ms short gestures, 1,800 ms D-to-Race hold refreshed every 250 ms, explicit release and observed intermediate modes. N/passive does not inject. Vehicle acceptance of replay remains unknown.",
       "observations": [
         {
           "session": "20260926-181818Z",
@@ -343,7 +351,7 @@
           "note": "Confirmed from the 2026-10-11 dna_all_modes sessions (three runs each): N=16, D=8, A=4, Race=1 (mask 0x7C, byte 0). Dashboard presentation broadcast. Re-analysis 2026-10-23: five successful Race entries across six marked attempts; 191050Z event 12 remained D. See docs/research/20261023-dna-selector.md; scenario completion is not acceptance."
         }
       ],
-      "note": "2026-10-23 capture evidence: byte 1 settles at 00 in N/A, 10 in D and 20 in Race (hex); meaning unresolved. Current firmware rewrites only byte 0. See DNA-RELATED-25A-001 and docs/research/20261023-dna-selector.md.",
+      "note": "2026-10-23 capture evidence: byte 1 settles at 00 in N/A, 10 in D and 20 in Race (hex); meaning unresolved. Current firmware rewrites only byte 0. See DNA-RELATED-25A-001 and docs/research/20261023-dna-selector.md. Commit 00b4b99 removes the default-mode rewrite; independent ESC/TC presentation still changes byte 0.",
       "observations": [
         {
           "session": "20260926-181818Z",
@@ -3947,7 +3955,7 @@
           ]
         }
       ],
-      "note": "2026-10-23 re-analysis: all 2,099 C1/C2 samples in the two DNA captures have byte 7=00; none matches the firmware J1850 payload CRC. The aa81111 default-mode rewrite was inconsistent with this captured layout. Commit 80fdb13 preserves byte 7 in every mode rewrite and bounds queue retries; C1 corroborates the requested mode with fresh DNA and CRC-valid transmission reports over a five-second window. Vehicle acceptance remains open. See docs/research/20261023-dna-selector.md. All-session re-analysis identifies an upstream momentary input on BH 0x256/DLC 4. The physical sender of this mode report remains a source-comment attribution; see docs/research/20261023-dna-all-sessions.md.",
+      "note": "2026-10-23 re-analysis: all 2,099 C1/C2 samples in the two DNA captures have byte 7=00; none matches the firmware J1850 payload CRC. The aa81111 default-mode rewrite was inconsistent with this captured layout. Commit 80fdb13 preserves byte 7 in every mode rewrite and bounds queue retries; C1 corroborates the requested mode with fresh DNA and CRC-valid transmission reports over a five-second window. Vehicle acceptance remains open. See docs/research/20261023-dna-selector.md. All-session re-analysis identifies an upstream momentary input on BH 0x256/DLC 4. The physical sender of this mode report remains a source-comment attribution; see docs/research/20261023-dna-all-sessions.md. Commit 00b4b99 removes default-mode report rewriting; C1 now starts corroboration after BH completes its token-matched selector gesture.",
       "observations": [
         {
           "session": "20260926-181705Z",
@@ -6720,7 +6728,7 @@
           ]
         }
       ],
-      "note": "2026-10-23 re-analysis: all 2,099 C1/C2 samples in the two DNA captures have byte 7=00; none matches the firmware J1850 payload CRC. The aa81111 default-mode rewrite was inconsistent with this captured layout. Commit 80fdb13 preserves byte 7 in every mode rewrite and bounds queue retries; C1 corroborates the requested mode with fresh DNA and CRC-valid transmission reports over a five-second window. Vehicle acceptance remains open. See docs/research/20261023-dna-selector.md. All-session re-analysis identifies an upstream momentary input on BH 0x256/DLC 4. The physical sender of this mode report remains a source-comment attribution; see docs/research/20261023-dna-all-sessions.md.",
+      "note": "2026-10-23 re-analysis: all 2,099 C1/C2 samples in the two DNA captures have byte 7=00; none matches the firmware J1850 payload CRC. The aa81111 default-mode rewrite was inconsistent with this captured layout. Commit 80fdb13 preserves byte 7 in every mode rewrite and bounds queue retries; C1 corroborates the requested mode with fresh DNA and CRC-valid transmission reports over a five-second window. Vehicle acceptance remains open. See docs/research/20261023-dna-selector.md. All-session re-analysis identifies an upstream momentary input on BH 0x256/DLC 4. The physical sender of this mode report remains a source-comment attribution; see docs/research/20261023-dna-all-sessions.md. Commit 00b4b99 removes default-mode report rewriting; C1 now starts corroboration after BH completes its token-matched selector gesture.",
       "observations": [
         {
           "session": "20260926-181818Z",
@@ -7671,6 +7679,10 @@
     {
       "can_id": "0x226",
       "handler": "vehicle_handle_start_stop_status"
+    },
+    {
+      "can_id": "0x256",
+      "handler": "dna_selector_observe"
     },
     {
       "can_id": "0x25A",
@@ -9852,7 +9864,7 @@
       "can_id": "0x256",
       "topic": "DNA selector input and sender identity",
       "source": "docs/research/20261023-dna-all-sessions.md",
-      "status": "Directional field is supported and decoded offline. Physical transmitter identity and acceptance of an injected short gesture remain unverified; see DNA-SELECTOR-BH-256-001."
+      "status": "Directional field is supported and decoded offline. Physical transmitter identity and acceptance of an injected short gesture remain unverified; see DNA-SELECTOR-BH-256-001. BH startup gestures implemented in 00b4b99, hardware acceptance still unknown."
     }
   ],
   "confidence_policy": {
@@ -14647,6 +14659,11 @@
       "topic": "DNA input and reaction order",
       "status": "supported_input_unverified_actuation",
       "detail": "All 20 sessions inventoried (21,354,624 database frames). BH 0x256 direction pulses lead 36 selector-associated mode changes, including all eight N-to-D transitions. One ignition-related D-to-N reset lacks a selector pulse. No cross-bus clock order or physical transmitter identity is inferred. See docs/research/20261023-dna-all-sessions.md"
+    },
+    {
+      "topic": "Startup selector implementation",
+      "status": "implemented_hardware_unknown",
+      "detail": "00b4b99 replaces default mode report rewrites with bounded BH 0x256 gestures, keeps slot 38 zero as N/passive, and starts C1 corroboration only after matching BH completion. Active presets A/D/Race require vehicle acceptance. See docs/architecture/MENU_UX.md."
     }
   ],
   "frame_templates": [

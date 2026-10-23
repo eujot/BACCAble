@@ -407,7 +407,7 @@
         "The owner subsequently reports that the installed one-shot default D briefly appears then returns to N (installed binary unknown). This is negative hardware evidence for persistence. Commit 80fdb13 corrects the CRC write and adds bounded state corroboration; no post-fix vehicle result yet.",
         "All-session review 2026-10-23 supersedes the earlier absence-of-input finding: BH 0x256/DLC 4 reports 36 momentary direction pulses, each followed by the matching selector-associated mode change. This does not identify its physical transmitter or prove injected acceptance."
       ],
-      "next_test": "Evaluate one short BH 0x256 direction gesture as a replacement for rewriting mode reports, with release, physical-input priority and sustained received-state corroboration; see docs/research/20261023-dna-all-sessions.md."
+      "next_test": "Vehicle acceptance of 00b4b99: bounded BH input gestures and actual sustained C1 DNA/transmission reports, including failure and physical-input priority."
     },
     {
       "id": "LIGHT-INDICATOR-C2-42D-001",
@@ -748,7 +748,7 @@
           2
         ]
       ],
-      "description": "Momentary selector direction: raw 0=released, 1=toward A (byte 0=20), 2=toward D/Race (byte 0=40). All 36 non-neutral pulses match selector-associated mode changes across three sessions. Every N-to-D (8/8) follows onset by 108-112 ms on BH; pulses last 154-294 ms. Five long holds precede Race by 1194-1211 ms. It is not a latched selected-mode report. C1 0x256/DLC 8 is unrelated.",
+      "description": "Momentary selector direction: raw 0=released, 1=toward A (byte 0=20), 2=toward D/Race (byte 0=40). All 36 non-neutral pulses match selector-associated mode changes across three sessions. Every N-to-D (8/8) follows onset by 108-112 ms on BH; pulses last 154-294 ms. Five long holds precede Race by 1194-1211 ms. It is not a latched selected-mode report. C1 0x256/DLC 8 is unrelated. Startup replay implemented in 00b4b99; implementation does not promote the capture claim to hardware validated.",
       "evidence": [
         {
           "session": "20261010-111025Z",
@@ -800,7 +800,7 @@
         "The final marked Race attempt contains only a short N-to-D pulse and no recorded subsequent long hold.",
         "Earlier narrow searches included the input pulse in their baseline and missed it; whole-window inspection corrected that false negative."
       ],
-      "next_test": "Verify sender/topology at the selector connector if exact ECU identity is needed. Separately test one bounded BH gesture from fresh neutral state with TX provenance, successful release and sustained factory mode/transmission reports. This research authorizes no injection."
+      "next_test": "Install matched C1/BH 00b4b99 firmware and verify A/D/Race startup selection, release, sustained factory DNA/transmission reports, cancellation and later physical selector use. N must preserve factory behavior."
     }
   ]
 }
