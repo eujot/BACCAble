@@ -58,12 +58,16 @@ ISO-TP reader corrections merged since v5-beta-27.
 
 The release workflow builds matching C1, C2, BH and CAN images and packages
 `BUILD_INFO.json` and `SHA256SUMS`. Install matching board images together and
-check their build identity and checksums before flashing. The PR's GitHub CI
-passed host tests, Lab tests, lint and firmware builds. The release workflow
-must pass its pinned toolchain checks before publication.
+check their build identity and checksums before flashing. PR #71 CI and release
+workflow [39985666557](https://github.com/eujot/BACCAble/actions/runs/39985666557)
+passed host tests, Lab tests, lint, four firmware flavors and the independent
+display/IPC build matrix. The release includes all four board images,
+`BUILD_INFO.json` and `SHA256SUMS`; every listed checksum was verified after
+download. The pinned Arm GNU 15.3.Rel1 build uses 101,764/102,400 C1 flash bytes
+and 15,500/16,384 RAM bytes.
 
-The local validation used Arm GNU 15.2.Rel1; CI and release builds use the
-pinned Arm GNU 15.3.Rel1 toolchain and may produce different sizes. The largest
-reported local C1 image used 102,236 of 102,400 bytes of flash. No firmware with
-the new BH selector replay has been accepted in a vehicle; verify startup mode,
-release behavior, failure status and later physical knob operation on hardware.
+Release tag `v5-beta-28` points to source commit
+`00e1b16464972d7fd40c78e871eb505d4170a34d` and embeds version `beta-00e1b16`.
+No firmware with the new BH selector replay has been accepted in a vehicle;
+verify startup mode, release behavior, failure status and later physical knob
+operation on hardware.

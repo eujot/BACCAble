@@ -6,13 +6,15 @@ implementation; they are not separate backlogs. Update this file after each task
 
 ## v5-beta-28 release preparation, 2026-10-23
 
-Prepared [v5-beta-28 release notes](releases/v5-beta-28.md) on the merged
-`master` source after PR #71 (`8d202d4`). The beta scope includes the Pelican
-Giulia Experiments/OBD reader, the parameter catalog bound fix, and BH
-`0x256`-based default DNA selection with A/N/D/Race choices. Notes include the
-ISO-TP, small-volume filesystem, C1 flash allocation, matching C1/BH firmware,
-and hardware acceptance boundaries. The notes PR and release workflow are
-pending; no beta-28 artifact or vehicle installation is claimed yet.
+Published [v5-beta-28](https://github.com/eujot/BACCAble/releases/tag/v5-beta-28)
+from master commit `00e1b16464972d7fd40c78e871eb505d4170a34d` after PR #71
+(`8d202d4`) and notes PR #72. Full notes are in
+[docs/releases/v5-beta-28.md](releases/v5-beta-28.md). Release workflow
+[39985666557](https://github.com/eujot/BACCAble/actions/runs/39985666557)
+passed host/Lab tests, lint, C1/C2/BH/CAN builds and the independent display/IPC
+matrix with pinned Arm GNU 15.3.Rel1. `BUILD_INFO.json` records C1 at
+101,764/102,400 flash bytes and 15,500/16,384 RAM bytes. All 13 downloaded
+release assets passed `SHA256SUMS`; firmware has not been accepted in a vehicle.
 
 ## BH default drive-mode gesture, 2026-10-23
 
