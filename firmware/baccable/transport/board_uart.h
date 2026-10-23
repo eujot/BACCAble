@@ -47,6 +47,8 @@
 void board_uart_set_diagnostic(uint8_t enabled);
 uint8_t board_uart_diagnostic_send(const uint8_t *data, size_t length);
 
+#define BH_CMD_DNA_DEFAULT 0x4A /* Target, startup action and request token. */
+#define C1_CMD_DNA_RESULT 0x4B /* Request token and completed/failed outcome. */
 #define BH_CMD_IPC_OPTIONS 0x47 /* RAM-only pace/method, five-second lease. */
 #define BOARD_CMD_USB_STATE 0x45
 #define C1_CMD_USB_STATE 0x46

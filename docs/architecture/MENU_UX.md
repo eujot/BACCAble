@@ -32,11 +32,24 @@ can override it. `LARGE_DISPLAY` independently chooses the legacy 18/24-characte
 width. MY23 always has budgets `MY23_L1_VISIBLE = 16` and
 `MY23_L2_VISIBLE = 22`. Those are visible glyph counts, not UTF-8 byte limits.
 
-The main menu remains Favorites, Readings, Actions, Settings, Information.
+The main menu is Favorites, Readings, Actions, Settings, Information, Experiments.
 MY23/atomic Settings contains Features, Favorites, Shown pages, Sort order, BACCAble IPC.
 Legacy before its first five-slot save retains Features, Page favorites,
 Shown pages, Favorite order, Sort order, Favorites, BACCAble IPC. Existing catalogs, engine gates and page IDs are retained.
 The [catalog audit](CATALOG_AUDIT.md) describes the legacy reading model.
+
+`Experiments` has nine source-defined groups and 64 manufacturer `0x22`
+signals. A single named value is shown per screen; MY23 puts the group on line 1
+and name/value on line 2. Only the selected DID is polled. The screens are not
+ordinary reading pages, Favorites or persisted preferences. C1 reassembles
+ISO-TP replies of up to 4095 bytes, retaining only a 40-byte prefix while
+validating every frame through the declared end. It checks source ID/service/DID,
+aborts reordered/truncated transfers, accepts NRC 0x78 within a bounded five-second
+transaction, and decodes OBDb MSB-first fields. Requests are padded to eight CAN
+bytes. Flow control requests a 5 ms separation time to protect the small receive
+FIFO. The source refresh intervals and null/range rules apply; failed attempts
+retry after one second. All resulting labels/values fit 18 characters.
+Vehicle compatibility and scaling still require physical confirmation.
 
 ## Central button recognizer
 
@@ -189,7 +202,7 @@ Raw CAN state and the CAN dictionary layout are unchanged.
 
 ## Experimental parameter bounds
 
-The parameter catalog contains 136 definitions. Display formatting, request
+The ordinary parameter catalog contains 98 definitions. Display formatting, request
 selection and cache bounds all use `PARAMETER_DEFINITION_COUNT`; a stale limit
 of 100 had left some experimental numeric templates visible as `$` and prevented
 requests or cache updates for those pages. A valid single-frame UDS reply can now
@@ -368,3 +381,50 @@ fractional ticks (`▏▎▍▌▋▊▉█`), fill density (`░▒▓█`) and
 the selected IPC source. BH transmits each code point as a 16-bit character.
 This is a visual comparison pattern only: it does not change the oil bar's
 rendering or imply that every IPC font supports the glyphs.
+
+## Default drive-mode selection and result
+
+Settings → Features → `Default mode` cycles A / N / D / Race. Saved slot 38
+retains 0=N (formerly OFF), 1=A, 2=D, 3=Race, so old records need no migration.
+N leaves the factory selection alone. The draft stays separate until save;
+saving changes the next start's preference, not the current vehicle mode.
+
+`features/dna_selector.c` runs only on BH and uses fresh standard data frames
+`0x256`/DLC 4 and actual `0x46C` mode reports. It preserves every unrelated
+input bit and changes only byte 0 bits 6:5: 20 toward A, 40 toward D/Race,
+00 released (hex). Short deflections last 200 ms. D-to-Race holds 40 for
+1,800 ms, repeating the held input every 250 ms, then releases. It takes up to
+three adjacent steps in A/N/D/Race order, waiting for each observed intermediate
+mode and a new neutral input after release before continuing. No observed step
+within 1.5 s after release ends the attempt. No new press or hold renewal is allowed after ten seconds; pending release
+continues until the CAN queue accepts it, including after timeout/save/OFF.
+Physical non-neutral input ends synthetic selection and hands control to the
+driver. Unknown modes, stale input/mode reports and queue failures cannot
+produce success. Only a pending queue offer can retry; no accepted gesture is
+repeated merely because the car failed to change mode.
+
+C1 sends legacy driver-aids preferences with mode=0, disabling the former
+selected-mode-report rewrite on older peers while preserving the C2 LKA protocol.
+A separate BH command `BH_CMD_DNA_DEFAULT` (0x4A) carries target, action
+(0=resync, 1=start, 2=cancel) and request token. The BH reply
+`C1_CMD_DNA_RESULT` (0x4B) carries token and outcome (0=failed, 1=gesture complete
+with observed target). Tokens reject results from earlier ignition/save events;
+duplicate start requests and transport resync cannot replay a completed gesture.
+Both new commands retain the existing UART framing/checksum. Update C1/BH together.
+
+`features/drive_mode_check.c` waits up to 15 s for BH. A matching completion
+starts a separate five-second observation window; a failure or missing BH ends
+with No confirm. At the window's end, fresh unmodified C1 `0x384` reports must
+match for at least 2 s (at least four samples, gaps at most 600 ms), and CRC-valid
+`0x5A8` for at least 1 s (at least two samples, gaps at most 1,500 ms).
+Disagreement or gaps reset the matching run. This is corroboration of received
+state, not an explicit ECU acknowledgement or proof of every subsystem.
+
+Browsing a non-N preference displays target and `Next start`, `Waiting`,
+`Confirmed` or `No confirm`. MY23 uses title/result lines; legacy uses compact
+`DNA` and R for Race to retain the complete status. Results remain until OFF, sleep or settings save; resync preserves them.
+A failed check leaves the preference for the next start. The preference never
+rewrites `0x384`, `0x46C`, `0x25A` or transmission status. Existing ESC/TC display
+customization still uses actual observed mode and preserves 0x384 byte 7;
+0x5A8 retains its genuine J1850 CRC. Input replay acceptance remains a vehicle
+check, based on the [capture evidence](../../baccable_lab/docs/research/20261023-dna-all-sessions.md).

@@ -7,6 +7,8 @@ SOURCES := test_core.c $(FIRMWARE)/protocol/slcan_codec.c $(FIRMWARE)/diagnostic
  $(FIRMWARE)/storage/record_store.c
 
 test: build/test_core build/test_transport build/test_catalog build/test_menu build/test_menu_large build/test_uart_menu build/test_input_repeat build/test_engine_status build/test_exhaust labels
+	./build/test_dna_selector
+	./build/test_fatfs
 	./build/test_core
 	./build/test_transport
 	./build/test_catalog
@@ -83,7 +85,7 @@ build/test_exhaust: test_exhaust.c $(FIRMWARE)/features/exhaust.c $(HEADERS) Mak
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC1_FLAVOR=1 test_exhaust.c \
 		$(FIRMWARE)/features/exhaust.c -lm -o $@
 
-DRIVE_MODE_SOURCES := test_drive_mode.c $(FIRMWARE)/vehicle/drive_mode.c $(FIRMWARE)/vehicle/display_frames.c $(FIRMWARE)/protocol/checksum.c
+DRIVE_MODE_SOURCES := test_drive_mode.c $(FIRMWARE)/features/dna_selector.c $(FIRMWARE)/vehicle/mirrors_frames.c $(FIRMWARE)/features/drive_mode_check.c $(FIRMWARE)/vehicle/drive_mode.c $(FIRMWARE)/vehicle/display_frames.c $(FIRMWARE)/protocol/checksum.c
 build/test_drive_mode: $(DRIVE_MODE_SOURCES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC1_FLAVOR=1 -DGIT_VERSION=\"test\" -Wno-unused-parameter $(DRIVE_MODE_SOURCES) -o $@
@@ -98,11 +100,11 @@ build/test_drive_mode_bh: $(DRIVE_MODE_SOURCES) $(HEADERS) Makefile
 test: build/test_drive_mode build/test_drive_mode_c2 build/test_drive_mode_bh
 
 MENU_SOURCES := test_menu.c $(addprefix $(FIRMWARE)/, features/menu.c features/menu_model.c \
- features/menu_input.c features/my23_ui.c features/favorite_parameters.c features/ui_entry.c features/menu_diagnostics.c features/display_stream.c features/oil_bar_animation.c features/ibs_override.c features/board_sync.c features/dashboard.c features/dashboard_format.c features/oil_level.c \
- diagnostics/parameter_cache.c diagnostics/parameter_request.c diagnostics/parameter_catalog.c \
+ features/menu_input.c features/my23_ui.c features/favorite_parameters.c features/ui_entry.c features/menu_diagnostics.c features/display_stream.c features/oil_bar_animation.c features/ibs_override.c features/board_sync.c features/drive_mode_check.c features/dashboard.c features/dashboard_format.c features/oil_level.c \
+ diagnostics/parameter_cache.c diagnostics/parameter_request.c diagnostics/parameter_catalog.c diagnostics/experiments.c \
  protocol/checksum.c vehicle/steering_controls.c diagnostics/uds_decode.c diagnostics/fault_reader.c settings/persistence.c settings/setup_menu.c settings/setup_entries.c \
  third_party/printf/printf.c)
-MENU_FIXTURES := test_oil_level.c test_my23_ui.c test_idle_latin1.c test_menu_contract.c test_setup_ui.c test_unified_ui.c
+MENU_FIXTURES := test_experiments.c test_experiment_vectors.h test_oil_level.c test_my23_ui.c test_idle_latin1.c test_menu_contract.c test_setup_ui.c test_unified_ui.c
 build/test_menu: $(MENU_SOURCES) $(MENU_FIXTURES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC1_FLAVOR=1 -DGIT_VERSION=\"test\" $(MENU_SOURCES) -lm -o $@
@@ -183,3 +185,15 @@ build/test_uart_rx_bh: test_uart_menu.c $(FIRMWARE)/transport/board_uart.c $(HEA
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DBH_FLAVOR=1 test_uart_menu.c $(FIRMWARE)/transport/board_uart.c -o $@
 test: build/test_uart_rx_c2 build/test_uart_rx_bh
+
+build/test_fatfs: test_fatfs.c $(FIRMWARE)/third_party/fatfs/ff.c $(FIRMWARE)/third_party/fatfs/ff.h $(FIRMWARE)/third_party/fatfs/ffconf.h Makefile
+	@mkdir -p build
+	$(CC) $(CPPFLAGS) $(CFLAGS) -Wno-unused-function test_fatfs.c $(FIRMWARE)/third_party/fatfs/ff.c -o $@
+test: build/test_fatfs
+
+
+build/test_dna_selector: test_dna_selector.c $(FIRMWARE)/features/dna_selector.c $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DBH_FLAVOR=1 $< $(FIRMWARE)/features/dna_selector.c -o $@
+
+test: build/test_dna_selector

@@ -1,5 +1,6 @@
 #include "vehicle/standard_frames.h"
 #include "vehicle/frame_handlers.h"
+#include "features/dna_selector.h"
 
 /* Route supported vehicle updates to their features and honor explicit message-routing requests. */
 void vehicle_dispatch_standard(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
@@ -50,6 +51,11 @@ void vehicle_dispatch_standard(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
         break;
     case 0x00000226:
         vehicle_handle_start_stop_status(rx_header, frame_data);
+        break;
+    case 0x00000256:
+#if defined(BACCABLE_BH)
+        dna_selector_observe(rx_header, frame_data);
+#endif
         break;
     case 0x0000025A:
         vehicle_handle_drive_style_display(rx_header, frame_data);

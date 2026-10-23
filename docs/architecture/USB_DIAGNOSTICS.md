@@ -11,6 +11,17 @@ Use a matching C1/C2/BH firmware set from this integration. Verify the C1 Flash
 requirement in [the integration report](UPSTREAM_SYNC.md#flash-and-ram) before
 flashing. The commands below describe runtime USB, not the STM32 DFU bootloader.
 
+## Small flash disks
+
+C1 reserves 100 KiB for code and 16 KiB for optional file storage; C2/BH retain
+64 KiB code and 52 KiB file storage. Standard C1 does not enable mass storage.
+The previous FatFs 128-sector minimum rejected all these small disks. The local
+FatFs patch permits format requests down to 32 sectors only for an explicit
+512-byte-sector FAT superfloppy, one FAT, 32 root entries and one-sector clusters.
+Mount validation accepts the resulting FAT12 volume. Host tests format, label,
+write, remount and read disks from 16 through 64 KiB; hardware USB mounting is
+still an acceptance check.
+
 ## Reading pages and actions
 
 - `Settings` → `Features` → `Auto rotate`: enable to advance through the

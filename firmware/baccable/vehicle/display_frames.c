@@ -1,6 +1,7 @@
 #include "vehicle/standard_frames.h"
 #include "app/powertrain.h"
 #include "features/body.h"
+#include "features/dna_selector.h"
 /* CAN ID 0x00000090. */
 /* Restore BACCAble text when factory display content would replace it. */
 void vehicle_handle_display_content(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
@@ -23,7 +24,8 @@ void vehicle_handle_display_content(const CAN_RxHeaderTypeDef *rx_header, uint8_
 /* CAN ID 0x0000025A. */
 /* Apply the configured driving-mode presentation on the dashboard. */
 void vehicle_handle_drive_style_display(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
-    if (rx_header->DLC < 1)
+    if (rx_header->StdId != 0x25A || rx_header->DLC < 1 ||
+        rx_header->IDE != CAN_ID_STD || rx_header->RTR != CAN_RTR_DATA)
         return;
     // msg received by DriveStyle control module
 #if defined(BACCABLE_BH)
@@ -35,16 +37,6 @@ void vehicle_handle_drive_style_display(const CAN_RxHeaderTypeDef *rx_header, ui
                 frame_data[0] = (frame_data[0] & ~0x7C) | 0x04;
                 can_forward(rx_header, frame_data); // transmit the modified packet
             }
-        }
-    } else if (settings_state.default_drive_mode >= 1 && settings_state.default_drive_mode <= 3 &&
-               chassis_state.default_mode_override && drive_mode_default_pending(DRIVE_MODE_ENC_IPC)) {
-        uint8_t default_mode = drive_mode_default_field(DRIVE_MODE_ENC_IPC);
-        if ((frame_data[0] & 0x7C) != default_mode) {
-            frame_data[0] = (frame_data[0] & ~0x7C) | default_mode;
-            if (can_forward(rx_header, frame_data) == HAL_OK)
-                drive_mode_default_queued(DRIVE_MODE_ENC_IPC);
-        } else {
-            drive_mode_default_queued(DRIVE_MODE_ENC_IPC);
         }
     }
 #endif
@@ -69,7 +61,8 @@ void vehicle_handle_odometer(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fram
 /* CAN ID 0x0000046C. */
 /* Update body-side driving-mode presentation and related requests. */
 void vehicle_handle_body_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
-    if (rx_header->DLC < 8)
+    if (rx_header->StdId != 0x46C || rx_header->DLC != 8 ||
+        rx_header->IDE != CAN_ID_STD || rx_header->RTR != CAN_RTR_DATA)
         return;
 
 #if defined(BACCABLE_BH)
@@ -81,7 +74,7 @@ void vehicle_handle_body_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_
     // current DNA mode, also called "Drive Style Status" (RDNA mode) is on byte 7, from bit 0 to bit 4
     // (0x0=Natural, 0x2=dynamic, 0x4=AllWeather, 0xC=race)
     telemetry_state.drive_mode = frame_data[7] & 0x1F; // 1F is the mask from bit 4 to 0
-    uint8_t apply_default = drive_mode_default_should_apply(telemetry_state.drive_mode);
+    dna_selector_mode(telemetry_state.drive_mode);
     if (chassis_state.stability_inverted) {
         if (telemetry_state.drive_mode != 0x0C) { // if not in race
             frame_data[7] =
@@ -90,15 +83,6 @@ void vehicle_handle_body_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_
             can_forward(rx_header, frame_data); // transmit the modified packet
 
             // problem as expected status_led_activity();
-        }
-    } else if (apply_default && drive_mode_default_pending(DRIVE_MODE_ENC_BODY)) {
-        uint8_t default_mode = drive_mode_default_field(DRIVE_MODE_ENC_BODY);
-        if ((frame_data[7] & 0x1F) != default_mode) {
-            frame_data[7] = (frame_data[7] & ~0x1F) | default_mode;
-            if (can_forward(rx_header, frame_data) == HAL_OK)
-                drive_mode_default_queued(DRIVE_MODE_ENC_BODY);
-        } else {
-            drive_mode_default_queued(DRIVE_MODE_ENC_BODY);
         }
     }
 
@@ -117,9 +101,6 @@ void vehicle_handle_stability_status(const CAN_RxHeaderTypeDef *rx_header, uint8
     defined(BACCABLE_C2) // we will test it to understand messages changing style on IPC
     if (chassis_state.stability_inverted) {
         uint8_t effective_mode = telemetry_state.drive_mode;
-        if (settings_state.default_drive_mode >= 1 && settings_state.default_drive_mode <= 3 &&
-            chassis_state.default_mode_override)
-            effective_mode = drive_mode_default_field(DRIVE_MODE_ENC_CAN);
         if (effective_mode != 0x30) { // if we're not in race
             if (((frame_data[0] & 0x01) != 0x01) ||
                 ((frame_data[1] & 0x04) != 0x04)) { // if not set as expected in race

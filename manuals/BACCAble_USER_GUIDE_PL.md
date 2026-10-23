@@ -1,8 +1,8 @@
 # BACCAble — instrukcja obsługi w samochodzie
 
 Ta instrukcja opisuje menu na zestawie wskaźników i funkcje w bieżącym kodzie
-firmware. Uwzględnia niewydane jeszcze **odczyty poziomu oleju i ustawienie napędu**
-po v5-beta-25. Nowy ekran oleju wymaga jeszcze próby w samochodzie. Instrukcja dotyczy urządzenia już zamontowanego
+firmware. Uwzględnia niewydane jeszcze **odczyty poziomu oleju, ustawienie napędu i Pelican Experiments**
+po v5-beta-27. Nowy ekran oleju i odczyty diagnostyczne wymagają jeszcze próby w samochodzie. Instrukcja dotyczy urządzenia już zamontowanego
 i podłączonego do samochodu. Nie obejmuje montażu, okablowania ani wgrywania
 oprogramowania. Kontrolery C1, C2 i BH powinny mieć pasujący do siebie zestaw
 oprogramowania z tego samego wydania.
@@ -132,12 +132,17 @@ Menu główne
 │  ├─ Shown pages            Pokazywanie i ukrywanie stron w Readings
 │  ├─ Sort order             Sortowanie według grup albo alfabetycznie
 │  └─ BACCAble IPC           Tymczasowe próby odświeżania
-└─ Information               Wersje, przyciski i test wyświetlacza IPC
-├─ Experiments               Dodatkowe odczyty z publicznych źródeł (niezweryfikowane w tym aucie)
-│  ├─ Electrical
-│  ├─ Oil
-│  ├─ Engine
-│  └─ Vehicle
+├─ Information               Wersje, przyciski i test wyświetlacza IPC
+└─ Experiments               64 sygnały diagnostyczne producenta
+   ├─ Battery                1 sygnał
+   ├─ Control                4 sygnały
+   ├─ Details                1 sygnał
+   ├─ Doors                  5 sygnałów
+   ├─ GPS                    3 sygnały
+   ├─ Movement               4 sygnały
+   ├─ Orientation            2 sygnały
+   ├─ Tires                  38 sygnałów
+   └─ Transmission           6 sygnałów
 ```
 
 Ten układ Settings dotyczy MY23 oraz każdego profilu po zapisaniu zestawu
@@ -152,21 +157,39 @@ domyślnie ukryte.
 
 ## Experiments — dodatkowe odczyty
 
-`Experiments` to osobna sekcja menu głównego z dodatkowymi odczytami pochodzącymi
-z publicznych źródeł dla Giulii/Stelvio, a nie ze zweryfikowanych nagrań tego
-samochodu. Ma cztery grupy: `Electrical`, `Oil`, `Engine` i `Vehicle`. Przeglądasz
-je podobnie jak Readings: góra/dół wybiera stronę, krótki RES pokazuje bieżącą
-wartość, dwuklik wraca.
+`Experiments` zawiera 64 sygnały diagnostyczne producenta z
+[listy Pelican dla Giulii](https://pelican.clutch.engineering/cars/alfa-romeo/giulia/parameters).
+Podłączony do niej [zestaw OBDb Alfa-Romeo](https://github.com/OBDb/Alfa-Romeo/blob/main/signalsets/v3/default.json)
+(CC BY-SA 4.0) podaje identyfikatory zapytań, położenie bitów i przeliczniki.
+Dziewięć grup odpowiada źródłu: `Battery`, `Control`, `Details`, `Doors`,
+`GPS`, `Movement`, `Orientation`, `Tires` i `Transmission`.
+Zastępują wcześniejsze eksperymentalne strony DID silnika benzynowego.
 
-Te strony odpytują identyfikatory diagnostyczne producenta (`0x22`) z ECM, TCM,
-BCM i IPC. Obsługa i skalowanie **nie są zweryfikowane w Twoim aucie** (źródłem
-był inny egzemplarz Giulii/Stelvio); brak lub odrzucenie odpowiedzi pokazuje `--`.
-Sekcja jest odseparowana od zwykłego katalogu Readings: nie zmienia `Shown pages`,
-kolejności Ulubionych ani zapisanych ustawień, a jej własny wybór nie jest
-pamiętany między restartami. Odczyty, których odpowiedź nie mieści się w jednej
-ramce CAN, nie są objęte tym wydaniem.
-Pola liczbowe na tych stronach pokazują wartość po otrzymaniu poprawnej odpowiedzi,
-a przy jej braku pokazują `--`.
+Otwórz grupę krótkim RES. Lekkie góra/dół zmienia sygnał, mocniejsze zmienia
+grupę. Każdy ekran pokazuje jedną krótką angielską nazwę i przeliczoną wartość,
+na przykład `FL P BCM 2.35bar`. Na MY23 grupa jest w pierwszej linii,
+a nazwa i wartość w drugiej. W nazwach opon FL/FR/RL/RR oznaczają koło,
+`P` ciśnienie, `t` temperaturę, a AC/740/742/BCM rozróżniają źródła.
+Dwuklik RES wraca do listy grup. `--` oznacza
+brak świeżej, kompletnej i poprawnej odpowiedzi. Pojawia się też po odmowie
+sterownika, błędzie transmisji lub przekroczeniu czasu kolejnego odświeżenia.
+Obsługiwane są odpowiedzi jedno- i wieloramkowe ISO-TP, również długie odpowiedzi
+z dodatkowymi polami. Odpytuje się tylko aktualnie widoczny DID. Pierwsze zapytanie
+jest wysyłane od razu, kolejne poprawne odczyty zgodnie z odstępem podanym w źródle
+(0,1–5 sekund, a stałe identyfikatory raz dziennie). Nieudane odczyty są ponawiane
+po około sekundzie. Wartość pozostaje do kolejnego planowanego odświeżenia,
+z maksymalnie pięcioma sekundami na odpowiedź. Wyjście z ekranu anuluje zapytanie.
+`Shift gear` rozpoznaje wyłącznie kody N/P/R; pozostałe pokazuje jako `--`.
+`Lat a` / `Long a` pokazują przyspieszenie w m/s2 z dwoma miejscami po przecinku,
+a `FL spd`, `FR spd`, `RL spd` i `RR spd` prędkości poszczególnych kół.
+Przeliczenia uwzględniają dolne i górne limity źródła; temperatura skrzyni jest w C.
+
+Są to wyłącznie odczyty `0x22`, oddzielone od zwykłych `Readings`.
+Nie można dodać ich do Favorites; nie zmieniają `Shown pages` ani zapisanych
+ustawień. Dostępność sygnałów i przeliczniki **nie zostały sprawdzone w tym
+samochodzie**. Inny sterownik lub wersja oprogramowania może nie obsługiwać DID
+albo mieć inny układ odpowiedzi. Przy braku poprawnych danych ekran nie
+podstawia wymyślonej wartości.
 
 ## Symbole i komunikaty
 
@@ -458,7 +481,7 @@ Szkic nie steruje samochodem przed udanym zapisem.
 | Opcja | Wartości | Do czego służy |
 | --- | --- | --- |
 | `Launch Nm` | 25–600 Nm, co 25 | Wartość momentu obrotowego zgłaszanego przez silnik, przy której wspomaganie startu wysyła polecenie zwolnienia wymuszonych przednich hamulców. To nie jest ograniczenie momentu ani ustawienie tuningu. |
-| `Default mode` | OFF / A / D / Race | Przy uruchomieniu samochodu dodaje do kolejki po jednej zmienionej ramce dla każdego właściwego typu raportu trybu (AllWeather, Dynamic albo Race); `OFF` nie zmienia samochodu. Jeśli kolejka CAN jest pełna, ponawia próbę przy kolejnym raporcie. Późniejsze zmiany pokrętłem pozostawia bez zmian. Zapisana zmiana ustawienia zaczyna działać przy następnym uruchomieniu; zakończenie przechwytywania USB lub diagnostyki nie uzbraja jej ponownie. W teście beta-22 podczas poprzedniego ciągłego wymuszania świeciła słabo również dioda Natural. Trzeba sprawdzić w samochodzie, czy pojedyncza ramka utrzymuje wybrany tryb. |
+| `Default mode` | A / N / D / Race | Przy uruchomieniu auta BH symuluje odczytany z nagrań sygnał pokrętła DNA w czterobajtowej ramce `0x256`. Domyślne `N` pozostawia fabryczny wybór bez ingerencji; wcześniejsze zapisane OFF staje się N bez zmiany formatu ustawień. A/D używają wychyleń po 200 ms. Race najpierw przechodzi do D, następnie przytrzymuje kierunek D przez 1,8 s, powtarzając raport co 250 ms, i go zwalnia. Kolejne kroki zależą od rzeczywistych, świeżych raportów trybu; obowiązuje limit trzech gestów i dziesięciu sekund na operację. Fizyczne pokrętło ma pierwszeństwo. Przy odrzuceniu przez kolejkę urządzenie może ponowić oczekującą ramkę; rozpoczęte wirtualne naciśnięcie zwalnia po anulowaniu lub utracie aktualnych danych. To ustawienie nie podmienia raportów wybranego trybu. Podczas przeglądania obok celu widać `Next start` (następne uruchomienie), `Waiting` (oczekiwanie/sprawdzanie), `Confirmed` (potwierdzony w raportach) lub `No confirm` (brak potwierdzenia); MY23 używa dwóch linii, a starszy ekran skróconej etykiety DNA (Race jest skrócone do R w wyniku). C1 czeka do 15 s na BH, a po zakończeniu gestu przez BH sprawdza raporty DNA i skrzyni z poprawnym CRC przez pięć sekund. `Confirmed` wymaga świeżych, zgodnych raportów DNA przez co najmniej 2 s i skrzyni przez co najmniej 1 s; potwierdza stan raportowany, nie działanie każdego układu. Brak BH, odrzucony wybór, nieaktualne dane albo chwilowy tryb docelowy i powrót do N dają `No confirm`. Pozostaje faktycznie wybrany tryb, także pośredni przed Race. Urządzenie kończy wybieranie w tym cyklu zapłonu i zachowuje ustawienie na następne uruchomienie. Zapis ustawień lub wyłączenie zapłonu anuluje próbę; ponowna synchronizacja łącza jej nie uzbraja. Zaktualizuj C1 i BH razem. Symulację pokrętła i każdy tryb trzeba jeszcze sprawdzić w samochodzie. |
 | `ESC/TC control` | Wyłączona / włączona | Udostępnia przełączanie kontroli stabilności i trakcji oraz obsługiwany skrót przyciskiem asystenta pasa. Samochód musi mieć odpowiednią konfigurację. |
 | `Dyno action` | Wyłączona / włączona | Udostępnia `Toggle Dyno mode`. Samo włączenie tego ustawienia nie uruchamia trybu Dyno. |
 | `Brake action` | Wyłączona / włączona | Udostępnia `Brake override` i `Disable launch`. Samo włączenie ustawienia nie uruchamia hamulców. |
@@ -992,6 +1015,14 @@ diagnostyczne mogą nie być obsługiwane przez daną wersję sterownika.
 | Oil/water/gear C | Temp | °C × 3; temperatura oleju z komunikatów CAN, płynu chłodzącego z ECU i skrzyni biegów. | A |
 
 ## Przechwytywanie CAN i diagnostyka przez USB
+
+Obszar aplikacji C1 zwiększono z 96 do 100 KiB, a zarezerwowany obszar plików
+USB zmniejszono z 20 do 16 KiB. Standardowe firmware C1 korzysta z szeregowego USB
+i **nie udostępnia tego dysku**. Jeśli używasz własnej kompilacji C1 z włączonym
+dyskiem USB, skopiuj jego pliki przed wgraniem: pierwsze 4 KiB starego obszaru
+zajmie aplikacja. Biblioteka systemu plików obsługuje teraz formatowanie i odczyt
+małych dysków FAT12. Obszar ustawień pozostał bez zmian. Pojemność nagrań CAN
+nie zmienia się, ponieważ nagrania są zapisywane na komputerze.
 
 USB nie jest potrzebne do zwykłej obsługi menu. Tryby USB działające w aplikacji
 różnią się od **bootloadera DFU** układu STM32, który służy do wgrywania

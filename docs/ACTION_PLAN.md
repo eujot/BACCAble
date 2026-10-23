@@ -1,8 +1,267 @@
 # BACCAble action plan and agent handoff
 
-Last updated: **2026-10-16** (dated verification boundaries below). This is the single source of planned work,
+Last updated: **2026-10-23** (dated verification boundaries below). This is the single source of planned work,
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
+
+## BH default drive-mode gesture, 2026-10-23
+
+Implementation commit `00b4b99` on `feat/bh-default-drive-mode`, based on research `5a6f43a`,
+isolated worktree `/private/tmp/baccable-bh-default-mode`. Default mode now uses
+the supported BH 0x256 input waveform instead of rewriting selected-mode
+reports. Choices cycle A/N/D/Race; flash slot 38 keeps 0=N/passive (formerly
+OFF), 1=A, 2=D, 3=Race. No record migration, new slot or memory-limit change.
+
+BH `features/dna_selector.c` requires a fresh neutral standard 0x256/DLC 4 and
+fresh actual 0x46C mode. It copies unrelated fields, sends 20 toward A or 40
+toward D/Race, and releases the directional field after 200 ms. Reaching Race
+requires D first, then a 1,800 ms hold refreshed every 250 ms. Each of at most
+three adjacent steps waits for its factory mode and a new neutral report after
+release. Unaccepted selection, unknown/stale reports and physical input stop
+further synthetic selection. At ten seconds no new press or hold refresh can
+start; a pending release still retries until CAN accepts it. OFF/save finishes
+a virtual release; physical input hands ownership to the driver. A failure
+leaves the actual mode, including an intermediate mode before Race.
+
+Removed Default mode overrides from C1/C2 0x384 and BH 0x46C/0x25A, plus obsolete
+RAM fields and default-mode helper functions. Existing ESC/TC customization uses
+actual observed mode. C1 sends legacy driver-aids mode=0 to keep older peers
+from rewriting reports, preserving the C2 LKA command. New BH command 0x4A
+carries target/action/token; C1 result 0x4B carries token/outcome. Completed
+outcomes can be resent on resync/duplicate request without replaying gestures.
+C1 waits up to 15 s for BH, then starts its existing five-second sustained
+DNA + CRC-valid transmission corroboration only after matching BH completion.
+Stale tokens, failure and missing BH cannot confirm. Update C1/BH together.
+
+Both guides and MENU_UX document N/passive migration, gestures, failure,
+intermediate modes, result checking and matched firmware. Legacy results use
+R for Race so the complete status fits; editors retain the Race label.
+
+Validation: complete native Apple Clang ASan/UBSan host suite passed. New BH
+fixture covers all 12 initial-position/active-target combinations, passive N,
+exact 200/1,800 ms press timing and 250 ms hold refresh, preserved unrelated
+bytes, malformed frames, stale/silent input, queue/release/UART failures,
+cancellation, resync/duplicate requests, no response and tick wrap. Existing
+C2 LKA and ESC/TC behavior checks pass. All 16 firmware board/display profiles
+built with full Arm GNU 15.2.Rel1, VERSION=bh-dna; cppcheck passed all flavors.
+Largest C1 flash 102,236/102,400 bytes (164 spare), data+bss 15,700/16,384;
+pinned CI/release identity sizing remains required. All 73 Lab tests also passed after updating dispatcher coverage to 34 IDs.
+Dictionary source provenance and the supported input description now reference
+00b4b99; generated catalog is current. No captured bit layout changes.
+
+PR #71: https://github.com/eujot/BACCAble/pull/71, from `feat/bh-default-drive-mode` into `master`. Branch commits: `00b4b99` implementation, `f3ee2fa` evidence/validation, `6428450` PR handoff. No merge/release/flash. Hardware acceptance is UNKNOWN: test A/D/Race
+from an actual fresh startup, automatic release, observed factory/transmission
+mode persistence, failure indication and later physical selector use. Source
+captures support the input waveform but do not prove injected acceptance. Main
+checkout capture/release folders are untouched; implementation and handoff are
+committed in this isolated branch.
+
+## DNA selector input identified across all sessions, 2026-10-23
+
+Analysis branch `research/dna-all-sessions`, based on `66b77fe`, isolated at
+`/private/tmp/baccable-dna-all-sessions`. Inventoried all 20 session databases
+(21,354,624 frames, including six failed/four empty captures). Three sessions
+contain eight N-to-D transitions. The October-10 campaign skipped its named DNA
+scenario but contains an actual selection outside it, with event 96's original
+note explaining the change. Do not repeat the earlier claim that it provides
+no DNA evidence.
+
+**New supported input: BH 0x256, exactly DLC 4**, byte 0 bits 6:5. Zero is
+released; byte 0=40 points toward D/Race; 20 points toward A. All 36 directional
+pulses match selector-associated mode changes. Eight N-to-D changes follow by
+108–112 ms on the BH clock; their pulses last 154–294 ms. Five long holds
+precede Race after 1.194–1.211 s (earlier 2.5–2.9 s D-to-Race timing included
+the pause before holding). One ignition-related D-to-N reset has no pulse.
+Thirteen sessions contain 17,087 BH 0x256 frames; neutral and unrelated controls
+are preserved. C1 0x256/DLC 8 is unrelated. Physical sender identity and
+acceptance of injected input remain unverified.
+
+On C1, 0x384 changes first among the established mode reports, followed by
+0x1FC after 12–27 ms and 0x5A8 after 29–46 ms, in all eight cases. C2 0x1FC
+follows its local 0x384 after 13–27 ms. BH 0x25A/0x46C follow its selector input.
+No unsynchronized cross-bus clock subtraction or definitive ECU identification.
+The earlier absence-of-input conclusion is superseded; the narrow search
+baseline included the early input pulse and obscured it.
+
+Report, raw evidence and reproduction commands:
+[all-session DNA review](../baccable_lab/docs/research/20261023-dna-all-sessions.md).
+Raw/SQLite discrepancies of 34 and 123 frames in two control sessions were
+checked with the existing raw parser; their raw mode/selector values still
+show no selection. Capture files and original markers were not changed;
+input SHA-256 fingerprints remain identical. Added a guarded passive dictionary
+field, updated hypotheses/catalog and preserved historical contradictory claims.
+All 73 Lab tests pass, including captured payloads, unknown code 3, exact DLC
+and bus isolation. No firmware behavior, menus, manual operation or settings
+changed; no new firmware builds required for this analysis-only task.
+
+Next implementation candidate: replace selected-mode-report rewriting with one
+short BH selector gesture from a fresh neutral report, restore the directional
+field, prioritize physical input and preserve unrelated bytes. Start the C1
+corroboration window after BH queues the request, with explicit inter-board
+status; retain bounded timeout and no continuous assertion. This task did not
+implement or transmit that gesture. Hardware validation is UNKNOWN. No PR,
+push, merge, release or flash. Main-checkout untracked captures/release folders
+remain untouched; findings and this handoff are committed on the research branch.
+
+## Default-mode CRC correction and result check, 2026-10-23
+
+Implementation commit `80fdb13` on `fix/default-mode-confirmation`, isolated worktree
+`/private/tmp/baccable-default-mode-check`, based on research commit `115ba8a`.
+The owner reports that the previously installed one-shot default D briefly
+appears and then returns to N. Installed binary identity remains unspecified.
+This is negative evidence for a persistent selection; queue success is not
+vehicle acceptance.
+
+All 0x384 mode rewrites now preserve byte 7 and unrelated fields. No global
+checksum change: 0x5A8 retains its J1850 CRC. Standard-data/length/ID guards
+protect the relevant handlers. Queue retries on each board are bounded to five
+seconds from arming; each accepted frame is still sent at most once per cycle.
+
+C1 `features/drive_mode_check.c` starts a five-second observation window when
+its request is queued (or target mode is already present). At its end, fresh
+unmodified C1 0x384 reports must match for at least 2 s, and CRC-valid 0x5A8
+reports for at least 1 s. Mismatches/gaps restart the relevant matching run;
+missing/stale/corrupt reports and queue timeout cannot confirm. No confirm
+leaves the vehicle alone; no automatic repeat of accepted injections or
+forced rollback. A new ignition permits another attempt. Saved settings,
+OFF and sleep clear the result; transport resync preserves it. This confirms
+observed C1 state, not explicit ECU acknowledgement or every subsystem.
+
+The existing Default mode browse screen shows the saved target and Next start,
+Waiting, Confirmed or No confirm (MY23 title/result; legacy compact DNA label).
+The editor retains its original draft semantics. Both user guides and MENU_UX
+now document the result and failure behavior. No additional menu entry or
+persisted settings slot was added.
+
+Validation: full native Apple Clang ASan/UBSan host suite passed, including
+transient D-to-N rejection, missing transmission, bad CRC, stale/no traffic,
+queue rejection/deadline, timer wrap, malformed frames, preserved bytes,
+ignition/save/resync lifecycle and both display layouts. All 16 board/display
+profiles built with full Arm GNU 15.2.Rel1, VERSION=mode-check; cppcheck passed
+C1/C2/BH/CAN. Largest C1 flash is 102,344/102,400 bytes (56 spare), RAM data+bss
+15,712/16,384; pinned CI/release version sizing must be checked before release.
+No memory allocation was enlarged. All 72 Lab tests also passed after refreshing
+source provenance to 80fdb13; generated catalog and dictionary hashes agree.
+No executable CAN decoder layout changes.
+
+No push/PR/merge/release or vehicle flash. Hardware acceptance remains UNKNOWN:
+install matching C1/C2/BH firmware, start with Default mode D, check sustained
+factory D and the stored result, then verify the physical knob still works.
+CRC correction does not by itself establish a persistent selector command.
+The main checkout's pre-existing untracked captures/release directories remain
+untouched; all task edits and this handoff are committed in the isolated branch.
+
+## DNA selector raw-capture review, 2026-10-23
+
+Analysis-only branch `research/dna-selector-analysis`, based on `aa81111`.
+Re-read 1,319,285 frames from `20261011-190746Z` and `20261011-191050Z`
+with read-only SQLite/WAL handling and unchanged input fingerprints. Report:
+[baccable_lab DNA analysis](../baccable_lab/docs/research/20261023-dna-selector.md),
+with a reproducible script and a raw transition/evidence JSON alongside it.
+
+Confirmed the known DNA fields and five successful Race entries among six
+marked attempts. C1 device-time D-to-Race intervals are 2.502–2.910 s; physical
+knob deflection/release is not independently identified. Transmission 0x5A8
+reports N/D/A/Race as 0/2/1/6. Race coincides with 0x4AF stability fields and
+LKA state changes. New related byte candidates remain hypotheses. Superseded
+COUNTER-HEARTBEAT-001's claim that all of 0x4AE is a counter: byte 3 changes
+with Race and manual LKA, while bytes 6/7 retain counter/checksum behavior.
+Updated dictionary notes and generated catalog without new executable layouts.
+
+Concrete firmware mismatch for follow-up: Default mode adds J1850 CRC to
+0x384 byte 7, but all 2,099 captured C1/C2 reports end in zero and none matches
+that CRC. Positive control: all 286 0x5A8 frames do match. BH 0x25A byte 1 also
+changes with factory mode, whereas the current rewrite touches only byte 0.
+The existing one-shot queue operation does not prove a latched body selection;
+no verified momentary knob request is established. Do not reinstate continuous
+contradictory broadcasts as a production fix. Next: separately mark knob
+press/hold/release, establish the actual control path, and require persistent
+original reports after a request before reporting success. Preserve unrelated
+fields and bus-specific layouts; no global CRC removal.
+
+Validation: 72 existing Lab tests passed; generated dictionary is current.
+No firmware/menu behavior changed, no hardware transmission or installation,
+no PR/push/release. Hardware acceptance is UNKNOWN. Existing untracked capture
+bundles and release directories remain untouched. Findings and handoff are
+committed on this research branch, not copied into master.
+
+## Experiments audit and corrections, 2026-10-23
+
+Follow-up on `feat/pelican-experiments`, auditing `ab057dd` against the pinned
+OBDb snapshot and the Pelican format/command documentation. Corrected defects:
+
+- `Shift gear` incorrectly shared ordinary gear codes: values such as 1, 11 or
+  13 could be shown as a gear, reverse or park. It now accepts only the source's
+  0/221/238 state map. Source limits for model year, wheel speed, acceleration
+  and transmission temperature are applied; acceleration retains two decimals.
+- The fixed 40-byte response limit rejected longer valid messages. The reader
+  now retains a 40-byte prefix while consuming and validating the full ISO-TP
+  response, up to 4095 bytes. Reordered/short continuation frames abort the
+  transfer. NRC 0x78 extends waiting within a five-second total bound; definitive
+  negative replies invalidate the value. Requests use eight-byte padding and
+  flow control requests 5 ms separation. Failed queue offers/read attempts retry.
+- Polling every 500 ms ignored source intervals (100 ms through one day).
+  Polling now follows each command's interval after success, retries failures
+  after one second, and retains the value until the next expected refresh.
+  Menu ownership gates reception and polling; exit, hidden screens and fault
+  operations cannot leave the old reader issuing flow control.
+- Wheel-speed/acceleration labels could clip the result on the 18-character
+  display. Shorter labels retain the complete value and unit on every profile.
+- CI still enforced the old 96 KiB C1 limit after the linker moved to 100 KiB.
+  Updated the default reporting budget and build documentation to 100 KiB.
+- The bundled FatFs refused formatting/mounting volumes below 64 KiB. Added a
+  narrowly configured small FAT12 formatting path and compatible mount check;
+  this covers the new 16 KiB reserve and existing 52 KiB C2/BH volumes.
+
+Correction to the preceding handoff: **standard C1 does not enable mass
+storage**, so the 20-to-16 KiB change affects its reserved optional file area.
+Custom C1 mass-storage builds must back up old files before flashing. Standard
+serial CAN capture writes to the host and does not lose capture capacity.
+Both user guides now explain this and the revised labels/refresh behavior.
+
+Validation: full Apple Clang ASan/UBSan host suite, 72 Lab tests, eight
+release-script tests, cppcheck for C1/C2/BH/CAN, and all 16 board/display-profile
+builds passed with local Arm GNU 15.2.Rel1. The C1 size-report gate passes at
+101,340/102,400 flash bytes (1,060 bytes spare); the large display uses 101,308
+bytes. These are local builds, not pinned CI or hardware verification. New tests include 192 independent
+source-derived wire/value vectors (three per signal), separate shift enums,
+long replies, counter/tick wrap, reordered fragments, negative/pending responses,
+queue failure/retry, freshness, menu ownership and both display profiles.
+FatFs tests format, label, write, remount and read 16–64 KiB volumes.
+
+Vehicle acceptance remains open. The source does not provide a receive ID for
+request 0x742; matching positive service/DID selects the sender for that transfer.
+The test reply address for that command is explicitly synthetic. Software tests
+do not establish ECU support or physical accuracy on the owner's car. Test
+source limits, the 5 ms flow-control pacing and USB mounting on hardware.
+
+## Pelican Giulia Experiments replacement, 2026-10-22
+
+Branch `feat/pelican-experiments` replaces the 38 old experimental gasoline
+pages with 64 read-only manufacturer signals from the Pelican Giulia list and
+its linked OBDb Alfa-Romeo `signalsets/v3/default.json` (CC BY-SA 4.0; source
+snapshot SHA-256 `c28314008a46d69169e0746919c9d5798b92df6eff727591836a60b30a9db59d`).
+Nine groups follow that source. The C1-only reader sends `0x22` requests for
+the selected signal, checks response IDs/service/DID, reassembles bounded
+ISO-TP replies, extracts MSB-first fields, applies source conversions and
+shows one named value. The ordinary catalog and Favorites remain separate.
+Both guides and the catalog/menu technical guides were updated.
+
+To fit C1, its application allocation grows from 96 to 100 KiB and the USB
+disk shrinks from 20 to 16 KiB. The old disk's first 4 KiB become application
+flash, so users must back up C1 USB files before flashing. Settings record
+addresses are unchanged. Local ARM GNU 15.2.Rel1 C1 image uses 101,080 of
+102,400 flash bytes, leaving 1,320 bytes; the pinned CI toolchain may size
+differently.
+
+Validation: complete native Apple Clang ASan/UBSan host suite, 72 Lab tests,
+and C1/C2/BH/CAN firmware builds with the full local ARM toolchain passed.
+Tests cover a rejected DID, 11-bit and 29-bit response IDs, bit extraction,
+ISO-TP flow control and out-of-order frame handling. Physical acceptance
+remains open for every manufacturer signal, ECU address and conversion on
+the owner's vehicle; the external catalog is a source specification, not
+a verified recording. Check CAN/USB behavior and the smaller C1 mass-storage
+volume on hardware before release.
 
 ## OBD catalog bound fix, 2026-10-16
 

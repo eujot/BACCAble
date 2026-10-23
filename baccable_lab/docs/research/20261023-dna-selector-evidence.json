@@ -1,0 +1,2173 @@
+{
+  "method": "BH device-clock 0x256 pulse onset/release vs every 0x46C transition",
+  "sessions": [
+    {
+      "session": "20260926-181705Z",
+      "frames": 0,
+      "payload_counts": {},
+      "median_interval_ms": null,
+      "payload_changes": [],
+      "pulses": [],
+      "mode_associations": [],
+      "raw_count_verification": {}
+    },
+    {
+      "session": "20260926-181818Z",
+      "frames": 926,
+      "payload_counts": {
+        "00 00 00 00": 926
+      },
+      "median_interval_ms": 250,
+      "payload_changes": [
+        {
+          "frame_id": 1832,
+          "sequence": 42,
+          "device_ms": 342519,
+          "host_ns": 410626084,
+          "data": "00 00 00 00"
+        }
+      ],
+      "pulses": [],
+      "mode_associations": [],
+      "raw_count_verification": {
+        "C1": {
+          "parser": {
+            "records": 625408,
+            "frames": 625407,
+            "loss_records": 1,
+            "dropped_frames": 65535,
+            "resyncs": 0,
+            "malformed": 0
+          },
+          "mode_values": {
+            "0": 928
+          },
+          "selector_values": {}
+        },
+        "C2": {
+          "parser": {
+            "records": 549887,
+            "frames": 549886,
+            "loss_records": 1,
+            "dropped_frames": 65535,
+            "resyncs": 7,
+            "malformed": 16
+          },
+          "mode_values": {
+            "0": 928
+          },
+          "selector_values": {}
+        },
+        "BH": {
+          "parser": {
+            "records": 46899,
+            "frames": 46898,
+            "loss_records": 1,
+            "dropped_frames": 30260,
+            "resyncs": 0,
+            "malformed": 0
+          },
+          "mode_values": {
+            "0": 474
+          },
+          "selector_values": {
+            "00 00 00 00": 926
+          }
+        }
+      }
+    },
+    {
+      "session": "20260926-182645Z",
+      "frames": 1010,
+      "payload_counts": {
+        "00 00 00 00": 1010
+      },
+      "median_interval_ms": 250,
+      "payload_changes": [
+        {
+          "frame_id": 489,
+          "sequence": 0,
+          "device_ms": 574266,
+          "host_ns": 208606083,
+          "data": "00 00 00 00"
+        }
+      ],
+      "pulses": [],
+      "mode_associations": [],
+      "raw_count_verification": {}
+    },
+    {
+      "session": "20260927-135053Z",
+      "frames": 0,
+      "payload_counts": {},
+      "median_interval_ms": null,
+      "payload_changes": [],
+      "pulses": [],
+      "mode_associations": [],
+      "raw_count_verification": {}
+    },
+    {
+      "session": "20260927-185043Z",
+      "frames": 0,
+      "payload_counts": {},
+      "median_interval_ms": null,
+      "payload_changes": [],
+      "pulses": [],
+      "mode_associations": [],
+      "raw_count_verification": {}
+    },
+    {
+      "session": "20260927-185047Z",
+      "frames": 0,
+      "payload_counts": {},
+      "median_interval_ms": null,
+      "payload_changes": [],
+      "pulses": [],
+      "mode_associations": [],
+      "raw_count_verification": {}
+    },
+    {
+      "session": "20260927-185055Z",
+      "frames": 0,
+      "payload_counts": {},
+      "median_interval_ms": null,
+      "payload_changes": [],
+      "pulses": [],
+      "mode_associations": [],
+      "raw_count_verification": {}
+    },
+    {
+      "session": "20260927-185059Z",
+      "frames": 0,
+      "payload_counts": {},
+      "median_interval_ms": null,
+      "payload_changes": [],
+      "pulses": [],
+      "mode_associations": [],
+      "raw_count_verification": {}
+    },
+    {
+      "session": "20260927-185147Z",
+      "frames": 724,
+      "payload_counts": {
+        "00 00 00 00": 724
+      },
+      "median_interval_ms": 250,
+      "payload_changes": [
+        {
+          "frame_id": 774,
+          "sequence": 9,
+          "device_ms": 132742,
+          "host_ns": 211237709,
+          "data": "00 00 00 00"
+        }
+      ],
+      "pulses": [],
+      "mode_associations": [],
+      "raw_count_verification": {}
+    },
+    {
+      "session": "20260928-203436Z",
+      "frames": 1138,
+      "payload_counts": {
+        "00 00 00 00": 1138
+      },
+      "median_interval_ms": 250,
+      "payload_changes": [
+        {
+          "frame_id": 1044,
+          "sequence": 23,
+          "device_ms": 459450,
+          "host_ns": 210663916,
+          "data": "00 00 00 00"
+        }
+      ],
+      "pulses": [],
+      "mode_associations": [],
+      "raw_count_verification": {}
+    },
+    {
+      "session": "20260928-204100Z",
+      "frames": 1214,
+      "payload_counts": {
+        "00 00 00 00": 1214
+      },
+      "median_interval_ms": 250,
+      "payload_changes": [
+        {
+          "frame_id": 1837,
+          "sequence": 47,
+          "device_ms": 855387,
+          "host_ns": 410053875,
+          "data": "00 00 00 00"
+        }
+      ],
+      "pulses": [],
+      "mode_associations": [],
+      "raw_count_verification": {}
+    },
+    {
+      "session": "20260928-204607Z",
+      "frames": 1329,
+      "payload_counts": {
+        "00 00 00 00": 1329
+      },
+      "median_interval_ms": 250.0,
+      "payload_changes": [
+        {
+          "frame_id": 803,
+          "sequence": 35,
+          "device_ms": 1162868,
+          "host_ns": 209148500,
+          "data": "00 00 00 00"
+        }
+      ],
+      "pulses": [],
+      "mode_associations": [],
+      "raw_count_verification": {}
+    },
+    {
+      "session": "20261010-104325Z",
+      "frames": 3741,
+      "payload_counts": {
+        "00 00 00 00": 3741
+      },
+      "median_interval_ms": 250.0,
+      "payload_changes": [
+        {
+          "frame_id": 806,
+          "sequence": 37,
+          "device_ms": 226155,
+          "host_ns": 211150208,
+          "data": "00 00 00 00"
+        }
+      ],
+      "pulses": [],
+      "mode_associations": [],
+      "raw_count_verification": {}
+    },
+    {
+      "session": "20261010-110416Z",
+      "frames": 0,
+      "payload_counts": {},
+      "median_interval_ms": null,
+      "payload_changes": [],
+      "pulses": [],
+      "mode_associations": [],
+      "raw_count_verification": {}
+    },
+    {
+      "session": "20261010-110504Z",
+      "frames": 26,
+      "payload_counts": {
+        "00 00 00 00": 26
+      },
+      "median_interval_ms": 250,
+      "payload_changes": [
+        {
+          "frame_id": 11,
+          "sequence": 10,
+          "device_ms": 1528613,
+          "host_ns": 2642588292,
+          "data": "00 00 00 00"
+        }
+      ],
+      "pulses": [],
+      "mode_associations": [],
+      "raw_count_verification": {
+        "C1": {
+          "parser": {
+            "records": 17004,
+            "frames": 17003,
+            "loss_records": 1,
+            "dropped_frames": 65535,
+            "resyncs": 0,
+            "malformed": 0
+          },
+          "mode_values": {
+            "0": 27
+          },
+          "selector_values": {}
+        },
+        "C2": {
+          "parser": {
+            "records": 15160,
+            "frames": 15159,
+            "loss_records": 1,
+            "dropped_frames": 57837,
+            "resyncs": 0,
+            "malformed": 0
+          },
+          "mode_values": {
+            "0": 28
+          },
+          "selector_values": {}
+        },
+        "BH": {
+          "parser": {
+            "records": 1343,
+            "frames": 1342,
+            "loss_records": 1,
+            "dropped_frames": 8088,
+            "resyncs": 0,
+            "malformed": 0
+          },
+          "mode_values": {
+            "0": 14
+          },
+          "selector_values": {
+            "00 00 00 00": 26
+          }
+        }
+      }
+    },
+    {
+      "session": "20261010-110821Z",
+      "frames": 486,
+      "payload_counts": {
+        "00 00 00 00": 486
+      },
+      "median_interval_ms": 250,
+      "payload_changes": [
+        {
+          "frame_id": 797,
+          "sequence": 31,
+          "device_ms": 1722474,
+          "host_ns": 208854583,
+          "data": "00 00 00 00"
+        }
+      ],
+      "pulses": [],
+      "mode_associations": [],
+      "raw_count_verification": {}
+    },
+    {
+      "session": "20261010-111025Z",
+      "frames": 5200,
+      "payload_counts": {
+        "00 00 00 00": 5169,
+        "00 80 00 00": 29,
+        "40 00 00 00": 2
+      },
+      "median_interval_ms": 250,
+      "payload_changes": [
+        {
+          "frame_id": 771,
+          "sequence": 2,
+          "device_ms": 1844192,
+          "host_ns": 208871917,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 2929626,
+          "sequence": 112601,
+          "device_ms": 2402893,
+          "host_ns": 556396861292,
+          "data": "00 80 00 00"
+        },
+        {
+          "frame_id": 2930690,
+          "sequence": 112641,
+          "device_ms": 2403003,
+          "host_ns": 556597606875,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 2940252,
+          "sequence": 112987,
+          "device_ms": 2404775,
+          "host_ns": 558408698750,
+          "data": "40 00 00 00"
+        },
+        {
+          "frame_id": 2941351,
+          "sequence": 113062,
+          "device_ms": 2405069,
+          "host_ns": 558611100834,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 3051548,
+          "sequence": 117275,
+          "device_ms": 2425989,
+          "host_ns": 579555815792,
+          "data": "00 80 00 00"
+        },
+        {
+          "frame_id": 3051561,
+          "sequence": 117288,
+          "device_ms": 2426029,
+          "host_ns": 579555815792,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 3068574,
+          "sequence": 117917,
+          "device_ms": 2429156,
+          "host_ns": 582774659375,
+          "data": "00 80 00 00"
+        },
+        {
+          "frame_id": 3068596,
+          "sequence": 117939,
+          "device_ms": 2429258,
+          "host_ns": 582774659375,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 3080054,
+          "sequence": 118389,
+          "device_ms": 2431511,
+          "host_ns": 584992213209,
+          "data": "00 80 00 00"
+        },
+        {
+          "frame_id": 3081105,
+          "sequence": 118416,
+          "device_ms": 2431662,
+          "host_ns": 585193331000,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 3096006,
+          "sequence": 118981,
+          "device_ms": 2434457,
+          "host_ns": 588014496417,
+          "data": "00 80 00 00"
+        },
+        {
+          "frame_id": 3097063,
+          "sequence": 119014,
+          "device_ms": 2434609,
+          "host_ns": 588214722292,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 3109051,
+          "sequence": 119482,
+          "device_ms": 2436912,
+          "host_ns": 590433251792,
+          "data": "00 80 00 00"
+        },
+        {
+          "frame_id": 3110108,
+          "sequence": 119515,
+          "device_ms": 2437034,
+          "host_ns": 590635026959,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 3348368,
+          "sequence": 128655,
+          "device_ms": 2482302,
+          "host_ns": 635906304959,
+          "data": "00 80 00 00"
+        },
+        {
+          "frame_id": 3348396,
+          "sequence": 128683,
+          "device_ms": 2482446,
+          "host_ns": 635906304959,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 3366229,
+          "sequence": 129364,
+          "device_ms": 2485849,
+          "host_ns": 639328986459,
+          "data": "00 80 00 00"
+        },
+        {
+          "frame_id": 3367294,
+          "sequence": 129405,
+          "device_ms": 2485971,
+          "host_ns": 639529205667,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 3377941,
+          "sequence": 129812,
+          "device_ms": 2487974,
+          "host_ns": 641538798875,
+          "data": "00 80 00 00"
+        },
+        {
+          "frame_id": 3377969,
+          "sequence": 129840,
+          "device_ms": 2488106,
+          "host_ns": 641538798875,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 3394981,
+          "sequence": 130468,
+          "device_ms": 2491211,
+          "host_ns": 644757963959,
+          "data": "00 80 00 00"
+        },
+        {
+          "frame_id": 3395772,
+          "sequence": 130491,
+          "device_ms": 2491343,
+          "host_ns": 644960007000,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 3409878,
+          "sequence": 131029,
+          "device_ms": 2493986,
+          "host_ns": 647577306459,
+          "data": "00 80 00 00"
+        },
+        {
+          "frame_id": 3409911,
+          "sequence": 131062,
+          "device_ms": 2494128,
+          "host_ns": 647577306459,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 3422414,
+          "sequence": 131533,
+          "device_ms": 2496493,
+          "host_ns": 649994030959,
+          "data": "00 80 00 00"
+        },
+        {
+          "frame_id": 3423468,
+          "sequence": 131563,
+          "device_ms": 2496644,
+          "host_ns": 650195222209,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 3495619,
+          "sequence": 134338,
+          "device_ms": 2510334,
+          "host_ns": 663886493709,
+          "data": "00 80 00 00"
+        },
+        {
+          "frame_id": 3496418,
+          "sequence": 134369,
+          "device_ms": 2510499,
+          "host_ns": 664086960375,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 3507339,
+          "sequence": 134794,
+          "device_ms": 2512601,
+          "host_ns": 666099310667,
+          "data": "00 80 00 00"
+        },
+        {
+          "frame_id": 3508392,
+          "sequence": 134823,
+          "device_ms": 2512753,
+          "host_ns": 666299366334,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 3516935,
+          "sequence": 135174,
+          "device_ms": 2514455,
+          "host_ns": 667914913125,
+          "data": "00 80 00 00"
+        },
+        {
+          "frame_id": 3517988,
+          "sequence": 135203,
+          "device_ms": 2514607,
+          "host_ns": 668116935584,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 3528379,
+          "sequence": 135610,
+          "device_ms": 2516600,
+          "host_ns": 670130085000,
+          "data": "00 80 00 00"
+        },
+        {
+          "frame_id": 3529427,
+          "sequence": 135634,
+          "device_ms": 2516722,
+          "host_ns": 670331231042,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 3541152,
+          "sequence": 136095,
+          "device_ms": 2518965,
+          "host_ns": 672543859334,
+          "data": "00 80 00 00"
+        },
+        {
+          "frame_id": 3541188,
+          "sequence": 136131,
+          "device_ms": 2519117,
+          "host_ns": 672543859334,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 3550467,
+          "sequence": 136450,
+          "device_ms": 2520735,
+          "host_ns": 674352937584,
+          "data": "00 80 00 00"
+        },
+        {
+          "frame_id": 3550491,
+          "sequence": 136474,
+          "device_ms": 2520877,
+          "host_ns": 674352937584,
+          "data": "00 00 00 00"
+        }
+      ],
+      "pulses": [
+        {
+          "frame_id": 2940252,
+          "sequence": 112987,
+          "device_ms": 2404775,
+          "host_ns": 558408698750,
+          "direction": 2,
+          "data": "40 00 00 00",
+          "release_device_ms": 2405069,
+          "duration_ms": 294
+        }
+      ],
+      "mode_associations": [
+        {
+          "from": 0,
+          "to": 2,
+          "mode_frame_id": 2940269,
+          "mode_device_ms": 2404887,
+          "lead": {
+            "frame_id": 2940252,
+            "sequence": 112987,
+            "device_ms": 2404775,
+            "host_ns": 558408698750,
+            "direction": 2,
+            "data": "40 00 00 00",
+            "release_device_ms": 2405069,
+            "duration_ms": 294
+          },
+          "delay_ms": 112
+        },
+        {
+          "from": 2,
+          "to": 0,
+          "mode_frame_id": 4038836,
+          "mode_device_ms": 2614358,
+          "lead": null,
+          "delay_ms": null
+        }
+      ],
+      "raw_count_verification": {}
+    },
+    {
+      "session": "20261011-190746Z",
+      "frames": 759,
+      "payload_counts": {
+        "00 00 00 00": 690,
+        "40 00 00 00": 55,
+        "20 00 00 00": 14
+      },
+      "median_interval_ms": 250.0,
+      "payload_changes": [
+        {
+          "frame_id": 1828,
+          "sequence": 36,
+          "device_ms": 99174,
+          "host_ns": 413256958,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 279771,
+          "sequence": 10715,
+          "device_ms": 152063,
+          "host_ns": 53198778291,
+          "data": "40 00 00 00"
+        },
+        {
+          "frame_id": 280853,
+          "sequence": 10773,
+          "device_ms": 152267,
+          "host_ns": 53398900125,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 302146,
+          "sequence": 11586,
+          "device_ms": 156289,
+          "host_ns": 57423090958,
+          "data": "20 00 00 00"
+        },
+        {
+          "frame_id": 303206,
+          "sequence": 11622,
+          "device_ms": 156471,
+          "host_ns": 57625370500,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 321051,
+          "sequence": 12315,
+          "device_ms": 159969,
+          "host_ns": 61048626291,
+          "data": "20 00 00 00"
+        },
+        {
+          "frame_id": 323142,
+          "sequence": 12358,
+          "device_ms": 160201,
+          "host_ns": 61452926666,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 345533,
+          "sequence": 13245,
+          "device_ms": 164493,
+          "host_ns": 65686458875,
+          "data": "40 00 00 00"
+        },
+        {
+          "frame_id": 364675,
+          "sequence": 13955,
+          "device_ms": 168067,
+          "host_ns": 69306082958,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 367616,
+          "sequence": 14080,
+          "device_ms": 168637,
+          "host_ns": 69908092833,
+          "data": "40 00 00 00"
+        },
+        {
+          "frame_id": 368691,
+          "sequence": 14131,
+          "device_ms": 168901,
+          "host_ns": 70109131541,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 375065,
+          "sequence": 14361,
+          "device_ms": 170042,
+          "host_ns": 71317453333,
+          "data": "40 00 00 00"
+        },
+        {
+          "frame_id": 384660,
+          "sequence": 14740,
+          "device_ms": 171877,
+          "host_ns": 73135506666,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 409171,
+          "sequence": 15699,
+          "device_ms": 176573,
+          "host_ns": 77774647166,
+          "data": "20 00 00 00"
+        },
+        {
+          "frame_id": 410226,
+          "sequence": 15730,
+          "device_ms": 176728,
+          "host_ns": 77976706250,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 429393,
+          "sequence": 16465,
+          "device_ms": 180320,
+          "host_ns": 81601173250,
+          "data": "20 00 00 00"
+        },
+        {
+          "frame_id": 429430,
+          "sequence": 16502,
+          "device_ms": 180492,
+          "host_ns": 81601173250,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 447263,
+          "sequence": 17183,
+          "device_ms": 183934,
+          "host_ns": 85021917500,
+          "data": "20 00 00 00"
+        },
+        {
+          "frame_id": 448315,
+          "sequence": 17211,
+          "device_ms": 184076,
+          "host_ns": 85222966083,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 471758,
+          "sequence": 18126,
+          "device_ms": 188528,
+          "host_ns": 89650392416,
+          "data": "40 00 00 00"
+        },
+        {
+          "frame_id": 472808,
+          "sequence": 18152,
+          "device_ms": 188690,
+          "host_ns": 89851050708,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 475166,
+          "sequence": 18206,
+          "device_ms": 188970,
+          "host_ns": 90264657750,
+          "data": "40 00 00 00"
+        },
+        {
+          "frame_id": 475201,
+          "sequence": 18241,
+          "device_ms": 189134,
+          "host_ns": 90264657750,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 483713,
+          "sequence": 18561,
+          "device_ms": 190675,
+          "host_ns": 91878351541,
+          "data": "40 00 00 00"
+        },
+        {
+          "frame_id": 496222,
+          "sequence": 19038,
+          "device_ms": 193030,
+          "host_ns": 94299030916,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 550289,
+          "sequence": 21137,
+          "device_ms": 203375,
+          "host_ns": 104573531541,
+          "data": "20 00 00 00"
+        },
+        {
+          "frame_id": 551340,
+          "sequence": 21164,
+          "device_ms": 203507,
+          "host_ns": 104773755291,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 565466,
+          "sequence": 21722,
+          "device_ms": 206246,
+          "host_ns": 107390607208,
+          "data": "20 00 00 00"
+        },
+        {
+          "frame_id": 566264,
+          "sequence": 21752,
+          "device_ms": 206368,
+          "host_ns": 107591784291,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 583292,
+          "sequence": 22396,
+          "device_ms": 209569,
+          "host_ns": 110809490333,
+          "data": "20 00 00 00"
+        },
+        {
+          "frame_id": 584345,
+          "sequence": 22425,
+          "device_ms": 209733,
+          "host_ns": 111012584291,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 605639,
+          "sequence": 23239,
+          "device_ms": 213786,
+          "host_ns": 115045867250,
+          "data": "40 00 00 00"
+        },
+        {
+          "frame_id": 605672,
+          "sequence": 23272,
+          "device_ms": 213937,
+          "host_ns": 115045867250,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 608856,
+          "sequence": 23384,
+          "device_ms": 214417,
+          "host_ns": 115648433750,
+          "data": "40 00 00 00"
+        },
+        {
+          "frame_id": 609914,
+          "sequence": 23418,
+          "device_ms": 214571,
+          "host_ns": 115849717958,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 617382,
+          "sequence": 23718,
+          "device_ms": 216122,
+          "host_ns": 117263527125,
+          "data": "40 00 00 00"
+        },
+        {
+          "frame_id": 629924,
+          "sequence": 24228,
+          "device_ms": 218547,
+          "host_ns": 119686929000,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 703380,
+          "sequence": 27028,
+          "device_ms": 232431,
+          "host_ns": 133575807208,
+          "data": "20 00 00 00"
+        },
+        {
+          "frame_id": 704450,
+          "sequence": 27074,
+          "device_ms": 232645,
+          "host_ns": 133778085375,
+          "data": "00 00 00 00"
+        }
+      ],
+      "pulses": [
+        {
+          "frame_id": 279771,
+          "sequence": 10715,
+          "device_ms": 152063,
+          "host_ns": 53198778291,
+          "direction": 2,
+          "data": "40 00 00 00",
+          "release_device_ms": 152267,
+          "duration_ms": 204
+        },
+        {
+          "frame_id": 302146,
+          "sequence": 11586,
+          "device_ms": 156289,
+          "host_ns": 57423090958,
+          "direction": 1,
+          "data": "20 00 00 00",
+          "release_device_ms": 156471,
+          "duration_ms": 182
+        },
+        {
+          "frame_id": 321051,
+          "sequence": 12315,
+          "device_ms": 159969,
+          "host_ns": 61048626291,
+          "direction": 1,
+          "data": "20 00 00 00",
+          "release_device_ms": 160201,
+          "duration_ms": 232
+        },
+        {
+          "frame_id": 345533,
+          "sequence": 13245,
+          "device_ms": 164493,
+          "host_ns": 65686458875,
+          "direction": 2,
+          "data": "40 00 00 00",
+          "release_device_ms": 168067,
+          "duration_ms": 3574
+        },
+        {
+          "frame_id": 367616,
+          "sequence": 14080,
+          "device_ms": 168637,
+          "host_ns": 69908092833,
+          "direction": 2,
+          "data": "40 00 00 00",
+          "release_device_ms": 168901,
+          "duration_ms": 264
+        },
+        {
+          "frame_id": 375065,
+          "sequence": 14361,
+          "device_ms": 170042,
+          "host_ns": 71317453333,
+          "direction": 2,
+          "data": "40 00 00 00",
+          "release_device_ms": 171877,
+          "duration_ms": 1835
+        },
+        {
+          "frame_id": 409171,
+          "sequence": 15699,
+          "device_ms": 176573,
+          "host_ns": 77774647166,
+          "direction": 1,
+          "data": "20 00 00 00",
+          "release_device_ms": 176728,
+          "duration_ms": 155
+        },
+        {
+          "frame_id": 429393,
+          "sequence": 16465,
+          "device_ms": 180320,
+          "host_ns": 81601173250,
+          "direction": 1,
+          "data": "20 00 00 00",
+          "release_device_ms": 180492,
+          "duration_ms": 172
+        },
+        {
+          "frame_id": 447263,
+          "sequence": 17183,
+          "device_ms": 183934,
+          "host_ns": 85021917500,
+          "direction": 1,
+          "data": "20 00 00 00",
+          "release_device_ms": 184076,
+          "duration_ms": 142
+        },
+        {
+          "frame_id": 471758,
+          "sequence": 18126,
+          "device_ms": 188528,
+          "host_ns": 89650392416,
+          "direction": 2,
+          "data": "40 00 00 00",
+          "release_device_ms": 188690,
+          "duration_ms": 162
+        },
+        {
+          "frame_id": 475166,
+          "sequence": 18206,
+          "device_ms": 188970,
+          "host_ns": 90264657750,
+          "direction": 2,
+          "data": "40 00 00 00",
+          "release_device_ms": 189134,
+          "duration_ms": 164
+        },
+        {
+          "frame_id": 483713,
+          "sequence": 18561,
+          "device_ms": 190675,
+          "host_ns": 91878351541,
+          "direction": 2,
+          "data": "40 00 00 00",
+          "release_device_ms": 193030,
+          "duration_ms": 2355
+        },
+        {
+          "frame_id": 550289,
+          "sequence": 21137,
+          "device_ms": 203375,
+          "host_ns": 104573531541,
+          "direction": 1,
+          "data": "20 00 00 00",
+          "release_device_ms": 203507,
+          "duration_ms": 132
+        },
+        {
+          "frame_id": 565466,
+          "sequence": 21722,
+          "device_ms": 206246,
+          "host_ns": 107390607208,
+          "direction": 1,
+          "data": "20 00 00 00",
+          "release_device_ms": 206368,
+          "duration_ms": 122
+        },
+        {
+          "frame_id": 583292,
+          "sequence": 22396,
+          "device_ms": 209569,
+          "host_ns": 110809490333,
+          "direction": 1,
+          "data": "20 00 00 00",
+          "release_device_ms": 209733,
+          "duration_ms": 164
+        },
+        {
+          "frame_id": 605639,
+          "sequence": 23239,
+          "device_ms": 213786,
+          "host_ns": 115045867250,
+          "direction": 2,
+          "data": "40 00 00 00",
+          "release_device_ms": 213937,
+          "duration_ms": 151
+        },
+        {
+          "frame_id": 608856,
+          "sequence": 23384,
+          "device_ms": 214417,
+          "host_ns": 115648433750,
+          "direction": 2,
+          "data": "40 00 00 00",
+          "release_device_ms": 214571,
+          "duration_ms": 154
+        },
+        {
+          "frame_id": 617382,
+          "sequence": 23718,
+          "device_ms": 216122,
+          "host_ns": 117263527125,
+          "direction": 2,
+          "data": "40 00 00 00",
+          "release_device_ms": 218547,
+          "duration_ms": 2425
+        },
+        {
+          "frame_id": 703380,
+          "sequence": 27028,
+          "device_ms": 232431,
+          "host_ns": 133575807208,
+          "direction": 1,
+          "data": "20 00 00 00",
+          "release_device_ms": 232645,
+          "duration_ms": 214
+        }
+      ],
+      "mode_associations": [
+        {
+          "from": 0,
+          "to": 2,
+          "mode_frame_id": 280812,
+          "mode_device_ms": 152172,
+          "lead": {
+            "frame_id": 279771,
+            "sequence": 10715,
+            "device_ms": 152063,
+            "host_ns": 53198778291,
+            "direction": 2,
+            "data": "40 00 00 00",
+            "release_device_ms": 152267,
+            "duration_ms": 204
+          },
+          "delay_ms": 109
+        },
+        {
+          "from": 2,
+          "to": 0,
+          "mode_frame_id": 303194,
+          "mode_device_ms": 156401,
+          "lead": {
+            "frame_id": 302146,
+            "sequence": 11586,
+            "device_ms": 156289,
+            "host_ns": 57423090958,
+            "direction": 1,
+            "data": "20 00 00 00",
+            "release_device_ms": 156471,
+            "duration_ms": 182
+          },
+          "delay_ms": 112
+        },
+        {
+          "from": 0,
+          "to": 4,
+          "mode_frame_id": 322098,
+          "mode_device_ms": 160079,
+          "lead": {
+            "frame_id": 321051,
+            "sequence": 12315,
+            "device_ms": 159969,
+            "host_ns": 61048626291,
+            "direction": 1,
+            "data": "20 00 00 00",
+            "release_device_ms": 160201,
+            "duration_ms": 232
+          },
+          "delay_ms": 110
+        },
+        {
+          "from": 4,
+          "to": 0,
+          "mode_frame_id": 345554,
+          "mode_device_ms": 164601,
+          "lead": {
+            "frame_id": 345533,
+            "sequence": 13245,
+            "device_ms": 164493,
+            "host_ns": 65686458875,
+            "direction": 2,
+            "data": "40 00 00 00",
+            "release_device_ms": 168067,
+            "duration_ms": 3574
+          },
+          "delay_ms": 108
+        },
+        {
+          "from": 0,
+          "to": 2,
+          "mode_frame_id": 367637,
+          "mode_device_ms": 168745,
+          "lead": {
+            "frame_id": 367616,
+            "sequence": 14080,
+            "device_ms": 168637,
+            "host_ns": 69908092833,
+            "direction": 2,
+            "data": "40 00 00 00",
+            "release_device_ms": 168901,
+            "duration_ms": 264
+          },
+          "delay_ms": 108
+        },
+        {
+          "from": 2,
+          "to": 12,
+          "mode_frame_id": 380690,
+          "mode_device_ms": 171240,
+          "lead": {
+            "frame_id": 375065,
+            "sequence": 14361,
+            "device_ms": 170042,
+            "host_ns": 71317453333,
+            "direction": 2,
+            "data": "40 00 00 00",
+            "release_device_ms": 171877,
+            "duration_ms": 1835
+          },
+          "delay_ms": 1198
+        },
+        {
+          "from": 12,
+          "to": 2,
+          "mode_frame_id": 409188,
+          "mode_device_ms": 176687,
+          "lead": {
+            "frame_id": 409171,
+            "sequence": 15699,
+            "device_ms": 176573,
+            "host_ns": 77774647166,
+            "direction": 1,
+            "data": "20 00 00 00",
+            "release_device_ms": 176728,
+            "duration_ms": 155
+          },
+          "delay_ms": 114
+        },
+        {
+          "from": 2,
+          "to": 0,
+          "mode_frame_id": 429416,
+          "mode_device_ms": 180429,
+          "lead": {
+            "frame_id": 429393,
+            "sequence": 16465,
+            "device_ms": 180320,
+            "host_ns": 81601173250,
+            "direction": 1,
+            "data": "20 00 00 00",
+            "release_device_ms": 180492,
+            "duration_ms": 172
+          },
+          "delay_ms": 109
+        },
+        {
+          "from": 0,
+          "to": 4,
+          "mode_frame_id": 448311,
+          "mode_device_ms": 184043,
+          "lead": {
+            "frame_id": 447263,
+            "sequence": 17183,
+            "device_ms": 183934,
+            "host_ns": 85021917500,
+            "direction": 1,
+            "data": "20 00 00 00",
+            "release_device_ms": 184076,
+            "duration_ms": 142
+          },
+          "delay_ms": 109
+        },
+        {
+          "from": 4,
+          "to": 0,
+          "mode_frame_id": 472802,
+          "mode_device_ms": 188641,
+          "lead": {
+            "frame_id": 471758,
+            "sequence": 18126,
+            "device_ms": 188528,
+            "host_ns": 89650392416,
+            "direction": 2,
+            "data": "40 00 00 00",
+            "release_device_ms": 188690,
+            "duration_ms": 162
+          },
+          "delay_ms": 113
+        },
+        {
+          "from": 0,
+          "to": 2,
+          "mode_frame_id": 475188,
+          "mode_device_ms": 189081,
+          "lead": {
+            "frame_id": 475166,
+            "sequence": 18206,
+            "device_ms": 188970,
+            "host_ns": 90264657750,
+            "direction": 2,
+            "data": "40 00 00 00",
+            "release_device_ms": 189134,
+            "duration_ms": 164
+          },
+          "delay_ms": 111
+        },
+        {
+          "from": 2,
+          "to": 12,
+          "mode_frame_id": 489842,
+          "mode_device_ms": 191869,
+          "lead": {
+            "frame_id": 483713,
+            "sequence": 18561,
+            "device_ms": 190675,
+            "host_ns": 91878351541,
+            "direction": 2,
+            "data": "40 00 00 00",
+            "release_device_ms": 193030,
+            "duration_ms": 2355
+          },
+          "delay_ms": 1194
+        },
+        {
+          "from": 12,
+          "to": 2,
+          "mode_frame_id": 551337,
+          "mode_device_ms": 203489,
+          "lead": {
+            "frame_id": 550289,
+            "sequence": 21137,
+            "device_ms": 203375,
+            "host_ns": 104573531541,
+            "direction": 1,
+            "data": "20 00 00 00",
+            "release_device_ms": 203507,
+            "duration_ms": 132
+          },
+          "delay_ms": 114
+        },
+        {
+          "from": 2,
+          "to": 0,
+          "mode_frame_id": 566262,
+          "mode_device_ms": 206357,
+          "lead": {
+            "frame_id": 565466,
+            "sequence": 21722,
+            "device_ms": 206246,
+            "host_ns": 107390607208,
+            "direction": 1,
+            "data": "20 00 00 00",
+            "release_device_ms": 206368,
+            "duration_ms": 122
+          },
+          "delay_ms": 111
+        },
+        {
+          "from": 0,
+          "to": 4,
+          "mode_frame_id": 583310,
+          "mode_device_ms": 209681,
+          "lead": {
+            "frame_id": 583292,
+            "sequence": 22396,
+            "device_ms": 209569,
+            "host_ns": 110809490333,
+            "direction": 1,
+            "data": "20 00 00 00",
+            "release_device_ms": 209733,
+            "duration_ms": 164
+          },
+          "delay_ms": 112
+        },
+        {
+          "from": 4,
+          "to": 0,
+          "mode_frame_id": 605663,
+          "mode_device_ms": 213894,
+          "lead": {
+            "frame_id": 605639,
+            "sequence": 23239,
+            "device_ms": 213786,
+            "host_ns": 115045867250,
+            "direction": 2,
+            "data": "40 00 00 00",
+            "release_device_ms": 213937,
+            "duration_ms": 151
+          },
+          "delay_ms": 108
+        },
+        {
+          "from": 0,
+          "to": 2,
+          "mode_frame_id": 608881,
+          "mode_device_ms": 214528,
+          "lead": {
+            "frame_id": 608856,
+            "sequence": 23384,
+            "device_ms": 214417,
+            "host_ns": 115648433750,
+            "direction": 2,
+            "data": "40 00 00 00",
+            "release_device_ms": 214571,
+            "duration_ms": 154
+          },
+          "delay_ms": 111
+        },
+        {
+          "from": 2,
+          "to": 12,
+          "mode_frame_id": 623785,
+          "mode_device_ms": 217318,
+          "lead": {
+            "frame_id": 617382,
+            "sequence": 23718,
+            "device_ms": 216122,
+            "host_ns": 117263527125,
+            "direction": 2,
+            "data": "40 00 00 00",
+            "release_device_ms": 218547,
+            "duration_ms": 2425
+          },
+          "delay_ms": 1196
+        },
+        {
+          "from": 12,
+          "to": 2,
+          "mode_frame_id": 704430,
+          "mode_device_ms": 232541,
+          "lead": {
+            "frame_id": 703380,
+            "sequence": 27028,
+            "device_ms": 232431,
+            "host_ns": 133575807208,
+            "direction": 1,
+            "data": "20 00 00 00",
+            "release_device_ms": 232645,
+            "duration_ms": 214
+          },
+          "delay_ms": 110
+        }
+      ],
+      "raw_count_verification": {}
+    },
+    {
+      "session": "20261011-191050Z",
+      "frames": 311,
+      "payload_counts": {
+        "00 00 00 00": 266,
+        "20 00 00 00": 16,
+        "40 00 00 00": 29
+      },
+      "median_interval_ms": 250.0,
+      "payload_changes": [
+        {
+          "frame_id": 772,
+          "sequence": 5,
+          "device_ms": 283667,
+          "host_ns": 211040667,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 102469,
+          "sequence": 3910,
+          "device_ms": 303051,
+          "host_ns": 19547402834,
+          "data": "20 00 00 00"
+        },
+        {
+          "frame_id": 103543,
+          "sequence": 3960,
+          "device_ms": 303213,
+          "host_ns": 19749133334,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 114213,
+          "sequence": 4390,
+          "device_ms": 305353,
+          "host_ns": 21762793709,
+          "data": "20 00 00 00"
+        },
+        {
+          "frame_id": 115530,
+          "sequence": 4427,
+          "device_ms": 305505,
+          "host_ns": 21964485125,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 128031,
+          "sequence": 4896,
+          "device_ms": 307878,
+          "host_ns": 24385669792,
+          "data": "40 00 00 00"
+        },
+        {
+          "frame_id": 129095,
+          "sequence": 4936,
+          "device_ms": 308090,
+          "host_ns": 24587430792,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 130195,
+          "sequence": 5012,
+          "device_ms": 308400,
+          "host_ns": 24787801750,
+          "data": "40 00 00 00"
+        },
+        {
+          "frame_id": 132541,
+          "sequence": 5054,
+          "device_ms": 308604,
+          "host_ns": 25190952042,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 139776,
+          "sequence": 5377,
+          "device_ms": 310186,
+          "host_ns": 26601148459,
+          "data": "40 00 00 00"
+        },
+        {
+          "frame_id": 149605,
+          "sequence": 5734,
+          "device_ms": 311960,
+          "host_ns": 28417771334,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 162147,
+          "sequence": 6244,
+          "device_ms": 314441,
+          "host_ns": 30835136542,
+          "data": "20 00 00 00"
+        },
+        {
+          "frame_id": 163204,
+          "sequence": 6277,
+          "device_ms": 314605,
+          "host_ns": 31038920250,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 182077,
+          "sequence": 6974,
+          "device_ms": 318107,
+          "host_ns": 34657921084,
+          "data": "20 00 00 00"
+        },
+        {
+          "frame_id": 182132,
+          "sequence": 7029,
+          "device_ms": 318259,
+          "host_ns": 34657921084,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 196989,
+          "sequence": 7550,
+          "device_ms": 320890,
+          "host_ns": 37470658834,
+          "data": "20 00 00 00"
+        },
+        {
+          "frame_id": 197025,
+          "sequence": 7586,
+          "device_ms": 321072,
+          "host_ns": 37470658834,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 219117,
+          "sequence": 8430,
+          "device_ms": 325168,
+          "host_ns": 41696136500,
+          "data": "40 00 00 00"
+        },
+        {
+          "frame_id": 220183,
+          "sequence": 8472,
+          "device_ms": 325340,
+          "host_ns": 41896736584,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 221520,
+          "sequence": 8529,
+          "device_ms": 325650,
+          "host_ns": 42098229709,
+          "data": "40 00 00 00"
+        },
+        {
+          "frame_id": 222579,
+          "sequence": 8564,
+          "device_ms": 325805,
+          "host_ns": 42298490750,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 231115,
+          "sequence": 8908,
+          "device_ms": 327455,
+          "host_ns": 43912594250,
+          "data": "40 00 00 00"
+        },
+        {
+          "frame_id": 241753,
+          "sequence": 9306,
+          "device_ms": 329400,
+          "host_ns": 45928649417,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 253225,
+          "sequence": 9770,
+          "device_ms": 331731,
+          "host_ns": 48145325000,
+          "data": "20 00 00 00"
+        },
+        {
+          "frame_id": 254295,
+          "sequence": 9816,
+          "device_ms": 331927,
+          "host_ns": 48346686917,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 271317,
+          "sequence": 10454,
+          "device_ms": 335128,
+          "host_ns": 51564203959,
+          "data": "20 00 00 00"
+        },
+        {
+          "frame_id": 272402,
+          "sequence": 10515,
+          "device_ms": 335309,
+          "host_ns": 51764324167,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 291541,
+          "sequence": 11222,
+          "device_ms": 338871,
+          "host_ns": 55400778750,
+          "data": "20 00 00 00"
+        },
+        {
+          "frame_id": 292599,
+          "sequence": 11256,
+          "device_ms": 339044,
+          "host_ns": 55601055209,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 316038,
+          "sequence": 12167,
+          "device_ms": 343492,
+          "host_ns": 60035175959,
+          "data": "40 00 00 00"
+        },
+        {
+          "frame_id": 317095,
+          "sequence": 12200,
+          "device_ms": 343683,
+          "host_ns": 60236314167,
+          "data": "00 00 00 00"
+        },
+        {
+          "frame_id": 319220,
+          "sequence": 12277,
+          "device_ms": 344115,
+          "host_ns": 60640381667,
+          "data": "40 00 00 00"
+        },
+        {
+          "frame_id": 320308,
+          "sequence": 12341,
+          "device_ms": 344309,
+          "host_ns": 60840511500,
+          "data": "00 00 00 00"
+        }
+      ],
+      "pulses": [
+        {
+          "frame_id": 102469,
+          "sequence": 3910,
+          "device_ms": 303051,
+          "host_ns": 19547402834,
+          "direction": 1,
+          "data": "20 00 00 00",
+          "release_device_ms": 303213,
+          "duration_ms": 162
+        },
+        {
+          "frame_id": 114213,
+          "sequence": 4390,
+          "device_ms": 305353,
+          "host_ns": 21762793709,
+          "direction": 1,
+          "data": "20 00 00 00",
+          "release_device_ms": 305505,
+          "duration_ms": 152
+        },
+        {
+          "frame_id": 128031,
+          "sequence": 4896,
+          "device_ms": 307878,
+          "host_ns": 24385669792,
+          "direction": 2,
+          "data": "40 00 00 00",
+          "release_device_ms": 308090,
+          "duration_ms": 212
+        },
+        {
+          "frame_id": 130195,
+          "sequence": 5012,
+          "device_ms": 308400,
+          "host_ns": 24787801750,
+          "direction": 2,
+          "data": "40 00 00 00",
+          "release_device_ms": 308604,
+          "duration_ms": 204
+        },
+        {
+          "frame_id": 139776,
+          "sequence": 5377,
+          "device_ms": 310186,
+          "host_ns": 26601148459,
+          "direction": 2,
+          "data": "40 00 00 00",
+          "release_device_ms": 311960,
+          "duration_ms": 1774
+        },
+        {
+          "frame_id": 162147,
+          "sequence": 6244,
+          "device_ms": 314441,
+          "host_ns": 30835136542,
+          "direction": 1,
+          "data": "20 00 00 00",
+          "release_device_ms": 314605,
+          "duration_ms": 164
+        },
+        {
+          "frame_id": 182077,
+          "sequence": 6974,
+          "device_ms": 318107,
+          "host_ns": 34657921084,
+          "direction": 1,
+          "data": "20 00 00 00",
+          "release_device_ms": 318259,
+          "duration_ms": 152
+        },
+        {
+          "frame_id": 196989,
+          "sequence": 7550,
+          "device_ms": 320890,
+          "host_ns": 37470658834,
+          "direction": 1,
+          "data": "20 00 00 00",
+          "release_device_ms": 321072,
+          "duration_ms": 182
+        },
+        {
+          "frame_id": 219117,
+          "sequence": 8430,
+          "device_ms": 325168,
+          "host_ns": 41696136500,
+          "direction": 2,
+          "data": "40 00 00 00",
+          "release_device_ms": 325340,
+          "duration_ms": 172
+        },
+        {
+          "frame_id": 221520,
+          "sequence": 8529,
+          "device_ms": 325650,
+          "host_ns": 42098229709,
+          "direction": 2,
+          "data": "40 00 00 00",
+          "release_device_ms": 325805,
+          "duration_ms": 155
+        },
+        {
+          "frame_id": 231115,
+          "sequence": 8908,
+          "device_ms": 327455,
+          "host_ns": 43912594250,
+          "direction": 2,
+          "data": "40 00 00 00",
+          "release_device_ms": 329400,
+          "duration_ms": 1945
+        },
+        {
+          "frame_id": 253225,
+          "sequence": 9770,
+          "device_ms": 331731,
+          "host_ns": 48145325000,
+          "direction": 1,
+          "data": "20 00 00 00",
+          "release_device_ms": 331927,
+          "duration_ms": 196
+        },
+        {
+          "frame_id": 271317,
+          "sequence": 10454,
+          "device_ms": 335128,
+          "host_ns": 51564203959,
+          "direction": 1,
+          "data": "20 00 00 00",
+          "release_device_ms": 335309,
+          "duration_ms": 181
+        },
+        {
+          "frame_id": 291541,
+          "sequence": 11222,
+          "device_ms": 338871,
+          "host_ns": 55400778750,
+          "direction": 1,
+          "data": "20 00 00 00",
+          "release_device_ms": 339044,
+          "duration_ms": 173
+        },
+        {
+          "frame_id": 316038,
+          "sequence": 12167,
+          "device_ms": 343492,
+          "host_ns": 60035175959,
+          "direction": 2,
+          "data": "40 00 00 00",
+          "release_device_ms": 343683,
+          "duration_ms": 191
+        },
+        {
+          "frame_id": 319220,
+          "sequence": 12277,
+          "device_ms": 344115,
+          "host_ns": 60640381667,
+          "direction": 2,
+          "data": "40 00 00 00",
+          "release_device_ms": 344309,
+          "duration_ms": 194
+        }
+      ],
+      "mode_associations": [
+        {
+          "from": 2,
+          "to": 0,
+          "mode_frame_id": 102484,
+          "mode_device_ms": 303158,
+          "lead": {
+            "frame_id": 102469,
+            "sequence": 3910,
+            "device_ms": 303051,
+            "host_ns": 19547402834,
+            "direction": 1,
+            "data": "20 00 00 00",
+            "release_device_ms": 303213,
+            "duration_ms": 162
+          },
+          "delay_ms": 107
+        },
+        {
+          "from": 0,
+          "to": 4,
+          "mode_frame_id": 115520,
+          "mode_device_ms": 305461,
+          "lead": {
+            "frame_id": 114213,
+            "sequence": 4390,
+            "device_ms": 305353,
+            "host_ns": 21762793709,
+            "direction": 1,
+            "data": "20 00 00 00",
+            "release_device_ms": 305505,
+            "duration_ms": 152
+          },
+          "delay_ms": 108
+        },
+        {
+          "from": 4,
+          "to": 0,
+          "mode_frame_id": 128056,
+          "mode_device_ms": 307990,
+          "lead": {
+            "frame_id": 128031,
+            "sequence": 4896,
+            "device_ms": 307878,
+            "host_ns": 24385669792,
+            "direction": 2,
+            "data": "40 00 00 00",
+            "release_device_ms": 308090,
+            "duration_ms": 212
+          },
+          "delay_ms": 112
+        },
+        {
+          "from": 0,
+          "to": 2,
+          "mode_frame_id": 131248,
+          "mode_device_ms": 308509,
+          "lead": {
+            "frame_id": 130195,
+            "sequence": 5012,
+            "device_ms": 308400,
+            "host_ns": 24787801750,
+            "direction": 2,
+            "data": "40 00 00 00",
+            "release_device_ms": 308604,
+            "duration_ms": 204
+          },
+          "delay_ms": 109
+        },
+        {
+          "from": 2,
+          "to": 12,
+          "mode_frame_id": 146166,
+          "mode_device_ms": 311397,
+          "lead": {
+            "frame_id": 139776,
+            "sequence": 5377,
+            "device_ms": 310186,
+            "host_ns": 26601148459,
+            "direction": 2,
+            "data": "40 00 00 00",
+            "release_device_ms": 311960,
+            "duration_ms": 1774
+          },
+          "delay_ms": 1211
+        },
+        {
+          "from": 12,
+          "to": 2,
+          "mode_frame_id": 163193,
+          "mode_device_ms": 314553,
+          "lead": {
+            "frame_id": 162147,
+            "sequence": 6244,
+            "device_ms": 314441,
+            "host_ns": 30835136542,
+            "direction": 1,
+            "data": "20 00 00 00",
+            "release_device_ms": 314605,
+            "duration_ms": 164
+          },
+          "delay_ms": 112
+        },
+        {
+          "from": 2,
+          "to": 0,
+          "mode_frame_id": 182121,
+          "mode_device_ms": 318220,
+          "lead": {
+            "frame_id": 182077,
+            "sequence": 6974,
+            "device_ms": 318107,
+            "host_ns": 34657921084,
+            "direction": 1,
+            "data": "20 00 00 00",
+            "release_device_ms": 318259,
+            "duration_ms": 152
+          },
+          "delay_ms": 113
+        },
+        {
+          "from": 0,
+          "to": 4,
+          "mode_frame_id": 197012,
+          "mode_device_ms": 320999,
+          "lead": {
+            "frame_id": 196989,
+            "sequence": 7550,
+            "device_ms": 320890,
+            "host_ns": 37470658834,
+            "direction": 1,
+            "data": "20 00 00 00",
+            "release_device_ms": 321072,
+            "duration_ms": 182
+          },
+          "delay_ms": 109
+        },
+        {
+          "from": 4,
+          "to": 0,
+          "mode_frame_id": 219148,
+          "mode_device_ms": 325275,
+          "lead": {
+            "frame_id": 219117,
+            "sequence": 8430,
+            "device_ms": 325168,
+            "host_ns": 41696136500,
+            "direction": 2,
+            "data": "40 00 00 00",
+            "release_device_ms": 325340,
+            "duration_ms": 172
+          },
+          "delay_ms": 107
+        },
+        {
+          "from": 0,
+          "to": 2,
+          "mode_frame_id": 222567,
+          "mode_device_ms": 325760,
+          "lead": {
+            "frame_id": 221520,
+            "sequence": 8529,
+            "device_ms": 325650,
+            "host_ns": 42098229709,
+            "direction": 2,
+            "data": "40 00 00 00",
+            "release_device_ms": 325805,
+            "duration_ms": 155
+          },
+          "delay_ms": 110
+        },
+        {
+          "from": 2,
+          "to": 12,
+          "mode_frame_id": 237243,
+          "mode_device_ms": 328665,
+          "lead": {
+            "frame_id": 231115,
+            "sequence": 8908,
+            "device_ms": 327455,
+            "host_ns": 43912594250,
+            "direction": 2,
+            "data": "40 00 00 00",
+            "release_device_ms": 329400,
+            "duration_ms": 1945
+          },
+          "delay_ms": 1210
+        },
+        {
+          "from": 12,
+          "to": 2,
+          "mode_frame_id": 254276,
+          "mode_device_ms": 331845,
+          "lead": {
+            "frame_id": 253225,
+            "sequence": 9770,
+            "device_ms": 331731,
+            "host_ns": 48145325000,
+            "direction": 1,
+            "data": "20 00 00 00",
+            "release_device_ms": 331927,
+            "duration_ms": 196
+          },
+          "delay_ms": 114
+        },
+        {
+          "from": 2,
+          "to": 0,
+          "mode_frame_id": 272384,
+          "mode_device_ms": 335236,
+          "lead": {
+            "frame_id": 271317,
+            "sequence": 10454,
+            "device_ms": 335128,
+            "host_ns": 51564203959,
+            "direction": 1,
+            "data": "20 00 00 00",
+            "release_device_ms": 335309,
+            "duration_ms": 181
+          },
+          "delay_ms": 108
+        },
+        {
+          "from": 0,
+          "to": 4,
+          "mode_frame_id": 291563,
+          "mode_device_ms": 338984,
+          "lead": {
+            "frame_id": 291541,
+            "sequence": 11222,
+            "device_ms": 338871,
+            "host_ns": 55400778750,
+            "direction": 1,
+            "data": "20 00 00 00",
+            "release_device_ms": 339044,
+            "duration_ms": 173
+          },
+          "delay_ms": 113
+        },
+        {
+          "from": 4,
+          "to": 0,
+          "mode_frame_id": 316056,
+          "mode_device_ms": 343597,
+          "lead": {
+            "frame_id": 316038,
+            "sequence": 12167,
+            "device_ms": 343492,
+            "host_ns": 60035175959,
+            "direction": 2,
+            "data": "40 00 00 00",
+            "release_device_ms": 343683,
+            "duration_ms": 191
+          },
+          "delay_ms": 105
+        },
+        {
+          "from": 0,
+          "to": 2,
+          "mode_frame_id": 319264,
+          "mode_device_ms": 344224,
+          "lead": {
+            "frame_id": 319220,
+            "sequence": 12277,
+            "device_ms": 344115,
+            "host_ns": 60640381667,
+            "direction": 2,
+            "data": "40 00 00 00",
+            "release_device_ms": 344309,
+            "duration_ms": 194
+          },
+          "delay_ms": 109
+        }
+      ],
+      "raw_count_verification": {}
+    },
+    {
+      "session": "20261011-191202Z",
+      "frames": 223,
+      "payload_counts": {
+        "00 00 00 00": 223
+      },
+      "median_interval_ms": 250.0,
+      "payload_changes": [
+        {
+          "frame_id": 773,
+          "sequence": 4,
+          "device_ms": 355778,
+          "host_ns": 210154750,
+          "data": "00 00 00 00"
+        }
+      ],
+      "pulses": [],
+      "mode_associations": [],
+      "raw_count_verification": {}
+    }
+  ]
+}

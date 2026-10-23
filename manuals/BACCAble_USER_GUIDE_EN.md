@@ -1,8 +1,8 @@
 # BACCAble — in-car user guide
 
 This guide describes the current dashboard-menu firmware source, including the
-unreleased **oil level readings and drivetrain setting** after v5-beta-25.
-The new oil display still requires vehicle acceptance testing. It starts after BACCAble has been installed and
+unreleased **oil level readings, drivetrain setting and Pelican Experiments** after v5-beta-27.
+The new oil display and diagnostic experiments still require vehicle acceptance testing. It starts after BACCAble has been installed and
 connected to the vehicle. Installation, wiring and firmware flashing are outside
 its scope. Use a matching C1/C2/BH firmware set.
 
@@ -124,12 +124,17 @@ Main menu
 │  ├─ Shown pages            Show/hide pages in Readings
 │  ├─ Sort order             Grouped or alphabetical reading lists
 │  └─ BACCAble IPC           Temporary refresh experiments
-└─ Information               Versions, input status and IPC display test
-├─ Experiments               Extra readings from public sources (not verified on this car)
-│  ├─ Electrical
-│  ├─ Oil
-│  ├─ Engine
-│  └─ Vehicle
+├─ Information               Versions, input status and IPC display test
+└─ Experiments               64 public-source manufacturer diagnostic signals
+   ├─ Battery                1 signal
+   ├─ Control                4 signals
+   ├─ Details                1 signal
+   ├─ Doors                  5 signals
+   ├─ GPS                    3 signals
+   ├─ Movement               4 signals
+   ├─ Orientation            2 signals
+   ├─ Tires                  38 signals
+   └─ Transmission           6 signals
 ```
 
 This Settings layout applies to MY23 and to any profile after an atomic Favorite set
@@ -142,20 +147,38 @@ The main menu order is fixed. Page availability follows the selected engine,
 
 ## Experiments (extra readings)
 
-`Experiments` is a separate main-menu section holding extra readings taken from
-public Giulia/Stelvio sources, not from this car's verified captures. It has four
-groups: `Electrical`, `Oil`, `Engine` and `Vehicle`. Browse them like Readings:
-gentle up/down picks a page, RES shows the live value, double-click returns.
+`Experiments` contains 64 manufacturer diagnostic signals from the
+[Pelican Giulia list](https://pelican.clutch.engineering/cars/alfa-romeo/giulia/parameters),
+whose linked [OBDb Alfa-Romeo signal set](https://github.com/OBDb/Alfa-Romeo/blob/main/signalsets/v3/default.json)
+supplies the request IDs, bit fields and conversions (CC BY-SA 4.0).
+The nine groups follow that source: `Battery`, `Control`, `Details`, `Doors`,
+`GPS`, `Movement`, `Orientation`, `Tires` and `Transmission`.
+They replace the previous experimental gasoline DID pages.
 
-These pages request manufacturer diagnostic identifiers (`0x22`) from the ECM, TCM,
-BCM and IPC. Support and scaling are **not verified on your car** (the source was a
-different Giulia/Stelvio); a missing or rejected reply shows `--`. `Experiments` is
-kept apart from the ordinary Readings catalog: it does not change `Shown pages`,
-Favorite sorting or the saved settings, and its own selection is not remembered
-between restarts. Reads whose reply does not fit a single CAN frame are not
-included in this release.
-Numeric fields on these pages show a value when a valid reply arrives; they show
-`--` while the value is unavailable.
+Open a group with RES; gentle up/down moves between its signals and stronger
+up/down changes group. Each screen shows one short English name and its decoded
+value, such as `FL P BCM 2.35bar`. On MY23 the group is on line 1 and the
+name/value on line 2. In tire labels, FL/FR/RL/RR identify wheel position,
+`P` pressure, `t` temperature, and AC/740/742/BCM distinguish source variants.
+Double-click RES to return to the group list. The value
+shows `--` until a fresh, complete, valid reply arrives; it also returns to
+`--` if the ECU rejects the read, a transfer fails or the next refresh times out.
+Both single-frame and multi-frame ISO-TP replies are supported, including long
+responses containing extra fields. Only the currently displayed DID is polled.
+The first request is immediate; subsequent successful reads follow the source
+interval (0.1–5 seconds, or once per day for fixed identifiers). Failed reads
+retry after about one second. A value is retained until its next scheduled
+refresh, with at most five seconds of reply grace. Leaving the screen cancels
+its transaction. `Shift gear` accepts only N/P/R codes; other codes show `--`.
+`Lat a` / `Long a` show acceleration in m/s2 with two decimals; `FL spd`,
+`FR spd`, `RL spd` and `RR spd` show individual wheel speeds. The conversions
+include the source minimum/maximum limits; transmission temperature is in C.
+
+These are read-only `0x22` queries, separate from ordinary `Readings`.
+They cannot be added to Favorites and do not affect `Shown pages` or saved
+settings. Signal availability and conversions have **not been verified in this
+vehicle**. Different ECU/software variants may omit a DID or return a different
+layout; no value is fabricated when the response is missing or invalid.
 
 ## Display symbols and messages
 
@@ -430,7 +453,7 @@ workflow; their draft does not control the car before successful persistence.
 | Option | Values | Purpose |
 | --- | --- | --- |
 | `Launch Nm` | 25–600 Nm, step 25 | Reported engine torque at which launch assist requests release of the forced front brakes. It is not a torque limit or a tuning setting. |
-| `Default mode` | OFF / A / D / Race | At vehicle start-up, queue one modified mode report per relevant bus frame (AllWeather, Dynamic or Race); `OFF` leaves the car unchanged. If the CAN queue is full, retry on a later report. Later knob changes are left alone. Saving a changed preference takes effect on the next start-up; ending USB capture or diagnostics does not re-arm it. Beta-22 testing found a faint Natural lamp alongside Dynamic during the previous continuous override. Whether a single report makes the selected mode persist still needs a vehicle test. |
+| `Default mode` | A / N / D / Race | At vehicle start-up, BH simulates the recorded DNA selector input on `0x256` (four bytes). `N` is the default and leaves factory selection untouched; the former saved OFF value becomes N without changing stored settings. A/D use 200 ms deflections; Race first reaches D, then holds the D direction for 1.8 s, repeating held reports every 250 ms, and releases it. Intermediate steps follow actual fresh mode reports, with at most three gestures and a ten-second operation limit. The physical selector takes priority. Queue rejection can retry the pending frame; a started virtual press is released on cancellation or stale data. No mode-report rewriting is used for this preference. Browsing shows `Next start`, `Waiting`, `Confirmed` or `No confirm` beside the target; MY23 uses title/result lines and legacy the compact DNA label (Race appears as R in the result). C1 waits up to 15 s for BH, then checks received DNA and CRC-valid transmission reports for five seconds after BH completes. `Confirmed` requires fresh matching DNA sustained for at least 2 s and transmission for at least 1 s; it corroborates reported state, not every subsystem. Missing BH, a rejected selection, stale data or a temporary target followed by N produces `No confirm`. The actual mode, including an intermediate mode before Race, remains selected. The device stops further selection attempts for that ignition cycle and retains the saved preference for the next start. Settings save or ignition OFF cancels; transport resync does not re-arm. Update C1 and BH together. Selector replay and every preset still require vehicle acceptance. |
 | `ESC/TC control` | Off / on | Permit the ESC/traction-control toggle and supported lane-button gesture. Vehicle configuration must support the function. |
 | `Dyno action` | Off / on | Permit `Toggle Dyno mode`; enabling this preference alone does not enter Dyno. |
 | `Brake action` | Off / on | Permit `Brake override` and `Disable launch`. Enabling this preference alone does not apply the brakes. |
@@ -933,6 +956,14 @@ supported by an individual ECU version.
 | Oil/water/gear C | Temp | °C × 3; native oil, ECU coolant and gearbox temperatures. | A |
 
 ## USB CAN capture and diagnostics
+
+The C1 application allocation grows from 96 to 100 KiB; its reserved USB
+file area shrinks from 20 to 16 KiB. Standard C1 firmware uses serial USB and
+**does not expose this disk**. If a custom C1 build enabled mass storage, copy
+its files before flashing: the old area's first 4 KiB become application flash.
+Small FAT12 volumes can now be formatted and mounted by the bundled filesystem.
+Saved settings remain in their existing flash area; CAN capture capacity is
+unaffected because captures are written on the computer.
 
 USB is optional for normal menu use. Runtime USB modes are different from the
 STM32 **DFU bootloader** used for flashing: seeing a device in `dfu-util --list`

@@ -1,9 +1,10 @@
 #include "app/powertrain.h"
 #include "features/periodic.h"
+#include "features/drive_mode_check.h"
 #if defined(BACCABLE_C1)
 static uint8_t next_option;
 /* 0 = transport resync, 1 = vehicle start, 2 = saved for the next start. */
-static uint8_t driver_aids_action;
+static uint8_t driver_aids_action, dna_action;
 /* RFHUB 0x1EF: 2 = OFF, 8 = RUN. Preserve the session through cranking (10). */
 static uint8_t ignition_state;
 
@@ -17,8 +18,8 @@ void board_sync_restart(void) {
 void board_sync_rearm(void) {
     board_sync_restart();
     ignition_state = 0;
-    driver_aids_action = 0;
-    chassis_state.default_mode_override = 0;
+    driver_aids_action = dna_action = 0;
+    drive_mode_check_start(0);
 }
 
 /* Ignition cycles do not require CAN silence or a processor sleep/wake cycle. */
@@ -27,21 +28,20 @@ void board_sync_ignition(unsigned code) {
     if (code == ignition_state) return;
     ignition_state = code;
     board_sync_restart();
-    driver_aids_action = code == 8 ? 1 : 2;
-    chassis_state.default_mode_override = code == 8;
-    chassis_state.default_mode_sent = 0;
-    chassis_state.default_mode_baseline = 0xFF;
+    driver_aids_action = dna_action = code == 8 ? 1 : 2;
+    drive_mode_check_start(code == 8);
 }
 
 /* Saving a preference applies it on the next vehicle start, not mid-session. */
 void board_sync_saved(void) {
     board_sync_restart();
-    driver_aids_action = 2;
-    chassis_state.default_mode_override = 0;
+    driver_aids_action = dna_action = 2;
+    drive_mode_check_start(0);
 }
 
 /* Deliver every enabled-feature preference, retrying when the board link is busy. */
 void board_sync_process(void) {
+    drive_mode_check_process();
     if (!runtime_state.instruct_slave_boards_trigger_enabled ||
         currentTime - runtime_state.all_processors_wakeup_time <=
             TIMING__C1____DELAY_BEFORE_SERIAL_INSTRUCT_OF_C2BH_AFTER_OTHER_CHIP_WAKE_MS)
@@ -88,9 +88,17 @@ void board_sync_process(void) {
     case 7:
         command[0] = C2_Bh_BusID;
         command[1] = C2_Bh_cmdSetDriverAids;
-        command[2] = settings_state.default_drive_mode;
+        command[2] = 0; /* Disable the obsolete report rewrite on older peers. */
         command[3] = settings_state.lane_assist_disabled;
         command[4] = driver_aids_action;
+        length = 5;
+        break;
+    case 8:
+        command[0] = BhBusID;
+        command[1] = BH_CMD_DNA_DEFAULT;
+        command[2] = settings_state.default_drive_mode;
+        command[3] = dna_action;
+        command[4] = drive_mode_check_token();
         length = 5;
         break;
     default:
@@ -100,6 +108,7 @@ void board_sync_process(void) {
     }
     if (board_uart_send(command, length)) {
         if (next_option == 7) driver_aids_action = 0;
+        if (next_option == 8) dna_action = 0;
         ++next_option;
     }
 }

@@ -1,3 +1,4 @@
+#include "features/drive_mode_check.h"
 #include "test_report.h"
 #include "features/menu.h"
 #include "features/ui_entry.h"
@@ -12,6 +13,7 @@
 #include "app/powertrain.h"
 #include "diagnostics/parameter_cache.h"
 #include "diagnostics/parameter_request.h"
+#include "diagnostics/experiments.h"
 #include "storage/flash_records.h"
 #include <assert.h>
 #include <stdio.h>
@@ -41,6 +43,7 @@ static bool usb_needs_apply;
 static uint16_t fail_type;
 static uint8_t last_command;
 static uint8_t last_ipc_pace, last_ipc_method, last_driver_rearm;
+static uint8_t last_dna_action, last_dna_token;
 static bool uart_busy;
 static uint8_t setup_page_for(uint8_t slot);
 uint32_t HAL_GetTick(void) { return now; }
@@ -62,6 +65,10 @@ uint8_t board_uart_send(const uint8_t *data, size_t size) {
             assert(size == 5);
             last_driver_rearm = data[4];
         }
+        if (data[0] == BhBusID && last_command == BH_CMD_DNA_DEFAULT) {
+            assert(size == 5 && data[2] == settings_state.default_drive_mode);
+            last_dna_action = data[3]; last_dna_token = data[4];
+        }
         if (data[0] == BhBusID && last_command == BH_CMD_IPC_OPTIONS) {
             assert(size == 4);
             last_ipc_pace = data[2]; last_ipc_method = data[3];
@@ -75,13 +82,16 @@ bool usb_modes_needs_apply(void) { return usb_needs_apply; }
 void usb_modes_apply(void) { ++usb_applies; usb_needs_apply = false; }
 void status_led_error(void) {}
 void status_led_activity(void) {}
-static uint8_t query_payload[4];
+static uint8_t query_payload[8];
+static uint32_t query_dlc;
+static bool query_fail;
 static uint32_t query_ecu;
 uint32_t can_tx(CAN_TxHeaderTypeDef *header, uint8_t *data) {
-    query_ecu = header->ExtId;
+    query_dlc = header->DLC;
+    query_ecu = header->IDE == CAN_ID_EXT ? header->ExtId : header->StdId;
     memcpy(query_payload, data, sizeof(query_payload));
     ++queries;
-    return HAL_OK;
+    return query_fail ? HAL_ERROR : HAL_OK;
 }
 uint32_t can_forward(const CAN_RxHeaderTypeDef *header, uint8_t *data) {
     (void)header;
@@ -347,23 +357,54 @@ static void reply_parameter(uint8_t id) {
     CAN_RxHeaderTypeDef header = {.IDE = CAN_ID_EXT, .ExtId = p->response_id, .DLC = 8};
     parameter_request_receive(&header, reply);
 }
-static void test_high_obd_parameter_pages(void) {
-    const uint8_t pages[] = {0x4e, 0x66};
-    const uint8_t ids[] = {100, 124};
-    for (unsigned i = 0; i < 2; ++i) {
-        preview_pair(pages[i], pages[i], i == 0);
-        assert(!strchr(screen, '$'));
-        unsigned before = queries;
-        now += 150;
-        menu_process();
-        assert(queries == before + 1);
-        assert(query_ecu == parameter_definitions[ids[i]].request_id);
-        reply_parameter(ids[i]);
-        assert(isfinite(parameter_cache_get(ids[i], now)));
-        assert(isfinite(displayed_parameter_values[0]));
-        assert(!strchr(screen, '$'));
-        assert(strpbrk(screen, "0123456789"));
+static void test_experiment_replies(void) {
+    char value[32];
+    uint8_t battery = experiment_group_signal(0, 0);
+    assert(experiment_group_count(0) == 1);
+    experiment_select(battery);
+    experiment_process();
+    assert(query_ecu == 0x6B4);
+    assert(query_payload[1] == 0x22 && query_payload[2] == 0xD4 && query_payload[3] == 0x10);
+    CAN_RxHeaderTypeDef standard = {.IDE = CAN_ID_STD, .StdId = 0x694, .DLC = 8};
+    uint8_t battery_reply[8] = {5, 0x62, 0xD4, 0x10, 0xC8, 0x00, 0, 0};
+    battery_reply[3] = 0x11; /* Ignore a positive reply for another DID. */
+    experiment_receive(&standard, battery_reply);
+    experiment_format(battery, value, sizeof(value));
+    assert(strstr(value, "--"));
+    battery_reply[3] = 0x10;
+    experiment_receive(&standard, battery_reply);
+    experiment_format(battery, value, sizeof(value));
+    assert(strstr(value, "100.0%"));
+
+    uint8_t door = experiment_group_signal(3, 3); /* Driver door is bit 6. */
+    experiment_select(door);
+    experiment_process();
+    CAN_RxHeaderTypeDef extended = {.IDE = CAN_ID_EXT, .ExtId = 0x18DAF1C7, .DLC = 8};
+    uint8_t door_reply[8] = {4, 0x62, 0x03, 0x02, 0x02, 0, 0, 0};
+    experiment_receive(&extended, door_reply);
+    experiment_format(door, value, sizeof(value));
+    assert(strstr(value, "YES"));
+
+    uint8_t wheel = experiment_group_signal(5, 0);
+    experiment_select(wheel);
+    experiment_process();
+    assert(query_ecu == 0x18DA30F1);
+    uint8_t payload[31] = {0x62, 0x29, 0x62};
+    payload[3 + 14] = 0x01; payload[3 + 15] = 0x60; /* 352 / 16 = 22 km/h. */
+    extended.ExtId = 0x18DAF130;
+    uint8_t first[8] = {0x10, 31};
+    memcpy(first + 2, payload, 6);
+    experiment_receive(&extended, first);
+    assert(query_payload[0] == 0x30); /* Flow control for ISO-TP. */
+    for (unsigned offset = 6, sequence = 1; offset < 31; offset += 7, ++sequence) {
+        uint8_t consecutive[8] = {(uint8_t)(0x20 | sequence)};
+        unsigned count = 31 - offset < 7 ? 31 - offset : 7;
+        memcpy(consecutive + 1, payload + offset, count);
+        experiment_receive(&extended, consecutive);
     }
+    experiment_format(wheel, value, sizeof(value));
+    assert(strstr(value, "22.0km/h"));
+    experiment_cancel();
 }
 static void test_readings_preview_prefetch(void) {
     for (unsigned in_flight = 0; in_flight < 2; ++in_flight) {
@@ -1210,7 +1251,7 @@ static void test_action_request_labels(void) {
 
 static void test_cache_flags(void) {
     parameter_cache_reset();
-    const uint8_t ids[] = {0, 7, 8, 31, 32, 95, 96, 99};
+    const uint8_t ids[] = {0, 7, 8, 31, 32, 95, 96, 97};
     for (unsigned i = 0; i < sizeof(ids); ++i) {
         assert(isnan(parameter_cache_get(ids[i], 0)));
         parameter_cache_put(ids[i], i + 0.5f, UINT32_MAX - 100);
@@ -1228,7 +1269,7 @@ static void test_cache_flags(void) {
     parameter_cache_put(255, 1, 0);
     assert(isnan(parameter_cache_get(255, 0)));
     parameter_cache_reset();
-    assert(isnan(parameter_cache_get(99, 0)));
+    assert(isnan(parameter_cache_get(97, 0)));
 }
 /* Hold numerical peaks without freezing status readings or showing stale measurements. */
 static void test_maximum_hold(void) {
@@ -1261,7 +1302,7 @@ static void test_board_sync_retry(void) {
     commands = 0;
     board_sync_rearm();
     board_sync_ignition(8);
-    for (unsigned option = 0; option < 8; ++option) {
+    for (unsigned option = 0; option < 9; ++option) {
         uart_busy = true;
         board_sync_process();
         assert(commands == option);
@@ -1272,22 +1313,21 @@ static void test_board_sync_retry(void) {
     board_sync_process();
     assert(!runtime_state.instruct_slave_boards_trigger_enabled);
     board_sync_process();
-    assert(commands == 8 && last_driver_rearm == 1);
-    chassis_state.default_mode_override = 0;
-    chassis_state.default_mode_baseline = 0x10;
+    assert(commands == 9 && last_driver_rearm == 1 && last_dna_action == 1);
+    assert(last_dna_token == drive_mode_check_token());
     board_sync_restart();
-    for (unsigned i = 0; i < 9; ++i) board_sync_process();
-    assert(last_driver_rearm == 0 && !chassis_state.default_mode_override);
-    assert(chassis_state.default_mode_baseline == 0x10);
+    for (unsigned i = 0; i < 10; ++i) board_sync_process();
+    assert(last_driver_rearm == 0 && last_dna_action == 0);
+
     board_sync_rearm();
     board_sync_ignition(8);
-    assert(chassis_state.default_mode_override && chassis_state.default_mode_baseline == 0xff);
+    assert(!strcmp(drive_mode_check_status(), settings_state.default_drive_mode ? "Waiting" : "Next start"));
     board_sync_restart(); /* Preserve an undelivered ignition event across transport resync. */
-    for (unsigned i = 0; i < 9; ++i) board_sync_process();
+    for (unsigned i = 0; i < 10; ++i) board_sync_process();
     assert(last_driver_rearm == 1);
     board_sync_saved();
-    assert(!chassis_state.default_mode_override);
-    for (unsigned i = 0; i < 9; ++i) board_sync_process();
+    assert(!strcmp(drive_mode_check_status(), "Next start"));
+    for (unsigned i = 0; i < 10; ++i) board_sync_process();
     assert(last_driver_rearm == 2);
 }
 
@@ -1299,6 +1339,7 @@ static void fresh_contract(void);
 #include "test_idle_latin1.c"
 #include "test_my23_ui.c"
 #include "test_oil_level.c"
+#include "test_experiments.c"
 
 int main(void) {
 #ifdef MENU_DIAGNOSTICS
@@ -1338,6 +1379,7 @@ int main(void) {
         HOST_TEST(test_usb_draft_has_no_early_effect),
         HOST_TEST(test_favorite_slot_draft_flow),
         HOST_TEST(test_setup_ui),
+        HOST_TEST(test_default_mode_result),
         HOST_TEST(test_shared_renderers),
         HOST_TEST(test_navigation_contract),
         HOST_TEST(test_ipc_display_menu),
@@ -1380,7 +1422,10 @@ int main(void) {
         HOST_TEST(test_maximum_hold),
         HOST_TEST(test_board_sync_retry),
         HOST_TEST(test_shipped_favorite_pairs),
-        HOST_TEST(test_high_obd_parameter_pages),
+        HOST_TEST(test_experiment_replies),
+        HOST_TEST(test_experiment_catalog),
+        HOST_TEST(test_experiment_transport),
+        HOST_TEST(test_experiment_menu),
         HOST_TEST(test_readings_preview_prefetch),
         HOST_TEST(test_engine_filters),
         HOST_TEST(test_action_availability)
