@@ -404,9 +404,10 @@
       ],
       "contradictions": [
         "Raw re-analysis on 2026-10-23 found five successful Race entries across six marked attempts; 191050Z event 12 says Race but all recorded mode reports stay Dynamic until capture end. Event 1 in that session begins with Dynamic already selected. Original markers remain unchanged.",
-        "The owner subsequently reports that the installed one-shot default D briefly appears then returns to N (installed binary unknown). This is negative hardware evidence for persistence. Commit 80fdb13 corrects the CRC write and adds bounded state corroboration; no post-fix vehicle result yet."
+        "The owner subsequently reports that the installed one-shot default D briefly appears then returns to N (installed binary unknown). This is negative hardware evidence for persistence. Commit 80fdb13 corrects the CRC write and adds bounded state corroboration; no post-fix vehicle result yet.",
+        "All-session review 2026-10-23 supersedes the earlier absence-of-input finding: BH 0x256/DLC 4 reports 36 momentary direction pulses, each followed by the matching selector-associated mode change. This does not identify its physical transmitter or prove injected acceptance."
       ],
-      "next_test": "Verify the CRC-corrected implementation 80fdb13 in the car. Confirmed requires sustained original C1 DNA and CRC-valid transmission reports; identify the actual selector input if the car still returns to N."
+      "next_test": "Evaluate one short BH 0x256 direction gesture as a replacement for rewriting mode reports, with release, physical-input priority and sustained received-state corroboration; see docs/research/20261023-dna-all-sessions.md."
     },
     {
       "id": "LIGHT-INDICATOR-C2-42D-001",
@@ -545,7 +546,7 @@
       "status": "candidate",
       "role": "C1",
       "can_id": "0x1FC",
-      "description": "C1/C2 byte 0 correlates with settled N/A=0x50, D=0x40, Race=0x60 in both captures. Mode-dependent response; no evidence it is a selector command. Existing damping/differential reference interpretation remains unvalidated.",
+      "description": "C1/C2 byte 0 correlates with settled N/A=0x50, D=0x40, Race=0x60 in both captures. Mode-dependent response; no evidence it is a selector command. Existing damping/differential reference interpretation remains unvalidated. Across all eight N-to-D edges it follows the local 0x384 by 12-27 ms on C1 and 13-27 ms on C2; median cadence is 20 ms. This strengthens the response interpretation, not the actuator identity.",
       "evidence": [
         {
           "session": "20261011-190746Z",
@@ -733,6 +734,73 @@
       ],
       "contradictions": [],
       "next_test": "Correlate with independent ACC availability/status observations before interpreting byte 1."
+    },
+    {
+      "id": "DNA-SELECTOR-BH-256-001",
+      "status": "supported",
+      "role": "BH",
+      "can_id": "0x256",
+      "dlc": 4,
+      "parts": [
+        [
+          0,
+          5,
+          2
+        ]
+      ],
+      "description": "Momentary selector direction: raw 0=released, 1=toward A (byte 0=20), 2=toward D/Race (byte 0=40). All 36 non-neutral pulses match selector-associated mode changes across three sessions. Every N-to-D (8/8) follows onset by 108-112 ms on BH; pulses last 154-294 ms. Five long holds precede Race by 1194-1211 ms. It is not a latched selected-mode report. C1 0x256/DLC 8 is unrelated.",
+      "evidence": [
+        {
+          "session": "20261010-111025Z",
+          "event_ids": [
+            96
+          ],
+          "report": "docs/research/20261023-dna-all-sessions.md",
+          "note": "Original track_changed marker note mentions selecting D; it precedes the actual CAN transition by 23 seconds and supplies context only."
+        },
+        {
+          "session": "20261011-190746Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "report": "docs/research/20261023-dna-all-sessions.md"
+        },
+        {
+          "session": "20261011-191050Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "report": "docs/research/20261023-dna-all-sessions.md"
+        }
+      ],
+      "contradictions": [
+        "An ignition-associated D-to-N reset has no selector pulse; do not require input for every mode reset.",
+        "The final marked Race attempt contains only a short N-to-D pulse and no recorded subsequent long hold.",
+        "Earlier narrow searches included the input pulse in their baseline and missed it; whole-window inspection corrected that false negative."
+      ],
+      "next_test": "Verify sender/topology at the selector connector if exact ECU identity is needed. Separately test one bounded BH gesture from fresh neutral state with TX provenance, successful release and sustained factory mode/transmission reports. This research authorizes no injection."
     }
   ]
 }

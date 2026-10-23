@@ -30,6 +30,23 @@ class KnowledgeTests(unittest.TestCase):
         self.assertEqual(crank['raw'], 10)
         self.assertIsNone(crank['enum'])
 
+    def test_captured_dna_selector_direction_is_bh_only(self):
+        # Recorded neutral, opposite deflections and independent byte-1 activity.
+        for payload, value, label in [('00000000', 0, 'Released'),
+                                      ('40000000', 2, 'Toward D/Race'),
+                                      ('20000000', 1, 'Toward A'),
+                                      ('00800000', 0, 'Released')]:
+            signal = self.values('BH', 0x256, payload)['dna_selector_direction']
+            self.assertEqual((signal['raw'], signal['enum']), (value, label))
+            self.assertEqual(signal['origin'], 'capture')
+        # Unknown direction must remain raw; C1 has an unrelated eight-byte ID.
+        unknown = self.values('BH', 0x256, '60000000')['dna_selector_direction']
+        self.assertEqual(unknown['raw'], 3)
+        self.assertIsNone(unknown['enum'])
+        for role, payload in [('C1', '4000000000000000'), ('C2', '40000000'),
+                              ('BH', '400000'), ('BH', '4000000000')]:
+            self.assertFalse(self.values(role, 0x256, payload))
+
     def test_source_snapshot_and_dispatcher_coverage(self):
         root = Path(__file__).resolve().parents[2]
         for path, expected in self.catalog['source_sha256'].items():

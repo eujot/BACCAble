@@ -4,6 +4,53 @@ Last updated: **2026-10-23** (dated verification boundaries below). This is the 
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
+## DNA selector input identified across all sessions, 2026-10-23
+
+Analysis branch `research/dna-all-sessions`, based on `66b77fe`, isolated at
+`/private/tmp/baccable-dna-all-sessions`. Inventoried all 20 session databases
+(21,354,624 frames, including six failed/four empty captures). Three sessions
+contain eight N-to-D transitions. The October-10 campaign skipped its named DNA
+scenario but contains an actual selection outside it, with event 96's original
+note explaining the change. Do not repeat the earlier claim that it provides
+no DNA evidence.
+
+**New supported input: BH 0x256, exactly DLC 4**, byte 0 bits 6:5. Zero is
+released; byte 0=40 points toward D/Race; 20 points toward A. All 36 directional
+pulses match selector-associated mode changes. Eight N-to-D changes follow by
+108–112 ms on the BH clock; their pulses last 154–294 ms. Five long holds
+precede Race after 1.194–1.211 s (earlier 2.5–2.9 s D-to-Race timing included
+the pause before holding). One ignition-related D-to-N reset has no pulse.
+Thirteen sessions contain 17,087 BH 0x256 frames; neutral and unrelated controls
+are preserved. C1 0x256/DLC 8 is unrelated. Physical sender identity and
+acceptance of injected input remain unverified.
+
+On C1, 0x384 changes first among the established mode reports, followed by
+0x1FC after 12–27 ms and 0x5A8 after 29–46 ms, in all eight cases. C2 0x1FC
+follows its local 0x384 after 13–27 ms. BH 0x25A/0x46C follow its selector input.
+No unsynchronized cross-bus clock subtraction or definitive ECU identification.
+The earlier absence-of-input conclusion is superseded; the narrow search
+baseline included the early input pulse and obscured it.
+
+Report, raw evidence and reproduction commands:
+[all-session DNA review](../baccable_lab/docs/research/20261023-dna-all-sessions.md).
+Raw/SQLite discrepancies of 34 and 123 frames in two control sessions were
+checked with the existing raw parser; their raw mode/selector values still
+show no selection. Capture files and original markers were not changed;
+input SHA-256 fingerprints remain identical. Added a guarded passive dictionary
+field, updated hypotheses/catalog and preserved historical contradictory claims.
+All 73 Lab tests pass, including captured payloads, unknown code 3, exact DLC
+and bus isolation. No firmware behavior, menus, manual operation or settings
+changed; no new firmware builds required for this analysis-only task.
+
+Next implementation candidate: replace selected-mode-report rewriting with one
+short BH selector gesture from a fresh neutral report, restore the directional
+field, prioritize physical input and preserve unrelated bytes. Start the C1
+corroboration window after BH queues the request, with explicit inter-board
+status; retain bounded timeout and no continuous assertion. This task did not
+implement or transmit that gesture. Hardware validation is UNKNOWN. No PR,
+push, merge, release or flash. Main-checkout untracked captures/release folders
+remain untouched; findings and this handoff are committed on the research branch.
+
 ## Default-mode CRC correction and result check, 2026-10-23
 
 Implementation commit `80fdb13` on `fix/default-mode-confirmation`, isolated worktree

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "dictionary_version": "2026-10-23.2",
+  "dictionary_version": "2026-10-23.3",
   "vehicle": {
     "model": "Alfa Romeo Giulia (owner-reported)",
     "model_year": null,
@@ -223,6 +223,90 @@
         {
           "session": "20261011-190746Z",
           "frames": 14
+        }
+      ]
+    },
+    {
+      "role": "BH",
+      "can_id": "0x256",
+      "title": "DNA selector momentary direction",
+      "sources": [],
+      "exact_dlc": 4,
+      "signals": [
+        {
+          "name": "dna_selector_direction",
+          "parts": [
+            [
+              0,
+              5,
+              2
+            ]
+          ],
+          "unit": "raw",
+          "scale": 1,
+          "offset": 0,
+          "origin": "capture",
+          "enum": {
+            "0": "Released",
+            "1": "Toward A",
+            "2": "Toward D/Race"
+          },
+          "note": "Supported by all 36 directional pulses in three sessions: eight N-to-D transitions follow raw byte 0=40 by 108-112 ms on BH; reverse direction uses 20. These are transient inputs, not selected-mode codes. Raw 3 is unobserved and remains unnamed. Source ECU identity and successful replay remain unverified. See docs/research/20261023-dna-all-sessions.md."
+        }
+      ],
+      "note": "BH-only DLC 4. C1 0x256/DLC 8 is a different message. Other bytes must be preserved: October-10 also contains 00 80 00 00 without directional input. Resting period is about 250 ms, with event-driven extra reports. Five held inputs precede Race after about 1.2 s. No firmware handler/injection is added by this decoder.",
+      "observations": [
+        {
+          "session": "20260926-181818Z",
+          "frames": 926
+        },
+        {
+          "session": "20260926-182645Z",
+          "frames": 1010
+        },
+        {
+          "session": "20260927-185147Z",
+          "frames": 724
+        },
+        {
+          "session": "20260928-203436Z",
+          "frames": 1138
+        },
+        {
+          "session": "20260928-204100Z",
+          "frames": 1214
+        },
+        {
+          "session": "20260928-204607Z",
+          "frames": 1329
+        },
+        {
+          "session": "20261010-104325Z",
+          "frames": 3741
+        },
+        {
+          "session": "20261010-110504Z",
+          "frames": 26
+        },
+        {
+          "session": "20261010-110821Z",
+          "frames": 486
+        },
+        {
+          "session": "20261010-111025Z",
+          "frames": 5200
+        },
+        {
+          "session": "20261011-190746Z",
+          "frames": 759
+        },
+        {
+          "session": "20261011-191050Z",
+          "frames": 311
+        },
+        {
+          "session": "20261011-191202Z",
+          "frames": 223
         }
       ]
     },
@@ -3863,7 +3947,7 @@
           ]
         }
       ],
-      "note": "2026-10-23 re-analysis: all 2,099 C1/C2 samples in the two DNA captures have byte 7=00; none matches the firmware J1850 payload CRC. The aa81111 default-mode rewrite was inconsistent with this captured layout. Commit 80fdb13 preserves byte 7 in every mode rewrite and bounds queue retries; C1 corroborates the requested mode with fresh DNA and CRC-valid transmission reports over a five-second window. Vehicle acceptance remains open. See docs/research/20261023-dna-selector.md.",
+      "note": "2026-10-23 re-analysis: all 2,099 C1/C2 samples in the two DNA captures have byte 7=00; none matches the firmware J1850 payload CRC. The aa81111 default-mode rewrite was inconsistent with this captured layout. Commit 80fdb13 preserves byte 7 in every mode rewrite and bounds queue retries; C1 corroborates the requested mode with fresh DNA and CRC-valid transmission reports over a five-second window. Vehicle acceptance remains open. See docs/research/20261023-dna-selector.md. All-session re-analysis identifies an upstream momentary input on BH 0x256/DLC 4. The physical sender of this mode report remains a source-comment attribution; see docs/research/20261023-dna-all-sessions.md.",
       "observations": [
         {
           "session": "20260926-181705Z",
@@ -6636,7 +6720,7 @@
           ]
         }
       ],
-      "note": "2026-10-23 re-analysis: all 2,099 C1/C2 samples in the two DNA captures have byte 7=00; none matches the firmware J1850 payload CRC. The aa81111 default-mode rewrite was inconsistent with this captured layout. Commit 80fdb13 preserves byte 7 in every mode rewrite and bounds queue retries; C1 corroborates the requested mode with fresh DNA and CRC-valid transmission reports over a five-second window. Vehicle acceptance remains open. See docs/research/20261023-dna-selector.md.",
+      "note": "2026-10-23 re-analysis: all 2,099 C1/C2 samples in the two DNA captures have byte 7=00; none matches the firmware J1850 payload CRC. The aa81111 default-mode rewrite was inconsistent with this captured layout. Commit 80fdb13 preserves byte 7 in every mode rewrite and bounds queue retries; C1 corroborates the requested mode with fresh DNA and CRC-valid transmission reports over a five-second window. Vehicle acceptance remains open. See docs/research/20261023-dna-selector.md. All-session re-analysis identifies an upstream momentary input on BH 0x256/DLC 4. The physical sender of this mode report remains a source-comment attribution; see docs/research/20261023-dna-all-sessions.md.",
       "observations": [
         {
           "session": "20260926-181818Z",
@@ -9762,6 +9846,13 @@
       "topic": "DNA-RELATED-73C-001",
       "source": "docs/research/20261023-dna-selector.md",
       "status": "candidate: Byte 1 is 0x07 during all five Race episodes and 0x9F outside Race in the DNA captures. Existing ACC status decoding uses byte 7; no physical meaning or control-command role is assigned to byte 1."
+    },
+    {
+      "role": "BH",
+      "can_id": "0x256",
+      "topic": "DNA selector input and sender identity",
+      "source": "docs/research/20261023-dna-all-sessions.md",
+      "status": "Directional field is supported and decoded offline. Physical transmitter identity and acceptance of an injected short gesture remain unverified; see DNA-SELECTOR-BH-256-001."
     }
   ],
   "confidence_policy": {
@@ -14551,6 +14642,11 @@
       "topic": "Diagnostic tire pressure",
       "status": "source_catalog_shape_issue",
       "detail": "Parameter IDs 50..53 are not-implemented catalog entries: request PCI is 2 despite 22+two DID bytes, and their reply offset exceeds the single-frame decoder capacity. This dictionary records the discrepancy; no firmware behavior is changed."
+    },
+    {
+      "topic": "DNA input and reaction order",
+      "status": "supported_input_unverified_actuation",
+      "detail": "All 20 sessions inventoried (21,354,624 database frames). BH 0x256 direction pulses lead 36 selector-associated mode changes, including all eight N-to-D transitions. One ignition-related D-to-N reset lacks a selector pulse. No cross-bus clock order or physical transmitter identity is inferred. See docs/research/20261023-dna-all-sessions.md"
     }
   ],
   "frame_templates": [
@@ -20091,8 +20187,8 @@
       "role": "BH",
       "can_id": "0x256",
       "dlc": 4,
-      "title": null,
-      "coverage": "unmapped",
+      "title": "DNA selector momentary direction",
+      "coverage": "mapped",
       "frames": 17087,
       "sessions": [
         "20260926-181818Z",
