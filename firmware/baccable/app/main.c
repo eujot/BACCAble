@@ -1,3 +1,4 @@
+#include "features/dna_selector.h"
 #include "app/main.h"
 #include "usb_device.h"
 #include "stm32f0xx_it.h"
@@ -149,6 +150,7 @@ int main(void) {
         parking_process();
 #elif defined(BACCABLE_BH)
         body_process();
+        dna_selector_process();
         parking_process();
 #endif
 

@@ -12,7 +12,7 @@ static uint8_t setup_page_for(uint8_t slot) {
         const char *label = "OFF";
         static const char *const pedal[] = {"OFF", "Auto", "Bypass", "A", "N", "D", "R", "Hybrid", "Kids"};
         static const char *const acc[] = {"OFF", "RES", "+"};
-        static const char *const dna[] = {"OFF", "A", "D", "Race"};
+        static const char *const dna[] = {"N", "A", "D", "Race"};
         static const char *const drivetrain[] = {"Not set", "RWD", "Q4"};
         if (slot == 40) label = drivetrain[value];
         if (slot == 16) label = value ? "2.2 D" : settings_state.gasoline_v6 ? "2.9 V6" : "2.0 I4";
@@ -23,6 +23,7 @@ static uint8_t setup_page_for(uint8_t slot) {
         ui_render_value(expected, sizeof(expected), param->menu_text, label);
         if (slot == 38 && value) {
             char result[24];
+            if (value == 3 && !settings_state.ipc_my23_is_installed) label = "R";
             snprintf_(result, sizeof(result), "%s %s", label, drive_mode_check_status());
             ui_render_value(expected, sizeof(expected), "DNA", result);
         }
@@ -63,10 +64,14 @@ static void test_default_mode_result(void) {
     assert(!memcmp(dashboard_setup_screen, "DNA: D Waiting", 14));
     board_sync_restart();
     assert(!strcmp(drive_mode_check_status(), "Waiting"));
-    now += 5000;
+    now += 15000;
     board_sync_process();
     setup_render_page(page);
     assert(!memcmp(dashboard_setup_screen, "DNA: D No confirm", 17));
+    settings_state.default_drive_mode = 3;
+    setup_render_page(page);
+    assert(!memcmp(dashboard_setup_screen, "DNA: R No confirm", 17));
+    settings_state.default_drive_mode = 2;
     settings_state.ipc_my23_is_installed = true;
     assert(setup_present_my23());
     assert(!memcmp(screen_packet + 2, "Default mode", 12));
@@ -97,7 +102,7 @@ static void test_setup_ui(void) {
         setup_select_page(enum_page);
         setup_move_page(-1);
         setup_accept_draft();
-        assert(*(uint8_t *)param->value == (enum_slots[entry] == 16 ? 1 : enum_sizes[entry] - 1));
+        assert(*(uint8_t *)param->value == (enum_slots[entry] == 16 || enum_slots[entry] == 38 ? 1 : enum_sizes[entry] - 1));
 
     }
     settings_state.rotate_readings = 0;
@@ -278,11 +283,11 @@ static void test_ignition_sessions_without_sleep(void) {
     runtime_state.all_processors_wakeup_time = 0;
     uart_busy = false;
     board_sync_rearm();
-    for (unsigned i = 0; i < 9; ++i) board_sync_process();
+    for (unsigned i = 0; i < 10; ++i) board_sync_process();
     assert(last_driver_rearm == 0); /* Bus wake alone is not ignition. */
     for (unsigned session = 0; session < 3; ++session) {
         board_sync_ignition(2);
-        for (unsigned i = 0; i < 9; ++i) board_sync_process();
+        for (unsigned i = 0; i < 10; ++i) board_sync_process();
         assert(last_driver_rearm == 2); /* OFF cancels an unused startup window. */
         unsigned before = commands;
         board_sync_ignition(10); /* Crank does not start a separate session. */
@@ -290,8 +295,8 @@ static void test_ignition_sessions_without_sleep(void) {
         assert(commands == before);
         board_sync_ignition(8);
         board_sync_restart(); /* A USB/link resync must preserve the pending start. */
-        for (unsigned i = 0; i < 9; ++i) board_sync_process();
-        assert(last_driver_rearm == 1 && commands == before + 8);
+        for (unsigned i = 0; i < 10; ++i) board_sync_process();
+        assert(last_driver_rearm == 1 && commands == before + 9);
         before = commands;
         for (unsigned i = 0; i < 10; ++i) {
             board_sync_ignition(8); board_sync_ignition(10); board_sync_ignition(8);
@@ -299,12 +304,12 @@ static void test_ignition_sessions_without_sleep(void) {
         }
         assert(commands == before); /* No repeated action during RUN/crank/RUN. */
         board_sync_restart();
-        for (unsigned i = 0; i < 9; ++i) board_sync_process();
+        for (unsigned i = 0; i < 10; ++i) board_sync_process();
         assert(last_driver_rearm == 0);
     }
     /* Boot while already running is one startup too. */
     board_sync_rearm(); board_sync_ignition(8);
-    for (unsigned i = 0; i < 9; ++i) board_sync_process();
+    for (unsigned i = 0; i < 10; ++i) board_sync_process();
     assert(last_driver_rearm == 1);
 }
 

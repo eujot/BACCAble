@@ -4,6 +4,58 @@ Last updated: **2026-10-23** (dated verification boundaries below). This is the 
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
+## BH default drive-mode gesture, 2026-10-23
+
+Implementation branch `feat/bh-default-drive-mode`, based on research `5a6f43a`,
+isolated worktree `/private/tmp/baccable-bh-default-mode`. Default mode now uses
+the supported BH 0x256 input waveform instead of rewriting selected-mode
+reports. Choices cycle A/N/D/Race; flash slot 38 keeps 0=N/passive (formerly
+OFF), 1=A, 2=D, 3=Race. No record migration, new slot or memory-limit change.
+
+BH `features/dna_selector.c` requires a fresh neutral standard 0x256/DLC 4 and
+fresh actual 0x46C mode. It copies unrelated fields, sends 20 toward A or 40
+toward D/Race, and releases the directional field after 200 ms. Reaching Race
+requires D first, then a 1,800 ms hold refreshed every 250 ms. Each of at most
+three adjacent steps waits for its factory mode and a new neutral report after
+release. Unaccepted selection, unknown/stale reports and physical input stop
+further synthetic selection. At ten seconds no new press or hold refresh can
+start; a pending release still retries until CAN accepts it. OFF/save finishes
+a virtual release; physical input hands ownership to the driver. A failure
+leaves the actual mode, including an intermediate mode before Race.
+
+Removed Default mode overrides from C1/C2 0x384 and BH 0x46C/0x25A, plus obsolete
+RAM fields and default-mode helper functions. Existing ESC/TC customization uses
+actual observed mode. C1 sends legacy driver-aids mode=0 to keep older peers
+from rewriting reports, preserving the C2 LKA command. New BH command 0x4A
+carries target/action/token; C1 result 0x4B carries token/outcome. Completed
+outcomes can be resent on resync/duplicate request without replaying gestures.
+C1 waits up to 15 s for BH, then starts its existing five-second sustained
+DNA + CRC-valid transmission corroboration only after matching BH completion.
+Stale tokens, failure and missing BH cannot confirm. Update C1/BH together.
+
+Both guides and MENU_UX document N/passive migration, gestures, failure,
+intermediate modes, result checking and matched firmware. Legacy results use
+R for Race so the complete status fits; editors retain the Race label.
+
+Validation: complete native Apple Clang ASan/UBSan host suite passed. New BH
+fixture covers all 12 initial-position/active-target combinations, passive N,
+exact 200/1,800 ms press timing and 250 ms hold refresh, preserved unrelated
+bytes, malformed frames, stale/silent input, queue/release/UART failures,
+cancellation, resync/duplicate requests, no response and tick wrap. Existing
+C2 LKA and ESC/TC behavior checks pass. All 16 firmware board/display profiles
+built with full Arm GNU 15.2.Rel1, VERSION=bh-dna; cppcheck passed all flavors.
+Largest C1 flash 102,236/102,400 bytes (164 spare), data+bss 15,700/16,384;
+pinned CI/release identity sizing remains required. Dictionary source provenance
+and the passive input description are refreshed in the follow-up evidence
+commit; no captured bit layout changes.
+
+No push/PR/merge/release/flash. Hardware acceptance is UNKNOWN: test A/D/Race
+from an actual fresh startup, automatic release, observed factory/transmission
+mode persistence, failure indication and later physical selector use. Source
+captures support the input waveform but do not prove injected acceptance. Main
+checkout capture/release folders are untouched; implementation and handoff are
+committed in this isolated branch.
+
 ## DNA selector input identified across all sessions, 2026-10-23
 
 Analysis branch `research/dna-all-sessions`, based on `66b77fe`, isolated at

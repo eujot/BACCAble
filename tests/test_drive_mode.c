@@ -60,15 +60,11 @@ static void feed_mode(uint8_t raw) {
 }
 static void arm(void) {
     memset(&chassis_state, 0, sizeof(chassis_state));
-    chassis_state.default_mode_override = 1;
-    chassis_state.default_mode_baseline = 0xff;
-    chassis_state.default_mode_sent = 0;
     chassis_state.lane_assist_pending = 0;
     telemetry_state.drive_mode = 0;
     forwards = 0;
     sends = 0;
     now = 100;
-    chassis_state.default_mode_started_at = now;
 #if defined(BACCABLE_C1)
     drive_mode_check_start(1);
 #endif
@@ -89,11 +85,11 @@ static void check_confirmation(void) {
         arm();
         if (scenario == 6) {
             now = UINT32_MAX - 1000;
-            chassis_state.default_mode_started_at = now;
             drive_mode_check_start(1);
         }
         uint32_t start = now;
         feed_mode(0);
+        drive_mode_check_reply(drive_mode_check_token(), 1);
         assert(!strcmp(drive_mode_check_status(), "Waiting"));
         for (unsigned elapsed = 250; elapsed <= 5000; elapsed += 250) {
             now = start + elapsed;
@@ -110,125 +106,49 @@ static void check_confirmation(void) {
         const char *expected = scenario == 0 || scenario == 6 ? "Confirmed" :
                                scenario == 5 ? "Next start" : "No confirm";
         assert(!strcmp(drive_mode_check_status(), expected));
-        assert(forwards == 1); /* Never fight the factory mode with repeated D. */
+        assert(forwards == 0); /* Only BH may generate a selector gesture. */
     }
 
     arm();
-    rejected = 1;
-    feed_mode(0);
+    uint8_t old_token = drive_mode_check_token();
+    drive_mode_check_start(1);
+    drive_mode_check_reply(old_token, 1);
     now += 5000;
     drive_mode_check_process();
-    assert(!strcmp(drive_mode_check_status(), "No confirm"));
-    feed_mode(0);
-    assert(forwards == 0); /* No late injection after the queue deadline. */
-
+    assert(!strcmp(drive_mode_check_status(), "Waiting")); /* Ignore stale BH results. */
+    now += 10000;
+    drive_mode_check_process();
+    assert(!strcmp(drive_mode_check_status(), "No confirm")); /* Missing BH. */
     arm();
-    feed_mode(0);
+    drive_mode_check_reply(drive_mode_check_token(), 0);
+    assert(!strcmp(drive_mode_check_status(), "No confirm"));
+    arm();
+    drive_mode_check_reply(drive_mode_check_token(), 1);
     now += 5000;
     drive_mode_check_process();
-    assert(!strcmp(drive_mode_check_status(), "No confirm")); /* Silent bus. */
+    assert(!strcmp(drive_mode_check_status(), "No confirm")); /* Silent CAN. */
+
 }
 #endif
 int main(void) {
-    static const uint8_t codes[3][3] = {{0x10,0x04,0x10}, {0x08,0x02,0x20}, {0x30,0x0c,0x04}};
-    for (unsigned mode = 1; mode <= 3; ++mode) {
+    /* Default settings never rewrite the selected-mode reports on any board. */
+    for (unsigned mode = 0; mode <= 3; ++mode) {
         settings_state.default_drive_mode = mode;
-        for (unsigned enc = 0; enc < 3; ++enc)
-            assert(drive_mode_default_field(enc) == codes[mode-1][enc]);
+        arm();
+        feed_mode(0);
+        feed_mode(2);
+        feed_mode(4);
+        assert(forwards == 0);
     }
-#if defined(BACCABLE_C1) || defined(BACCABLE_C2) || defined(BACCABLE_BH)
-    settings_state.default_drive_mode = 2;
+    /* Existing ESC/TC customization still uses the actual factory selection. */
     arm();
+    chassis_state.stability_inverted = 1;
     feed_mode(0);
     assert(forwards == 1);
 #if defined(BACCABLE_BH)
-    assert((forwarded[7] & 0x1f) == 2);
+    assert((forwarded[7] & 0x1f) == 12);
 #else
-    assert(forwarded[1] == 0x09);
-    assert(forwarded[7] == 0); /* 0x384 has no demonstrated J1850 payload CRC. */
-#endif
-    feed_mode(0);
-    assert(forwards == 1); /* No repeated default while body still reports N. */
-    feed_mode(4);
-    assert(forwards == 1 && !chassis_state.default_mode_override);
-    feed_mode(0);
-    assert(forwards == 1);
-
-    /* A full CAN queue postpones the only attempt until a later report. */
-    arm();
-    rejected = 1;
-    feed_mode(0);
-    assert(forwards == 0 && chassis_state.default_mode_sent == 0);
-    feed_mode(0);
-    feed_mode(0);
-    assert(forwards == 1 && chassis_state.default_mode_sent);
-
-    /* A baseline must be sampled even while ESC/TC owns the outgoing mode. */
-    arm();
-    chassis_state.stability_inverted = 1;
-    feed_mode(0);
-    assert(chassis_state.default_mode_baseline == 0);
-    feed_mode(4);
-    assert(!chassis_state.default_mode_override);
-    unsigned before = forwards;
-    feed_mode(0);
-    assert(forwards == before);
-
-#if defined(BACCABLE_C2)
-    arm();
-    settings_state.default_drive_mode = 3;
-    feed_mode(0);
-    chassis_state.stability_inverted = 1;
-    feed_mode(0);
-    assert((forwarded[1] & 0x7c) == 0x08); /* Invert effective Race to Dynamic. */
-    CAN_RxHeaderTypeDef stability_header = {.DLC = 8};
-    uint8_t stability[8] = {0};
-    unsigned previous = forwards;
-    vehicle_handle_stability_status(&stability_header, stability);
-    assert(forwards == previous); /* Do not synthesize disabled-control flags. */
-#endif
-    arm();
-    settings_state.default_drive_mode = 255;
-    feed_mode(0);
-    assert(forwards == 0);
-#endif
-#if defined(BACCABLE_C1) || defined(BACCABLE_C2)
-    /* Change only the mode bits; preserve unrelated fields and the final byte. */
-    settings_state.default_drive_mode = 2;
-    arm();
-    CAN_RxHeaderTypeDef mode_header = {.StdId = 0x384, .DLC = 8};
-    uint8_t original[] = {8, 0x81, 0x8a, 0x80, 0x12, 4, 0x34, 0x5a};
-    uint8_t copy[8];
-    memcpy(copy, original, sizeof(copy));
-    mode_header.IDE = CAN_ID_EXT;
-    vehicle_handle_drive_mode(&mode_header, copy);
-    mode_header.IDE = CAN_ID_STD;
-    mode_header.RTR = CAN_RTR_REMOTE;
-    vehicle_handle_drive_mode(&mode_header, copy);
-    mode_header.RTR = CAN_RTR_DATA;
-    mode_header.DLC = 7;
-    vehicle_handle_drive_mode(&mode_header, copy);
-    assert(forwards == 0);
-    mode_header.DLC = 8;
-    vehicle_handle_drive_mode(&mode_header, copy);
-    original[1] = 0x89;
-    assert(forwards == 1 && !memcmp(original, forwarded, sizeof(original)));
-#endif
-#if defined(BACCABLE_BH)
-    arm();
-    settings_state.default_drive_mode = 2;
-    CAN_RxHeaderTypeDef ipc_header = {.StdId = 0x25a, .DLC = 4};
-    uint8_t ipc[8] = {0xc3,1,2,3,4,5,6,7};
-    vehicle_handle_drive_style_display(&ipc_header, ipc);
-    assert(forwards == 1 && forwarded[0] == 0xa3 && forwarded[3] == 3);
-    vehicle_handle_drive_style_display(&ipc_header, ipc);
-    assert(forwards == 1); /* One 0x25A injection in this session. */
-    feed_mode(0);
-    feed_mode(0);
-    assert(forwards == 2); /* 0x46C is a separate one-time frame. */
-    settings_state.default_drive_mode = 255;
-    vehicle_handle_drive_style_display(&ipc_header, ipc);
-    assert(forwards == 2);
+    assert((forwarded[1] & 0x7c) == 0x30 && forwarded[7] == 0);
 #endif
 #if defined(BACCABLE_C2)
     /* Recorded stalk gesture: press, release, press, release at 100 ms intervals. */

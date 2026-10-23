@@ -52,7 +52,7 @@ typedef struct {
 
     uint8_t has_function_enabled;
 
-    /* Default drive mode forced at start-up (0=off, 1=AllWeather, 2=Dynamic, 3=Race). */
+    /* Startup selector target: 0=N/passive, 1=A, 2=D, 3=Race (stable flash encoding). */
     uint8_t default_drive_mode;
 
     /* Force the lane-keeping assist off while set. */

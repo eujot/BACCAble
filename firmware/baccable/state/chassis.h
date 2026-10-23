@@ -39,18 +39,6 @@ typedef struct {
 
     uint8_t stability_inverted;
 
-    /* 1 while the start-up mode may still be sent; 0 after a manual change. */
-    uint8_t default_mode_override;
-
-    /* Each bus frame gets at most one successful start-up injection. */
-    uint8_t default_mode_sent;
-
-    /* Raw drive-mode field seen when the override was armed; 0xFF = not sampled yet. */
-    uint8_t default_mode_baseline;
-
-    /* Bound queue retries to five seconds after this board is armed. */
-    uint32_t default_mode_started_at;
-
     /* Start-up LKA double-click state; see LANE_ASSIST_* below. */
     uint8_t lane_assist_pending;
 #if defined(BACCABLE_C2)

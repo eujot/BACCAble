@@ -43,6 +43,7 @@ static bool usb_needs_apply;
 static uint16_t fail_type;
 static uint8_t last_command;
 static uint8_t last_ipc_pace, last_ipc_method, last_driver_rearm;
+static uint8_t last_dna_action, last_dna_token;
 static bool uart_busy;
 static uint8_t setup_page_for(uint8_t slot);
 uint32_t HAL_GetTick(void) { return now; }
@@ -63,6 +64,10 @@ uint8_t board_uart_send(const uint8_t *data, size_t size) {
         if (last_command == C2_Bh_cmdSetDriverAids) {
             assert(size == 5);
             last_driver_rearm = data[4];
+        }
+        if (data[0] == BhBusID && last_command == BH_CMD_DNA_DEFAULT) {
+            assert(size == 5 && data[2] == settings_state.default_drive_mode);
+            last_dna_action = data[3]; last_dna_token = data[4];
         }
         if (data[0] == BhBusID && last_command == BH_CMD_IPC_OPTIONS) {
             assert(size == 4);
@@ -1297,7 +1302,7 @@ static void test_board_sync_retry(void) {
     commands = 0;
     board_sync_rearm();
     board_sync_ignition(8);
-    for (unsigned option = 0; option < 8; ++option) {
+    for (unsigned option = 0; option < 9; ++option) {
         uart_busy = true;
         board_sync_process();
         assert(commands == option);
@@ -1308,22 +1313,21 @@ static void test_board_sync_retry(void) {
     board_sync_process();
     assert(!runtime_state.instruct_slave_boards_trigger_enabled);
     board_sync_process();
-    assert(commands == 8 && last_driver_rearm == 1);
-    chassis_state.default_mode_override = 0;
-    chassis_state.default_mode_baseline = 0x10;
+    assert(commands == 9 && last_driver_rearm == 1 && last_dna_action == 1);
+    assert(last_dna_token == drive_mode_check_token());
     board_sync_restart();
-    for (unsigned i = 0; i < 9; ++i) board_sync_process();
-    assert(last_driver_rearm == 0 && !chassis_state.default_mode_override);
-    assert(chassis_state.default_mode_baseline == 0x10);
+    for (unsigned i = 0; i < 10; ++i) board_sync_process();
+    assert(last_driver_rearm == 0 && last_dna_action == 0);
+
     board_sync_rearm();
     board_sync_ignition(8);
-    assert(chassis_state.default_mode_override && chassis_state.default_mode_baseline == 0xff);
+    assert(!strcmp(drive_mode_check_status(), settings_state.default_drive_mode ? "Waiting" : "Next start"));
     board_sync_restart(); /* Preserve an undelivered ignition event across transport resync. */
-    for (unsigned i = 0; i < 9; ++i) board_sync_process();
+    for (unsigned i = 0; i < 10; ++i) board_sync_process();
     assert(last_driver_rearm == 1);
     board_sync_saved();
-    assert(!chassis_state.default_mode_override);
-    for (unsigned i = 0; i < 9; ++i) board_sync_process();
+    assert(!strcmp(drive_mode_check_status(), "Next start"));
+    for (unsigned i = 0; i < 10; ++i) board_sync_process();
     assert(last_driver_rearm == 2);
 }
 

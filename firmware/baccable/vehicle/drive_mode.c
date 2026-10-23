@@ -1,55 +1,6 @@
 #include "vehicle/drive_mode.h"
 #include "features/drive_mode_check.h"
 
-/* Raw field values for the start-up default mode, indexed by [encoding][mode]:
- * mode 0=off, 1=AllWeather, 2=Dynamic, 3=Race. */
-static const uint8_t DEFAULT_MODE_ENCODING[3][4] = {
-    {0x00, 0x10, 0x08, 0x30}, /* 0x384 byte 1 bits 6..2 */
-    {0x00, 0x04, 0x02, 0x0C}, /* 0x46C byte 7 bits 4..0 */
-    {0x00, 0x10, 0x20, 0x04}, /* 0x25A byte 0 bits 6..2 */
-};
-
-/* Raw field value that encodes the configured default mode for one frame layout. */
-uint8_t drive_mode_default_field(uint8_t encoding) {
-    uint8_t mode = settings_state.default_drive_mode;
-    if (encoding > 2 || mode == 0 || mode > 3)
-        return 0;
-    return DEFAULT_MODE_ENCODING[encoding][mode];
-}
-
-/* Stop on a real change in the body's mode, not on our own extra CAN frame. */
-uint8_t drive_mode_default_should_apply(uint8_t raw_mode) {
-    if (settings_state.default_drive_mode == 0 || settings_state.default_drive_mode > 3 ||
-        !chassis_state.default_mode_override)
-        return 0;
-    if (chassis_state.default_mode_baseline == 0xFF) {
-        chassis_state.default_mode_baseline = raw_mode; /* first sample after arming */
-        return 1;
-    }
-    if (raw_mode != chassis_state.default_mode_baseline) {
-        chassis_state.default_mode_override = 0; /* the driver changed it on purpose */
-        return 0;
-    }
-    return 1;
-}
-
-uint8_t drive_mode_default_pending(uint8_t encoding) {
-    if (currentTime - chassis_state.default_mode_started_at >= 5000U) {
-        chassis_state.default_mode_override = 0;
-        return 0;
-    }
-    return encoding <= DRIVE_MODE_ENC_IPC &&
-           !(chassis_state.default_mode_sent & (1U << encoding));
-}
-
-void drive_mode_default_queued(uint8_t encoding) {
-    if (encoding <= DRIVE_MODE_ENC_IPC)
-        chassis_state.default_mode_sent |= 1U << encoding;
-#if defined(BACCABLE_C1)
-    if (encoding == DRIVE_MODE_ENC_CAN) drive_mode_check_queued();
-#endif
-}
-
 /* Update the current driving mode and its related feature behavior. */
 void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->StdId != 0x384 || rx_header->DLC != 8 ||
@@ -67,7 +18,6 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
     // 0x4=AllWeather [shifted by 2 bits becomes 0x10], 0xC=race [shifted by 2 bits becomes 0x30]
     telemetry_state.drive_mode =
         frame_data[1] & 0x7C; // 7C is the mask from bit 6 to 2 (we avoid bit shift to save cpu loops)
-    uint8_t apply_default = drive_mode_default_should_apply(telemetry_state.drive_mode);
     if (chassis_state.stability_inverted) {
 
         if (telemetry_state.drive_mode != 0x30) { // if not in race
@@ -78,15 +28,6 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
 
         /* Captured 0x384 has no J1850 payload CRC; preserve its final byte. */
         can_forward(rx_header, frame_data);                         // transmit the modified packet
-    } else if (apply_default && drive_mode_default_pending(DRIVE_MODE_ENC_CAN)) {
-        uint8_t default_mode = drive_mode_default_field(DRIVE_MODE_ENC_CAN);
-        if ((frame_data[1] & 0x7C) != default_mode) {
-            frame_data[1] = (frame_data[1] & ~0x7C) | default_mode;
-            if (can_forward(rx_header, frame_data) == HAL_OK)
-                drive_mode_default_queued(DRIVE_MODE_ENC_CAN);
-        } else {
-            drive_mode_default_queued(DRIVE_MODE_ENC_CAN);
-        }
     }
 
 #endif
@@ -160,12 +101,10 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
     // 0x4=AllWeather [shifted by 2 bits becomes 0x10], 0xC=race [shifted by 2 bits becomes 0x30]
     telemetry_state.drive_mode =
         frame_data[1] & 0x7C; // 7C is the mask from bit 6 to 2 (we avoid bit shift to save cpu loops)
-    uint8_t apply_default = drive_mode_default_should_apply(telemetry_state.drive_mode);
     if (chassis_state.stability_inverted) {
 
-        uint8_t effective_mode = apply_default ? drive_mode_default_field(DRIVE_MODE_ENC_CAN)
-                                               : telemetry_state.drive_mode;
-        if (effective_mode == 0x30) { // race, including the configured start-up mode
+        uint8_t effective_mode = telemetry_state.drive_mode;
+        if (effective_mode == 0x30) { // observed Race mode
 
             // ESC and TC
             frame_data[1] =
@@ -179,15 +118,6 @@ void vehicle_handle_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
 
         /* Preserve the observed 0x384 layout, including its final byte. */
         can_forward(rx_header, frame_data);                         // transmit the modified packet
-    } else if (apply_default && drive_mode_default_pending(DRIVE_MODE_ENC_CAN)) {
-        uint8_t default_mode = drive_mode_default_field(DRIVE_MODE_ENC_CAN);
-        if ((frame_data[1] & 0x7C) != default_mode) {
-            frame_data[1] = (frame_data[1] & ~0x7C) | default_mode;
-            if (can_forward(rx_header, frame_data) == HAL_OK)
-                drive_mode_default_queued(DRIVE_MODE_ENC_CAN);
-        } else {
-            drive_mode_default_queued(DRIVE_MODE_ENC_CAN);
-        }
     }
 #endif
 
@@ -208,10 +138,6 @@ void driver_aids_configure(uint8_t mode, uint8_t disable_lka, uint8_t action) {
     settings_state.lane_assist_disabled = disable_lka ? 1 : 0;
     /* Transport resync preserves the session; a save ends its start-up window. */
     if (action == 1) {
-        chassis_state.default_mode_override = 1;
-        chassis_state.default_mode_sent = 0;
-        chassis_state.default_mode_baseline = 0xFF;
-        chassis_state.default_mode_started_at = currentTime;
 #if defined(BACCABLE_C2)
         if (chassis_state.lane_assist_pending < LANE_ASSIST_RELEASE_FIRST_PENDING) {
             chassis_state.lane_assist_step_at = currentTime;
@@ -221,7 +147,6 @@ void driver_aids_configure(uint8_t mode, uint8_t disable_lka, uint8_t action) {
         }
 #endif
     } else if (action == 2) {
-        chassis_state.default_mode_override = 0;
 #if defined(BACCABLE_C2)
         if (chassis_state.lane_assist_pending < LANE_ASSIST_RELEASE_FIRST_PENDING)
             chassis_state.lane_assist_pending = LANE_ASSIST_IDLE;

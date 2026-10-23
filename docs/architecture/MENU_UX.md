@@ -382,31 +382,49 @@ the selected IPC source. BH transmits each code point as a 16-bit character.
 This is a visual comparison pattern only: it does not change the oil bar's
 rendering or imply that every IPC font supports the glyphs.
 
-## Default drive-mode result
+## Default drive-mode selection and result
 
-`features/drive_mode_check.c` observes unmodified C1 `0x384` and CRC-valid
-`0x5A8` reports. Startup arming starts a five-second queue deadline; successful
-C1 queue acceptance starts a separate five-second observation window. Only
-fresh matching DNA samples spanning at least 2 s (at least four reports, no gap
-above 600 ms) and transmission samples spanning at least 1 s (at least two,
-no gap above 1,500 ms) confirm the result at the end of that window. A mismatch
-or excessive gap restarts that source's matching run. Silence and queue failure
-expire without further accepted injections. Each auxiliary board also bounds
-queue retries to five seconds from its own startup command. This is received
-state corroboration, not a UDS acknowledgement or proof of all ECUs.
+Settings → Features → `Default mode` cycles A / N / D / Race. Saved slot 38
+retains 0=N (formerly OFF), 1=A, 2=D, 3=Race, so old records need no migration.
+N leaves the factory selection alone. The draft stays separate until save;
+saving changes the next start's preference, not the current vehicle mode.
 
-Features → `Default mode` retains its OFF/A/D/Race draft and saved encoding.
-Browsing a non-OFF preference displays the target and `Next start`, `Waiting`,
-`Confirmed` or `No confirm`. MY23 uses title/result lines; legacy uses the
-compact `DNA` label. Results remain until ignition OFF, sleep or settings save;
-transport resync preserves them. A failed check leaves the preference for the
-next start and does not trigger a continuous override. Editing still changes
-only the draft. Both user guides describe these states.
+`features/dna_selector.c` runs only on BH and uses fresh standard data frames
+`0x256`/DLC 4 and actual `0x46C` mode reports. It preserves every unrelated
+input bit and changes only byte 0 bits 6:5: 20 toward A, 40 toward D/Race,
+00 released (hex). Short deflections last 200 ms. D-to-Race holds 40 for
+1,800 ms, repeating the held input every 250 ms, then releases. It takes up to
+three adjacent steps in A/N/D/Race order, waiting for each observed intermediate
+mode and a new neutral input after release before continuing. No observed step
+within 1.5 s after release ends the attempt. No new press or hold renewal is allowed after ten seconds; pending release
+continues until the CAN queue accepts it, including after timeout/save/OFF.
+Physical non-neutral input ends synthetic selection and hands control to the
+driver. Unknown modes, stale input/mode reports and queue failures cannot
+produce success. Only a pending queue offer can retry; no accepted gesture is
+repeated merely because the car failed to change mode.
 
-For the captured vehicle layout, all `0x384` mode rewrite paths preserve byte 7
-instead of inserting a J1850 CRC. `0x5A8` CRC calculation and Race rewriting
-remain intact; verification observes that payload before any local mutation.
-Standard data/length guards reject malformed reports before changing state.
-The owner's prior firmware briefly displayed D then returned to N. The CRC
-correction and result checking do not establish a persistent control command;
-vehicle acceptance remains required.
+C1 sends legacy driver-aids preferences with mode=0, disabling the former
+selected-mode-report rewrite on older peers while preserving the C2 LKA protocol.
+A separate BH command `BH_CMD_DNA_DEFAULT` (0x4A) carries target, action
+(0=resync, 1=start, 2=cancel) and request token. The BH reply
+`C1_CMD_DNA_RESULT` (0x4B) carries token and outcome (0=failed, 1=gesture complete
+with observed target). Tokens reject results from earlier ignition/save events;
+duplicate start requests and transport resync cannot replay a completed gesture.
+Both new commands retain the existing UART framing/checksum. Update C1/BH together.
+
+`features/drive_mode_check.c` waits up to 15 s for BH. A matching completion
+starts a separate five-second observation window; a failure or missing BH ends
+with No confirm. At the window's end, fresh unmodified C1 `0x384` reports must
+match for at least 2 s (at least four samples, gaps at most 600 ms), and CRC-valid
+`0x5A8` for at least 1 s (at least two samples, gaps at most 1,500 ms).
+Disagreement or gaps reset the matching run. This is corroboration of received
+state, not an explicit ECU acknowledgement or proof of every subsystem.
+
+Browsing a non-N preference displays target and `Next start`, `Waiting`,
+`Confirmed` or `No confirm`. MY23 uses title/result lines; legacy uses compact
+`DNA` and R for Race to retain the complete status. Results remain until OFF, sleep or settings save; resync preserves them.
+A failed check leaves the preference for the next start. The preference never
+rewrites `0x384`, `0x46C`, `0x25A` or transmission status. Existing ESC/TC display
+customization still uses actual observed mode and preserves 0x384 byte 7;
+0x5A8 retains its genuine J1850 CRC. Input replay acceptance remains a vehicle
+check, based on the [capture evidence](../../baccable_lab/docs/research/20261023-dna-all-sessions.md).

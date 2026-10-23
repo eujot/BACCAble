@@ -7,6 +7,7 @@ SOURCES := test_core.c $(FIRMWARE)/protocol/slcan_codec.c $(FIRMWARE)/diagnostic
  $(FIRMWARE)/storage/record_store.c
 
 test: build/test_core build/test_transport build/test_catalog build/test_menu build/test_menu_large build/test_uart_menu build/test_input_repeat build/test_engine_status build/test_exhaust labels
+	./build/test_dna_selector
 	./build/test_fatfs
 	./build/test_core
 	./build/test_transport
@@ -84,7 +85,7 @@ build/test_exhaust: test_exhaust.c $(FIRMWARE)/features/exhaust.c $(HEADERS) Mak
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC1_FLAVOR=1 test_exhaust.c \
 		$(FIRMWARE)/features/exhaust.c -lm -o $@
 
-DRIVE_MODE_SOURCES := test_drive_mode.c $(FIRMWARE)/vehicle/mirrors_frames.c $(FIRMWARE)/features/drive_mode_check.c $(FIRMWARE)/vehicle/drive_mode.c $(FIRMWARE)/vehicle/display_frames.c $(FIRMWARE)/protocol/checksum.c
+DRIVE_MODE_SOURCES := test_drive_mode.c $(FIRMWARE)/features/dna_selector.c $(FIRMWARE)/vehicle/mirrors_frames.c $(FIRMWARE)/features/drive_mode_check.c $(FIRMWARE)/vehicle/drive_mode.c $(FIRMWARE)/vehicle/display_frames.c $(FIRMWARE)/protocol/checksum.c
 build/test_drive_mode: $(DRIVE_MODE_SOURCES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC1_FLAVOR=1 -DGIT_VERSION=\"test\" -Wno-unused-parameter $(DRIVE_MODE_SOURCES) -o $@
@@ -189,3 +190,10 @@ build/test_fatfs: test_fatfs.c $(FIRMWARE)/third_party/fatfs/ff.c $(FIRMWARE)/th
 	@mkdir -p build
 	$(CC) $(CPPFLAGS) $(CFLAGS) -Wno-unused-function test_fatfs.c $(FIRMWARE)/third_party/fatfs/ff.c -o $@
 test: build/test_fatfs
+
+
+build/test_dna_selector: test_dna_selector.c $(FIRMWARE)/features/dna_selector.c $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DBH_FLAVOR=1 $< $(FIRMWARE)/features/dna_selector.c -o $@
+
+test: build/test_dna_selector

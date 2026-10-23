@@ -296,7 +296,7 @@ static const char *setup_value_label(const SetupParam *param, uint16_t value, ui
         static const char *const modes[] = {"OFF", "Auto", "Bypass", "A", "N", "D", "R", "Hybrid", "Kids"};
         label = modes[value <= 8 ? value : 0];
     } else if (param->flash_index == 38) {
-        static const char *const modes[] = {"OFF", "A", "D", "Race"};
+        static const char *const modes[] = {"N", "A", "D", "Race"};
         label = modes[value <= 3 ? value : 0];
     } else if (param->flash_index == 24) {
         static const char *const modes[] = {"OFF", "RES", "+"};
@@ -310,9 +310,11 @@ static const char *setup_value_label(const SetupParam *param, uint16_t value, ui
 
 /* Show the saved target and the result of the current ignition's mode check. */
 static void setup_default_mode_result(char result[24]) {
-    static const char *const modes[] = {"OFF", "A", "D", "Race"};
+    static const char *const modes[] = {"N", "A", "D", "Race"};
     unsigned mode = settings_state.default_drive_mode;
-    snprintf_(result, 24, "%s %s", modes[mode <= 3 ? mode : 0], drive_mode_check_status());
+    const char *label = modes[mode <= 3 ? mode : 0];
+    if (mode == 3 && !settings_state.ipc_my23_is_installed) label = "R";
+    snprintf_(result, 24, "%s %s", label, drive_mode_check_status());
 }
 
 /* Show the selected setting and its current value. */
@@ -457,6 +459,12 @@ static void stage_cycle(int direction) {
         mode = (mode + (step ? 1 : 2)) % 3;
         stage_value = mode == 2;
         stage_extra = mode == 1 || (mode == 2 && (stage_original ? stage_original_extra : 1));
+    } else if (staged->flash_index == 38) {
+        static const uint8_t order[] = {1, 0, 2, 3}; /* A, N, D, Race; keep saved encodings. */
+        unsigned position = 0;
+        while (position < 3 && order[position] != stage_value) ++position;
+        position = (position + (step ? 1 : 3)) % 4;
+        stage_value = order[position];
     } else if (staged->entry_type != UI_ENTRY_NUMBER) {
         unsigned choices = staged->max_value + 1;
         stage_value = (stage_value + choices + (step ? 1 : choices - 1)) % choices;

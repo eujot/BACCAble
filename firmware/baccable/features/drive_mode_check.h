@@ -5,8 +5,10 @@
 
 /* Start a new ignition check, or clear it after OFF, sleep or a settings save. */
 void drive_mode_check_start(uint8_t enabled);
-/* Begin checking received reports after the C1 request reaches the CAN queue. */
-void drive_mode_check_queued(void);
+/* Begin observation only after BH finishes its gesture for this startup token. */
+void drive_mode_check_reply(uint8_t token, uint8_t result);
+/* Identify the current startup request without persisting another setting. */
+uint8_t drive_mode_check_token(void);
 /* Observe an unmodified DNA (0) or transmission (1) mode report. */
 void drive_mode_check_observe(uint8_t source, uint8_t value);
 /* Finish the bounded check even when no further CAN reports arrive. */

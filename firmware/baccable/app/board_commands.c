@@ -1,5 +1,7 @@
 #include "app/main.h"
 #include "features/body.h"
+#include "features/dna_selector.h"
+#include "features/drive_mode_check.h"
 #include "vehicle/drive_mode.h"
 #include "features/menu.h"
 #include "features/parking.h"
@@ -32,6 +34,9 @@ void board_commands_dispatch(const uint8_t *message) {
 #if defined(BACCABLE_C1)
         menu_action_reply(message[1]);
         switch (message[1]) {
+        case C1_CMD_DNA_RESULT:
+            drive_mode_check_reply(message[2], message[3]);
+            break;
         case C1_CMD_USB_STATE:
             usb_modes_ack(message[2], message + 3);
             break;
@@ -133,6 +138,9 @@ void board_commands_dispatch(const uint8_t *message) {
     case BhBusID: // message directed to baccable connected to BH bus
 #if defined(BACCABLE_BH)
         switch (message[1]) {
+        case BH_CMD_DNA_DEFAULT:
+            dna_selector_configure(message[2], message[3], message[4]);
+            break;
         case BH_CMD_IPC_OPTIONS:
             body_display_options(message[2], message[3]);
             break;
