@@ -298,6 +298,11 @@ static const char *setup_value_label(const SetupParam *param, uint16_t value, ui
     } else if (param->flash_index == 38) {
         static const char *const modes[] = {"N", "A", "D", "Race"};
         label = modes[value <= 3 ? value : 0];
+    } else if (param->flash_index == 36) {
+        if (!value) label = "Stiff";
+        else if (settings_state.default_drive_mode == 2) label = "Soft";
+        else if (settings_state.default_drive_mode == 3) label = "Mid";
+        else label = "Soft / Mid";
     } else if (param->flash_index == 24) {
         static const char *const modes[] = {"OFF", "RES", "+"};
         label = modes[value <= 2 ? value : 0];

@@ -53,6 +53,7 @@
     #define SETUP_FLASH_PDC_MUTE 31
     #define SETUP_FLASH_REVERSE_AUDIO 32
     #define SETUP_FLASH_ROTATE 33
+    #define SETUP_FLASH_DEFAULT_SUSPENSION 36
     #define SETUP_FLASH_DEFAULT_MODE 38
     #define SETUP_FLASH_LANE_ASSIST 39
 
@@ -323,6 +324,8 @@ const SetupParam setup_params[] = {
                         settings_state.has_function_enabled),
     SETUP_ENUM8(SETUP_FLASH_DEFAULT_MODE, "Default mode", 3, DEFAULT_DEFAULT_MODE,
                         settings_state.default_drive_mode, NULL),
+    SETUP_ENUM8(SETUP_FLASH_DEFAULT_SUSPENSION, "Suspension", 1, 0,
+                        settings_state.default_suspension_softer, NULL),
     SETUP_TOGGLE(SETUP_FLASH_LANE_ASSIST, "LKA", DEFAULT_LANE_ASSIST,
                         settings_state.lane_assist_disabled),
     SETUP_TOGGLE(SETUP_FLASH_QV_EXHAUST_FLAP, "QV exhaust", DEFAULT_QV_EXHAUST_FLAP,

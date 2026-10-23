@@ -14,6 +14,7 @@ void vehicle_handle_engine_status(const CAN_RxHeaderTypeDef *rx_header, uint8_t 
     if (rx_header->DLC >= 2) {
         telemetry_state.current_rpm_speed =
             (frame_data[0] * 256 + (frame_data[1] & ~0x3)) / 4; // extract rpm speed
+        telemetry_state.current_rpm_updated_at = currentTime;
     }
 #endif
 #if defined(BACCABLE_C2)

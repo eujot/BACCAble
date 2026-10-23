@@ -35,6 +35,36 @@ suite still passes. Next candidate: a generic triage script that, for every
 session, enumerates all (bus, ID, DLC) identities, computes period and payload
 stability, isolates short non-neutral excursions, and correlates each excursion
 with every marker, so occasional signals surface without a manual prompt.
+## Wait for engine start before applying default DNA, 2026-10-23
+
+After v5-beta-28, the owner reported that D changes successfully but Race does
+not; Race requires the engine to be running. Active A/D/Race requests now wait
+for fresh RPM above 400 for two seconds on C1 before the BH request is sent.
+The menu shows `Start engine` during this wait, and the C1 confirmation timeout
+starts only after the engine gate. BH independently requires fresh RPM above
+400 for two seconds before it starts any selector gesture, and aborts/releases
+if engine reports stop or become stale during the sequence. N remains passive.
+
+Implementation is in the local task branch `fix/dna-after-engine-start` based
+on `495b335`. Host tests, firmware builds, PR, merge, release and vehicle
+acceptance have not yet been performed for this correction.
+
+## Default suspension calibration, 2026-10-23
+
+Added the `Suspension` setup option in free flash slot 36. `Stiff` leaves the
+mode's firm startup calibration; the softer choice means Soft in D and Mid in
+Race, and is ignored for A/N. Stiff needs no extra press because selecting
+D/Race sets the suspension firm. For Soft/Mid, after the selector reaches D/Race, BH checks fresh `0x25A` byte 1
+bit 4 and sends one BH `0x256` byte 1 bit 7 pulse only when the softer state is
+not already reported. The pulse is released after 150 ms; BH waits for fresh
+matching suspension feedback before returning success. The softer setting uses
+the unused high bit of the existing five-byte `BH_CMD_DNA_DEFAULT`, so the UART
+message length and flash record size remain unchanged.
+
+Work remains on local branch `fix/dna-after-engine-start`, based on `495b335`.
+No firmware build, host test, PR, merge, release or vehicle acceptance has been
+performed. D feedback is present in one capture campaign; the Race/Mid status
+encoding and hardware behavior still need vehicle confirmation.
 
 ## v5-beta-28 release preparation, 2026-10-23
 

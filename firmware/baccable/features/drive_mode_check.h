@@ -5,6 +5,7 @@
 
 /* Start a new ignition check, or clear it after OFF, sleep or a settings save. */
 void drive_mode_check_start(uint8_t enabled);
+void drive_mode_check_engine_started(void);
 /* Begin observation only after BH finishes its gesture for this startup token. */
 void drive_mode_check_reply(uint8_t token, uint8_t result);
 /* Identify the current startup request without persisting another setting. */

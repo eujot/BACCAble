@@ -376,6 +376,23 @@ retains 0=N (formerly OFF), 1=A, 2=D, 3=Race, so old records need no migration.
 N leaves the factory selection alone. The draft stays separate until save;
 saving changes the next start's preference, not the current vehicle mode.
 
+For an active A/D/Race preference, C1 waits for fresh engine-speed reports
+above 400 RPM for two seconds before sending the request to BH. Until then the
+status is `Start engine`; the BH board independently applies the same fresh-RPM
+and two-second running check before sending any selector input. If the engine
+stops or RPM reports become stale during a gesture, BH releases any pending
+press and ends the attempt. Natural (N) remains passive and does not wait for
+the engine.
+
+`Settings → Features → Suspension` uses flash slot 36: `Stiff` is value 0;
+value 1 is shown as `Soft` when Default mode is D and `Mid` when it is Race.
+For A/N it is shown as `Soft / Mid` and has no effect. The saved default is
+Stiff. Selecting D/Race sets the firm calibration. For Soft/Mid, after the
+mode is confirmed, BH reads fresh `0x25A` reports (byte 1 bit 4) and presses BH
+`0x256` byte 1 bit 7 once for 150 ms only if the softer state is not already
+reported; it releases the input and waits for matching feedback. This avoids
+treating a toggle as an absolute command or sending it before the target mode.
+
 `features/dna_selector.c` runs only on BH and uses fresh standard data frames
 `0x256`/DLC 4 and actual `0x46C` mode reports. It preserves every unrelated
 input bit and changes only byte 0 bits 6:5: 20 toward A, 40 toward D/Race,
@@ -399,7 +416,8 @@ with observed target). Tokens reject results from earlier ignition/save events;
 duplicate start requests and transport resync cannot replay a completed gesture.
 Both new commands retain the existing UART framing/checksum. Update C1/BH together.
 
-`features/drive_mode_check.c` waits up to 15 s for BH. A matching completion
+After the engine-running gate, `features/drive_mode_check.c` waits up to 15 s
+for BH. A matching completion
 starts a separate five-second observation window; a failure or missing BH ends
 with No confirm. At the window's end, fresh unmodified C1 `0x384` reports must
 match for at least 2 s (at least four samples, gaps at most 600 ms), and CRC-valid

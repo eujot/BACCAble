@@ -20,6 +20,8 @@ typedef struct {
 
     uint32_t current_rpm_speed;
 
+    uint32_t current_rpm_updated_at;
+
     uint8_t current_gear;
 
     uint8_t drive_mode;

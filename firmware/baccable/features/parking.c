@@ -54,6 +54,7 @@ void parking_observe(const CAN_RxHeaderTypeDef *h, const uint8_t *d) {
         parking_state.rpm_seen = currentTime;
         telemetry_state.current_rpm_speed =
             ((uint32_t)(d[3] & 7) << 11) | ((uint32_t)d[4] << 3) | (d[5] >> 5);
+        telemetry_state.current_rpm_updated_at = currentTime;
     }
     if (h->StdId == 0x3e8 && h->DLC >= 8) {
         parking_state.gear_known = true;
