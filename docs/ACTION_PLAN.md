@@ -4,6 +4,26 @@ Last updated: **2026-10-23** (dated verification boundaries below). This is the 
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
+## Analysis absence protocol, 2026-10-23
+
+Branch `docs/analysis-absence-protocol`, based on `495b335`. Documentation-only
+change: `baccable_lab/docs/SESSION_ANALYSIS.md` now carries a blocking checklist
+for negative claims (“no request frame”, “no signal for this control”), derived
+from the missed BH `0x256` DNA selector input. The checks cover the actual
+failure modes: matching frames by ID instead of (bus, ID, DLC); ranking
+occasional pulses by whole-session frequency; a pre-window that contained the
+event's first sample; ignoring boards classified as report-only; discarding a
+skipped scenario; anchoring on an operator note instead of an observed event;
+accepting a single occurrence; and recording a refutation without its method.
+The rule now requires the wording “not demonstrated with this method in these
+recordings”, never “does not exist”.
+
+No code, firmware, scenario, menu or user-guide change; no new tests. The Lab
+suite still passes. Next candidate: a generic triage script that, for every
+session, enumerates all (bus, ID, DLC) identities, computes period and payload
+stability, isolates short non-neutral excursions, and correlates each excursion
+with every marker, so occasional signals surface without a manual prompt.
+
 ## v5-beta-28 release preparation, 2026-10-23
 
 Published [v5-beta-28](https://github.com/eujot/BACCAble/releases/tag/v5-beta-28)
