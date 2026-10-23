@@ -49,6 +49,16 @@ class DashboardTests(unittest.TestCase):
                                 width=120, scenario=SCENARIO, color=False, caps=True)
         self.assertIn("NACIŚNIJ UNLOCK NA PILOCIE", caps)
 
+    def test_zero_separation_hides_the_time_hint(self):
+        # A procedure without time targets must not nag about a minimum delay.
+        untimed = dict(SCENARIO, min_separation_s=0)
+        screen = render_dashboard(mode="LIVE CAPTURE", elapsed=0, counts={}, latest={},
+                                  width=120, scenario=untimed, color=False)
+        self.assertNotIn("odstęp między akcjami", screen)
+        timed = render_dashboard(mode="LIVE CAPTURE", elapsed=0, counts={}, latest={},
+                                 width=120, scenario=SCENARIO, color=False)
+        self.assertIn("odstęp między akcjami >= 3s", timed)
+
     def test_paused_complete_and_empty_states_are_explicit(self):
         paused = dict(SCENARIO, paused=True, action="Naciśnij LOCK na pilocie")
         screen = render_dashboard(mode="LIVE CAPTURE", elapsed=0, counts={}, latest={}, scenario=paused)

@@ -134,7 +134,10 @@ def _scenario_block(scenario: dict | None, width: int, color: bool, caps: bool) 
     lines.append(_clip("  [o] pomiń scenariusz   [e] wyklucz   [r] wznów   [u] cofnij   [n] notatka   [s] wybierz   [q] zakończ", width))
     if scenario.get("guard"):
         lines.append(_paint(_clip("  nie zmieniaj: " + ", ".join(scenario["guard"]), width), GREY, color))
-    lines.append(_paint(_clip(f"  odstęp między akcjami >= {scenario.get('min_separation_s', 3):g}s", width), GREY, color))
+    # A zero separation means the procedure has no time target: the operator
+    # confirms each observed effect and decides when to start the next run.
+    if scenario.get("min_separation_s", 3):
+        lines.append(_paint(_clip(f"  odstęp między akcjami >= {scenario.get('min_separation_s', 3):g}s", width), GREY, color))
     if scenario.get("message"):
         lines.append(_paint(_clip("  " + scenario["message"], width), _message_style(scenario["message"]), color))
     return lines

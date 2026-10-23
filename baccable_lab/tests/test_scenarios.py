@@ -86,6 +86,33 @@ class ScenarioModelTests(unittest.TestCase):
         drive = [s for s in ordered if s.group == "drive"]
         self.assertTrue(drive and all(location_label(s) == "jazda – plac" for s in drive))
 
+    def test_rain_lights_auto_isolates_each_cause_and_repeats(self):
+        # One cause per phase: the light sensor is tested with the wipers off,
+        # the rain sensor with the sensor uncovered, then manual cycles. A wrong
+        # order would make covering the sensor start a wipe and mix both signals.
+        scenario = load_scenarios(default_directory())["rain_lights_auto"]
+        self.assertEqual((scenario.group, scenario.vehicle), ("wipers", "stationary"))
+        self.assertGreaterEqual(scenario.runs, 3)
+        expected = [step.expect for step in scenario.steps]
+        # Dark baseline first: in a garage the lamps are already on at ignition.
+        # Then brightness is forced (torch or daylight) and darkness returned.
+        self.assertEqual(expected[:5], ["light_sensor_dark", "light_sensor_bright",
+                                        "dipped_beam_off", "light_sensor_dark",
+                                        "dipped_beam_on"])
+        self.assertEqual(expected[5:9], ["wipers_auto", "rain_detected",
+                                         "dipped_beam_off", "rain_stopped"])
+        self.assertEqual(expected[9:], ["wipers_slow", "dipped_beam_off", "wipers_off"])
+        # The rain phases must be run with the scene forced bright, otherwise AUTO
+        # switches the lamps on for darkness and the negative control is invalid.
+        for action in (scenario.steps[5].action, scenario.steps[6].action,
+                       scenario.steps[9].action):
+            self.assertIn("jasno", action.lower())
+        # Factory behaviour is the negative control: darkness switches the lamps
+        # on, but wipers and rain do not, because the feature is not implemented.
+        # The rain phases therefore record the lamps staying off.
+        self.assertEqual(expected.count("dipped_beam_on"), 1)
+        self.assertGreaterEqual(expected.count("dipped_beam_off"), 3)
+
     def test_parse_rejects_unknown_label_missing_action_and_duplicates(self):
         with self.assertRaises(ValueError):
             parse_scenarios('[[scenario]]\nid="x"\n[[scenario.steps]]\naction="a"\nexpect="not_a_label"\n')

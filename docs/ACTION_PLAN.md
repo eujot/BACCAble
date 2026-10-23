@@ -4,6 +4,54 @@ Last updated: **2026-10-23** (dated verification boundaries below). This is the 
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
+## Rain-to-lights capture scenario, 2026-10-23
+
+Branch `feat/rain-lights-scenario`, based on `495b335`. Replaces the 11-step
+`wipers_lights_auto` procedure with the 12-step `rain_lights_auto` (group
+`wipers`, stationary, 3 runs, 36 confirmations) so the two sensor signals can be
+recorded from one short, repeatable procedure instead of a long mixed test. The
+procedure has **no time targets** (`min_separation_s = 0`, and the dashboard
+hides the separation hint): each step is confirmed when its effect is visible,
+never after a fixed delay.
+
+**The factory car does not switch the dipped beams on because of rain or wiper
+operation** — that is the firmware feature still to be added. The rain phases
+therefore record the lamps staying **off** (`dipped_beam_off`) as the negative
+control, which proves they were not already on for another reason. After the
+firmware change those steps become `dipped_beam_on` and the same procedure is the
+acceptance test. Phases:
+
+1. light sensor forced bright and dark with the wipers **off** — a torch in a
+   dark garage, an opaque cloth in daylight; this isolates the light-sensor
+   signal and confirms the factory AUTO function, because forcing brightness
+   cannot start a wipe when the wipers are off;
+2. wipers in AUTO plus washer water, then drying, with the scene **forced
+   bright** — isolates rain/wiper activation (confirm that the wipers started,
+   not after a set spraying time) while darkness cannot switch the lamps on;
+3. three manual wiper cycles with the scene still forced bright — the third
+   future trigger, separated from the rain sensor.
+
+The procedure works both outdoors in daylight and in a dark underground garage.
+In the garage the dipped beams are already on at ignition (correct night
+baseline, not a fault) and a torch pointed at the sensor behind the mirror is
+the "day" source; outdoors a cloth is the "night" source. The rain phases must
+keep the scene bright, otherwise AUTO turns the lamps on for darkness and the
+`dipped_beam_off` negative control proves nothing.
+
+Added catalog labels `light_sensor_dark` / `light_sensor_bright` (Polish titles,
+search aliases): the existing `ambient_light_changed` cannot separate the two
+directions. Updated `baccable_lab/docs/SCENARIOS.md` (counts 82 procedures / 527
+confirmations, phase-order rationale, no-time rule and the negative-control
+statement) and `baccable_lab/docs/MARKERS.md`. Tests assert the phase order, the
+lamps-off control and the hidden time hint.
+
+Validation: 75 Lab tests pass; host tests, firmware and the device user guides
+are untouched (no menu, setting, reading or device action changed). Hardware
+acceptance is UNKNOWN: nobody has run the procedure in a car yet. Next: run all
+three phases three times in daylight, then `baccable bundle` and correlate the
+`rain_detected/stopped`, `wipers_*` and `light_sensor_*` steps (with
+`dipped_beam_off` as the baseline) before writing any firmware rule.
+
 ## v5-beta-28 release preparation, 2026-10-23
 
 Published [v5-beta-28](https://github.com/eujot/BACCAble/releases/tag/v5-beta-28)

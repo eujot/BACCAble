@@ -69,44 +69,47 @@ action = "Przestań polewać i wysusz czujnik"
 expect = "rain_stopped"
 
 [[scenario]]
-id = "wipers_lights_auto"
-title = "Wycieraczki → światła mijania (AUTO): praca ciągła i automatyczna"
+id = "rain_lights_auto"
+title = "Czujnik jasności i deszczu (AUTO) w dzień i w nocy: stan świateł mijania"
 group = "wipers"
 vehicle = "stationary"
-runs = 2
-min_separation_s = 5
-confounder_guard = ["przełącznik świateł", "spryskiwacz", "pozycja świateł"]
-notes = "Wykonuj w dzień, przy jasnym otoczeniu, żeby AUTO nie włączyło świateł z powodu ciemności. Przełącznik świateł w AUTO. Każdy stan wycieraczek utrzymuj kilkanaście sekund; część automatyczną (kilka cykli w minucie) trzymaj około minuty."
+runs = 3
+min_separation_s = 0
+confounder_guard = ["przełącznik świateł", "bieg", "silnik"]
+notes = "Zapłon włączony, przełącznik świateł w AUTO, czułość czujnika deszczu pośrodku. Scenariusz działa w obu warunkach, bo zawsze wymuszasz stan czujnika: (a) CIEMNY GARAŻ — 'jasno' uzyskujesz latarką skierowaną na czujnik za lusterkiem, 'ciemno' przez jej zgaszenie; (b) DZIEŃ NA ZEWNĄTRZ — 'ciemno' uzyskujesz nieprzezroczystą szmatką na czujniku, 'jasno' przez jej zdjęcie. W ciemnym garażu światła mijania palą się od razu po zapłonie — to prawidłowy stan nocny, nie usterka. WAŻNE: auto fabrycznie NIE zapala świateł mijania od pracy wycieraczek ani od deszczu — to funkcja dopiero do dodania w firmware. Dlatego w fazach deszczu potwierdzasz, że światła POZOSTAJĄ zgaszone; to punkt odniesienia (kontrola negatywna). W tych fazach utrzymuj JASNO (latarka na czujniku albo dzień), inaczej AUTO zapali światła od ciemności i kontrola straci sens. Po wdrożeniu funkcji te same kroki zmieniasz na 'światła mijania zapaliły się'. Kolejność faz jest celowa: najpierw czujnik jasności przy WYŁĄCZONYCH wycieraczkach, potem deszcz przy jasnym otoczeniu. DRL świecą zawsze — oceniaj pełne światła mijania. Nie zasłaniaj czujnika nasłonecznienia na desce. Bez czasów: potwierdzasz efekt, gdy go widzisz, a kolejne powtórzenie zaczynasz, gdy światła i wycieraczki wrócą do stanu wyjściowego."
 [[scenario.steps]]
-action = "Przełącznik świateł w AUTO (światła zgaszone — jasno)"
-expect = "automatic_headlights_on"
+action = "Ciemno (garaż) — światła mijania już się palą; punkt odniesienia nocy"
+expect = "light_sensor_dark"
 [[scenario.steps]]
-action = "Wycieraczki wyłączone — światła pozostają zgaszone (kontrola)"
-expect = "wipers_off"
+action = "Wymuś JASNO: oświetl czujnik latarką (na dworze: odsłoń czujnik)"
+expect = "light_sensor_bright"
 [[scenario.steps]]
-action = "Wycieraczki: wolne (ciągłe) — trzymaj około 20 s"
-expect = "wipers_slow"
-[[scenario.steps]]
-action = "Poczekaj, aż zapalą się światła mijania (ciągła praca wycieraczek)"
-expect = "dipped_beam_on"
-[[scenario.steps]]
-action = "Wycieraczki: szybkie — trzymaj około 15 s"
-expect = "wipers_fast"
-[[scenario.steps]]
-action = "Wyłącz wycieraczki — światła mają zgasnąć po chwili"
-expect = "wipers_off"
-[[scenario.steps]]
-action = "Potwierdź wyłączenie świateł mijania"
+action = "Światła mijania zgasły"
 expect = "dipped_beam_off"
 [[scenario.steps]]
-action = "Wycieraczki: tryb automatyczny (czujnik deszczu), podlej szybę — kilka cykli w minucie"
+action = "Wymuś CIEMNO: zgaś latarkę (na dworze: zasłoń czujnik)"
+expect = "light_sensor_dark"
+[[scenario.steps]]
+action = "Światła mijania zapaliły się"
+expect = "dipped_beam_on"
+[[scenario.steps]]
+action = "Wymuś JASNO i zostaw; wycieraczki AUTO, szyba sucha — nie pracują (kontrola)"
 expect = "wipers_auto"
 [[scenario.steps]]
-action = "Poczekaj, aż zapalą się światła mijania (auto + kilka cykli)"
-expect = "dipped_beam_on"
+action = "Spryskaj szybę — wycieraczki ruszyły (jasno cały czas)"
+expect = "rain_detected"
 [[scenario.steps]]
-action = "Wysusz lub zatrzymaj wycieraczki"
-expect = "wipers_off"
-[[scenario.steps]]
-action = "Potwierdź wyłączenie świateł mijania po ustaniu wycieraczek"
+action = "Światła mijania pozostały ZGASZONE (funkcji jeszcze nie ma)"
 expect = "dipped_beam_off"
+[[scenario.steps]]
+action = "Przestań polewać i wysusz szybę — wycieraczki się zatrzymały"
+expect = "rain_stopped"
+[[scenario.steps]]
+action = "Wycieraczki ręcznie: 3 pełne cykle pracy (jasno cały czas)"
+expect = "wipers_slow"
+[[scenario.steps]]
+action = "Światła mijania pozostały ZGASZONE (funkcji jeszcze nie ma)"
+expect = "dipped_beam_off"
+[[scenario.steps]]
+action = "Wyłącz wycieraczki; możesz zdjąć latarkę"
+expect = "wipers_off"
