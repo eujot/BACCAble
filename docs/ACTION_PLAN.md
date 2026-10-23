@@ -49,7 +49,7 @@ pinned CI/release identity sizing remains required. All 73 Lab tests also passed
 Dictionary source provenance and the supported input description now reference
 00b4b99; generated catalog is current. No captured bit layout changes.
 
-PR preparation: implementation and handoff are committed on `feat/bh-default-drive-mode`; branch is clean. GitHub CLI authentication currently reports an invalid token, so remote publication and PR creation are pending valid GitHub access. No merge/release/flash. Hardware acceptance is UNKNOWN: test A/D/Race
+PR #71: https://github.com/eujot/BACCAble/pull/71, from `feat/bh-default-drive-mode` into `master`. Branch commits: `00b4b99` implementation, `f3ee2fa` evidence/validation, `6428450` PR handoff. No merge/release/flash. Hardware acceptance is UNKNOWN: test A/D/Race
 from an actual fresh startup, automatic release, observed factory/transmission
 mode persistence, failure indication and later physical selector use. Source
 captures support the input waveform but do not prove injected acceptance. Main
