@@ -4,6 +4,16 @@ Last updated: **2026-10-23** (dated verification boundaries below). This is the 
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
+## v5-beta-28 release preparation, 2026-10-23
+
+Prepared [v5-beta-28 release notes](releases/v5-beta-28.md) on the merged
+`master` source after PR #71 (`8d202d4`). The beta scope includes the Pelican
+Giulia Experiments/OBD reader, the parameter catalog bound fix, and BH
+`0x256`-based default DNA selection with A/N/D/Race choices. Notes include the
+ISO-TP, small-volume filesystem, C1 flash allocation, matching C1/BH firmware,
+and hardware acceptance boundaries. The notes PR and release workflow are
+pending; no beta-28 artifact or vehicle installation is claimed yet.
+
 ## BH default drive-mode gesture, 2026-10-23
 
 Implementation commit `00b4b99` on `feat/bh-default-drive-mode`, based on research `5a6f43a`,
