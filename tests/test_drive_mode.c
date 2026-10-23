@@ -1,6 +1,7 @@
 /* Exercise production CAN handlers for each board role. */
 #include "vehicle/drive_mode.h"
 #include "vehicle/frame_handlers.h"
+#include "features/drive_mode_check.h"
 #include <assert.h>
 #include <string.h>
 
@@ -16,6 +17,8 @@ uint32_t HAL_GetTick(void) { return now; }
 void status_led_activity(void) {}
 void body_display_factory_frame(const uint8_t *data, uint8_t dlc) { (void)data; (void)dlc; }
 uint8_t board_uart_send(const uint8_t *data, size_t length) { (void)data; (void)length; return 1; }
+uint8_t mirror_positions_save(void) { return 0; }
+uint16_t mirror_positions_read(uint8_t id) { (void)id; return 0; }
 static uint8_t sent[8];
 static uint32_t sent_id;
 static unsigned sends, send_rejected;
@@ -65,7 +68,67 @@ static void arm(void) {
     forwards = 0;
     sends = 0;
     now = 100;
+    chassis_state.default_mode_started_at = now;
+#if defined(BACCABLE_C1)
+    drive_mode_check_start(1);
+#endif
 }
+
+#if defined(BACCABLE_C1)
+/* Factory Dynamic 0x5A8, including the recorded counter and independent CRC. */
+static void feed_transmission(uint8_t valid) {
+    CAN_RxHeaderTypeDef header = {.StdId = 0x5A8, .DLC = 8};
+    uint8_t data[] = {0x90, 0, 0x20, 0x56, 0x96, 0xc0, 3, 0xd2};
+    if (!valid) data[7] ^= 1;
+    vehicle_handle_transmission_mode(&header, data);
+}
+
+static void check_confirmation(void) {
+    settings_state.default_drive_mode = 2;
+    for (unsigned scenario = 0; scenario < 7; ++scenario) {
+        arm();
+        if (scenario == 6) {
+            now = UINT32_MAX - 1000;
+            chassis_state.default_mode_started_at = now;
+            drive_mode_check_start(1);
+        }
+        uint32_t start = now;
+        feed_mode(0);
+        assert(!strcmp(drive_mode_check_status(), "Waiting"));
+        for (unsigned elapsed = 250; elapsed <= 5000; elapsed += 250) {
+            now = start + elapsed;
+            /* One transient D, or a stale matching stream, must not succeed. */
+            if (scenario != 3 || elapsed <= 2000)
+                feed_mode(scenario == 1 && elapsed > 250 ? 0 : 2);
+            if (elapsed % 1000 == 0 && scenario != 2)
+                feed_transmission(scenario != 4);
+            if (scenario == 5 && elapsed == 3000) drive_mode_check_start(0);
+            drive_mode_check_process();
+            if (elapsed < 5000 && scenario != 5)
+                assert(!strcmp(drive_mode_check_status(), "Waiting"));
+        }
+        const char *expected = scenario == 0 || scenario == 6 ? "Confirmed" :
+                               scenario == 5 ? "Next start" : "No confirm";
+        assert(!strcmp(drive_mode_check_status(), expected));
+        assert(forwards == 1); /* Never fight the factory mode with repeated D. */
+    }
+
+    arm();
+    rejected = 1;
+    feed_mode(0);
+    now += 5000;
+    drive_mode_check_process();
+    assert(!strcmp(drive_mode_check_status(), "No confirm"));
+    feed_mode(0);
+    assert(forwards == 0); /* No late injection after the queue deadline. */
+
+    arm();
+    feed_mode(0);
+    now += 5000;
+    drive_mode_check_process();
+    assert(!strcmp(drive_mode_check_status(), "No confirm")); /* Silent bus. */
+}
+#endif
 int main(void) {
     static const uint8_t codes[3][3] = {{0x10,0x04,0x10}, {0x08,0x02,0x20}, {0x30,0x0c,0x04}};
     for (unsigned mode = 1; mode <= 3; ++mode) {
@@ -82,8 +145,7 @@ int main(void) {
     assert((forwarded[7] & 0x1f) == 2);
 #else
     assert(forwarded[1] == 0x09);
-    /* Independent J1850 fixture: 00 09 00 00 00 00 00 -> 0x46. */
-    assert(forwarded[7] == 0x46);
+    assert(forwarded[7] == 0); /* 0x384 has no demonstrated J1850 payload CRC. */
 #endif
     feed_mode(0);
     assert(forwards == 1); /* No repeated default while body still reports N. */
@@ -130,13 +192,35 @@ int main(void) {
     feed_mode(0);
     assert(forwards == 0);
 #endif
+#if defined(BACCABLE_C1) || defined(BACCABLE_C2)
+    /* Change only the mode bits; preserve unrelated fields and the final byte. */
+    settings_state.default_drive_mode = 2;
+    arm();
+    CAN_RxHeaderTypeDef mode_header = {.StdId = 0x384, .DLC = 8};
+    uint8_t original[] = {8, 0x81, 0x8a, 0x80, 0x12, 4, 0x34, 0x5a};
+    uint8_t copy[8];
+    memcpy(copy, original, sizeof(copy));
+    mode_header.IDE = CAN_ID_EXT;
+    vehicle_handle_drive_mode(&mode_header, copy);
+    mode_header.IDE = CAN_ID_STD;
+    mode_header.RTR = CAN_RTR_REMOTE;
+    vehicle_handle_drive_mode(&mode_header, copy);
+    mode_header.RTR = CAN_RTR_DATA;
+    mode_header.DLC = 7;
+    vehicle_handle_drive_mode(&mode_header, copy);
+    assert(forwards == 0);
+    mode_header.DLC = 8;
+    vehicle_handle_drive_mode(&mode_header, copy);
+    original[1] = 0x89;
+    assert(forwards == 1 && !memcmp(original, forwarded, sizeof(original)));
+#endif
 #if defined(BACCABLE_BH)
     arm();
     settings_state.default_drive_mode = 2;
-    CAN_RxHeaderTypeDef ipc_header = {.StdId = 0x25a, .DLC = 8};
+    CAN_RxHeaderTypeDef ipc_header = {.StdId = 0x25a, .DLC = 4};
     uint8_t ipc[8] = {0xc3,1,2,3,4,5,6,7};
     vehicle_handle_drive_style_display(&ipc_header, ipc);
-    assert(forwards == 1 && forwarded[0] == 0xa3 && forwarded[7] == 7);
+    assert(forwards == 1 && forwarded[0] == 0xa3 && forwarded[3] == 3);
     vehicle_handle_drive_style_display(&ipc_header, ipc);
     assert(forwards == 1); /* One 0x25A injection in this session. */
     feed_mode(0);
@@ -307,6 +391,9 @@ int main(void) {
     unsigned before_lane = forwards;
     vehicle_handle_lane_state(&state_header, state);
     assert(forwards == before_lane && sends == 0 && chassis_state.lane_assist_pending == 1);
+#endif
+#if defined(BACCABLE_C1)
+    check_confirmation();
 #endif
     return 0;
 }

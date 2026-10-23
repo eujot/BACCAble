@@ -381,3 +381,32 @@ fractional ticks (`▏▎▍▌▋▊▉█`), fill density (`░▒▓█`) and
 the selected IPC source. BH transmits each code point as a 16-bit character.
 This is a visual comparison pattern only: it does not change the oil bar's
 rendering or imply that every IPC font supports the glyphs.
+
+## Default drive-mode result
+
+`features/drive_mode_check.c` observes unmodified C1 `0x384` and CRC-valid
+`0x5A8` reports. Startup arming starts a five-second queue deadline; successful
+C1 queue acceptance starts a separate five-second observation window. Only
+fresh matching DNA samples spanning at least 2 s (at least four reports, no gap
+above 600 ms) and transmission samples spanning at least 1 s (at least two,
+no gap above 1,500 ms) confirm the result at the end of that window. A mismatch
+or excessive gap restarts that source's matching run. Silence and queue failure
+expire without further accepted injections. Each auxiliary board also bounds
+queue retries to five seconds from its own startup command. This is received
+state corroboration, not a UDS acknowledgement or proof of all ECUs.
+
+Features → `Default mode` retains its OFF/A/D/Race draft and saved encoding.
+Browsing a non-OFF preference displays the target and `Next start`, `Waiting`,
+`Confirmed` or `No confirm`. MY23 uses title/result lines; legacy uses the
+compact `DNA` label. Results remain until ignition OFF, sleep or settings save;
+transport resync preserves them. A failed check leaves the preference for the
+next start and does not trigger a continuous override. Editing still changes
+only the draft. Both user guides describe these states.
+
+For the captured vehicle layout, all `0x384` mode rewrite paths preserve byte 7
+instead of inserting a J1850 CRC. `0x5A8` CRC calculation and Race rewriting
+remain intact; verification observes that payload before any local mutation.
+Standard data/length guards reject malformed reports before changing state.
+The owner's prior firmware briefly displayed D then returned to N. The CRC
+correction and result checking do not establish a persistent control command;
+vehicle acceptance remains required.

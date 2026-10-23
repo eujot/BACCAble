@@ -84,7 +84,7 @@ build/test_exhaust: test_exhaust.c $(FIRMWARE)/features/exhaust.c $(HEADERS) Mak
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC1_FLAVOR=1 test_exhaust.c \
 		$(FIRMWARE)/features/exhaust.c -lm -o $@
 
-DRIVE_MODE_SOURCES := test_drive_mode.c $(FIRMWARE)/vehicle/drive_mode.c $(FIRMWARE)/vehicle/display_frames.c $(FIRMWARE)/protocol/checksum.c
+DRIVE_MODE_SOURCES := test_drive_mode.c $(FIRMWARE)/vehicle/mirrors_frames.c $(FIRMWARE)/features/drive_mode_check.c $(FIRMWARE)/vehicle/drive_mode.c $(FIRMWARE)/vehicle/display_frames.c $(FIRMWARE)/protocol/checksum.c
 build/test_drive_mode: $(DRIVE_MODE_SOURCES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC1_FLAVOR=1 -DGIT_VERSION=\"test\" -Wno-unused-parameter $(DRIVE_MODE_SOURCES) -o $@
@@ -99,7 +99,7 @@ build/test_drive_mode_bh: $(DRIVE_MODE_SOURCES) $(HEADERS) Makefile
 test: build/test_drive_mode build/test_drive_mode_c2 build/test_drive_mode_bh
 
 MENU_SOURCES := test_menu.c $(addprefix $(FIRMWARE)/, features/menu.c features/menu_model.c \
- features/menu_input.c features/my23_ui.c features/favorite_parameters.c features/ui_entry.c features/menu_diagnostics.c features/display_stream.c features/oil_bar_animation.c features/ibs_override.c features/board_sync.c features/dashboard.c features/dashboard_format.c features/oil_level.c \
+ features/menu_input.c features/my23_ui.c features/favorite_parameters.c features/ui_entry.c features/menu_diagnostics.c features/display_stream.c features/oil_bar_animation.c features/ibs_override.c features/board_sync.c features/drive_mode_check.c features/dashboard.c features/dashboard_format.c features/oil_level.c \
  diagnostics/parameter_cache.c diagnostics/parameter_request.c diagnostics/parameter_catalog.c diagnostics/experiments.c \
  protocol/checksum.c vehicle/steering_controls.c diagnostics/uds_decode.c diagnostics/fault_reader.c settings/persistence.c settings/setup_menu.c settings/setup_entries.c \
  third_party/printf/printf.c)

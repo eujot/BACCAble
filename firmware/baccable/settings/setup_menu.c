@@ -8,6 +8,7 @@
 #include "features/menu.h"
 #include "features/my23_ui.h"
 #include "features/ibs_override.h"
+#include "features/drive_mode_check.h"
 #include "diagnostics/fault_reader.h"
 
 #if defined(BACCABLE_C1)
@@ -307,6 +308,13 @@ static const char *setup_value_label(const SetupParam *param, uint16_t value, ui
     return label;
 }
 
+/* Show the saved target and the result of the current ignition's mode check. */
+static void setup_default_mode_result(char result[24]) {
+    static const char *const modes[] = {"OFF", "A", "D", "Race"};
+    unsigned mode = settings_state.default_drive_mode;
+    snprintf_(result, 24, "%s %s", modes[mode <= 3 ? mode : 0], drive_mode_check_status());
+}
+
 /* Show the selected setting and its current value. */
 void setup_render_page(uint8_t page_index) {
     if (page_index >= setup_menu_pages_count())
@@ -349,8 +357,12 @@ void setup_render_page(uint8_t page_index) {
         if (param->render) { param->render(); return; }
         char number[24];
         uint8_t extra = param->flash_index == 34 ? settings_state.usb_elm327 : settings_state.gasoline_v6;
-        ui_render_value(text, sizeof(text), param->menu_text,
-                        setup_value_label(param, setup_get_value(param), extra, number));
+        const char *value = setup_value_label(param, setup_get_value(param), extra, number);
+        if (param->flash_index == 38 && setup_get_value(param)) {
+            char result[24];
+            setup_default_mode_result(result);
+            ui_render_value(text, sizeof(text), "DNA", result);
+        } else ui_render_value(text, sizeof(text), param->menu_text, value);
     }
     memset(dashboard_setup_screen, ' ', sizeof(dashboard_setup_screen));
     memcpy(dashboard_setup_screen, text, strlen(text));
@@ -503,6 +515,12 @@ bool setup_present_my23(void) {
     }
     const SetupParam *current = setup_find_by_page(setup_dashboardPageIndex);
     const SetupParam *next = setup_find_by_page((setup_dashboardPageIndex + 1) % setup_menu_pages_count());
+    if (current && current->flash_index == 38 && setup_get_value(current)) {
+        char result[24];
+        setup_default_mode_result(result);
+        menu_present_lines(current->menu_text, result);
+        return true;
+    }
     menu_present_view(UI_MODE_LIST, current ? current->menu_text : "Features", next ? next->menu_text : "");
     return true;
 }

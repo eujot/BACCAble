@@ -1,3 +1,4 @@
+#include "features/drive_mode_check.h"
 #include "test_report.h"
 #include "features/menu.h"
 #include "features/ui_entry.h"
@@ -1374,6 +1375,7 @@ int main(void) {
         HOST_TEST(test_usb_draft_has_no_early_effect),
         HOST_TEST(test_favorite_slot_draft_flow),
         HOST_TEST(test_setup_ui),
+        HOST_TEST(test_default_mode_result),
         HOST_TEST(test_shared_renderers),
         HOST_TEST(test_navigation_contract),
         HOST_TEST(test_ipc_display_menu),

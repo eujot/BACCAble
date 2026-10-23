@@ -1,5 +1,6 @@
 #include "vehicle/standard_frames.h"
 #include "app/powertrain.h"
+#include "features/drive_mode_check.h"
 /* CAN ID 0x000005A6. */
 /* Track mirror positions and advance requested parking-mirror movement. */
 void vehicle_handle_mirror_position(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
@@ -72,11 +73,14 @@ void vehicle_handle_mirror_position(const CAN_RxHeaderTypeDef *rx_header, uint8_
 /* CAN ID 0x000005A8. */
 /* Track transmission mode for parking and driving features. */
 void vehicle_handle_transmission_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
-    if (rx_header->DLC < 8)
+    if (rx_header->StdId != 0x5A8 || rx_header->DLC != 8 ||
+        rx_header->IDE != CAN_ID_STD || rx_header->RTR != CAN_RTR_DATA)
         return;
 
 // when in race, byte 4 bit 3-6 has value 6
 #if defined(BACCABLE_C1)
+    if (frame_checksum(frame_data, 8) == frame_data[7])
+        drive_mode_check_observe(1, (frame_data[4] & 0x78) >> 3);
     if (chassis_state.stability_inverted) {
         if ((frame_data[4] & 0x78) !=
             0x30) { // if not race (on C1 it is a msg from TCM or DCTM and received by ECM)

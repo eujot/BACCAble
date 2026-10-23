@@ -23,7 +23,8 @@ void vehicle_handle_display_content(const CAN_RxHeaderTypeDef *rx_header, uint8_
 /* CAN ID 0x0000025A. */
 /* Apply the configured driving-mode presentation on the dashboard. */
 void vehicle_handle_drive_style_display(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
-    if (rx_header->DLC < 1)
+    if (rx_header->StdId != 0x25A || rx_header->DLC < 1 ||
+        rx_header->IDE != CAN_ID_STD || rx_header->RTR != CAN_RTR_DATA)
         return;
     // msg received by DriveStyle control module
 #if defined(BACCABLE_BH)
@@ -37,6 +38,7 @@ void vehicle_handle_drive_style_display(const CAN_RxHeaderTypeDef *rx_header, ui
             }
         }
     } else if (settings_state.default_drive_mode >= 1 && settings_state.default_drive_mode <= 3 &&
+               rx_header->DLC == 4 && rx_header->IDE == CAN_ID_STD && rx_header->RTR == CAN_RTR_DATA &&
                chassis_state.default_mode_override && drive_mode_default_pending(DRIVE_MODE_ENC_IPC)) {
         uint8_t default_mode = drive_mode_default_field(DRIVE_MODE_ENC_IPC);
         if ((frame_data[0] & 0x7C) != default_mode) {
@@ -69,7 +71,8 @@ void vehicle_handle_odometer(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fram
 /* CAN ID 0x0000046C. */
 /* Update body-side driving-mode presentation and related requests. */
 void vehicle_handle_body_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
-    if (rx_header->DLC < 8)
+    if (rx_header->StdId != 0x46C || rx_header->DLC != 8 ||
+        rx_header->IDE != CAN_ID_STD || rx_header->RTR != CAN_RTR_DATA)
         return;
 
 #if defined(BACCABLE_BH)

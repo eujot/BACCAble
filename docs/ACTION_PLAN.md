@@ -4,6 +4,53 @@ Last updated: **2026-10-23** (dated verification boundaries below). This is the 
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
+## Default-mode CRC correction and result check, 2026-10-23
+
+Branch `fix/default-mode-confirmation`, isolated worktree
+`/private/tmp/baccable-default-mode-check`, based on research commit `115ba8a`.
+The owner reports that the previously installed one-shot default D briefly
+appears and then returns to N. Installed binary identity remains unspecified.
+This is negative evidence for a persistent selection; queue success is not
+vehicle acceptance.
+
+All 0x384 mode rewrites now preserve byte 7 and unrelated fields. No global
+checksum change: 0x5A8 retains its J1850 CRC. Standard-data/length/ID guards
+protect the relevant handlers. Queue retries on each board are bounded to five
+seconds from arming; each accepted frame is still sent at most once per cycle.
+
+C1 `features/drive_mode_check.c` starts a five-second observation window when
+its request is queued (or target mode is already present). At its end, fresh
+unmodified C1 0x384 reports must match for at least 2 s, and CRC-valid 0x5A8
+reports for at least 1 s. Mismatches/gaps restart the relevant matching run;
+missing/stale/corrupt reports and queue timeout cannot confirm. No confirm
+leaves the vehicle alone; no automatic repeat of accepted injections or
+forced rollback. A new ignition permits another attempt. Saved settings,
+OFF and sleep clear the result; transport resync preserves it. This confirms
+observed C1 state, not explicit ECU acknowledgement or every subsystem.
+
+The existing Default mode browse screen shows the saved target and Next start,
+Waiting, Confirmed or No confirm (MY23 title/result; legacy compact DNA label).
+The editor retains its original draft semantics. Both user guides and MENU_UX
+now document the result and failure behavior. No additional menu entry or
+persisted settings slot was added.
+
+Validation: full native Apple Clang ASan/UBSan host suite passed, including
+transient D-to-N rejection, missing transmission, bad CRC, stale/no traffic,
+queue rejection/deadline, timer wrap, malformed frames, preserved bytes,
+ignition/save/resync lifecycle and both display layouts. All 16 board/display
+profiles built with full Arm GNU 15.2.Rel1, VERSION=mode-check; cppcheck passed
+C1/C2/BH/CAN. Largest C1 flash is 102,344/102,400 bytes (56 spare), RAM data+bss
+15,712/16,384; pinned CI/release version sizing must be checked before release.
+No memory allocation was enlarged. Lab source provenance is refreshed in the
+following evidence commit; no executable CAN decoder layout changes.
+
+No push/PR/merge/release or vehicle flash. Hardware acceptance remains UNKNOWN:
+install matching C1/C2/BH firmware, start with Default mode D, check sustained
+factory D and the stored result, then verify the physical knob still works.
+CRC correction does not by itself establish a persistent selector command.
+The main checkout's pre-existing untracked captures/release directories remain
+untouched; all task edits and this handoff are committed in the isolated branch.
+
 ## DNA selector raw-capture review, 2026-10-23
 
 Analysis-only branch `research/dna-selector-analysis`, based on `aa81111`.

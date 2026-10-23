@@ -21,6 +21,11 @@ static uint8_t setup_page_for(uint8_t slot) {
         if (slot == 38) label = dna[value <= 3 ? value : 0];
         if (slot == 34) label = value ? "CAN" : settings_state.usb_elm327 ? "ELM327" : "OFF";
         ui_render_value(expected, sizeof(expected), param->menu_text, label);
+        if (slot == 38 && value) {
+            char result[24];
+            snprintf_(result, sizeof(result), "%s %s", label, drive_mode_check_status());
+            ui_render_value(expected, sizeof(expected), "DNA", result);
+        }
     } else if (slot == 39)
         ui_render_value(expected, sizeof(expected), "LKA", *(uint8_t *)param->value ? "OFF" : "ON");
     else if (param->entry_type == UI_ENTRY_TOGGLE)
@@ -47,6 +52,33 @@ static void setup_accept_draft(void) {
     assert(setup_stage_back()); /* A separate Back leaves the clean editor. */
     assert(!setup_stage_active());
 }
+/* The result is persistent, visible on both displays, and never edits the preference. */
+static void test_default_mode_result(void) {
+    fresh_menu();
+    settings_state.default_drive_mode = 2;
+    board_sync_rearm();
+    board_sync_ignition(8);
+    uint8_t page = setup_page_for(38);
+    setup_render_page(page);
+    assert(!memcmp(dashboard_setup_screen, "DNA: D Waiting", 14));
+    board_sync_restart();
+    assert(!strcmp(drive_mode_check_status(), "Waiting"));
+    now += 5000;
+    board_sync_process();
+    setup_render_page(page);
+    assert(!memcmp(dashboard_setup_screen, "DNA: D No confirm", 17));
+    settings_state.ipc_my23_is_installed = true;
+    assert(setup_present_my23());
+    assert(!memcmp(screen_packet + 2, "Default mode", 12));
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "D No confirm", 12));
+    assert(settings_state.default_drive_mode == 2);
+    board_sync_ignition(2);
+    board_sync_ignition(8);
+    assert(!strcmp(drive_mode_check_status(), "Waiting"));
+    board_sync_saved();
+    assert(!strcmp(drive_mode_check_status(), "Next start"));
+}
+
 static void test_setup_ui(void) {
     fresh_menu();
     const uint8_t enum_slots[] = {16, 20, 24, 25, 26, 38, 40};
