@@ -6,7 +6,7 @@ implementation; they are not separate backlogs. Update this file after each task
 
 ## Default-mode CRC correction and result check, 2026-10-23
 
-Branch `fix/default-mode-confirmation`, isolated worktree
+Implementation commit `80fdb13` on `fix/default-mode-confirmation`, isolated worktree
 `/private/tmp/baccable-default-mode-check`, based on research commit `115ba8a`.
 The owner reports that the previously installed one-shot default D briefly
 appears and then returns to N. Installed binary identity remains unspecified.
@@ -41,8 +41,9 @@ ignition/save/resync lifecycle and both display layouts. All 16 board/display
 profiles built with full Arm GNU 15.2.Rel1, VERSION=mode-check; cppcheck passed
 C1/C2/BH/CAN. Largest C1 flash is 102,344/102,400 bytes (56 spare), RAM data+bss
 15,712/16,384; pinned CI/release version sizing must be checked before release.
-No memory allocation was enlarged. Lab source provenance is refreshed in the
-following evidence commit; no executable CAN decoder layout changes.
+No memory allocation was enlarged. All 72 Lab tests also passed after refreshing
+source provenance to 80fdb13; generated catalog and dictionary hashes agree.
+No executable CAN decoder layout changes.
 
 No push/PR/merge/release or vehicle flash. Hardware acceptance remains UNKNOWN:
 install matching C1/C2/BH firmware, start with Default mode D, check sustained

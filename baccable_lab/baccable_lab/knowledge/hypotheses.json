@@ -403,9 +403,10 @@
         }
       ],
       "contradictions": [
-        "Raw re-analysis on 2026-10-23 found five successful Race entries across six marked attempts; 191050Z event 12 says Race but all recorded mode reports stay Dynamic until capture end. Event 1 in that session begins with Dynamic already selected. Original markers remain unchanged."
+        "Raw re-analysis on 2026-10-23 found five successful Race entries across six marked attempts; 191050Z event 12 says Race but all recorded mode reports stay Dynamic until capture end. Event 1 in that session begins with Dynamic already selected. Original markers remain unchanged.",
+        "The owner subsequently reports that the installed one-shot default D briefly appears then returns to N (installed binary unknown). This is negative hardware evidence for persistence. Commit 80fdb13 corrects the CRC write and adds bounded state corroboration; no post-fix vehicle result yet."
       ],
-      "next_test": "Identify knob deflection/hold/release separately; verify original post-request mode reports. Current one-shot CRC insertion into 0x384 conflicts with all 2,099 captured frames; see docs/research/20261023-dna-selector.md."
+      "next_test": "Verify the CRC-corrected implementation 80fdb13 in the car. Confirmed requires sustained original C1 DNA and CRC-valid transmission reports; identify the actual selector input if the car still returns to N."
     },
     {
       "id": "LIGHT-INDICATOR-C2-42D-001",
@@ -497,7 +498,7 @@
       "status": "supported",
       "role": "C1",
       "can_id": "0x384",
-      "description": "The firmware J1850 payload CRC does not match any of 2,099 C1/C2 0x384 frames in the two October-11 DNA captures; byte 7 is always zero. The same algorithm matches all 286 C1 0x5A8 frames. Current default-mode rewriting invents a nonzero byte 7 on the observed layout. This does not establish ECU rejection or universality across vehicles.",
+      "description": "The firmware J1850 payload CRC does not match any of 2,099 C1/C2 0x384 frames in the two October-11 DNA captures; byte 7 is always zero. The same algorithm matches all 286 C1 0x5A8 frames. The aa81111 default-mode rewrite invented a nonzero byte 7 on the observed layout. This does not establish ECU rejection or universality across vehicles. Commit 80fdb13 preserves byte 7; this source correction is not physical acceptance.",
       "evidence": [
         {
           "session": "20261011-190746Z",
@@ -537,7 +538,7 @@
         }
       ],
       "contradictions": [],
-      "next_test": "Preserve byte 7 for this demonstrated layout when implementing the next change; verify acceptance separately and retain CRC on 0x5A8."
+      "next_test": "Install matched firmware and check whether factory D persists, the new result corroborates DNA/transmission, and the physical selector remains usable."
     },
     {
       "id": "DNA-RELATED-1FC-001",
