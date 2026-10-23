@@ -1,5 +1,17 @@
 # BACCAble action plan and agent handoff
 
+## Remove the Experiments DID menu, 2026-10-23
+
+On `remove/experiments-menu-wt`, removed the standalone Experiments root-menu
+entry and its 64 Pelican/OBDb `0x22` signal catalog, polling, ISO-TP decoding,
+CAN receive hook, and dedicated catalog/transport/navigation tests. The shared
+OBD request and parameter-catalog paths used by ordinary `Readings` remain.
+Both user guides, `MENU_UX.md` and `CATALOG_AUDIT.md` now describe the five-item
+root menu and omit the removed feature. This change does not remove generic OBD support or the
+vehicle parameter readings already used by `Readings` and `Favorites`.
+
+No tests or firmware builds were run for this removal.
+
 Last updated: **2026-10-23** (dated verification boundaries below). This is the single source of planned work,
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.

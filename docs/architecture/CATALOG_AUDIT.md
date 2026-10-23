@@ -10,10 +10,9 @@ in the same change as the implementation.
 The original **64 gasoline and 60 diesel pages** retain their IDs, physical order,
 parameter IDs and scales. Oil height page 0x31 is now `Oil level`, with a
 status renderer shared with diesel 0x9a. New ordinary pages 0x67 / 0xbd add
-`Oil level bar`. The former gasoline experimental pages 0x41–0x66 were removed
-from the ordinary catalog and replaced by 64 read-only manufacturer signals in
-`Experiments`, grouped by the Pelican/OBDb taxonomy. This is a browsing policy,
-not proof that every ECU supports every inherited diagnostic request.
+`Oil level bar`. The former gasoline experimental pages 0x41–0x66 are not part of the ordinary
+catalog. The separate Pelican/OBDb `Experiments` DID menu has also been removed;
+ordinary `Readings` and their shared OBD request path remain unchanged.
 
 ## Profile and compatibility
 

@@ -32,24 +32,11 @@ can override it. `LARGE_DISPLAY` independently chooses the legacy 18/24-characte
 width. MY23 always has budgets `MY23_L1_VISIBLE = 16` and
 `MY23_L2_VISIBLE = 22`. Those are visible glyph counts, not UTF-8 byte limits.
 
-The main menu is Favorites, Readings, Actions, Settings, Information, Experiments.
+The main menu is Favorites, Readings, Actions, Settings and Information.
 MY23/atomic Settings contains Features, Favorites, Shown pages, Sort order, BACCAble IPC.
 Legacy before its first five-slot save retains Features, Page favorites,
 Shown pages, Favorite order, Sort order, Favorites, BACCAble IPC. Existing catalogs, engine gates and page IDs are retained.
 The [catalog audit](CATALOG_AUDIT.md) describes the legacy reading model.
-
-`Experiments` has nine source-defined groups and 64 manufacturer `0x22`
-signals. A single named value is shown per screen; MY23 puts the group on line 1
-and name/value on line 2. Only the selected DID is polled. The screens are not
-ordinary reading pages, Favorites or persisted preferences. C1 reassembles
-ISO-TP replies of up to 4095 bytes, retaining only a 40-byte prefix while
-validating every frame through the declared end. It checks source ID/service/DID,
-aborts reordered/truncated transfers, accepts NRC 0x78 within a bounded five-second
-transaction, and decodes OBDb MSB-first fields. Requests are padded to eight CAN
-bytes. Flow control requests a 5 ms separation time to protect the small receive
-FIFO. The source refresh intervals and null/range rules apply; failed attempts
-retry after one second. All resulting labels/values fit 18 characters.
-Vehicle compatibility and scaling still require physical confirmation.
 
 ## Central button recognizer
 

@@ -1,8 +1,8 @@
 # BACCAble — in-car user guide
 
 This guide describes the current dashboard-menu firmware source, including the
-unreleased **oil level readings, drivetrain setting and Pelican Experiments** after v5-beta-27.
-The new oil display and diagnostic experiments still require vehicle acceptance testing. It starts after BACCAble has been installed and
+unreleased **oil level readings and drivetrain setting** after v5-beta-27.
+The new oil display still requires vehicle acceptance testing. It starts after BACCAble has been installed and
 connected to the vehicle. Installation, wiring and firmware flashing are outside
 its scope. Use a matching C1/C2/BH firmware set.
 
@@ -25,7 +25,6 @@ are supported; a menu entry alone does not establish compatibility.
 - [Actions](#actions)
 - [Information](#information)
 - [Reading the measurements](#reading-the-measurements)
-- [Experiments (extra readings)](#experiments-extra-readings)
 - [Gasoline reading catalog](#gasoline-reading-catalog)
 - [Diesel reading catalog](#diesel-reading-catalog)
 - [USB CAN capture and diagnostics](#usb-can-capture-and-diagnostics)
@@ -124,17 +123,7 @@ Main menu
 │  ├─ Shown pages            Show/hide pages in Readings
 │  ├─ Sort order             Grouped or alphabetical reading lists
 │  └─ BACCAble IPC           Temporary refresh experiments
-├─ Information               Versions, input status and IPC display test
-└─ Experiments               64 public-source manufacturer diagnostic signals
-   ├─ Battery                1 signal
-   ├─ Control                4 signals
-   ├─ Details                1 signal
-   ├─ Doors                  5 signals
-   ├─ GPS                    3 signals
-   ├─ Movement               4 signals
-   ├─ Orientation            2 signals
-   ├─ Tires                  38 signals
-   └─ Transmission           6 signals
+└─ Information               Versions, input status and IPC display test
 ```
 
 This Settings layout applies to MY23 and to any profile after an atomic Favorite set
@@ -144,41 +133,6 @@ Page favorites, Shown pages, Favorite order, Sort order, Favorites, BACCAble IPC
 The main menu order is fixed. Page availability follows the selected engine,
 `Advanced pages` and `Shown pages`. A group without eligible pages may show
 `No pages`. The complete catalogs below include pages that are hidden by default.
-
-## Experiments (extra readings)
-
-`Experiments` contains 64 manufacturer diagnostic signals from the
-[Pelican Giulia list](https://pelican.clutch.engineering/cars/alfa-romeo/giulia/parameters),
-whose linked [OBDb Alfa-Romeo signal set](https://github.com/OBDb/Alfa-Romeo/blob/main/signalsets/v3/default.json)
-supplies the request IDs, bit fields and conversions (CC BY-SA 4.0).
-The nine groups follow that source: `Battery`, `Control`, `Details`, `Doors`,
-`GPS`, `Movement`, `Orientation`, `Tires` and `Transmission`.
-They replace the previous experimental gasoline DID pages.
-
-Open a group with RES; gentle up/down moves between its signals and stronger
-up/down changes group. Each screen shows one short English name and its decoded
-value, such as `FL P BCM 2.35bar`. On MY23 the group is on line 1 and the
-name/value on line 2. In tire labels, FL/FR/RL/RR identify wheel position,
-`P` pressure, `t` temperature, and AC/740/742/BCM distinguish source variants.
-Double-click RES to return to the group list. The value
-shows `--` until a fresh, complete, valid reply arrives; it also returns to
-`--` if the ECU rejects the read, a transfer fails or the next refresh times out.
-Both single-frame and multi-frame ISO-TP replies are supported, including long
-responses containing extra fields. Only the currently displayed DID is polled.
-The first request is immediate; subsequent successful reads follow the source
-interval (0.1–5 seconds, or once per day for fixed identifiers). Failed reads
-retry after about one second. A value is retained until its next scheduled
-refresh, with at most five seconds of reply grace. Leaving the screen cancels
-its transaction. `Shift gear` accepts only N/P/R codes; other codes show `--`.
-`Lat a` / `Long a` show acceleration in m/s2 with two decimals; `FL spd`,
-`FR spd`, `RL spd` and `RR spd` show individual wheel speeds. The conversions
-include the source minimum/maximum limits; transmission temperature is in C.
-
-These are read-only `0x22` queries, separate from ordinary `Readings`.
-They cannot be added to Favorites and do not affect `Shown pages` or saved
-settings. Signal availability and conversions have **not been verified in this
-vehicle**. Different ECU/software variants may omit a DID or return a different
-layout; no value is fabricated when the response is missing or invalid.
 
 ## Display symbols and messages
 
@@ -1112,7 +1066,7 @@ commands and bus behavior. Use explicitly save USB mode OFF for ordinary operati
 | Short RES returns to the main menu | Short RES selects; **double-click RES goes back**. |
 | Strong press skips ten parameters | Strong press jumps functional groups; Favorites moves one page. |
 | Save & Exit | Draft confirmation and hold to save; explicit retry on failure. |
-| Flat parameter/function menu | Favorites, Readings, Actions, Settings, Information, Experiments. |
+| Flat parameter/function menu | Favorites, Readings, Actions, Settings and Information. |
 | Enabling Park Mirror stores positions | `Park mirror → Enabled` and `Store position` are separate operations. |
 | Generic Battery % / BATTERY | Distinct BCM, engine ECU and native IBS SOC sources; see the battery table. |
 | OIL UN. AIR | `MultiAir temp`, I4 only. |

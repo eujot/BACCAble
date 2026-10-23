@@ -1,12 +1,9 @@
 #ifndef BACCABLE_MENU_MODEL_H
 #define BACCABLE_MENU_MODEL_H
 #include "diagnostics/parameter_catalog.h"
-#include "diagnostics/experiments.h"
 #include <stdbool.h>
 #define MENU_FAVORITES 6
 #define MENU_GROUPS 7
-/* Experimental (public-source) readings live in extra groups after the menu groups. */
-#define MENU_EXPERIMENT_GROUPS EXPERIMENT_GROUP_COUNT
 #define MENU_PREFS_SIZE 80
 typedef struct {
     uint16_t favorites[2][MENU_FAVORITES];

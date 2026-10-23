@@ -13,7 +13,6 @@
 #include "app/powertrain.h"
 #include "diagnostics/parameter_cache.h"
 #include "diagnostics/parameter_request.h"
-#include "diagnostics/experiments.h"
 #include "storage/flash_records.h"
 #include <assert.h>
 #include <stdio.h>
@@ -265,14 +264,14 @@ static void test_preferences(void) {
     for (unsigned e = 0; e < 2; ++e) {
         assert(menu_page_list(&prefs, e, 0, true, false, list) == (e == 0 ? 6 : 4));
         unsigned total = 0;
-        for (unsigned g = 1; g < MENU_GROUPS + MENU_EXPERIMENT_GROUPS; ++g)
+        for (unsigned g = 1; g < MENU_GROUPS; ++g)
             total += menu_page_list(&prefs, e, g, false, false, list);
         assert(total == menu_page_count(e));
         for (unsigned i = 0; i < menu_page_count(e); ++i) {
             const ParameterPage *page = &parameter_pages[e][i];
             assert(menu_page_index(e, page->id) == (int)i);
             assert((page->id & 0x7f) > 0 && (page->id & 0x7f) <= 127);
-            assert(page->label && page->group > 0 && page->group < MENU_GROUPS + MENU_EXPERIMENT_GROUPS);
+            assert(page->label && page->group > 0 && page->group < MENU_GROUPS);
             for (unsigned j = 0; j < i; ++j)
                 assert(parameter_pages[e][j].id != page->id);
         }
@@ -293,7 +292,7 @@ static void test_preferences(void) {
     for (unsigned i = 0; i < menu_page_count(0); ++i)
         menu_page_show(&copy, 0, i, false);
     assert(menu_page_list(&copy, 0, 0, false, false, list) == 0);
-    assert(menu_page_list(&copy, 0, 0, false, true, list) == 65); /* Ordinary gasoline catalog; experiments are a separate section. */
+    assert(menu_page_list(&copy, 0, 0, false, true, list) == 65); /* Shipped gasoline reading catalog. */
     raw[0] = 255;
     assert(!menu_preferences_decode(&copy, raw));
 }
@@ -356,55 +355,6 @@ static void reply_parameter(uint8_t id) {
     reply[4 + p->value_offset + p->value_length - 1] = 70;
     CAN_RxHeaderTypeDef header = {.IDE = CAN_ID_EXT, .ExtId = p->response_id, .DLC = 8};
     parameter_request_receive(&header, reply);
-}
-static void test_experiment_replies(void) {
-    char value[32];
-    uint8_t battery = experiment_group_signal(0, 0);
-    assert(experiment_group_count(0) == 1);
-    experiment_select(battery);
-    experiment_process();
-    assert(query_ecu == 0x6B4);
-    assert(query_payload[1] == 0x22 && query_payload[2] == 0xD4 && query_payload[3] == 0x10);
-    CAN_RxHeaderTypeDef standard = {.IDE = CAN_ID_STD, .StdId = 0x694, .DLC = 8};
-    uint8_t battery_reply[8] = {5, 0x62, 0xD4, 0x10, 0xC8, 0x00, 0, 0};
-    battery_reply[3] = 0x11; /* Ignore a positive reply for another DID. */
-    experiment_receive(&standard, battery_reply);
-    experiment_format(battery, value, sizeof(value));
-    assert(strstr(value, "--"));
-    battery_reply[3] = 0x10;
-    experiment_receive(&standard, battery_reply);
-    experiment_format(battery, value, sizeof(value));
-    assert(strstr(value, "100.0%"));
-
-    uint8_t door = experiment_group_signal(3, 3); /* Driver door is bit 6. */
-    experiment_select(door);
-    experiment_process();
-    CAN_RxHeaderTypeDef extended = {.IDE = CAN_ID_EXT, .ExtId = 0x18DAF1C7, .DLC = 8};
-    uint8_t door_reply[8] = {4, 0x62, 0x03, 0x02, 0x02, 0, 0, 0};
-    experiment_receive(&extended, door_reply);
-    experiment_format(door, value, sizeof(value));
-    assert(strstr(value, "YES"));
-
-    uint8_t wheel = experiment_group_signal(5, 0);
-    experiment_select(wheel);
-    experiment_process();
-    assert(query_ecu == 0x18DA30F1);
-    uint8_t payload[31] = {0x62, 0x29, 0x62};
-    payload[3 + 14] = 0x01; payload[3 + 15] = 0x60; /* 352 / 16 = 22 km/h. */
-    extended.ExtId = 0x18DAF130;
-    uint8_t first[8] = {0x10, 31};
-    memcpy(first + 2, payload, 6);
-    experiment_receive(&extended, first);
-    assert(query_payload[0] == 0x30); /* Flow control for ISO-TP. */
-    for (unsigned offset = 6, sequence = 1; offset < 31; offset += 7, ++sequence) {
-        uint8_t consecutive[8] = {(uint8_t)(0x20 | sequence)};
-        unsigned count = 31 - offset < 7 ? 31 - offset : 7;
-        memcpy(consecutive + 1, payload + offset, count);
-        experiment_receive(&extended, consecutive);
-    }
-    experiment_format(wheel, value, sizeof(value));
-    assert(strstr(value, "22.0km/h"));
-    experiment_cancel();
 }
 static void test_readings_preview_prefetch(void) {
     for (unsigned in_flight = 0; in_flight < 2; ++in_flight) {
@@ -1339,7 +1289,6 @@ static void fresh_contract(void);
 #include "test_idle_latin1.c"
 #include "test_my23_ui.c"
 #include "test_oil_level.c"
-#include "test_experiments.c"
 
 int main(void) {
 #ifdef MENU_DIAGNOSTICS
@@ -1422,10 +1371,6 @@ int main(void) {
         HOST_TEST(test_maximum_hold),
         HOST_TEST(test_board_sync_retry),
         HOST_TEST(test_shipped_favorite_pairs),
-        HOST_TEST(test_experiment_replies),
-        HOST_TEST(test_experiment_catalog),
-        HOST_TEST(test_experiment_transport),
-        HOST_TEST(test_experiment_menu),
         HOST_TEST(test_readings_preview_prefetch),
         HOST_TEST(test_engine_filters),
         HOST_TEST(test_action_availability)

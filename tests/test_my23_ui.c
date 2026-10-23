@@ -383,7 +383,7 @@ static void test_my23_list_and_old_favorite_migration(void) {
     assert(screen_packet[2] == 0x80 && !memcmp(screen_packet + 4, "Favorites", 9));
     assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "Readings", 8));
     menu_event(MENU_PREVIOUS); /* Wrap to last/current and first/next. */
-    assert(!memcmp(screen_packet + 4, "Experiments", 11));
+    assert(!memcmp(screen_packet + 4, "Information", 11));
     assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "Favorites", 9));
     menu_event(MENU_BACK); /* Save migrated preferences on close. */
     assert(have_saved);

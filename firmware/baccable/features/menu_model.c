@@ -117,8 +117,8 @@ bool menu_page_visible(const MenuPreferences *prefs, uint8_t engine, uint8_t ind
         return false;
     unsigned slot = parameter_pages[engine][index].id == 0x67 ? 64 :
                     (parameter_pages[engine][index].id & 0x7f) - 1;
-    if (parameter_pages[engine][index].group >= MENU_GROUPS || slot >= 72)
-        return true; /* Experimental pages are always available. */
+    if (slot >= 72)
+        return true;
     return !(prefs->hidden[engine][slot / 8] & (1U << (slot % 8)));
 }
 
@@ -128,7 +128,7 @@ void menu_page_show(MenuPreferences *prefs, uint8_t engine, uint8_t index, bool 
         return;
     unsigned slot = parameter_pages[engine][index].id == 0x67 ? 64 :
                     (parameter_pages[engine][index].id & 0x7f) - 1;
-    if (parameter_pages[engine][index].group >= MENU_GROUPS || slot >= 72)
+    if (slot >= 72)
         return;
     uint8_t mask = 1U << (slot % 8);
     if (visible)
@@ -141,7 +141,7 @@ void menu_page_show(MenuPreferences *prefs, uint8_t engine, uint8_t index, bool 
 unsigned menu_page_list(const MenuPreferences *prefs, uint8_t engine, uint8_t group, bool favorites,
                         bool include_hidden, uint8_t list[128]) {
     unsigned count = 0;
-    if (engine > 1 || group >= MENU_GROUPS + MENU_EXPERIMENT_GROUPS)
+    if (engine > 1 || group >= MENU_GROUPS)
         return 0;
     if (favorites) {
         for (unsigned i = 0; i < MENU_FAVORITES; ++i) {
@@ -154,7 +154,6 @@ unsigned menu_page_list(const MenuPreferences *prefs, uint8_t engine, uint8_t gr
     }
     for (unsigned i = 0; i < menu_page_count(engine); ++i) {
         const ParameterPage *page = &parameter_pages[engine][i];
-        /* Group 0 (All readings) lists the ordinary catalog only; experiments stay separate. */
         bool match = group ? page->group == group : page->group < MENU_GROUPS;
         if (match && (include_hidden || menu_page_visible(prefs, engine, i)))
             list[count++] = i;

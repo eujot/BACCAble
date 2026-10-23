@@ -1,8 +1,8 @@
 # BACCAble — instrukcja obsługi w samochodzie
 
 Ta instrukcja opisuje menu na zestawie wskaźników i funkcje w bieżącym kodzie
-firmware. Uwzględnia niewydane jeszcze **odczyty poziomu oleju, ustawienie napędu i Pelican Experiments**
-po v5-beta-27. Nowy ekran oleju i odczyty diagnostyczne wymagają jeszcze próby w samochodzie. Instrukcja dotyczy urządzenia już zamontowanego
+firmware. Uwzględnia niewydane jeszcze **odczyty poziomu oleju i ustawienie napędu**
+po v5-beta-27. Nowy ekran oleju wymaga jeszcze próby w samochodzie. Instrukcja dotyczy urządzenia już zamontowanego
 i podłączonego do samochodu. Nie obejmuje montażu, okablowania ani wgrywania
 oprogramowania. Kontrolery C1, C2 i BH powinny mieć pasujący do siebie zestaw
 oprogramowania z tego samego wydania.
@@ -30,7 +30,6 @@ jego sterowników. Sama obecność opcji w menu nie oznacza, że samochód ją o
 - [Akcje: Actions](#akcje-actions)
 - [Informacje: Information](#informacje-information)
 - [Jak rozumieć odczyty](#jak-rozumieć-odczyty)
-- [Experiments — dodatkowe odczyty](#experiments--dodatkowe-odczyty)
 - [Odczyty dla silników benzynowych](#odczyty-dla-silników-benzynowych)
 - [Odczyty dla silnika Diesla](#odczyty-dla-silnika-diesla)
 - [Przechwytywanie CAN i diagnostyka przez USB](#przechwytywanie-can-i-diagnostyka-przez-usb)
@@ -132,17 +131,7 @@ Menu główne
 │  ├─ Shown pages            Pokazywanie i ukrywanie stron w Readings
 │  ├─ Sort order             Sortowanie według grup albo alfabetycznie
 │  └─ BACCAble IPC           Tymczasowe próby odświeżania
-├─ Information               Wersje, przyciski i test wyświetlacza IPC
-└─ Experiments               64 sygnały diagnostyczne producenta
-   ├─ Battery                1 sygnał
-   ├─ Control                4 sygnały
-   ├─ Details                1 sygnał
-   ├─ Doors                  5 sygnałów
-   ├─ GPS                    3 sygnały
-   ├─ Movement               4 sygnały
-   ├─ Orientation            2 sygnały
-   ├─ Tires                  38 sygnałów
-   └─ Transmission           6 sygnałów
+└─ Information               Wersje, przyciski i test wyświetlacza IPC
 ```
 
 Ten układ Settings dotyczy MY23 oraz każdego profilu po zapisaniu zestawu
@@ -154,42 +143,6 @@ Kolejność menu głównego jest stała. Dostępność stron zależy od wybraneg
 oraz ustawień `Advanced pages` i `Shown pages`. Grupa bez dostępnych stron może
 pokazać `No pages`. Pełne wykazy w dalszej części obejmują również strony
 domyślnie ukryte.
-
-## Experiments — dodatkowe odczyty
-
-`Experiments` zawiera 64 sygnały diagnostyczne producenta z
-[listy Pelican dla Giulii](https://pelican.clutch.engineering/cars/alfa-romeo/giulia/parameters).
-Podłączony do niej [zestaw OBDb Alfa-Romeo](https://github.com/OBDb/Alfa-Romeo/blob/main/signalsets/v3/default.json)
-(CC BY-SA 4.0) podaje identyfikatory zapytań, położenie bitów i przeliczniki.
-Dziewięć grup odpowiada źródłu: `Battery`, `Control`, `Details`, `Doors`,
-`GPS`, `Movement`, `Orientation`, `Tires` i `Transmission`.
-Zastępują wcześniejsze eksperymentalne strony DID silnika benzynowego.
-
-Otwórz grupę krótkim RES. Lekkie góra/dół zmienia sygnał, mocniejsze zmienia
-grupę. Każdy ekran pokazuje jedną krótką angielską nazwę i przeliczoną wartość,
-na przykład `FL P BCM 2.35bar`. Na MY23 grupa jest w pierwszej linii,
-a nazwa i wartość w drugiej. W nazwach opon FL/FR/RL/RR oznaczają koło,
-`P` ciśnienie, `t` temperaturę, a AC/740/742/BCM rozróżniają źródła.
-Dwuklik RES wraca do listy grup. `--` oznacza
-brak świeżej, kompletnej i poprawnej odpowiedzi. Pojawia się też po odmowie
-sterownika, błędzie transmisji lub przekroczeniu czasu kolejnego odświeżenia.
-Obsługiwane są odpowiedzi jedno- i wieloramkowe ISO-TP, również długie odpowiedzi
-z dodatkowymi polami. Odpytuje się tylko aktualnie widoczny DID. Pierwsze zapytanie
-jest wysyłane od razu, kolejne poprawne odczyty zgodnie z odstępem podanym w źródle
-(0,1–5 sekund, a stałe identyfikatory raz dziennie). Nieudane odczyty są ponawiane
-po około sekundzie. Wartość pozostaje do kolejnego planowanego odświeżenia,
-z maksymalnie pięcioma sekundami na odpowiedź. Wyjście z ekranu anuluje zapytanie.
-`Shift gear` rozpoznaje wyłącznie kody N/P/R; pozostałe pokazuje jako `--`.
-`Lat a` / `Long a` pokazują przyspieszenie w m/s2 z dwoma miejscami po przecinku,
-a `FL spd`, `FR spd`, `RL spd` i `RR spd` prędkości poszczególnych kół.
-Przeliczenia uwzględniają dolne i górne limity źródła; temperatura skrzyni jest w C.
-
-Są to wyłącznie odczyty `0x22`, oddzielone od zwykłych `Readings`.
-Nie można dodać ich do Favorites; nie zmieniają `Shown pages` ani zapisanych
-ustawień. Dostępność sygnałów i przeliczniki **nie zostały sprawdzone w tym
-samochodzie**. Inny sterownik lub wersja oprogramowania może nie obsługiwać DID
-albo mieć inny układ odpowiedzi. Przy braku poprawnych danych ekran nie
-podstawia wymyślonej wartości.
 
 ## Symbole i komunikaty
 
@@ -1182,7 +1135,7 @@ Po zakończeniu używaj USB mode OFF do zwykłej pracy.
 | Krótkie RES wraca do menu głównego | Krótkie RES wybiera; **dwuklik RES cofa**. |
 | Mocne naciśnięcie pomija dziesięć parametrów | Mocne naciśnięcie zmienia grupę; w Favorites przesuwa o jedną stronę. |
 | Save & Exit | Szkic, potwierdzenie i przytrzymanie, aby zapisać; jawne ponowienie po błędzie. |
-| Jedna płaska lista parametrów i funkcji | Favorites, Readings, Actions, Settings, Information, Experiments. |
+| Jedna płaska lista parametrów i funkcji | Favorites, Readings, Actions, Settings i Information. |
 | Włączenie Park Mirror zapisuje pozycje | `Park mirror → Enabled` i `Store position` to osobne operacje. |
 | Ogólne Battery % / BATTERY | Oddzielne źródła SOC: BCM, sterownik silnika i IBS. Zobacz tabelę źródeł akumulatora. |
 | OIL UN. AIR | `MultiAir temp`, tylko I4. |
