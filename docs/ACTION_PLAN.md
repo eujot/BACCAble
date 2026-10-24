@@ -1,20 +1,28 @@
 # BACCAble action plan and agent handoff
 
-## v5-beta-30 release preparation, 2026-10-24
+## v5-beta-30 release, 2026-10-24
 
 PR #77 (`241b993`) added `Rain lights`, DNA Race/suspension reliability
 changes and the October 24 CAN research reports. PR #78 (`40f2fa5`) fixes the
 rain-command UART scheduler so C2/BH status and USB polls remain fresh. Full
 notes: [v5-beta-30](releases/v5-beta-30.md).
 
-Release preparation branch `docs/v5-beta-30` is based on merged master
-`40f2fa5`. The local regression demonstrates that the prior scheduler stops a
-C2-only capture and that the correction keeps status/USB active during display
-updates and one lost rain reply. It also asserts the captured C1/C2 lighting
-payloads. Owner-confirmed lamps-on trials used the light sensor or physical
-switch; the remaining vehicle check is acceptance of BACCAble's additional
-transmission while factory frames continue. No release CI or device flash is
-claimed until recorded below.
+Published prerelease: https://github.com/eujot/BACCAble/releases/tag/v5-beta-30
+from `1bd28fab7b5048ebf99aa2cc3e85d263f04583f8`, embedded identity
+`beta-1bd28fa`. Official workflow [40099405814](https://github.com/eujot/BACCAble/actions/runs/40099405814)
+passed host/Lab tests, lint, all four firmware builds, display/IPC matrix,
+size/identity gates, packaging and publication. All 12 firmware assets plus
+`BUILD_INFO.json` and `SHA256SUMS` were downloaded and verified; C1 uses
+96,936/98,304 flash bytes and 15,388/16,384 static RAM. No hardware flash or
+vehicle acceptance is claimed.
+
+The local regression demonstrates that the prior scheduler stops a C2-only
+capture and that the correction keeps status/USB active during display updates
+and one lost rain reply. It also asserts captured C1/C2 lighting payloads.
+Owner-confirmed lamps-on trials used the light sensor or physical switch; the
+remaining vehicle check is acceptance of BACCAble's additional transmission
+while factory frames continue. Release branch `docs/v5-beta-30` preserves the
+release notes and handoff for integration into master.
 
 
 ## Rain-light UART correction and owner clarification, 2026-10-24
