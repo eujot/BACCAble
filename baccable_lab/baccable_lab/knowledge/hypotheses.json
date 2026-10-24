@@ -834,7 +834,7 @@
           1
         ]
       ],
-      "description": "A repeating wiper-associated cycle phase, not a steady rain or enable state. Median message interval 50 ms; slow rising-edge interval about 1500 ms, fast 950 ms.",
+      "description": "A repeating wiper-associated cycle phase, not a steady rain or enable state. Median message interval 50 ms; slow rising-edge interval about 1500 ms, fast 950 ms. Independent 20261024-111510Z adds 27 pulses and two slow/fast/OFF controls.",
       "evidence": [
         {
           "session": "20261024-105643Z",
@@ -898,6 +898,18 @@
             78
           ],
           "report": "docs/research/20261024-rain-lights-correlation.md"
+        },
+        {
+          "session": "20261024-111510Z",
+          "event_ids": [
+            8,
+            9,
+            10,
+            22,
+            23,
+            24
+          ],
+          "report": "docs/research/20261024-111510-rain-lights-followup.md"
         }
       ],
       "contradictions": [
@@ -998,6 +1010,26 @@
             11
           ],
           "report": "docs/research/20261024-rain-lights-correlation.md"
+        },
+        {
+          "session": "20261024-111510Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21
+          ],
+          "report": "docs/research/20261024-111510-rain-lights-followup.md"
         }
       ],
       "contradictions": [
@@ -1010,7 +1042,7 @@
     },
     {
       "id": "LIGHT-SENSOR-CHANNELS-001",
-      "status": "candidate",
+      "status": "supported",
       "role": "BH",
       "can_id": "0x738",
       "dlc": 8,
@@ -1026,7 +1058,7 @@
           8
         ]
       ],
-      "description": "Two separate raw channels react to covering/uncovering the light sensor: usually 6/6 in daylight and 0/0 while covered in the new session. They return before lamp OFF by about 14\u201320 seconds on the BH clock. The parts describe two channels, not a combined physical value.",
+      "description": "Two separate raw channels react to covering/uncovering the light sensor: usually 6/6 in daylight and 0/0 while covered in the new session. They return before lamp OFF by about 14\u201320 seconds on the BH clock. The parts describe two channels, not a combined physical value. Independent 20261024-111510Z shows both raw channels falling while lamps remain manually OFF, then AUTO lamp release 14.411/14.474 s after both channels recover. Units and physical source stay unverified.",
       "evidence": [
         {
           "session": "20261024-105643Z",
@@ -1069,6 +1101,24 @@
             78
           ],
           "report": "docs/research/20261024-rain-lights-correlation.md"
+        },
+        {
+          "session": "20261024-111510Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            5,
+            6,
+            7,
+            15,
+            16,
+            17,
+            19,
+            20,
+            21
+          ],
+          "report": "docs/research/20261024-111510-rain-lights-followup.md"
         }
       ],
       "contradictions": [
@@ -1080,7 +1130,7 @@
         "two optical/illumination channels",
         "ambient or solar-related values relayed by another module"
       ],
-      "next_test": "Only if raw light sensing is needed, isolate cover/uncover with lamps manually OFF. The wiper-triggered feature does not require a lux decoder."
+      "next_test": "A raw light-response association is supported. Establish units/source only if a photometric reading is needed; the next feature acceptance gap is lamp actuation, not another complete input scenario."
     },
     {
       "id": "WIPER-41A-CONFOUNDER-001",
@@ -1146,7 +1196,7 @@
           1
         ]
       ],
-      "description": "Short pulses coincide with spraying in the new session, but the older washer-labelled procedure does not reproduce them.",
+      "description": "Short pulses coincide with spraying in the new session, but the older washer-labelled procedure does not reproduce them. Follow-up spray trials reproduce short pulses; older contradictions remain unresolved.",
       "evidence": [
         {
           "session": "20261024-105643Z",
@@ -1168,6 +1218,14 @@
             11
           ],
           "report": "docs/research/20261024-rain-lights-correlation.md"
+        },
+        {
+          "session": "20261024-111510Z",
+          "event_ids": [
+            12,
+            26
+          ],
+          "report": "docs/research/20261024-111510-rain-lights-followup.md"
         }
       ],
       "contradictions": [

@@ -1,5 +1,26 @@
 # BACCAble action plan and agent handoff
 
+## Rain/light follow-up capture, 2026-10-24
+
+On `research/rain-lights-correlation`, reviewed `20261024-111510Z`: 28/28 steps,
+1,644,370 frames, context Giulia 2.0 / v5-beta-29 / daylight / outdoors. Raw
+replay matches SQLite and fingerprints are unchanged; saturated C1/C2 startup
+losses and the initial C1/BH old-clock segment remain explicit. No recorded
+later drops, with the usual capture-quality limitations.
+
+Two sensor-covered trials with lights manually OFF independently support BH
+`0x738` b1/b2 as light-responsive raw channels. The raw-response hypothesis is
+now supported, with no units/source claim. In the labelled AUTO cycles, lamp OFF
+follows both channels returning to 6 by 14.411 and 14.474 s on the BH clock;
+short correlation windows would be misleading. C2 `0x2EC` adds 27 wiper-phase
+pulses and two independent slow/fast/OFF controls. Spray pulses repeat, but old
+washer contradictions remain. No new raw rain decoder or proven lamp command.
+
+[Follow-up evidence and timing](../baccable_lab/docs/research/20261024-111510-rain-lights-followup.md).
+Dictionary `2026-10-24.3` retains layouts and adds cumulative evidence. The next
+vehicle check remains lamp-output acceptance with factory/manual priority.
+All 75 Lab tests pass; no firmware or user-facing behavior changed.
+
 ## Rain/wiper and automatic-lighting correlation, 2026-10-24
 
 Research branch `research/rain-lights-correlation`, based on `939a85e`; isolated
