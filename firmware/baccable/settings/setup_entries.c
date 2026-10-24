@@ -53,6 +53,7 @@
     #define SETUP_FLASH_PDC_MUTE 31
     #define SETUP_FLASH_REVERSE_AUDIO 32
     #define SETUP_FLASH_ROTATE 33
+    #define SETUP_FLASH_DEFAULT_SUSPENSION 41
     #define SETUP_FLASH_DEFAULT_MODE 38
     #define SETUP_FLASH_LANE_ASSIST 39
 
@@ -323,12 +324,15 @@ const SetupParam setup_params[] = {
                         settings_state.has_function_enabled),
     SETUP_ENUM8(SETUP_FLASH_DEFAULT_MODE, "Default mode", 3, DEFAULT_DEFAULT_MODE,
                         settings_state.default_drive_mode, NULL),
+    SETUP_ENUM8(SETUP_FLASH_DEFAULT_SUSPENSION, "Suspension", 1, 0,
+                        settings_state.default_suspension_softer, NULL),
     SETUP_TOGGLE(SETUP_FLASH_LANE_ASSIST, "LKA", DEFAULT_LANE_ASSIST,
                         settings_state.lane_assist_disabled),
     SETUP_TOGGLE(SETUP_FLASH_QV_EXHAUST_FLAP, "QV exhaust", DEFAULT_QV_EXHAUST_FLAP,
                  settings_state.qv_exhaust_flap_function_enabled),
     SETUP_HIDDEN_TOGGLE(SETUP_FLASH_EUJOT, DEFAULT_EUJOT, settings_state.eujot_enabled),
 
+    SETUP_TOGGLE(42, "Rain lights", 0, settings_state.rain_lights_enabled),
     SETUP_TOGGLE(SETUP_FLASH_PDC_MUTE, "Auto PDC mute", 0, settings_state.parking_sensor_mute),
     SETUP_TOGGLE(SETUP_FLASH_REVERSE_AUDIO, "Mute audio in R", 0, settings_state.reverse_audio_mute),
     SETUP_TOGGLE(SETUP_FLASH_ROTATE, "Auto rotate", 0, settings_state.rotate_readings),

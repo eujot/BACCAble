@@ -32,24 +32,11 @@ can override it. `LARGE_DISPLAY` independently chooses the legacy 18/24-characte
 width. MY23 always has budgets `MY23_L1_VISIBLE = 16` and
 `MY23_L2_VISIBLE = 22`. Those are visible glyph counts, not UTF-8 byte limits.
 
-The main menu is Favorites, Readings, Actions, Settings, Information, Experiments.
+The main menu is Favorites, Readings, Actions, Settings and Information.
 MY23/atomic Settings contains Features, Favorites, Shown pages, Sort order, BACCAble IPC.
 Legacy before its first five-slot save retains Features, Page favorites,
 Shown pages, Favorite order, Sort order, Favorites, BACCAble IPC. Existing catalogs, engine gates and page IDs are retained.
 The [catalog audit](CATALOG_AUDIT.md) describes the legacy reading model.
-
-`Experiments` has nine source-defined groups and 64 manufacturer `0x22`
-signals. A single named value is shown per screen; MY23 puts the group on line 1
-and name/value on line 2. Only the selected DID is polled. The screens are not
-ordinary reading pages, Favorites or persisted preferences. C1 reassembles
-ISO-TP replies of up to 4095 bytes, retaining only a 40-byte prefix while
-validating every frame through the declared end. It checks source ID/service/DID,
-aborts reordered/truncated transfers, accepts NRC 0x78 within a bounded five-second
-transaction, and decodes OBDb MSB-first fields. Requests are padded to eight CAN
-bytes. Flow control requests a 5 ms separation time to protect the small receive
-FIFO. The source refresh intervals and null/range rules apply; failed attempts
-retry after one second. All resulting labels/values fit 18 characters.
-Vehicle compatibility and scaling still require physical confirmation.
 
 ## Central button recognizer
 
@@ -200,13 +187,11 @@ beta-19 atomic formatter had printed as a decimal. Both Readings and Favorites
 now use the catalog enum formatter, which displays the unknown marker `-`.
 Raw CAN state and the CAN dictionary layout are unchanged.
 
-## Experimental parameter bounds
+## Parameter bounds
 
-The ordinary parameter catalog contains 98 definitions. Display formatting, request
-selection and cache bounds all use `PARAMETER_DEFINITION_COUNT`; a stale limit
-of 100 had left some experimental numeric templates visible as `$` and prevented
-requests or cache updates for those pages. A valid single-frame UDS reply can now
-populate the field; missing or rejected replies still display `--`.
+Formatting, request selection and cache bounds use `PARAMETER_DEFINITION_COUNT`
+for the 98 ordinary definitions. Reading lists use a 72-page capacity matching
+the persisted visibility bitmap.
 
 ## Readings preview polling
 
@@ -389,14 +374,59 @@ retains 0=N (formerly OFF), 1=A, 2=D, 3=Race, so old records need no migration.
 N leaves the factory selection alone. The draft stays separate until save;
 saving changes the next start's preference, not the current vehicle mode.
 
+For an active A/D/Race preference, C1 waits for fresh engine-speed reports
+above 400 RPM for two seconds before sending the request to BH. Until then the
+status is `Start engine`; the BH board independently applies the same fresh-RPM
+and two-second running check before sending any selector input. If the engine
+stops or RPM reports become stale during a gesture, BH releases any pending
+press and ends the attempt. Natural (N) remains passive and does not wait for
+the engine.
+
+`Settings → Features → Suspension` uses new flash slot 41: 0=`Stiff`,
+1=`Soft` for D or `Mid` for Race. For A/N the softer choice is labelled `Softer`
+and is ignored. Slot 36 remains the V6 engine selector. Settings grow from 40
+to 41 slots; loading falls back to the previous 80-byte record and defaults the
+new slot to Stiff. The first save writes 82 bytes without moving the storage
+region. Older firmware may not read this longer record after a downgrade.
+
+BH waits for the actual mode to remain unchanged for one second and for fresh
+suspension status to settle for 300 ms before a 150 ms BH `0x256` byte-1 bit-7
+pulse. This applies to Stiff and the softer choice, including when already in
+the target mode. It requires post-release matching feedback before success.
+One additional pulse is allowed only after at least one second following release,
+with the opposite calibration continuously stable for at least one second, a
+status sample no older than 300 ms, the correct mode and fully drained CAN
+transmission. A report gap exceeding 400 ms restarts calibration stability. Any observed desired
+calibration latches response evidence and forbids this retry, even if that state
+was brief. Missing/unknown feedback cannot justify a second toggle. At most two
+suspension presses are admitted; physical input cancels either attempt. An
+eligible retry still expires at the first 3 s post-release feedback deadline. A final
+failure can show `No confirm` even if the selected DNA mode itself succeeded.
+`0x25A` must be a standard DLC-4 data frame.
+Its byte-1 bits 5:4 are decoded by mode: D Stiff=1, Soft=0; Race Stiff=2,
+Mid=1. The labelled `20261024-113104Z` manual matrix directly supports both
+D Soft and Race Mid, with two repetitions each. Automatic startup replay still
+requires vehicle acceptance. Mode entry can briefly retain the previous level:
+Race first reports `04 10 00 00` for 35–36 ms before the default `04 20 00 00`.
+Unknown codes invalidate the previous sample, and the state must settle for
+300 ms before use. See the [three-session audit](../../baccable_lab/docs/research/20261024-three-session-audit.md),
+which supersedes the earlier [Mid uncertainty](../../baccable_lab/docs/research/20261024-startup-audit.md).
+
 `features/dna_selector.c` runs only on BH and uses fresh standard data frames
 `0x256`/DLC 4 and actual `0x46C` mode reports. It preserves every unrelated
 input bit and changes only byte 0 bits 6:5: 20 toward A, 40 toward D/Race,
 00 released (hex). Short deflections last 200 ms. D-to-Race holds 40 for
-1,800 ms, repeating the held input every 250 ms, then releases. It takes up to
-three adjacent steps in A/N/D/Race order, waiting for each observed intermediate
-mode and a new neutral input after release before continuing. No observed step
-within 1.5 s after release ends the attempt. No new press or hold renewal is allowed after ten seconds; pending release
+2,200 ms, then releases. Every new press starts within 20 ms of a received
+factory-neutral input and only after older software/hardware transmissions have
+drained. During a press, each new factory-neutral report requests a fresh copy
+with the owned input held; long holds also refresh after 250 ms without a repeat.
+The original received message is not intercepted or modified. This reduces the
+neutral gap on the shared bus; actual ECU acceptance still needs vehicle testing.
+It takes up to three adjacent steps in A/N/D/Race order. Actual mode must settle
+for one second before each step or suspension action; the preceding release also
+needs at least 300 ms and a new neutral report. No observed step within 3 s
+after release ends the attempt. No new press or hold renewal is allowed after
+12 seconds; pending release
 continues until the CAN queue accepts it, including after timeout/save/OFF.
 Physical non-neutral input ends synthetic selection and hands control to the
 driver. Unknown modes, stale input/mode reports and queue failures cannot
@@ -412,7 +442,9 @@ with observed target). Tokens reject results from earlier ignition/save events;
 duplicate start requests and transport resync cannot replay a completed gesture.
 Both new commands retain the existing UART framing/checksum. Update C1/BH together.
 
-`features/drive_mode_check.c` waits up to 15 s for BH. A matching completion
+After the engine-running gate and successful UART enqueue, `features/drive_mode_check.c`
+waits up to 20 s for BH. BH allows at most 3 s for its independent engine gate,
+then 12 s for selection and suspension; it cannot apply a timed-out request at a later engine start. A matching completion
 starts a separate five-second observation window; a failure or missing BH ends
 with No confirm. At the window's end, fresh unmodified C1 `0x384` reports must
 match for at least 2 s (at least four samples, gaps at most 600 ms), and CRC-valid
@@ -420,7 +452,7 @@ match for at least 2 s (at least four samples, gaps at most 600 ms), and CRC-val
 Disagreement or gaps reset the matching run. This is corroboration of received
 state, not an explicit ECU acknowledgement or proof of every subsystem.
 
-Browsing a non-N preference displays target and `Next start`, `Waiting`,
+Browsing a non-N preference displays target and `Next start`, `Start engine`, `Waiting`,
 `Confirmed` or `No confirm`. MY23 uses title/result lines; legacy uses compact
 `DNA` and R for Race to retain the complete status. Results remain until OFF, sleep or settings save; resync preserves them.
 A failed check leaves the preference for the next start. The preference never
@@ -428,3 +460,62 @@ rewrites `0x384`, `0x46C`, `0x25A` or transmission status. Existing ESC/TC displ
 customization still uses actual observed mode and preserves 0x384 byte 7;
 0x5A8 retains its genuine J1850 CRC. Input replay acceptance remains a vehicle
 check, based on the [capture evidence](../../baccable_lab/docs/research/20261023-dna-all-sessions.md).
+
+The startup-gesture correction and its acceptance limits are described in
+[the beta-29 failure review](../research/20261024-startup-gesture-correction.md).
+
+## Rain lights (unreleased after v5-beta-29)
+
+`Settings` → `Features` → `Comfort` → `Rain lights` is an ordinary OFF/ON draft, default OFF,
+persisted in new slot 42. Record 0x101 now has 42 halfwords (84 bytes); loaders
+accept the preceding 41- and 40-slot records and default new options to OFF.
+Existing slot numbers are unchanged. Older firmware may not load the extended
+record when downgrading; record settings before a rollback.
+
+C2 observes only standard data 0x2EC/DLC8 byte 2 bit 5. Three rising phases in
+an inclusive 15,000 ms sliding window request light additions. The initial sample,
+repeated high samples and gaps over 500 ms do not count as a cycle. Further
+rises renew the hold, which ends at 60,000 ms after the last rise. Live C2
+0x73E/DLC4 byte 3 bit 6 must indicate AUTO; reports older than 1,000 ms or a
+non-AUTO report clear the request. The phase is supported by repeated captures;
+exact one-phase-per-physical-sweep semantics still needs physical observation.
+Washer sweeps are not excluded. No rain intensity or BH 0x738 threshold is used.
+
+C1 sends addressed C2 command 0x4C (enabled, token) once per second while ON;
+OFF is sent on a change and once after boot. C2 configuration expires after
+3 s and replies 0x4D (active, echoed token) in its addressed response window.
+C1 accepts the latest token only within 1 s of its poll, then leases position
+lamp additions for 3 s. Replies represent a rain request, not lamp acceptance.
+Busy UART queues retain the next poll; lost replies expire rather than latch ON.
+C1 sleep prevents polling and additions; gaps/reset expire C2 ownership.
+
+On fresh factory 0x73E/DLC4 templates, C2 ORs only b1 mask 0x40 (dipped beams),
+and C1 ORs only b0 mask 0x02 / b2 mask 0x80 (position lamps). All other bits
+are preserved. Already-set bits cause no extra transmission. No timer replays
+an old template, no explicit OFF is sent, and factory frames are not intercepted.
+Queue rejection is retried naturally on the next factory report. C2 stops on
+manual non-AUTO immediately; C1 follows the next C2 reply/lease expiration.
+This additional-transmission output follows the existing animation's bus-specific
+lamp mapping, but sustained front/rear lamp acceptance, factory darkness handover
+and manual priority still require a stationary vehicle trial. No physical-success
+claim is made by the menu. Use matching C1/C2 images.
+
+### Rain-light polling correction
+
+Status/USB poll deadlines are independent of rain-control transmissions and
+advance only when their own request enters the queue. Rejected queue attempts
+retain the same USB/version poll choice. This prevents the 1-second rain
+requests from repeatedly deferring C2's 1,010 ms status timer. A combined host
+regression uses the production UART, rain controller and USB manager with
+continuous display updates, C2-only USB capture and one missing rain reply.
+C2/BH status remains fresh and the rain request remains active.
+
+The owner clarified on 2026-10-24 that earlier lamp confirmations came from
+covering the light sensor or operating the physical switch. These confirmations
+are valid evidence for the captured ON/OFF values; C2 AUTO/daylight
+`00 00 00 40` becomes `00 40 00 40` with dipped beams, and the associated C1
+position-lamp pattern is `02 00 80 00`. Rain lights generates these patterns
+on their respective buses while preserving unrelated fields. The remaining
+check is the receiver's reaction to BACCAble's additional transmission while
+factory frames continue. The earlier physical observations are not discarded
+or reclassified as missing evidence. See the [focused correction report](../research/20261024-rain-light-polling-correction.md).

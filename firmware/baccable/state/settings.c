@@ -45,6 +45,7 @@ SettingsState settings_state = {
     .open_windows_with_door_lock = 0,
     .qv_exhaust_flap_function_enabled = 0,
     .eujot_enabled = 0,
+    .rain_lights_enabled = 0,
 #endif
 #if defined(BACCABLE_C1) || defined(BACCABLE_C2)
     .lights_animation_enabled = 0,
@@ -63,6 +64,7 @@ SettingsState settings_state = {
     .has_function_enabled = 0,
 
     .default_drive_mode = 0,
+    .default_suspension_softer = 0,
 
     .lane_assist_disabled = 0,
 };

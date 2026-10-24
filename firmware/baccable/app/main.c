@@ -3,9 +3,9 @@
 #include "usb_device.h"
 #include "stm32f0xx_it.h"
 #include "diagnostics/parameter_cache.h"
-#include "diagnostics/experiments.h"
 #include "features/menu.h"
 #include "features/parking.h"
+#include "features/rain_lights.h"
 #include "features/ibs_override.h"
 #include "features/usb_modes.h"
 #include "protocol/elm327.h"
@@ -66,6 +66,8 @@ static void receive_can_frames(void) {
 #else
         usb_sniffer_observe(&header, data);
         parking_observe(&header, data);
+        rain_lights_observe(&header, data);
+        rain_lights_frame(&header, data);
     #if defined(BACCABLE_C1)
         ibs_override_observe(&header, data);
         if (header.IDE == CAN_ID_STD && header.RTR == CAN_RTR_DATA && header.StdId == 0x41a &&
@@ -76,10 +78,6 @@ static void receive_can_frames(void) {
     #endif
         if (header.RTR != CAN_RTR_DATA || header.DLC == 0)
             continue;
-#if defined(BACCABLE_C1)
-        if (menu_experiments_active()) experiment_receive(&header, data);
-        else experiment_cancel();
-#endif
         if (header.IDE == CAN_ID_EXT)
             vehicle_dispatch_diagnostic(&header, data);
         if (header.IDE == CAN_ID_STD)
@@ -140,6 +138,7 @@ int main(void) {
         }
 #endif
         receive_can_frames();
+        rain_lights_process();
 #if defined(BACCABLE_C1)
         pedal_uart_process();
         powertrain_process();

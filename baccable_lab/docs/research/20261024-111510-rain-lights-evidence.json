@@ -1,0 +1,4024 @@
+{
+  "session": "20261024-111510Z",
+  "status": "complete",
+  "duration_seconds": 312.378244958,
+  "host_origin_ns": 90190666,
+  "input_sha256": {
+    "manifest.json": "1e4a8ec0317dbeb5cea1e0c39dd93f333f10801f47deddebfa02967c2887a002",
+    "summary.json": "637294a0868b4f71f7e1601a95904dce4e8a11fab76923418e7ffffb424f3c37",
+    "session.sqlite3": "c3e0b99fd78406d835be660aa0ab08455e8c4b3fe7facb40f86b91f34487e841",
+    "session.sqlite3-wal": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "C1.bin": "ea74a73120c24640bda45c0c6e191a7e718c1c35176d030e2da43803a8ec5ce5",
+    "C2.bin": "92b1efe48f270dc008cce4e2f4a4f69185c4c19a6c2227bd9de5db5fb0e6f1b9",
+    "BH.bin": "1511921f5fbb8149af4c7a2b1d7c53587f061827892eaf4cba265c4d95304efd"
+  },
+  "events": [
+    {
+      "id": 1,
+      "host_ns": 14257125958,
+      "label": "light_sensor_bright",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 1 step 1 done"
+    },
+    {
+      "id": 2,
+      "host_ns": 26701840458,
+      "label": "light_sensor_dark",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 1 step 2 done"
+    },
+    {
+      "id": 3,
+      "host_ns": 42995607791,
+      "label": "dipped_beam_off",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 1 step 3 done"
+    },
+    {
+      "id": 4,
+      "host_ns": 56060344125,
+      "label": "automatic_headlights_on",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 1 step 4 done"
+    },
+    {
+      "id": 5,
+      "host_ns": 100756259583,
+      "label": "light_sensor_dark",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 1 step 5 done"
+    },
+    {
+      "id": 6,
+      "host_ns": 102953919916,
+      "label": "dipped_beam_on",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 1 step 6 done"
+    },
+    {
+      "id": 7,
+      "host_ns": 123999200500,
+      "label": "dipped_beam_off",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 1 step 7 done"
+    },
+    {
+      "id": 8,
+      "host_ns": 137821720291,
+      "label": "wipers_slow",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 1 step 8 done"
+    },
+    {
+      "id": 9,
+      "host_ns": 141198172833,
+      "label": "wipers_fast",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 1 step 9 done"
+    },
+    {
+      "id": 10,
+      "host_ns": 147559494333,
+      "label": "wipers_off",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 1 step 10 done"
+    },
+    {
+      "id": 11,
+      "host_ns": 157346384375,
+      "label": "wipers_auto",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 1 step 11 done"
+    },
+    {
+      "id": 12,
+      "host_ns": 165291241666,
+      "label": "rain_detected",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 1 step 12 done"
+    },
+    {
+      "id": 13,
+      "host_ns": 169393489333,
+      "label": "dipped_beam_off",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 1 step 13 done"
+    },
+    {
+      "id": 14,
+      "host_ns": 173173780500,
+      "label": "rain_stopped",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 1 step 14 done"
+    },
+    {
+      "id": 15,
+      "host_ns": 183653707000,
+      "label": "light_sensor_bright",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 2 step 1 done"
+    },
+    {
+      "id": 16,
+      "host_ns": 192974949000,
+      "label": "light_sensor_dark",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 2 step 2 done"
+    },
+    {
+      "id": 17,
+      "host_ns": 196395782208,
+      "label": "dipped_beam_off",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 2 step 3 done"
+    },
+    {
+      "id": 18,
+      "host_ns": 218912635708,
+      "label": "automatic_headlights_on",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 2 step 4 done"
+    },
+    {
+      "id": 19,
+      "host_ns": 231402068083,
+      "label": "light_sensor_dark",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 2 step 5 done"
+    },
+    {
+      "id": 20,
+      "host_ns": 234495309833,
+      "label": "dipped_beam_on",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 2 step 6 done"
+    },
+    {
+      "id": 21,
+      "host_ns": 255777231208,
+      "label": "dipped_beam_off",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 2 step 7 done"
+    },
+    {
+      "id": 22,
+      "host_ns": 266512660708,
+      "label": "wipers_slow",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 2 step 8 done"
+    },
+    {
+      "id": 23,
+      "host_ns": 269846297166,
+      "label": "wipers_fast",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 2 step 9 done"
+    },
+    {
+      "id": 24,
+      "host_ns": 274726123708,
+      "label": "wipers_off",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 2 step 10 done"
+    },
+    {
+      "id": 25,
+      "host_ns": 291043494875,
+      "label": "wipers_auto",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 2 step 11 done"
+    },
+    {
+      "id": 26,
+      "host_ns": 297697329541,
+      "label": "rain_detected",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 2 step 12 done"
+    },
+    {
+      "id": 27,
+      "host_ns": 301972414083,
+      "label": "dipped_beam_off",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 2 step 13 done"
+    },
+    {
+      "id": 28,
+      "host_ns": 305999922708,
+      "label": "rain_stopped",
+      "source": "scenario",
+      "note": "scenario sensor_wiper_lights run 2 step 14 done"
+    }
+  ],
+  "frames": 1644370,
+  "inventory": [
+    {
+      "role": "BH",
+      "can_id": 156,
+      "dlc": 6,
+      "frames": 5
+    },
+    {
+      "role": "BH",
+      "can_id": 171,
+      "dlc": 8,
+      "frames": 312
+    },
+    {
+      "role": "BH",
+      "can_id": 598,
+      "dlc": 4,
+      "frames": 1248
+    },
+    {
+      "role": "BH",
+      "can_id": 600,
+      "dlc": 8,
+      "frames": 1249
+    },
+    {
+      "role": "BH",
+      "can_id": 601,
+      "dlc": 8,
+      "frames": 3124
+    },
+    {
+      "role": "BH",
+      "can_id": 602,
+      "dlc": 4,
+      "frames": 1249
+    },
+    {
+      "role": "BH",
+      "can_id": 750,
+      "dlc": 8,
+      "frames": 313
+    },
+    {
+      "role": "BH",
+      "can_id": 752,
+      "dlc": 8,
+      "frames": 3123
+    },
+    {
+      "role": "BH",
+      "can_id": 754,
+      "dlc": 8,
+      "frames": 3124
+    },
+    {
+      "role": "BH",
+      "can_id": 773,
+      "dlc": 2,
+      "frames": 1562
+    },
+    {
+      "role": "BH",
+      "can_id": 775,
+      "dlc": 2,
+      "frames": 1561
+    },
+    {
+      "role": "BH",
+      "can_id": 852,
+      "dlc": 4,
+      "frames": 1257
+    },
+    {
+      "role": "BH",
+      "can_id": 854,
+      "dlc": 8,
+      "frames": 1250
+    },
+    {
+      "role": "BH",
+      "can_id": 856,
+      "dlc": 6,
+      "frames": 1249
+    },
+    {
+      "role": "BH",
+      "can_id": 986,
+      "dlc": 1,
+      "frames": 352
+    },
+    {
+      "role": "BH",
+      "can_id": 988,
+      "dlc": 8,
+      "frames": 3123
+    },
+    {
+      "role": "BH",
+      "can_id": 990,
+      "dlc": 8,
+      "frames": 3123
+    },
+    {
+      "role": "BH",
+      "can_id": 992,
+      "dlc": 8,
+      "frames": 3122
+    },
+    {
+      "role": "BH",
+      "can_id": 994,
+      "dlc": 8,
+      "frames": 3123
+    },
+    {
+      "role": "BH",
+      "can_id": 996,
+      "dlc": 8,
+      "frames": 3124
+    },
+    {
+      "role": "BH",
+      "can_id": 998,
+      "dlc": 8,
+      "frames": 3124
+    },
+    {
+      "role": "BH",
+      "can_id": 1000,
+      "dlc": 8,
+      "frames": 3124
+    },
+    {
+      "role": "BH",
+      "can_id": 1098,
+      "dlc": 4,
+      "frames": 624
+    },
+    {
+      "role": "BH",
+      "can_id": 1100,
+      "dlc": 4,
+      "frames": 625
+    },
+    {
+      "role": "BH",
+      "can_id": 1128,
+      "dlc": 2,
+      "frames": 625
+    },
+    {
+      "role": "BH",
+      "can_id": 1130,
+      "dlc": 8,
+      "frames": 626
+    },
+    {
+      "role": "BH",
+      "can_id": 1132,
+      "dlc": 8,
+      "frames": 624
+    },
+    {
+      "role": "BH",
+      "can_id": 1198,
+      "dlc": 8,
+      "frames": 624
+    },
+    {
+      "role": "BH",
+      "can_id": 1268,
+      "dlc": 8,
+      "frames": 1246
+    },
+    {
+      "role": "BH",
+      "can_id": 1270,
+      "dlc": 8,
+      "frames": 1249
+    },
+    {
+      "role": "BH",
+      "can_id": 1290,
+      "dlc": 8,
+      "frames": 312
+    },
+    {
+      "role": "BH",
+      "can_id": 1404,
+      "dlc": 8,
+      "frames": 313
+    },
+    {
+      "role": "BH",
+      "can_id": 1434,
+      "dlc": 4,
+      "frames": 313
+    },
+    {
+      "role": "BH",
+      "can_id": 1436,
+      "dlc": 8,
+      "frames": 314
+    },
+    {
+      "role": "BH",
+      "can_id": 1438,
+      "dlc": 8,
+      "frames": 312
+    },
+    {
+      "role": "BH",
+      "can_id": 1440,
+      "dlc": 8,
+      "frames": 402
+    },
+    {
+      "role": "BH",
+      "can_id": 1446,
+      "dlc": 8,
+      "frames": 313
+    },
+    {
+      "role": "BH",
+      "can_id": 1448,
+      "dlc": 8,
+      "frames": 313
+    },
+    {
+      "role": "BH",
+      "can_id": 1450,
+      "dlc": 4,
+      "frames": 312
+    },
+    {
+      "role": "BH",
+      "can_id": 1451,
+      "dlc": 8,
+      "frames": 313
+    },
+    {
+      "role": "BH",
+      "can_id": 1452,
+      "dlc": 8,
+      "frames": 312
+    },
+    {
+      "role": "BH",
+      "can_id": 1456,
+      "dlc": 4,
+      "frames": 313
+    },
+    {
+      "role": "BH",
+      "can_id": 1458,
+      "dlc": 8,
+      "frames": 313
+    },
+    {
+      "role": "BH",
+      "can_id": 1462,
+      "dlc": 8,
+      "frames": 312
+    },
+    {
+      "role": "BH",
+      "can_id": 1468,
+      "dlc": 8,
+      "frames": 312
+    },
+    {
+      "role": "BH",
+      "can_id": 1470,
+      "dlc": 8,
+      "frames": 312
+    },
+    {
+      "role": "BH",
+      "can_id": 1472,
+      "dlc": 8,
+      "frames": 317
+    },
+    {
+      "role": "BH",
+      "can_id": 1474,
+      "dlc": 3,
+      "frames": 312
+    },
+    {
+      "role": "BH",
+      "can_id": 1476,
+      "dlc": 8,
+      "frames": 317
+    },
+    {
+      "role": "BH",
+      "can_id": 1478,
+      "dlc": 8,
+      "frames": 315
+    },
+    {
+      "role": "BH",
+      "can_id": 1482,
+      "dlc": 8,
+      "frames": 313
+    },
+    {
+      "role": "BH",
+      "can_id": 1485,
+      "dlc": 8,
+      "frames": 313
+    },
+    {
+      "role": "BH",
+      "can_id": 1486,
+      "dlc": 8,
+      "frames": 312
+    },
+    {
+      "role": "BH",
+      "can_id": 1498,
+      "dlc": 8,
+      "frames": 312
+    },
+    {
+      "role": "BH",
+      "can_id": 1500,
+      "dlc": 8,
+      "frames": 312
+    },
+    {
+      "role": "BH",
+      "can_id": 1502,
+      "dlc": 8,
+      "frames": 312
+    },
+    {
+      "role": "BH",
+      "can_id": 1522,
+      "dlc": 8,
+      "frames": 313
+    },
+    {
+      "role": "BH",
+      "can_id": 1600,
+      "dlc": 8,
+      "frames": 6
+    },
+    {
+      "role": "BH",
+      "can_id": 1848,
+      "dlc": 8,
+      "frames": 312
+    },
+    {
+      "role": "BH",
+      "can_id": 1865,
+      "dlc": 8,
+      "frames": 63
+    },
+    {
+      "role": "BH",
+      "can_id": 1884,
+      "dlc": 2,
+      "frames": 313
+    },
+    {
+      "role": "BH",
+      "can_id": 1888,
+      "dlc": 6,
+      "frames": 312
+    },
+    {
+      "role": "BH",
+      "can_id": 1890,
+      "dlc": 6,
+      "frames": 313
+    },
+    {
+      "role": "BH",
+      "can_id": 1892,
+      "dlc": 6,
+      "frames": 313
+    },
+    {
+      "role": "BH",
+      "can_id": 1984,
+      "dlc": 8,
+      "frames": 156
+    },
+    {
+      "role": "BH",
+      "can_id": 2000,
+      "dlc": 3,
+      "frames": 208
+    },
+    {
+      "role": "BH",
+      "can_id": 506724352,
+      "dlc": 6,
+      "frames": 313
+    },
+    {
+      "role": "BH",
+      "can_id": 506724355,
+      "dlc": 2,
+      "frames": 313
+    },
+    {
+      "role": "BH",
+      "can_id": 506724362,
+      "dlc": 2,
+      "frames": 313
+    },
+    {
+      "role": "BH",
+      "can_id": 506724387,
+      "dlc": 2,
+      "frames": 313
+    },
+    {
+      "role": "BH",
+      "can_id": 506724388,
+      "dlc": 2,
+      "frames": 313
+    },
+    {
+      "role": "BH",
+      "can_id": 506724398,
+      "dlc": 2,
+      "frames": 313
+    },
+    {
+      "role": "BH",
+      "can_id": 506724400,
+      "dlc": 2,
+      "frames": 313
+    },
+    {
+      "role": "BH",
+      "can_id": 506724403,
+      "dlc": 2,
+      "frames": 313
+    },
+    {
+      "role": "BH",
+      "can_id": 506724404,
+      "dlc": 2,
+      "frames": 313
+    },
+    {
+      "role": "BH",
+      "can_id": 506724427,
+      "dlc": 2,
+      "frames": 313
+    },
+    {
+      "role": "BH",
+      "can_id": 506724455,
+      "dlc": 2,
+      "frames": 313
+    },
+    {
+      "role": "C1",
+      "can_id": 222,
+      "dlc": 6,
+      "frames": 31215
+    },
+    {
+      "role": "C1",
+      "can_id": 238,
+      "dlc": 8,
+      "frames": 31156
+    },
+    {
+      "role": "C1",
+      "can_id": 240,
+      "dlc": 8,
+      "frames": 31218
+    },
+    {
+      "role": "C1",
+      "can_id": 244,
+      "dlc": 8,
+      "frames": 31210
+    },
+    {
+      "role": "C1",
+      "can_id": 250,
+      "dlc": 8,
+      "frames": 31216
+    },
+    {
+      "role": "C1",
+      "can_id": 251,
+      "dlc": 8,
+      "frames": 31214
+    },
+    {
+      "role": "C1",
+      "can_id": 252,
+      "dlc": 8,
+      "frames": 31215
+    },
+    {
+      "role": "C1",
+      "can_id": 254,
+      "dlc": 8,
+      "frames": 31159
+    },
+    {
+      "role": "C1",
+      "can_id": 255,
+      "dlc": 8,
+      "frames": 31208
+    },
+    {
+      "role": "C1",
+      "can_id": 256,
+      "dlc": 8,
+      "frames": 31213
+    },
+    {
+      "role": "C1",
+      "can_id": 257,
+      "dlc": 8,
+      "frames": 31159
+    },
+    {
+      "role": "C1",
+      "can_id": 259,
+      "dlc": 8,
+      "frames": 31159
+    },
+    {
+      "role": "C1",
+      "can_id": 260,
+      "dlc": 8,
+      "frames": 31216
+    },
+    {
+      "role": "C1",
+      "can_id": 263,
+      "dlc": 8,
+      "frames": 31158
+    },
+    {
+      "role": "C1",
+      "can_id": 278,
+      "dlc": 8,
+      "frames": 31153
+    },
+    {
+      "role": "C1",
+      "can_id": 284,
+      "dlc": 8,
+      "frames": 31148
+    },
+    {
+      "role": "C1",
+      "can_id": 288,
+      "dlc": 6,
+      "frames": 31212
+    },
+    {
+      "role": "C1",
+      "can_id": 346,
+      "dlc": 4,
+      "frames": 626
+    },
+    {
+      "role": "C1",
+      "can_id": 348,
+      "dlc": 8,
+      "frames": 3122
+    },
+    {
+      "role": "C1",
+      "can_id": 402,
+      "dlc": 5,
+      "frames": 30432
+    },
+    {
+      "role": "C1",
+      "can_id": 495,
+      "dlc": 8,
+      "frames": 15601
+    },
+    {
+      "role": "C1",
+      "can_id": 496,
+      "dlc": 8,
+      "frames": 15609
+    },
+    {
+      "role": "C1",
+      "can_id": 497,
+      "dlc": 8,
+      "frames": 15570
+    },
+    {
+      "role": "C1",
+      "can_id": 498,
+      "dlc": 8,
+      "frames": 15565
+    },
+    {
+      "role": "C1",
+      "can_id": 500,
+      "dlc": 8,
+      "frames": 15590
+    },
+    {
+      "role": "C1",
+      "can_id": 501,
+      "dlc": 5,
+      "frames": 15541
+    },
+    {
+      "role": "C1",
+      "can_id": 503,
+      "dlc": 8,
+      "frames": 15599
+    },
+    {
+      "role": "C1",
+      "can_id": 506,
+      "dlc": 8,
+      "frames": 15535
+    },
+    {
+      "role": "C1",
+      "can_id": 507,
+      "dlc": 8,
+      "frames": 15598
+    },
+    {
+      "role": "C1",
+      "can_id": 508,
+      "dlc": 8,
+      "frames": 15599
+    },
+    {
+      "role": "C1",
+      "can_id": 550,
+      "dlc": 8,
+      "frames": 311
+    },
+    {
+      "role": "C1",
+      "can_id": 598,
+      "dlc": 8,
+      "frames": 3120
+    },
+    {
+      "role": "C1",
+      "can_id": 599,
+      "dlc": 8,
+      "frames": 3126
+    },
+    {
+      "role": "C1",
+      "can_id": 601,
+      "dlc": 8,
+      "frames": 3117
+    },
+    {
+      "role": "C1",
+      "can_id": 748,
+      "dlc": 8,
+      "frames": 6239
+    },
+    {
+      "role": "C1",
+      "can_id": 749,
+      "dlc": 8,
+      "frames": 6242
+    },
+    {
+      "role": "C1",
+      "can_id": 750,
+      "dlc": 4,
+      "frames": 3119
+    },
+    {
+      "role": "C1",
+      "can_id": 751,
+      "dlc": 8,
+      "frames": 6235
+    },
+    {
+      "role": "C1",
+      "can_id": 762,
+      "dlc": 3,
+      "frames": 15585
+    },
+    {
+      "role": "C1",
+      "can_id": 833,
+      "dlc": 8,
+      "frames": 625
+    },
+    {
+      "role": "C1",
+      "can_id": 900,
+      "dlc": 8,
+      "frames": 1247
+    },
+    {
+      "role": "C1",
+      "can_id": 1042,
+      "dlc": 5,
+      "frames": 3120
+    },
+    {
+      "role": "C1",
+      "can_id": 1046,
+      "dlc": 8,
+      "frames": 3101
+    },
+    {
+      "role": "C1",
+      "can_id": 1047,
+      "dlc": 8,
+      "frames": 3119
+    },
+    {
+      "role": "C1",
+      "can_id": 1048,
+      "dlc": 4,
+      "frames": 3107
+    },
+    {
+      "role": "C1",
+      "can_id": 1049,
+      "dlc": 8,
+      "frames": 3116
+    },
+    {
+      "role": "C1",
+      "can_id": 1050,
+      "dlc": 7,
+      "frames": 3122
+    },
+    {
+      "role": "C1",
+      "can_id": 1051,
+      "dlc": 8,
+      "frames": 3119
+    },
+    {
+      "role": "C1",
+      "can_id": 1054,
+      "dlc": 8,
+      "frames": 3115
+    },
+    {
+      "role": "C1",
+      "can_id": 1056,
+      "dlc": 8,
+      "frames": 3120
+    },
+    {
+      "role": "C1",
+      "can_id": 1058,
+      "dlc": 8,
+      "frames": 3121
+    },
+    {
+      "role": "C1",
+      "can_id": 1060,
+      "dlc": 8,
+      "frames": 3120
+    },
+    {
+      "role": "C1",
+      "can_id": 1062,
+      "dlc": 8,
+      "frames": 3121
+    },
+    {
+      "role": "C1",
+      "can_id": 1194,
+      "dlc": 8,
+      "frames": 624
+    },
+    {
+      "role": "C1",
+      "can_id": 1196,
+      "dlc": 7,
+      "frames": 155
+    },
+    {
+      "role": "C1",
+      "can_id": 1198,
+      "dlc": 8,
+      "frames": 623
+    },
+    {
+      "role": "C1",
+      "can_id": 1199,
+      "dlc": 8,
+      "frames": 624
+    },
+    {
+      "role": "C1",
+      "can_id": 1201,
+      "dlc": 8,
+      "frames": 624
+    },
+    {
+      "role": "C1",
+      "can_id": 1202,
+      "dlc": 8,
+      "frames": 624
+    },
+    {
+      "role": "C1",
+      "can_id": 1349,
+      "dlc": 8,
+      "frames": 1244
+    },
+    {
+      "role": "C1",
+      "can_id": 1440,
+      "dlc": 8,
+      "frames": 313
+    },
+    {
+      "role": "C1",
+      "can_id": 1444,
+      "dlc": 8,
+      "frames": 311
+    },
+    {
+      "role": "C1",
+      "can_id": 1445,
+      "dlc": 8,
+      "frames": 313
+    },
+    {
+      "role": "C1",
+      "can_id": 1446,
+      "dlc": 8,
+      "frames": 809
+    },
+    {
+      "role": "C1",
+      "can_id": 1447,
+      "dlc": 8,
+      "frames": 311
+    },
+    {
+      "role": "C1",
+      "can_id": 1448,
+      "dlc": 8,
+      "frames": 312
+    },
+    {
+      "role": "C1",
+      "can_id": 1453,
+      "dlc": 8,
+      "frames": 311
+    },
+    {
+      "role": "C1",
+      "can_id": 1454,
+      "dlc": 8,
+      "frames": 312
+    },
+    {
+      "role": "C1",
+      "can_id": 1504,
+      "dlc": 8,
+      "frames": 1243
+    },
+    {
+      "role": "C1",
+      "can_id": 1846,
+      "dlc": 8,
+      "frames": 3122
+    },
+    {
+      "role": "C1",
+      "can_id": 1848,
+      "dlc": 5,
+      "frames": 312
+    },
+    {
+      "role": "C1",
+      "can_id": 1850,
+      "dlc": 6,
+      "frames": 312
+    },
+    {
+      "role": "C1",
+      "can_id": 1852,
+      "dlc": 8,
+      "frames": 313
+    },
+    {
+      "role": "C1",
+      "can_id": 1854,
+      "dlc": 4,
+      "frames": 1254
+    },
+    {
+      "role": "C1",
+      "can_id": 1994,
+      "dlc": 2,
+      "frames": 313
+    },
+    {
+      "role": "C1",
+      "can_id": 2000,
+      "dlc": 1,
+      "frames": 15597
+    },
+    {
+      "role": "C1",
+      "can_id": 417001744,
+      "dlc": 6,
+      "frames": 551
+    },
+    {
+      "role": "C1",
+      "can_id": 417001824,
+      "dlc": 4,
+      "frames": 31
+    },
+    {
+      "role": "C1",
+      "can_id": 417001824,
+      "dlc": 7,
+      "frames": 31
+    },
+    {
+      "role": "C1",
+      "can_id": 506724352,
+      "dlc": 8,
+      "frames": 1561
+    },
+    {
+      "role": "C1",
+      "can_id": 506855425,
+      "dlc": 1,
+      "frames": 309
+    },
+    {
+      "role": "C1",
+      "can_id": 506855427,
+      "dlc": 1,
+      "frames": 309
+    },
+    {
+      "role": "C1",
+      "can_id": 506855435,
+      "dlc": 1,
+      "frames": 312
+    },
+    {
+      "role": "C1",
+      "can_id": 506855446,
+      "dlc": 1,
+      "frames": 303
+    },
+    {
+      "role": "C1",
+      "can_id": 506855459,
+      "dlc": 1,
+      "frames": 312
+    },
+    {
+      "role": "C1",
+      "can_id": 506855481,
+      "dlc": 1,
+      "frames": 313
+    },
+    {
+      "role": "C1",
+      "can_id": 506855489,
+      "dlc": 1,
+      "frames": 311
+    },
+    {
+      "role": "C1",
+      "can_id": 506855491,
+      "dlc": 1,
+      "frames": 312
+    },
+    {
+      "role": "C2",
+      "can_id": 171,
+      "dlc": 8,
+      "frames": 312
+    },
+    {
+      "role": "C2",
+      "can_id": 222,
+      "dlc": 6,
+      "frames": 31232
+    },
+    {
+      "role": "C2",
+      "can_id": 228,
+      "dlc": 6,
+      "frames": 31233
+    },
+    {
+      "role": "C2",
+      "can_id": 238,
+      "dlc": 8,
+      "frames": 31168
+    },
+    {
+      "role": "C2",
+      "can_id": 241,
+      "dlc": 8,
+      "frames": 31167
+    },
+    {
+      "role": "C2",
+      "can_id": 249,
+      "dlc": 4,
+      "frames": 31167
+    },
+    {
+      "role": "C2",
+      "can_id": 250,
+      "dlc": 8,
+      "frames": 31232
+    },
+    {
+      "role": "C2",
+      "can_id": 252,
+      "dlc": 8,
+      "frames": 31230
+    },
+    {
+      "role": "C2",
+      "can_id": 254,
+      "dlc": 8,
+      "frames": 31167
+    },
+    {
+      "role": "C2",
+      "can_id": 257,
+      "dlc": 8,
+      "frames": 31167
+    },
+    {
+      "role": "C2",
+      "can_id": 262,
+      "dlc": 7,
+      "frames": 31233
+    },
+    {
+      "role": "C2",
+      "can_id": 263,
+      "dlc": 8,
+      "frames": 31167
+    },
+    {
+      "role": "C2",
+      "can_id": 270,
+      "dlc": 7,
+      "frames": 31289
+    },
+    {
+      "role": "C2",
+      "can_id": 278,
+      "dlc": 8,
+      "frames": 31167
+    },
+    {
+      "role": "C2",
+      "can_id": 280,
+      "dlc": 6,
+      "frames": 31232
+    },
+    {
+      "role": "C2",
+      "can_id": 282,
+      "dlc": 8,
+      "frames": 31233
+    },
+    {
+      "role": "C2",
+      "can_id": 284,
+      "dlc": 8,
+      "frames": 31167
+    },
+    {
+      "role": "C2",
+      "can_id": 288,
+      "dlc": 6,
+      "frames": 31232
+    },
+    {
+      "role": "C2",
+      "can_id": 290,
+      "dlc": 4,
+      "frames": 31233
+    },
+    {
+      "role": "C2",
+      "can_id": 346,
+      "dlc": 4,
+      "frames": 626
+    },
+    {
+      "role": "C2",
+      "can_id": 496,
+      "dlc": 8,
+      "frames": 15615
+    },
+    {
+      "role": "C2",
+      "can_id": 501,
+      "dlc": 5,
+      "frames": 15584
+    },
+    {
+      "role": "C2",
+      "can_id": 502,
+      "dlc": 8,
+      "frames": 31232
+    },
+    {
+      "role": "C2",
+      "can_id": 508,
+      "dlc": 8,
+      "frames": 15616
+    },
+    {
+      "role": "C2",
+      "can_id": 599,
+      "dlc": 8,
+      "frames": 3129
+    },
+    {
+      "role": "C2",
+      "can_id": 601,
+      "dlc": 8,
+      "frames": 3124
+    },
+    {
+      "role": "C2",
+      "can_id": 740,
+      "dlc": 8,
+      "frames": 7808
+    },
+    {
+      "role": "C2",
+      "can_id": 742,
+      "dlc": 8,
+      "frames": 7808
+    },
+    {
+      "role": "C2",
+      "can_id": 748,
+      "dlc": 8,
+      "frames": 6246
+    },
+    {
+      "role": "C2",
+      "can_id": 756,
+      "dlc": 8,
+      "frames": 7808
+    },
+    {
+      "role": "C2",
+      "can_id": 758,
+      "dlc": 8,
+      "frames": 7808
+    },
+    {
+      "role": "C2",
+      "can_id": 762,
+      "dlc": 3,
+      "frames": 15616
+    },
+    {
+      "role": "C2",
+      "can_id": 766,
+      "dlc": 4,
+      "frames": 7808
+    },
+    {
+      "role": "C2",
+      "can_id": 900,
+      "dlc": 8,
+      "frames": 1249
+    },
+    {
+      "role": "C2",
+      "can_id": 1040,
+      "dlc": 8,
+      "frames": 3124
+    },
+    {
+      "role": "C2",
+      "can_id": 1046,
+      "dlc": 8,
+      "frames": 3123
+    },
+    {
+      "role": "C2",
+      "can_id": 1069,
+      "dlc": 5,
+      "frames": 3124
+    },
+    {
+      "role": "C2",
+      "can_id": 1070,
+      "dlc": 5,
+      "frames": 3124
+    },
+    {
+      "role": "C2",
+      "can_id": 1194,
+      "dlc": 8,
+      "frames": 625
+    },
+    {
+      "role": "C2",
+      "can_id": 1198,
+      "dlc": 8,
+      "frames": 624
+    },
+    {
+      "role": "C2",
+      "can_id": 1199,
+      "dlc": 8,
+      "frames": 624
+    },
+    {
+      "role": "C2",
+      "can_id": 1201,
+      "dlc": 8,
+      "frames": 625
+    },
+    {
+      "role": "C2",
+      "can_id": 1204,
+      "dlc": 8,
+      "frames": 624
+    },
+    {
+      "role": "C2",
+      "can_id": 1206,
+      "dlc": 8,
+      "frames": 625
+    },
+    {
+      "role": "C2",
+      "can_id": 1351,
+      "dlc": 8,
+      "frames": 1249
+    },
+    {
+      "role": "C2",
+      "can_id": 1354,
+      "dlc": 8,
+      "frames": 1246
+    },
+    {
+      "role": "C2",
+      "can_id": 1442,
+      "dlc": 8,
+      "frames": 3749
+    },
+    {
+      "role": "C2",
+      "can_id": 1445,
+      "dlc": 8,
+      "frames": 312
+    },
+    {
+      "role": "C2",
+      "can_id": 1446,
+      "dlc": 8,
+      "frames": 312
+    },
+    {
+      "role": "C2",
+      "can_id": 1449,
+      "dlc": 8,
+      "frames": 312
+    },
+    {
+      "role": "C2",
+      "can_id": 1456,
+      "dlc": 8,
+      "frames": 312
+    },
+    {
+      "role": "C2",
+      "can_id": 1458,
+      "dlc": 4,
+      "frames": 313
+    },
+    {
+      "role": "C2",
+      "can_id": 1522,
+      "dlc": 8,
+      "frames": 313
+    },
+    {
+      "role": "C2",
+      "can_id": 1843,
+      "dlc": 8,
+      "frames": 313
+    },
+    {
+      "role": "C2",
+      "can_id": 1849,
+      "dlc": 4,
+      "frames": 313
+    },
+    {
+      "role": "C2",
+      "can_id": 1850,
+      "dlc": 6,
+      "frames": 626
+    },
+    {
+      "role": "C2",
+      "can_id": 1854,
+      "dlc": 4,
+      "frames": 1257
+    },
+    {
+      "role": "C2",
+      "can_id": 1865,
+      "dlc": 8,
+      "frames": 63
+    },
+    {
+      "role": "C2",
+      "can_id": 1994,
+      "dlc": 2,
+      "frames": 313
+    },
+    {
+      "role": "C2",
+      "can_id": 506724352,
+      "dlc": 8,
+      "frames": 1561
+    },
+    {
+      "role": "C2",
+      "can_id": 506855426,
+      "dlc": 1,
+      "frames": 312
+    },
+    {
+      "role": "C2",
+      "can_id": 506855430,
+      "dlc": 1,
+      "frames": 311
+    },
+    {
+      "role": "C2",
+      "can_id": 506855448,
+      "dlc": 1,
+      "frames": 309
+    },
+    {
+      "role": "C2",
+      "can_id": 506855450,
+      "dlc": 1,
+      "frames": 313
+    },
+    {
+      "role": "C2",
+      "can_id": 506855453,
+      "dlc": 1,
+      "frames": 313
+    },
+    {
+      "role": "C2",
+      "can_id": 506855454,
+      "dlc": 1,
+      "frames": 313
+    },
+    {
+      "role": "C2",
+      "can_id": 506855526,
+      "dlc": 1,
+      "frames": 312
+    }
+  ],
+  "profiles": [
+    {
+      "role": "BH",
+      "can_id": "0x256",
+      "dlc": 4,
+      "frames": 1248,
+      "median_period_ms": 250,
+      "max_gap_ms": 697708,
+      "fields": {
+        "direction": {
+          "values": {
+            "0": 1248
+          },
+          "transitions": [
+            {
+              "frame_id": 1022,
+              "sequence": 1,
+              "host_ns": 211633583,
+              "host_seconds": 0.121443,
+              "device_ms": 676938,
+              "data": "00 00 00 00",
+              "raw": 0
+            }
+          ]
+        },
+        "suspension_button": {
+          "values": {
+            "0": 1248
+          },
+          "transitions": [
+            {
+              "frame_id": 1022,
+              "sequence": 1,
+              "host_ns": 211633583,
+              "host_seconds": 0.121443,
+              "device_ms": 676938,
+              "data": "00 00 00 00",
+              "raw": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "role": "BH",
+      "can_id": "0x354",
+      "dlc": 4,
+      "frames": 1257,
+      "median_period_ms": 250.0,
+      "max_gap_ms": 251,
+      "fields": {
+        "dipped_report": {
+          "values": {
+            "0": 896,
+            "64": 361
+          },
+          "transitions": [
+            {
+              "frame_id": 1852,
+              "sequence": 63,
+              "host_ns": 412641291,
+              "host_seconds": 0.322451,
+              "device_ms": 1374595,
+              "data": "00 00 00 40",
+              "raw": 0
+            },
+            {
+              "frame_id": 287237,
+              "sequence": 11016,
+              "host_ns": 54620825416,
+              "host_seconds": 54.530635,
+              "device_ms": 1428884,
+              "data": "02 40 80 40",
+              "raw": 64
+            },
+            {
+              "frame_id": 470940,
+              "sequence": 18079,
+              "host_ns": 89473023416,
+              "host_seconds": 89.382833,
+              "device_ms": 1463838,
+              "data": "00 00 00 40",
+              "raw": 0
+            },
+            {
+              "frame_id": 516444,
+              "sequence": 19807,
+              "host_ns": 98139586833,
+              "host_seconds": 98.049396,
+              "device_ms": 1472481,
+              "data": "02 40 80 40",
+              "raw": 64
+            },
+            {
+              "frame_id": 645005,
+              "sequence": 24720,
+              "host_ns": 122503682500,
+              "host_seconds": 122.413492,
+              "device_ms": 1496726,
+              "data": "00 00 00 40",
+              "raw": 0
+            },
+            {
+              "frame_id": 1127406,
+              "sequence": 43249,
+              "host_ns": 214151942583,
+              "host_seconds": 214.061752,
+              "device_ms": 1588562,
+              "data": "02 40 80 40",
+              "raw": 64
+            },
+            {
+              "frame_id": 1145514,
+              "sequence": 43949,
+              "host_ns": 217574683583,
+              "host_seconds": 217.484493,
+              "device_ms": 1591929,
+              "data": "00 00 00 40",
+              "raw": 0
+            },
+            {
+              "frame_id": 1198477,
+              "sequence": 45968,
+              "host_ns": 227648704166,
+              "host_seconds": 227.558514,
+              "device_ms": 1601937,
+              "data": "02 40 80 40",
+              "raw": 64
+            },
+            {
+              "frame_id": 1339576,
+              "sequence": 51387,
+              "host_ns": 254444872250,
+              "host_seconds": 254.354682,
+              "device_ms": 1628828,
+              "data": "00 00 00 40",
+              "raw": 0
+            }
+          ]
+        },
+        "historical_auto_flag": {
+          "values": {
+            "64": 928,
+            "0": 329
+          },
+          "transitions": [
+            {
+              "frame_id": 1852,
+              "sequence": 63,
+              "host_ns": 412641291,
+              "host_seconds": 0.322451,
+              "device_ms": 1374595,
+              "data": "00 00 00 40",
+              "raw": 64
+            },
+            {
+              "frame_id": 43399,
+              "sequence": 1674,
+              "host_ns": 8271065791,
+              "host_seconds": 8.180875,
+              "device_ms": 1382597,
+              "data": "00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 287237,
+              "sequence": 11016,
+              "host_ns": 54620825416,
+              "host_seconds": 54.530635,
+              "device_ms": 1428884,
+              "data": "02 40 80 40",
+              "raw": 64
+            },
+            {
+              "frame_id": 939748,
+              "sequence": 36071,
+              "host_ns": 178505360333,
+              "host_seconds": 178.41517,
+              "device_ms": 1552891,
+              "data": "00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1127406,
+              "sequence": 43249,
+              "host_ns": 214151942583,
+              "host_seconds": 214.061752,
+              "device_ms": 1588562,
+              "data": "02 40 80 40",
+              "raw": 64
+            }
+          ]
+        }
+      }
+    },
+    {
+      "role": "BH",
+      "can_id": "0x738",
+      "dlc": 8,
+      "frames": 312,
+      "median_period_ms": 1000,
+      "max_gap_ms": 1002,
+      "fields": {
+        "light_channel_1_raw": {
+          "values": {
+            "6": 236,
+            "4": 1,
+            "0": 71,
+            "5": 2,
+            "2": 1,
+            "1": 1
+          },
+          "transitions": [
+            {
+              "frame_id": 5057,
+              "sequence": 196,
+              "host_ns": 1014313000,
+              "host_seconds": 0.924122,
+              "device_ms": 1375288,
+              "data": "70 06 06 3c 48 e8 00 00",
+              "raw": 6
+            },
+            {
+              "frame_id": 120594,
+              "sequence": 4629,
+              "host_ns": 22971709208,
+              "host_seconds": 22.881519,
+              "device_ms": 1397294,
+              "data": "6d 04 05 3b c8 e8 00 00",
+              "raw": 4
+            },
+            {
+              "frame_id": 126172,
+              "sequence": 4831,
+              "host_ns": 23978290000,
+              "host_seconds": 23.888099,
+              "device_ms": 1398294,
+              "data": "6d 00 00 3b c8 e8 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 257681,
+              "sequence": 9876,
+              "host_ns": 48970945250,
+              "host_seconds": 48.880755,
+              "device_ms": 1423300,
+              "data": "70 06 06 3c a8 ec 00 00",
+              "raw": 6
+            },
+            {
+              "frame_id": 331936,
+              "sequence": 12707,
+              "host_ns": 63078266541,
+              "host_seconds": 62.988076,
+              "device_ms": 1437304,
+              "data": "71 05 06 3c 68 f0 00 00",
+              "raw": 5
+            },
+            {
+              "frame_id": 337257,
+              "sequence": 12908,
+              "host_ns": 64085524833,
+              "host_seconds": 63.995334,
+              "device_ms": 1438304,
+              "data": "71 00 00 3c 68 f0 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 394524,
+              "sequence": 15135,
+              "host_ns": 74961962583,
+              "host_seconds": 74.871772,
+              "device_ms": 1449306,
+              "data": "72 06 06 3c a8 f0 00 00",
+              "raw": 6
+            },
+            {
+              "frame_id": 510327,
+              "sequence": 19578,
+              "host_ns": 96932072791,
+              "host_seconds": 96.841882,
+              "device_ms": 1471313,
+              "data": "72 00 00 3d 08 f4 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 563289,
+              "sequence": 21596,
+              "host_ns": 107000423291,
+              "host_seconds": 106.910233,
+              "device_ms": 1481315,
+              "data": "72 06 04 3d 08 f4 00 00",
+              "raw": 6
+            },
+            {
+              "frame_id": 994836,
+              "sequence": 38167,
+              "host_ns": 188968988416,
+              "host_seconds": 188.878798,
+              "device_ms": 1563337,
+              "data": "70 00 00 3d 09 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1063770,
+              "sequence": 40797,
+              "host_ns": 202066042916,
+              "host_seconds": 201.975852,
+              "device_ms": 1576342,
+              "data": "71 02 00 3c c8 fc 00 00",
+              "raw": 2
+            },
+            {
+              "frame_id": 1069091,
+              "sequence": 40998,
+              "host_ns": 203070853083,
+              "host_seconds": 202.980662,
+              "device_ms": 1577342,
+              "data": "71 06 06 3c c8 fc 00 00",
+              "raw": 6
+            },
+            {
+              "frame_id": 1189955,
+              "sequence": 45638,
+              "host_ns": 226038355375,
+              "host_seconds": 225.948165,
+              "device_ms": 1600349,
+              "data": "70 05 06 3d 09 04 00 00",
+              "raw": 5
+            },
+            {
+              "frame_id": 1195277,
+              "sequence": 45840,
+              "host_ns": 227044272666,
+              "host_seconds": 226.954082,
+              "device_ms": 1601349,
+              "data": "70 00 00 3d 09 04 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1257860,
+              "sequence": 48263,
+              "host_ns": 238926478416,
+              "host_seconds": 238.836288,
+              "device_ms": 1613353,
+              "data": "6e 01 00 3c a9 00 00 00",
+              "raw": 1
+            },
+            {
+              "frame_id": 1263438,
+              "sequence": 48465,
+              "host_ns": 239935445208,
+              "host_seconds": 239.845255,
+              "device_ms": 1614354,
+              "data": "6e 06 06 3c a9 00 00 00",
+              "raw": 6
+            }
+          ]
+        },
+        "light_channel_2_raw": {
+          "values": {
+            "6": 237,
+            "5": 1,
+            "0": 73,
+            "4": 1
+          },
+          "transitions": [
+            {
+              "frame_id": 5057,
+              "sequence": 196,
+              "host_ns": 1014313000,
+              "host_seconds": 0.924122,
+              "device_ms": 1375288,
+              "data": "70 06 06 3c 48 e8 00 00",
+              "raw": 6
+            },
+            {
+              "frame_id": 120594,
+              "sequence": 4629,
+              "host_ns": 22971709208,
+              "host_seconds": 22.881519,
+              "device_ms": 1397294,
+              "data": "6d 04 05 3b c8 e8 00 00",
+              "raw": 5
+            },
+            {
+              "frame_id": 126172,
+              "sequence": 4831,
+              "host_ns": 23978290000,
+              "host_seconds": 23.888099,
+              "device_ms": 1398294,
+              "data": "6d 00 00 3b c8 e8 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 257681,
+              "sequence": 9876,
+              "host_ns": 48970945250,
+              "host_seconds": 48.880755,
+              "device_ms": 1423300,
+              "data": "70 06 06 3c a8 ec 00 00",
+              "raw": 6
+            },
+            {
+              "frame_id": 337257,
+              "sequence": 12908,
+              "host_ns": 64085524833,
+              "host_seconds": 63.995334,
+              "device_ms": 1438304,
+              "data": "71 00 00 3c 68 f0 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 394524,
+              "sequence": 15135,
+              "host_ns": 74961962583,
+              "host_seconds": 74.871772,
+              "device_ms": 1449306,
+              "data": "72 06 06 3c a8 f0 00 00",
+              "raw": 6
+            },
+            {
+              "frame_id": 510327,
+              "sequence": 19578,
+              "host_ns": 96932072791,
+              "host_seconds": 96.841882,
+              "device_ms": 1471313,
+              "data": "72 00 00 3d 08 f4 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 563289,
+              "sequence": 21596,
+              "host_ns": 107000423291,
+              "host_seconds": 106.910233,
+              "device_ms": 1481315,
+              "data": "72 06 04 3d 08 f4 00 00",
+              "raw": 4
+            },
+            {
+              "frame_id": 568357,
+              "sequence": 21800,
+              "host_ns": 108005071250,
+              "host_seconds": 107.914881,
+              "device_ms": 1482315,
+              "data": "72 06 06 3d 08 f4 00 00",
+              "raw": 6
+            },
+            {
+              "frame_id": 994836,
+              "sequence": 38167,
+              "host_ns": 188968988416,
+              "host_seconds": 188.878798,
+              "device_ms": 1563337,
+              "data": "70 00 00 3d 09 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1069091,
+              "sequence": 40998,
+              "host_ns": 203070853083,
+              "host_seconds": 202.980662,
+              "device_ms": 1577342,
+              "data": "71 06 06 3c c8 fc 00 00",
+              "raw": 6
+            },
+            {
+              "frame_id": 1195277,
+              "sequence": 45840,
+              "host_ns": 227044272666,
+              "host_seconds": 226.954082,
+              "device_ms": 1601349,
+              "data": "70 00 00 3d 09 04 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1263438,
+              "sequence": 48465,
+              "host_ns": 239935445208,
+              "host_seconds": 239.845255,
+              "device_ms": 1614354,
+              "data": "6e 06 06 3c a9 00 00 00",
+              "raw": 6
+            }
+          ]
+        }
+      }
+    },
+    {
+      "role": "C1",
+      "can_id": "0x384",
+      "dlc": 8,
+      "frames": 1247,
+      "median_period_ms": 250.0,
+      "max_gap_ms": 502,
+      "fields": {
+        "dipped_associated": {
+          "values": {
+            "0": 890,
+            "128": 357
+          },
+          "transitions": [
+            {
+              "frame_id": 606,
+              "sequence": 351,
+              "host_ns": 185568416,
+              "host_seconds": 0.095378,
+              "device_ms": 1373669,
+              "data": "08 09 88 00 00 04 80 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 287782,
+              "sequence": 147209,
+              "host_ns": 54720211958,
+              "host_seconds": 54.630021,
+              "device_ms": 1428191,
+              "data": "08 09 88 80 00 04 80 00",
+              "raw": 128
+            },
+            {
+              "frame_id": 472100,
+              "sequence": 241497,
+              "host_ns": 89685999583,
+              "host_seconds": 89.595809,
+              "device_ms": 1463203,
+              "data": "08 09 88 00 00 04 80 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 516677,
+              "sequence": 264400,
+              "host_ns": 98142199375,
+              "host_seconds": 98.052009,
+              "device_ms": 1471706,
+              "data": "08 09 88 80 00 04 80 00",
+              "raw": 128
+            },
+            {
+              "frame_id": 644234,
+              "sequence": 329723,
+              "host_ns": 122376978125,
+              "host_seconds": 122.286787,
+              "device_ms": 1495965,
+              "data": "08 09 88 00 00 04 80 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1127595,
+              "sequence": 576932,
+              "host_ns": 214158475458,
+              "host_seconds": 214.068285,
+              "device_ms": 1587752,
+              "data": "08 09 88 80 00 04 80 00",
+              "raw": 128
+            },
+            {
+              "frame_id": 1145922,
+              "sequence": 586375,
+              "host_ns": 217673593500,
+              "host_seconds": 217.583403,
+              "device_ms": 1591256,
+              "data": "08 09 88 00 00 04 80 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1198691,
+              "sequence": 613304,
+              "host_ns": 227656081541,
+              "host_seconds": 227.565891,
+              "device_ms": 1601260,
+              "data": "08 09 88 80 00 04 80 00",
+              "raw": 128
+            },
+            {
+              "frame_id": 1339664,
+              "sequence": 685378,
+              "host_ns": 254446582583,
+              "host_seconds": 254.356392,
+              "device_ms": 1628016,
+              "data": "08 09 88 00 00 04 80 00",
+              "raw": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "role": "C1",
+      "can_id": "0x41A",
+      "dlc": 7,
+      "frames": 3122,
+      "median_period_ms": 100,
+      "max_gap_ms": 697560,
+      "fields": {
+        "non_specific_load_candidate": {
+          "values": {
+            "0": 2832,
+            "96": 290
+          },
+          "transitions": [
+            {
+              "frame_id": 5,
+              "sequence": 4,
+              "host_ns": 90190666,
+              "host_seconds": 0.0,
+              "device_ms": 676038,
+              "data": "b4 d4 00 a6 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 692849,
+              "sequence": 354450,
+              "host_ns": 131592145000,
+              "host_seconds": 131.501954,
+              "device_ms": 1505149,
+              "data": "b0 d3 60 88 00 00 00",
+              "raw": 96
+            },
+            {
+              "frame_id": 765331,
+              "sequence": 391644,
+              "host_ns": 145368871750,
+              "host_seconds": 145.278681,
+              "device_ms": 1518957,
+              "data": "b1 53 00 a6 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 800839,
+              "sequence": 409692,
+              "host_ns": 152113030458,
+              "host_seconds": 152.02284,
+              "device_ms": 1525658,
+              "data": "b1 d3 60 88 00 00 00",
+              "raw": 96
+            },
+            {
+              "frame_id": 802246,
+              "sequence": 410501,
+              "host_ns": 152400232000,
+              "host_seconds": 152.310041,
+              "device_ms": 1525959,
+              "data": "b1 53 00 a6 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 850364,
+              "sequence": 435025,
+              "host_ns": 161519374083,
+              "host_seconds": 161.429183,
+              "device_ms": 1535062,
+              "data": "b1 d3 60 88 00 00 00",
+              "raw": 96
+            },
+            {
+              "frame_id": 853372,
+              "sequence": 436641,
+              "host_ns": 162089532875,
+              "host_seconds": 161.999342,
+              "device_ms": 1535663,
+              "data": "b1 d3 00 a6 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 889203,
+              "sequence": 454961,
+              "host_ns": 168932567416,
+              "host_seconds": 168.842377,
+              "device_ms": 1542466,
+              "data": "b2 53 60 88 00 00 00",
+              "raw": 96
+            },
+            {
+              "frame_id": 892494,
+              "sequence": 456583,
+              "host_ns": 169502312250,
+              "host_seconds": 169.412122,
+              "device_ms": 1543067,
+              "data": "b2 53 00 a6 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1371596,
+              "sequence": 701758,
+              "host_ns": 260526841875,
+              "host_seconds": 260.436651,
+              "device_ms": 1634100,
+              "data": "b3 d3 60 88 00 00 00",
+              "raw": 96
+            },
+            {
+              "frame_id": 1438823,
+              "sequence": 736216,
+              "host_ns": 273267902333,
+              "host_seconds": 273.177712,
+              "device_ms": 1646903,
+              "data": "b4 53 00 a6 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1474339,
+              "sequence": 754264,
+              "host_ns": 280018556833,
+              "host_seconds": 279.928366,
+              "device_ms": 1653606,
+              "data": "b4 53 60 88 00 00 00",
+              "raw": 96
+            },
+            {
+              "frame_id": 1476274,
+              "sequence": 755345,
+              "host_ns": 280396200291,
+              "host_seconds": 280.30601,
+              "device_ms": 1654007,
+              "data": "b4 53 00 a6 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1551762,
+              "sequence": 793871,
+              "host_ns": 294746792458,
+              "host_seconds": 294.656602,
+              "device_ms": 1668311,
+              "data": "b4 d3 60 88 00 00 00",
+              "raw": 96
+            },
+            {
+              "frame_id": 1554723,
+              "sequence": 795476,
+              "host_ns": 295315788583,
+              "host_seconds": 295.225598,
+              "device_ms": 1668909,
+              "data": "b4 53 00 a6 00 00 00",
+              "raw": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "role": "C1",
+      "can_id": "0x73E",
+      "dlc": 4,
+      "frames": 1254,
+      "median_period_ms": 250,
+      "max_gap_ms": 501,
+      "fields": {
+        "left_position_report": {
+          "values": {
+            "0": 895,
+            "2": 359
+          },
+          "transitions": [
+            {
+              "frame_id": 107,
+              "sequence": 106,
+              "host_ns": 90190666,
+              "host_seconds": 0.0,
+              "device_ms": 1373578,
+              "data": "00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 286778,
+              "sequence": 146751,
+              "host_ns": 54531908041,
+              "host_seconds": 54.441717,
+              "device_ms": 1428021,
+              "data": "02 00 80 00",
+              "raw": 2
+            },
+            {
+              "frame_id": 470986,
+              "sequence": 240931,
+              "host_ns": 89498669833,
+              "host_seconds": 89.408479,
+              "device_ms": 1462992,
+              "data": "00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 516504,
+              "sequence": 264227,
+              "host_ns": 98142199375,
+              "host_seconds": 98.052009,
+              "device_ms": 1471642,
+              "data": "02 00 80 00",
+              "raw": 2
+            },
+            {
+              "frame_id": 644065,
+              "sequence": 329554,
+              "host_ns": 122376978125,
+              "host_seconds": 122.286787,
+              "device_ms": 1495901,
+              "data": "00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1127547,
+              "sequence": 576884,
+              "host_ns": 214158475458,
+              "host_seconds": 214.068285,
+              "device_ms": 1587734,
+              "data": "02 00 80 00",
+              "raw": 2
+            },
+            {
+              "frame_id": 1145167,
+              "sequence": 585913,
+              "host_ns": 217484645958,
+              "host_seconds": 217.394455,
+              "device_ms": 1591086,
+              "data": "00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1197997,
+              "sequence": 612898,
+              "host_ns": 227561545208,
+              "host_seconds": 227.471355,
+              "device_ms": 1601110,
+              "data": "02 00 80 00",
+              "raw": 2
+            },
+            {
+              "frame_id": 1339606,
+              "sequence": 685320,
+              "host_ns": 254446582583,
+              "host_seconds": 254.356392,
+              "device_ms": 1627996,
+              "data": "00 00 00 00",
+              "raw": 0
+            }
+          ]
+        },
+        "right_position_report": {
+          "values": {
+            "0": 895,
+            "128": 359
+          },
+          "transitions": [
+            {
+              "frame_id": 107,
+              "sequence": 106,
+              "host_ns": 90190666,
+              "host_seconds": 0.0,
+              "device_ms": 1373578,
+              "data": "00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 286778,
+              "sequence": 146751,
+              "host_ns": 54531908041,
+              "host_seconds": 54.441717,
+              "device_ms": 1428021,
+              "data": "02 00 80 00",
+              "raw": 128
+            },
+            {
+              "frame_id": 470986,
+              "sequence": 240931,
+              "host_ns": 89498669833,
+              "host_seconds": 89.408479,
+              "device_ms": 1462992,
+              "data": "00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 516504,
+              "sequence": 264227,
+              "host_ns": 98142199375,
+              "host_seconds": 98.052009,
+              "device_ms": 1471642,
+              "data": "02 00 80 00",
+              "raw": 128
+            },
+            {
+              "frame_id": 644065,
+              "sequence": 329554,
+              "host_ns": 122376978125,
+              "host_seconds": 122.286787,
+              "device_ms": 1495901,
+              "data": "00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1127547,
+              "sequence": 576884,
+              "host_ns": 214158475458,
+              "host_seconds": 214.068285,
+              "device_ms": 1587734,
+              "data": "02 00 80 00",
+              "raw": 128
+            },
+            {
+              "frame_id": 1145167,
+              "sequence": 585913,
+              "host_ns": 217484645958,
+              "host_seconds": 217.394455,
+              "device_ms": 1591086,
+              "data": "00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1197997,
+              "sequence": 612898,
+              "host_ns": 227561545208,
+              "host_seconds": 227.471355,
+              "device_ms": 1601110,
+              "data": "02 00 80 00",
+              "raw": 128
+            },
+            {
+              "frame_id": 1339606,
+              "sequence": 685320,
+              "host_ns": 254446582583,
+              "host_seconds": 254.356392,
+              "device_ms": 1627996,
+              "data": "00 00 00 00",
+              "raw": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "role": "C2",
+      "can_id": "0x2EC",
+      "dlc": 8,
+      "frames": 6246,
+      "median_period_ms": 50,
+      "max_gap_ms": 54,
+      "fields": {
+        "cycle_phase": {
+          "values": {
+            "0": 5783,
+            "32": 463
+          },
+          "transitions": [
+            {
+              "frame_id": 388,
+              "sequence": 133,
+              "host_ns": 103743041,
+              "host_seconds": 0.013552,
+              "device_ms": 1373832,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 694417,
+              "sequence": 312454,
+              "host_ns": 131901893500,
+              "host_seconds": 131.811703,
+              "device_ms": 1505643,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 699548,
+              "sequence": 314825,
+              "host_ns": 132874038416,
+              "host_seconds": 132.783848,
+              "device_ms": 1506644,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 702403,
+              "sequence": 316013,
+              "host_ns": 133412000750,
+              "host_seconds": 133.32181,
+              "device_ms": 1507145,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 707902,
+              "sequence": 318495,
+              "host_ns": 134494345458,
+              "host_seconds": 134.404155,
+              "device_ms": 1508194,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 710319,
+              "sequence": 319560,
+              "host_ns": 134924825666,
+              "host_seconds": 134.834635,
+              "device_ms": 1508644,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 715864,
+              "sequence": 322049,
+              "host_ns": 136007071750,
+              "host_seconds": 135.916881,
+              "device_ms": 1509694,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 718054,
+              "sequence": 323120,
+              "host_ns": 136437304791,
+              "host_seconds": 136.347114,
+              "device_ms": 1510144,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 723526,
+              "sequence": 325611,
+              "host_ns": 137409392000,
+              "host_seconds": 137.319201,
+              "device_ms": 1511195,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 725981,
+              "sequence": 326674,
+              "host_ns": 137951569625,
+              "host_seconds": 137.861379,
+              "device_ms": 1511645,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 731480,
+              "sequence": 329155,
+              "host_ns": 138923014166,
+              "host_seconds": 138.832823,
+              "device_ms": 1512695,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 733662,
+              "sequence": 330224,
+              "host_ns": 139354594000,
+              "host_seconds": 139.264403,
+              "device_ms": 1513145,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 738559,
+              "sequence": 332360,
+              "host_ns": 140326284416,
+              "host_seconds": 140.236094,
+              "device_ms": 1514045,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 739962,
+              "sequence": 332952,
+              "host_ns": 140544913375,
+              "host_seconds": 140.454723,
+              "device_ms": 1514295,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 743838,
+              "sequence": 334616,
+              "host_ns": 141298903708,
+              "host_seconds": 141.208713,
+              "device_ms": 1514995,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 745098,
+              "sequence": 335324,
+              "host_ns": 141516899500,
+              "host_seconds": 141.426709,
+              "device_ms": 1515295,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 748537,
+              "sequence": 336862,
+              "host_ns": 142162737541,
+              "host_seconds": 142.072547,
+              "device_ms": 1515945,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 750116,
+              "sequence": 337577,
+              "host_ns": 142488889166,
+              "host_seconds": 142.398698,
+              "device_ms": 1516245,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 753556,
+              "sequence": 339121,
+              "host_ns": 143136886583,
+              "host_seconds": 143.046696,
+              "device_ms": 1516898,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 755124,
+              "sequence": 339821,
+              "host_ns": 143460917416,
+              "host_seconds": 143.370727,
+              "device_ms": 1517195,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 758558,
+              "sequence": 341357,
+              "host_ns": 144111426291,
+              "host_seconds": 144.021236,
+              "device_ms": 1517845,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 760350,
+              "sequence": 342071,
+              "host_ns": 144432884791,
+              "host_seconds": 144.342694,
+              "device_ms": 1518145,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 763576,
+              "sequence": 343612,
+              "host_ns": 145082849125,
+              "host_seconds": 144.992658,
+              "device_ms": 1518796,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 802443,
+              "sequence": 361034,
+              "host_ns": 152426829166,
+              "host_seconds": 152.336638,
+              "device_ms": 1526148,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 807950,
+              "sequence": 363518,
+              "host_ns": 153507622625,
+              "host_seconds": 153.417432,
+              "device_ms": 1527197,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 851966,
+              "sequence": 383304,
+              "host_ns": 161826991208,
+              "host_seconds": 161.736801,
+              "device_ms": 1535549,
+              "data": "00 00 20 00 10 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 857090,
+              "sequence": 385667,
+              "host_ns": 162800880708,
+              "host_seconds": 162.71069,
+              "device_ms": 1536549,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 890667,
+              "sequence": 400836,
+              "host_ns": 169172593916,
+              "host_seconds": 169.082403,
+              "device_ms": 1542950,
+              "data": "00 00 20 00 10 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 896110,
+              "sequence": 403207,
+              "host_ns": 170251973875,
+              "host_seconds": 170.161783,
+              "device_ms": 1543950,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1373020,
+              "sequence": 617898,
+              "host_ns": 260785622291,
+              "host_seconds": 260.695432,
+              "device_ms": 1634568,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 1378155,
+              "sequence": 620270,
+              "host_ns": 261757268875,
+              "host_seconds": 261.667078,
+              "device_ms": 1635568,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1380956,
+              "sequence": 621463,
+              "host_ns": 262297743000,
+              "host_seconds": 262.207552,
+              "device_ms": 1636069,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 1386773,
+              "sequence": 623951,
+              "host_ns": 263380203833,
+              "host_seconds": 263.290013,
+              "device_ms": 1637122,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1388927,
+              "sequence": 625003,
+              "host_ns": 263810730958,
+              "host_seconds": 263.72054,
+              "device_ms": 1637568,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 1394434,
+              "sequence": 627494,
+              "host_ns": 264890592458,
+              "host_seconds": 264.800402,
+              "device_ms": 1638619,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1396913,
+              "sequence": 628565,
+              "host_ns": 265323459875,
+              "host_seconds": 265.233269,
+              "device_ms": 1639069,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 1402423,
+              "sequence": 631052,
+              "host_ns": 266400395833,
+              "host_seconds": 266.310205,
+              "device_ms": 1640119,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1404844,
+              "sequence": 632117,
+              "host_ns": 266835608416,
+              "host_seconds": 266.745418,
+              "device_ms": 1640569,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 1410102,
+              "sequence": 634613,
+              "host_ns": 267808668458,
+              "host_seconds": 267.718478,
+              "device_ms": 1641622,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1412835,
+              "sequence": 635684,
+              "host_ns": 268348096833,
+              "host_seconds": 268.257906,
+              "device_ms": 1642072,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 1416756,
+              "sequence": 637442,
+              "host_ns": 269103075958,
+              "host_seconds": 269.012885,
+              "device_ms": 1642819,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1418026,
+              "sequence": 638155,
+              "host_ns": 269320036000,
+              "host_seconds": 269.229845,
+              "device_ms": 1643119,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 1421887,
+              "sequence": 639813,
+              "host_ns": 270075416500,
+              "host_seconds": 269.985226,
+              "device_ms": 1643819,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1423051,
+              "sequence": 640416,
+              "host_ns": 270291121458,
+              "host_seconds": 270.200931,
+              "device_ms": 1644070,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 1426904,
+              "sequence": 642067,
+              "host_ns": 271048619541,
+              "host_seconds": 270.958429,
+              "device_ms": 1644770,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1428183,
+              "sequence": 642784,
+              "host_ns": 271263103625,
+              "host_seconds": 271.172913,
+              "device_ms": 1645069,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 1431631,
+              "sequence": 644320,
+              "host_ns": 271910550291,
+              "host_seconds": 271.82036,
+              "device_ms": 1645719,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1433459,
+              "sequence": 645040,
+              "host_ns": 272235769875,
+              "host_seconds": 272.145579,
+              "device_ms": 1646021,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 1436656,
+              "sequence": 646581,
+              "host_ns": 272885800291,
+              "host_seconds": 272.79561,
+              "device_ms": 1646673,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1438459,
+              "sequence": 647276,
+              "host_ns": 273208623541,
+              "host_seconds": 273.118433,
+              "device_ms": 1646970,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 1438581,
+              "sequence": 647398,
+              "host_ns": 273208623541,
+              "host_seconds": 273.118433,
+              "device_ms": 1647020,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1476033,
+              "sequence": 664224,
+              "host_ns": 280339256541,
+              "host_seconds": 280.249066,
+              "device_ms": 1654122,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 1481171,
+              "sequence": 666596,
+              "host_ns": 281309765916,
+              "host_seconds": 281.219575,
+              "device_ms": 1655122,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1553124,
+              "sequence": 698937,
+              "host_ns": 295031125000,
+              "host_seconds": 294.940934,
+              "device_ms": 1668776,
+              "data": "00 00 20 00 10 00 00 00",
+              "raw": 32
+            },
+            {
+              "frame_id": 1558517,
+              "sequence": 701311,
+              "host_ns": 296007176583,
+              "host_seconds": 295.916986,
+              "device_ms": 1669777,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            }
+          ],
+          "pulses": [
+            {
+              "start": {
+                "frame_id": 694417,
+                "sequence": 312454,
+                "host_ns": 131901893500,
+                "host_seconds": 131.811703,
+                "device_ms": 1505643,
+                "data": "00 00 20 00 00 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 699548,
+                "sequence": 314825,
+                "host_ns": 132874038416,
+                "host_seconds": 132.783848,
+                "device_ms": 1506644,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 1001
+            },
+            {
+              "start": {
+                "frame_id": 702403,
+                "sequence": 316013,
+                "host_ns": 133412000750,
+                "host_seconds": 133.32181,
+                "device_ms": 1507145,
+                "data": "00 00 20 00 00 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 707902,
+                "sequence": 318495,
+                "host_ns": 134494345458,
+                "host_seconds": 134.404155,
+                "device_ms": 1508194,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 1049
+            },
+            {
+              "start": {
+                "frame_id": 710319,
+                "sequence": 319560,
+                "host_ns": 134924825666,
+                "host_seconds": 134.834635,
+                "device_ms": 1508644,
+                "data": "00 00 20 00 00 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 715864,
+                "sequence": 322049,
+                "host_ns": 136007071750,
+                "host_seconds": 135.916881,
+                "device_ms": 1509694,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 1050
+            },
+            {
+              "start": {
+                "frame_id": 718054,
+                "sequence": 323120,
+                "host_ns": 136437304791,
+                "host_seconds": 136.347114,
+                "device_ms": 1510144,
+                "data": "00 00 20 00 00 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 723526,
+                "sequence": 325611,
+                "host_ns": 137409392000,
+                "host_seconds": 137.319201,
+                "device_ms": 1511195,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 1051
+            },
+            {
+              "start": {
+                "frame_id": 725981,
+                "sequence": 326674,
+                "host_ns": 137951569625,
+                "host_seconds": 137.861379,
+                "device_ms": 1511645,
+                "data": "00 00 20 00 00 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 731480,
+                "sequence": 329155,
+                "host_ns": 138923014166,
+                "host_seconds": 138.832823,
+                "device_ms": 1512695,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 1050
+            },
+            {
+              "start": {
+                "frame_id": 733662,
+                "sequence": 330224,
+                "host_ns": 139354594000,
+                "host_seconds": 139.264403,
+                "device_ms": 1513145,
+                "data": "00 00 20 00 00 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 738559,
+                "sequence": 332360,
+                "host_ns": 140326284416,
+                "host_seconds": 140.236094,
+                "device_ms": 1514045,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 900
+            },
+            {
+              "start": {
+                "frame_id": 739962,
+                "sequence": 332952,
+                "host_ns": 140544913375,
+                "host_seconds": 140.454723,
+                "device_ms": 1514295,
+                "data": "00 00 20 00 00 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 743838,
+                "sequence": 334616,
+                "host_ns": 141298903708,
+                "host_seconds": 141.208713,
+                "device_ms": 1514995,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 700
+            },
+            {
+              "start": {
+                "frame_id": 745098,
+                "sequence": 335324,
+                "host_ns": 141516899500,
+                "host_seconds": 141.426709,
+                "device_ms": 1515295,
+                "data": "00 00 20 00 00 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 748537,
+                "sequence": 336862,
+                "host_ns": 142162737541,
+                "host_seconds": 142.072547,
+                "device_ms": 1515945,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 650
+            },
+            {
+              "start": {
+                "frame_id": 750116,
+                "sequence": 337577,
+                "host_ns": 142488889166,
+                "host_seconds": 142.398698,
+                "device_ms": 1516245,
+                "data": "00 00 20 00 00 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 753556,
+                "sequence": 339121,
+                "host_ns": 143136886583,
+                "host_seconds": 143.046696,
+                "device_ms": 1516898,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 653
+            },
+            {
+              "start": {
+                "frame_id": 755124,
+                "sequence": 339821,
+                "host_ns": 143460917416,
+                "host_seconds": 143.370727,
+                "device_ms": 1517195,
+                "data": "00 00 20 00 00 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 758558,
+                "sequence": 341357,
+                "host_ns": 144111426291,
+                "host_seconds": 144.021236,
+                "device_ms": 1517845,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 650
+            },
+            {
+              "start": {
+                "frame_id": 760350,
+                "sequence": 342071,
+                "host_ns": 144432884791,
+                "host_seconds": 144.342694,
+                "device_ms": 1518145,
+                "data": "00 00 20 00 00 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 763576,
+                "sequence": 343612,
+                "host_ns": 145082849125,
+                "host_seconds": 144.992658,
+                "device_ms": 1518796,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 651
+            },
+            {
+              "start": {
+                "frame_id": 802443,
+                "sequence": 361034,
+                "host_ns": 152426829166,
+                "host_seconds": 152.336638,
+                "device_ms": 1526148,
+                "data": "00 00 20 00 00 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 807950,
+                "sequence": 363518,
+                "host_ns": 153507622625,
+                "host_seconds": 153.417432,
+                "device_ms": 1527197,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 1049
+            },
+            {
+              "start": {
+                "frame_id": 851966,
+                "sequence": 383304,
+                "host_ns": 161826991208,
+                "host_seconds": 161.736801,
+                "device_ms": 1535549,
+                "data": "00 00 20 00 10 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 857090,
+                "sequence": 385667,
+                "host_ns": 162800880708,
+                "host_seconds": 162.71069,
+                "device_ms": 1536549,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 1000
+            },
+            {
+              "start": {
+                "frame_id": 890667,
+                "sequence": 400836,
+                "host_ns": 169172593916,
+                "host_seconds": 169.082403,
+                "device_ms": 1542950,
+                "data": "00 00 20 00 10 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 896110,
+                "sequence": 403207,
+                "host_ns": 170251973875,
+                "host_seconds": 170.161783,
+                "device_ms": 1543950,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 1000
+            },
+            {
+              "start": {
+                "frame_id": 1373020,
+                "sequence": 617898,
+                "host_ns": 260785622291,
+                "host_seconds": 260.695432,
+                "device_ms": 1634568,
+                "data": "00 00 20 00 00 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 1378155,
+                "sequence": 620270,
+                "host_ns": 261757268875,
+                "host_seconds": 261.667078,
+                "device_ms": 1635568,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 1000
+            },
+            {
+              "start": {
+                "frame_id": 1380956,
+                "sequence": 621463,
+                "host_ns": 262297743000,
+                "host_seconds": 262.207552,
+                "device_ms": 1636069,
+                "data": "00 00 20 00 00 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 1386773,
+                "sequence": 623951,
+                "host_ns": 263380203833,
+                "host_seconds": 263.290013,
+                "device_ms": 1637122,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 1053
+            },
+            {
+              "start": {
+                "frame_id": 1388927,
+                "sequence": 625003,
+                "host_ns": 263810730958,
+                "host_seconds": 263.72054,
+                "device_ms": 1637568,
+                "data": "00 00 20 00 00 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 1394434,
+                "sequence": 627494,
+                "host_ns": 264890592458,
+                "host_seconds": 264.800402,
+                "device_ms": 1638619,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 1051
+            },
+            {
+              "start": {
+                "frame_id": 1396913,
+                "sequence": 628565,
+                "host_ns": 265323459875,
+                "host_seconds": 265.233269,
+                "device_ms": 1639069,
+                "data": "00 00 20 00 00 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 1402423,
+                "sequence": 631052,
+                "host_ns": 266400395833,
+                "host_seconds": 266.310205,
+                "device_ms": 1640119,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 1050
+            },
+            {
+              "start": {
+                "frame_id": 1404844,
+                "sequence": 632117,
+                "host_ns": 266835608416,
+                "host_seconds": 266.745418,
+                "device_ms": 1640569,
+                "data": "00 00 20 00 00 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 1410102,
+                "sequence": 634613,
+                "host_ns": 267808668458,
+                "host_seconds": 267.718478,
+                "device_ms": 1641622,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 1053
+            },
+            {
+              "start": {
+                "frame_id": 1412835,
+                "sequence": 635684,
+                "host_ns": 268348096833,
+                "host_seconds": 268.257906,
+                "device_ms": 1642072,
+                "data": "00 00 20 00 00 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 1416756,
+                "sequence": 637442,
+                "host_ns": 269103075958,
+                "host_seconds": 269.012885,
+                "device_ms": 1642819,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 747
+            },
+            {
+              "start": {
+                "frame_id": 1418026,
+                "sequence": 638155,
+                "host_ns": 269320036000,
+                "host_seconds": 269.229845,
+                "device_ms": 1643119,
+                "data": "00 00 20 00 00 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 1421887,
+                "sequence": 639813,
+                "host_ns": 270075416500,
+                "host_seconds": 269.985226,
+                "device_ms": 1643819,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 700
+            },
+            {
+              "start": {
+                "frame_id": 1423051,
+                "sequence": 640416,
+                "host_ns": 270291121458,
+                "host_seconds": 270.200931,
+                "device_ms": 1644070,
+                "data": "00 00 20 00 00 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 1426904,
+                "sequence": 642067,
+                "host_ns": 271048619541,
+                "host_seconds": 270.958429,
+                "device_ms": 1644770,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 700
+            },
+            {
+              "start": {
+                "frame_id": 1428183,
+                "sequence": 642784,
+                "host_ns": 271263103625,
+                "host_seconds": 271.172913,
+                "device_ms": 1645069,
+                "data": "00 00 20 00 00 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 1431631,
+                "sequence": 644320,
+                "host_ns": 271910550291,
+                "host_seconds": 271.82036,
+                "device_ms": 1645719,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 650
+            },
+            {
+              "start": {
+                "frame_id": 1433459,
+                "sequence": 645040,
+                "host_ns": 272235769875,
+                "host_seconds": 272.145579,
+                "device_ms": 1646021,
+                "data": "00 00 20 00 00 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 1436656,
+                "sequence": 646581,
+                "host_ns": 272885800291,
+                "host_seconds": 272.79561,
+                "device_ms": 1646673,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 652
+            },
+            {
+              "start": {
+                "frame_id": 1438459,
+                "sequence": 647276,
+                "host_ns": 273208623541,
+                "host_seconds": 273.118433,
+                "device_ms": 1646970,
+                "data": "00 00 20 00 00 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 1438581,
+                "sequence": 647398,
+                "host_ns": 273208623541,
+                "host_seconds": 273.118433,
+                "device_ms": 1647020,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 50
+            },
+            {
+              "start": {
+                "frame_id": 1476033,
+                "sequence": 664224,
+                "host_ns": 280339256541,
+                "host_seconds": 280.249066,
+                "device_ms": 1654122,
+                "data": "00 00 20 00 00 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 1481171,
+                "sequence": 666596,
+                "host_ns": 281309765916,
+                "host_seconds": 281.219575,
+                "device_ms": 1655122,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 1000
+            },
+            {
+              "start": {
+                "frame_id": 1553124,
+                "sequence": 698937,
+                "host_ns": 295031125000,
+                "host_seconds": 294.940934,
+                "device_ms": 1668776,
+                "data": "00 00 20 00 10 00 00 00",
+                "raw": 32
+              },
+              "end": {
+                "frame_id": 1558517,
+                "sequence": 701311,
+                "host_ns": 296007176583,
+                "host_seconds": 295.916986,
+                "device_ms": 1669777,
+                "data": "00 00 00 00 00 00 00 00",
+                "raw": 0
+              },
+              "width_ms": 1001
+            }
+          ],
+          "rising_edges": 27
+        },
+        "spray_candidate": {
+          "values": {
+            "0": 6210,
+            "16": 36
+          },
+          "transitions": [
+            {
+              "frame_id": 388,
+              "sequence": 133,
+              "host_ns": 103743041,
+              "host_seconds": 0.013552,
+              "device_ms": 1373832,
+              "data": "00 00 00 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 850044,
+              "sequence": 382481,
+              "host_ns": 161501840875,
+              "host_seconds": 161.41165,
+              "device_ms": 1535199,
+              "data": "00 00 00 00 10 00 00 00",
+              "raw": 16
+            },
+            {
+              "frame_id": 853111,
+              "sequence": 383900,
+              "host_ns": 162042465208,
+              "host_seconds": 161.952275,
+              "device_ms": 1535800,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 889034,
+              "sequence": 400008,
+              "host_ns": 168850322541,
+              "host_seconds": 168.760132,
+              "device_ms": 1542600,
+              "data": "00 00 00 00 10 00 00 00",
+              "raw": 16
+            },
+            {
+              "frame_id": 892128,
+              "sequence": 401433,
+              "host_ns": 169496493708,
+              "host_seconds": 169.406303,
+              "device_ms": 1543200,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1551196,
+              "sequence": 698108,
+              "host_ns": 294599675875,
+              "host_seconds": 294.509485,
+              "device_ms": 1668426,
+              "data": "00 00 00 00 10 00 00 00",
+              "raw": 16
+            },
+            {
+              "frame_id": 1554528,
+              "sequence": 699537,
+              "host_ns": 295246772875,
+              "host_seconds": 295.156582,
+              "device_ms": 1669027,
+              "data": "00 00 20 00 00 00 00 00",
+              "raw": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "role": "C2",
+      "can_id": "0x384",
+      "dlc": 8,
+      "frames": 1249,
+      "median_period_ms": 250.0,
+      "max_gap_ms": 253,
+      "fields": {
+        "dipped_associated": {
+          "values": {
+            "0": 891,
+            "128": 358
+          },
+          "transitions": [
+            {
+              "frame_id": 883,
+              "sequence": 372,
+              "host_ns": 207330875,
+              "host_seconds": 0.11714,
+              "device_ms": 1373932,
+              "data": "08 09 88 00 00 00 80 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 287753,
+              "sequence": 129516,
+              "host_ns": 54658018416,
+              "host_seconds": 54.567828,
+              "device_ms": 1428436,
+              "data": "08 09 88 80 00 00 80 00",
+              "raw": 128
+            },
+            {
+              "frame_id": 471952,
+              "sequence": 212457,
+              "host_ns": 89660542000,
+              "host_seconds": 89.570351,
+              "device_ms": 1463438,
+              "data": "08 09 88 00 00 00 80 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 516875,
+              "sequence": 232598,
+              "host_ns": 98193818541,
+              "host_seconds": 98.103628,
+              "device_ms": 1471938,
+              "data": "08 09 88 80 00 00 80 00",
+              "raw": 128
+            },
+            {
+              "frame_id": 644770,
+              "sequence": 290067,
+              "host_ns": 122502321750,
+              "host_seconds": 122.412131,
+              "device_ms": 1496192,
+              "data": "08 09 88 00 00 00 80 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1127770,
+              "sequence": 507475,
+              "host_ns": 214221032291,
+              "host_seconds": 214.130842,
+              "device_ms": 1587960,
+              "data": "08 09 88 80 00 00 80 00",
+              "raw": 128
+            },
+            {
+              "frame_id": 1146225,
+              "sequence": 515766,
+              "host_ns": 217681185333,
+              "host_seconds": 217.590995,
+              "device_ms": 1591461,
+              "data": "08 09 88 00 00 00 80 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1198837,
+              "sequence": 539466,
+              "host_ns": 227727117416,
+              "host_seconds": 227.636927,
+              "device_ms": 1601463,
+              "data": "08 09 88 80 00 00 80 00",
+              "raw": 128
+            },
+            {
+              "frame_id": 1339526,
+              "sequence": 602852,
+              "host_ns": 254410290166,
+              "host_seconds": 254.320099,
+              "device_ms": 1628218,
+              "data": "08 09 88 00 00 00 80 00",
+              "raw": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "role": "C2",
+      "can_id": "0x73E",
+      "dlc": 4,
+      "frames": 1257,
+      "median_period_ms": 250.0,
+      "max_gap_ms": 253,
+      "fields": {
+        "dipped_report": {
+          "values": {
+            "0": 896,
+            "64": 361
+          },
+          "transitions": [
+            {
+              "frame_id": 1002,
+              "sequence": 491,
+              "host_ns": 207330875,
+              "host_seconds": 0.11714,
+              "device_ms": 1373982,
+              "data": "00 00 00 40",
+              "raw": 0
+            },
+            {
+              "frame_id": 287061,
+              "sequence": 129114,
+              "host_ns": 54551098666,
+              "host_seconds": 54.460908,
+              "device_ms": 1428263,
+              "data": "00 40 00 40",
+              "raw": 64
+            },
+            {
+              "frame_id": 470845,
+              "sequence": 211902,
+              "host_ns": 89443226041,
+              "host_seconds": 89.353035,
+              "device_ms": 1463202,
+              "data": "00 00 00 40",
+              "raw": 0
+            },
+            {
+              "frame_id": 516347,
+              "sequence": 232368,
+              "host_ns": 98087823875,
+              "host_seconds": 97.997633,
+              "device_ms": 1471843,
+              "data": "00 40 00 40",
+              "raw": 64
+            },
+            {
+              "frame_id": 644256,
+              "sequence": 289809,
+              "host_ns": 122393257541,
+              "host_seconds": 122.303067,
+              "device_ms": 1496086,
+              "data": "00 00 00 40",
+              "raw": 0
+            },
+            {
+              "frame_id": 1127353,
+              "sequence": 507362,
+              "host_ns": 214115821750,
+              "host_seconds": 214.025631,
+              "device_ms": 1587915,
+              "data": "00 40 00 40",
+              "raw": 64
+            },
+            {
+              "frame_id": 1145270,
+              "sequence": 515360,
+              "host_ns": 217572879500,
+              "host_seconds": 217.482689,
+              "device_ms": 1591287,
+              "data": "00 00 00 40",
+              "raw": 0
+            },
+            {
+              "frame_id": 1197873,
+              "sequence": 539046,
+              "host_ns": 227510757458,
+              "host_seconds": 227.420567,
+              "device_ms": 1601287,
+              "data": "00 40 00 40",
+              "raw": 64
+            },
+            {
+              "frame_id": 1339422,
+              "sequence": 602748,
+              "host_ns": 254410290166,
+              "host_seconds": 254.320099,
+              "device_ms": 1628172,
+              "data": "00 00 00 40",
+              "raw": 0
+            }
+          ]
+        },
+        "historical_auto_flag": {
+          "values": {
+            "64": 928,
+            "0": 329
+          },
+          "transitions": [
+            {
+              "frame_id": 1002,
+              "sequence": 491,
+              "host_ns": 207330875,
+              "host_seconds": 0.11714,
+              "device_ms": 1373982,
+              "data": "00 00 00 40",
+              "raw": 64
+            },
+            {
+              "frame_id": 43417,
+              "sequence": 19454,
+              "host_ns": 8312020666,
+              "host_seconds": 8.22183,
+              "device_ms": 1381983,
+              "data": "00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 287061,
+              "sequence": 129114,
+              "host_ns": 54551098666,
+              "host_seconds": 54.460908,
+              "device_ms": 1428263,
+              "data": "00 40 00 40",
+              "raw": 64
+            },
+            {
+              "frame_id": 939685,
+              "sequence": 422878,
+              "host_ns": 178463477500,
+              "host_seconds": 178.373287,
+              "device_ms": 1552252,
+              "data": "00 00 00 00",
+              "raw": 0
+            },
+            {
+              "frame_id": 1127353,
+              "sequence": 507362,
+              "host_ns": 214115821750,
+              "host_seconds": 214.025631,
+              "device_ms": 1587915,
+              "data": "00 40 00 40",
+              "raw": 64
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "session_id": "20261024-111510Z",
+    "duration_seconds": 312.378244958,
+    "events": 28,
+    "status": "complete",
+    "context": {
+      "vehicle": "Giulia_2.0",
+      "firmware": "v5-beta-29",
+      "weather": "daylight",
+      "site": "outdoor"
+    },
+    "roles": {
+      "C1": {
+        "records": 841215,
+        "frames": 841214,
+        "loss_records": 1,
+        "dropped_frames": 65535,
+        "resyncs": 11,
+        "malformed": 16
+      },
+      "C2": {
+        "records": 740095,
+        "frames": 740094,
+        "loss_records": 1,
+        "dropped_frames": 65535,
+        "resyncs": 9,
+        "malformed": 16
+      },
+      "BH": {
+        "records": 63063,
+        "frames": 63062,
+        "loss_records": 1,
+        "dropped_frames": 20897,
+        "resyncs": 4,
+        "malformed": 4
+      }
+    },
+    "reader_errors": [],
+    "errors": [],
+    "discarded_reader_bytes": 0,
+    "discarded_queued_bytes": 0,
+    "startup_loss_window_seconds": 2.0,
+    "startup_dropped": {
+      "C1": 65535,
+      "C2": 65535,
+      "BH": 20897
+    },
+    "in_session_dropped": {
+      "C1": 0,
+      "C2": 0,
+      "BH": 0
+    }
+  },
+  "raw_replay": {
+    "C1": {
+      "records": 841215,
+      "frames": 841214,
+      "loss_records": 1,
+      "dropped_frames": 65535,
+      "resyncs": 11,
+      "malformed": 16,
+      "database_frames": 841214
+    },
+    "C2": {
+      "records": 740095,
+      "frames": 740094,
+      "loss_records": 1,
+      "dropped_frames": 65535,
+      "resyncs": 9,
+      "malformed": 16,
+      "database_frames": 740094
+    },
+    "BH": {
+      "records": 63063,
+      "frames": 63062,
+      "loss_records": 1,
+      "dropped_frames": 20897,
+      "resyncs": 4,
+      "malformed": 4,
+      "database_frames": 63062
+    }
+  }
+}

@@ -2,24 +2,32 @@
 #include "app/powertrain.h"
 
 #if defined(BACCABLE_C1)
-enum { CHECK_IDLE, CHECK_BH, CHECK_REPORTS, CHECK_CONFIRMED, CHECK_FAILED };
+enum { CHECK_IDLE, CHECK_ENGINE, CHECK_BH, CHECK_REPORTS, CHECK_CONFIRMED, CHECK_FAILED };
 static uint8_t state, token;
 static uint8_t expected[2], samples[2];
 static uint32_t started, first_match[2], last_match[2];
 
-/* A new ignition starts a bounded attempt; saves and OFF clear the old result. */
+/* A new ignition waits for the engine; saves and OFF clear the old result. */
 void drive_mode_check_start(uint8_t enabled) {
     static const uint8_t dna[] = {0, 4, 2, 12};
     static const uint8_t transmission[] = {0, 1, 2, 6};
     unsigned mode = settings_state.default_drive_mode;
     ++token;
-    state = enabled && mode >= 1 && mode <= 3 ? CHECK_BH : CHECK_IDLE;
+    state = enabled && mode >= 1 && mode <= 3 ? CHECK_ENGINE : CHECK_IDLE;
     started = currentTime;
     samples[0] = samples[1] = 0;
-    if (state == CHECK_BH) {
+    if (state == CHECK_ENGINE) {
         expected[0] = dna[mode];
         expected[1] = transmission[mode];
     }
+}
+
+/* Begin the bounded BH wait only after fresh engine reports show a running engine. */
+void drive_mode_check_engine_started(void) {
+    if (state != CHECK_ENGINE) return;
+    state = CHECK_BH;
+    started = currentTime;
+    samples[0] = samples[1] = 0;
 }
 
 /* A matching BH completion starts observation; stale or failed results cannot confirm. */
@@ -51,7 +59,7 @@ void drive_mode_check_observe(uint8_t source, uint8_t value) {
 /* Confirm only fresh, sustained reports at the end of the five-second window. */
 void drive_mode_check_process(void) {
     uint32_t now = currentTime;
-    if ((state != CHECK_BH && state != CHECK_REPORTS) || now - started < (state == CHECK_BH ? 15000U : 5000U))
+    if ((state != CHECK_BH && state != CHECK_REPORTS) || now - started < (state == CHECK_BH ? 20000U : 5000U))
         return;
     uint8_t confirmed = state == CHECK_REPORTS &&
         samples[0] >= 4 && last_match[0] - first_match[0] >= 2000U &&
@@ -63,7 +71,7 @@ void drive_mode_check_process(void) {
 
 /* Keep the result available in Features until the next start or settings save. */
 const char *drive_mode_check_status(void) {
-    static const char *const labels[] = {"Next start", "Waiting", "Waiting", "Confirmed", "No confirm"};
+    static const char *const labels[] = {"Next start", "Start engine", "Waiting", "Waiting", "Confirmed", "No confirm"};
     return labels[state];
 }
 

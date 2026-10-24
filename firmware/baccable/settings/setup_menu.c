@@ -157,6 +157,7 @@ static uint8_t setup_group(uint8_t id) {
     case 28:
     case 31:
     case 32:
+    case 42:
         return 1; /* Comfort */
     case 9:
     case 24:
@@ -298,6 +299,11 @@ static const char *setup_value_label(const SetupParam *param, uint16_t value, ui
     } else if (param->flash_index == 38) {
         static const char *const modes[] = {"N", "A", "D", "Race"};
         label = modes[value <= 3 ? value : 0];
+    } else if (param->flash_index == 41) {
+        if (!value) label = "Stiff";
+        else if (settings_state.default_drive_mode == 2) label = "Soft";
+        else if (settings_state.default_drive_mode == 3) label = "Mid";
+        else label = "Softer";
     } else if (param->flash_index == 24) {
         static const char *const modes[] = {"OFF", "RES", "+"};
         label = modes[value <= 2 ? value : 0];
@@ -363,7 +369,9 @@ void setup_render_page(uint8_t page_index) {
         if (param->flash_index == 38 && setup_get_value(param)) {
             char result[24];
             setup_default_mode_result(result);
-            ui_render_value(text, sizeof(text), "DNA", result);
+            if (!strcmp(drive_mode_check_status(), "Start engine"))
+                ui_render_value(text, sizeof(text), value, "Start engine");
+            else ui_render_value(text, sizeof(text), "DNA", result);
         } else ui_render_value(text, sizeof(text), param->menu_text, value);
     }
     memset(dashboard_setup_screen, ' ', sizeof(dashboard_setup_screen));

@@ -22,6 +22,7 @@ uint16_t mirror_positions_read(uint8_t id) { (void)id; return 0; }
 static uint8_t sent[8];
 static uint32_t sent_id;
 static unsigned sends, send_rejected;
+uint8_t can_tx_idle(void) { return 1; }
 uint32_t can_tx(CAN_TxHeaderTypeDef *header, uint8_t *data) {
     if (send_rejected) {
         --send_rejected;
@@ -67,6 +68,7 @@ static void arm(void) {
     now = 100;
 #if defined(BACCABLE_C1)
     drive_mode_check_start(1);
+    drive_mode_check_engine_started();
 #endif
 }
 
@@ -86,6 +88,7 @@ static void check_confirmation(void) {
         if (scenario == 6) {
             now = UINT32_MAX - 1000;
             drive_mode_check_start(1);
+            drive_mode_check_engine_started();
         }
         uint32_t start = now;
         feed_mode(0);
@@ -112,11 +115,15 @@ static void check_confirmation(void) {
     arm();
     uint8_t old_token = drive_mode_check_token();
     drive_mode_check_start(1);
+    drive_mode_check_engine_started();
     drive_mode_check_reply(old_token, 1);
     now += 5000;
     drive_mode_check_process();
     assert(!strcmp(drive_mode_check_status(), "Waiting")); /* Ignore stale BH results. */
-    now += 10000;
+    now += 14999;
+    drive_mode_check_process();
+    assert(!strcmp(drive_mode_check_status(), "Waiting"));
+    ++now;
     drive_mode_check_process();
     assert(!strcmp(drive_mode_check_status(), "No confirm")); /* Missing BH. */
     arm();

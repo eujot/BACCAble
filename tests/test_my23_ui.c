@@ -106,7 +106,7 @@ static void test_my23_readings_preview_and_unavailable_gear(void) {
     assert(!strcmp(enum_text, "Belt --"));
     MenuPreferences prefs;
     menu_preferences_default(&prefs);
-    uint8_t pages[128];
+    uint8_t pages[MENU_PAGE_CAPACITY];
     unsigned count = menu_page_list_filtered(&prefs, 0, parameter_pages[0][gear].group,
                                              false, false, false, false, pages);
     unsigned selected = 0;
@@ -143,7 +143,7 @@ static void test_my23_readings_preview_and_unavailable_gear(void) {
     next = parameter_pages[0][pages[(selected + 1) % count]].label;
     assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, next, strlen(next) < 22 ? strlen(next) : 22));
     menu_event(MENU_BACK); menu_event(MENU_BACK); /* Return to root. */
-    menu_event(MENU_PREVIOUS); menu_event(MENU_PREVIOUS); menu_event(MENU_SELECT); /* Information. */
+    menu_event(MENU_PREVIOUS); menu_event(MENU_SELECT); /* Information. */
     for (unsigned i = 0; i < 5; ++i) menu_event(MENU_NEXT);
     assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "Gaps", 4));
     for (unsigned i = 0; i < 4; ++i) menu_event(MENU_NEXT);
@@ -332,7 +332,7 @@ static void test_favorite_slot_draft_flow(void) {
     menu_event(MENU_BACK);
     assert(strstr(screen, "Favorite 1"));
     menu_event(MENU_BACK); menu_event(MENU_BACK);
-    menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_NEXT);
+    menu_event(MENU_NEXT); menu_event(MENU_NEXT);
     menu_event(MENU_SELECT); /* Favorites. */
     assert(menu_parameters_active());
 }
@@ -383,7 +383,7 @@ static void test_my23_list_and_old_favorite_migration(void) {
     assert(screen_packet[2] == 0x80 && !memcmp(screen_packet + 4, "Favorites", 9));
     assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "Readings", 8));
     menu_event(MENU_PREVIOUS); /* Wrap to last/current and first/next. */
-    assert(!memcmp(screen_packet + 4, "Experiments", 11));
+    assert(!memcmp(screen_packet + 4, "Information", 11));
     assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "Favorites", 9));
     menu_event(MENU_BACK); /* Save migrated preferences on close. */
     assert(have_saved);

@@ -5,6 +5,8 @@
 static uint8_t next_option;
 /* 0 = transport resync, 1 = vehicle start, 2 = saved for the next start. */
 static uint8_t driver_aids_action, dna_action;
+static uint8_t engine_running;
+static uint32_t engine_running_since;
 /* RFHUB 0x1EF: 2 = OFF, 8 = RUN. Preserve the session through cranking (10). */
 static uint8_t ignition_state;
 
@@ -19,6 +21,7 @@ void board_sync_rearm(void) {
     board_sync_restart();
     ignition_state = 0;
     driver_aids_action = dna_action = 0;
+    engine_running = 0;
     drive_mode_check_start(0);
 }
 
@@ -29,6 +32,7 @@ void board_sync_ignition(unsigned code) {
     ignition_state = code;
     board_sync_restart();
     driver_aids_action = dna_action = code == 8 ? 1 : 2;
+    engine_running = 0;
     drive_mode_check_start(code == 8);
 }
 
@@ -39,8 +43,23 @@ void board_sync_saved(void) {
     drive_mode_check_start(0);
 }
 
+/* Require a fresh RPM report and two seconds above 400 RPM before requesting DNA selection. */
+static uint8_t dna_engine_ready(void) {
+    if (telemetry_state.current_rpm_speed <= 400 ||
+        currentTime - telemetry_state.current_rpm_updated_at > 1000U) {
+        engine_running = 0;
+        return 0;
+    }
+    if (!engine_running) {
+        engine_running = 1;
+        engine_running_since = currentTime;
+    }
+    return currentTime - engine_running_since >= 2000U;
+}
+
 /* Deliver every enabled-feature preference, retrying when the board link is busy. */
 void board_sync_process(void) {
+    uint8_t engine_ready = dna_engine_ready();
     drive_mode_check_process();
     if (!runtime_state.instruct_slave_boards_trigger_enabled ||
         currentTime - runtime_state.all_processors_wakeup_time <=
@@ -94,9 +113,14 @@ void board_sync_process(void) {
         length = 5;
         break;
     case 8:
+        if (dna_action == 1 && settings_state.default_drive_mode >= 1 &&
+            settings_state.default_drive_mode <= 3) {
+            if (!engine_ready) return;
+        }
         command[0] = BhBusID;
         command[1] = BH_CMD_DNA_DEFAULT;
-        command[2] = settings_state.default_drive_mode;
+        command[2] = settings_state.default_drive_mode |
+                     (settings_state.default_suspension_softer ? BH_DNA_SOFT_SUSPENSION : 0);
         command[3] = dna_action;
         command[4] = drive_mode_check_token();
         length = 5;
@@ -108,7 +132,10 @@ void board_sync_process(void) {
     }
     if (board_uart_send(command, length)) {
         if (next_option == 7) driver_aids_action = 0;
-        if (next_option == 8) dna_action = 0;
+        if (next_option == 8) {
+            if (dna_action == 1) drive_mode_check_engine_started();
+            dna_action = 0;
+        }
         ++next_option;
     }
 }

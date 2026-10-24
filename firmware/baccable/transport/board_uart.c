@@ -503,35 +503,25 @@ void board_uart_process(void) {
         if (currentTime - last_c2_poll_time > TIMING__C1____C2_STATUS_REQUEST_TIMEOUT_MS) {
             uint8_t command[4];
             uint8_t length = usb_modes_poll(0, command);
-            if (board_uart_send(command, length))
+            if (board_uart_send(command, length)) {
                 usb_modes_poll_queued(0, command);
-            last_c2_poll_time = currentTime;
+                last_c2_poll_time = currentTime;
+            }
         }
         if (currentTime - last_bh_poll_time > TIMING__C1____BH_STATUS_REQUEST_TIMEOUT_MS) {
             uint8_t command[4];
             uint8_t length = usb_modes_poll(1, command);
-            if (board_uart_send(command, length))
+            if (board_uart_send(command, length)) {
                 usb_modes_poll_queued(1, command);
-            last_bh_poll_time = currentTime;
+                last_bh_poll_time = currentTime;
+            }
         }
     }
     if (currentTime - last_sent_serial_msg_time <= TIMING__C1____SERIAL_TIMEOUT_REPLY_MS)
         return;
     if (queue_start(tx_queue, &huart2, active_tx, UART_BUFFER_SIZE, &board_tx_active)) {
         last_sent_serial_msg_time = currentTime;
-        switch (active_tx[0]) {
-        case C2BusID:
-        case C2_Bh_BusID:
-        case AllResetFaults:
-            last_c2_poll_time = currentTime;
-            break;
-        case BhBusID:
-        case BhBusIDgetStatus:
-            last_bh_poll_time = currentTime;
-            break;
-        default:
-            break;
-        }
+        /* Feature commands must not postpone the independent status/USB polls. */
     }
 #elif defined(BACCABLE_C2) || defined(BACCABLE_BH)
     if (currentTime - runtime_state.we_can_send_a_message_reply < TIMING__C2_BH_SERIAL_TIMEOUT_REPLY_MS)

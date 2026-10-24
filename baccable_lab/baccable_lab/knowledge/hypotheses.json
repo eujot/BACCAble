@@ -313,16 +313,54 @@
     },
     {
       "id": "ENGINE-RUN-001",
-      "status": "candidate",
+      "status": "refuted",
       "role": "C2",
       "can_id": "0x1FC",
       "dlc": 8,
-      "description": "Byte 0 bit 4 rises with engine start and clears on stop (ON 0.83 / OFF 0.01). Conflicts with the existing reference-only note that calls 0x1FC active damping; both meanings may coexist on one multiplexed frame.",
-      "evidence": [],
-      "contradictions": [
-        "Prior reference-only interpretation: active damping / differential status."
+      "description": "Refuted as a generic engine-running flag: 0x1FC b0.4 clears in D Stiff and Race while fresh C1 RPM remains 797\u2013974 in the labelled 20261024-113104Z matrix. It also changes with D suspension toggles. The earlier start/stop correlation is preserved in history_before_matrix; actual mode/calibration confounded that interpretation.",
+      "evidence": [
+        {
+          "session": "20261024-113104Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ],
+          "report": "docs/research/20261024-three-session-audit.md"
+        }
       ],
-      "next_test": "Repeat start/stop cycles and inspect the full payload to separate engine-running from the damping reference."
+      "contradictions": [
+        "Prior reference-only interpretation: active damping / differential status.",
+        "The entire labelled matrix has fresh running-engine RPM while the proposed flag changes with DNA/calibration; previous engine-start correlation was confounded. docs/research/20261024-three-session-audit.md"
+      ],
+      "next_test": "Use fresh engine RPM for engine-running decisions; retain this refuted interpretation as history.",
+      "history_before_matrix": {
+        "status": "candidate",
+        "description": "Byte 0 bit 4 rises with engine start and clears on stop (ON 0.83 / OFF 0.01). Conflicts with the existing reference-only note that calls 0x1FC active damping; both meanings may coexist on one multiplexed frame."
+      }
     },
     {
       "id": "WIPER-HVAC-001",
@@ -543,10 +581,10 @@
     },
     {
       "id": "DNA-RELATED-1FC-001",
-      "status": "candidate",
+      "status": "supported",
       "role": "C1",
       "can_id": "0x1FC",
-      "description": "C1/C2 byte 0 correlates with settled N/A=0x50, D=0x40, Race=0x60 in both captures. Mode-dependent response; no evidence it is a selector command. Existing damping/differential reference interpretation remains unvalidated. Across all eight N-to-D edges it follows the local 0x384 by 12-27 ms on C1 and 13-27 ms on C2; median cadence is 20 ms. This strengthens the response interpretation, not the actuator identity.",
+      "description": "C1/C2 raw byte0 tracks mode/calibration: N/A=0x50, D Stiff/Soft=0x40/0x50, Race Stiff/Mid=0x60/0x40. The labelled matrix repeats each softer-to-firm pair twice. b0.4 alone cannot indicate Race softness; no physical ECU or command role is established.",
       "evidence": [
         {
           "session": "20261011-190746Z",
@@ -583,10 +621,46 @@
             12
           ],
           "report": "docs/research/20261023-dna-selector.md"
+        },
+        {
+          "session": "20261024-113104Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ],
+          "report": "docs/research/20261024-three-session-audit.md"
         }
       ],
       "contradictions": [],
-      "next_test": "Isolate damping/selector controls and establish the sender before assigning physical meaning."
+      "next_test": "Use the actual mode with the raw code; assess actuation separately. Do not use bit4 as an engine gate.",
+      "history_before_matrix": {
+        "status": "candidate",
+        "description": "C1/C2 byte 0 correlates with settled N/A=0x50, D=0x40, Race=0x60 in both captures. Mode-dependent response; no evidence it is a selector command. Existing damping/differential reference interpretation remains unvalidated. Across all eight N-to-D edges it follows the local 0x384 by 12-27 ms on C1 and 13-27 ms on C2; median cadence is 20 ms. This strengthens the response interpretation, not the actuator identity."
+      }
     },
     {
       "id": "DNA-RELATED-4AE-001",
@@ -643,10 +717,10 @@
     },
     {
       "id": "DNA-RELATED-25A-001",
-      "status": "candidate",
+      "status": "supported",
       "role": "BH",
       "can_id": "0x25A",
-      "description": "Byte 1 settles at N/A=0x00, D=0x10, Race=0x20 and can lag the known byte-0 mode field. This is not an identified knob press/release signal. Existing firmware only rewrites byte 0.",
+      "description": "Labelled manual matrix confirms b1[5:4]: D Stiff=1, Soft=0; Race Stiff=2, Mid=1. Two complete repetitions give four D/Race softer-to-firm pairs; N/A button controls have no response. New mode entries carry a 24\u201336 ms transitional old level. This supersedes the Mid=1 inference, not the separate question of injected startup acceptance.",
       "evidence": [
         {
           "session": "20261011-190746Z",
@@ -683,10 +757,66 @@
             12
           ],
           "report": "docs/research/20261023-dna-selector.md"
+        },
+        {
+          "session": "20261010-111025Z",
+          "event_ids": [
+            109,
+            110,
+            111,
+            112,
+            113,
+            114,
+            115,
+            116,
+            117,
+            118,
+            119,
+            120
+          ],
+          "report": "docs/research/20261024-startup-audit.md",
+          "note": "Context markers; exact transitions use original CAN frame IDs in the report, not nearest-marker labels."
+        },
+        {
+          "session": "20261024-113104Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ],
+          "report": "docs/research/20261024-three-session-audit.md"
         }
       ],
       "contradictions": [],
-      "next_test": "Record knob press/hold/release boundaries and distinguish presentation/feedback from an input."
+      "next_test": "Validate automatic startup selection/pulse acceptance and driver priority on matching firmware; another passive Race/Mid identification capture is unnecessary.",
+      "history_before_matrix": {
+        "status": "candidate",
+        "description": "Byte 1 settles at N/A=0x00, D=0x10, Race=0x20 and can lag the known byte-0 mode field. This is not an identified knob press/release signal. Existing firmware only rewrites byte 0. Audit 2026-10-24: D button pulses repeatedly toggle byte1[5:4] between 1 (firm) and 0 (Soft), using the owner description to label calibration. Race entry shows 2; the implemented Mid=1 remains a candidate.",
+        "next_test": "Capture labelled Race Stiff -> Mid -> Stiff button actions and validate the inferred 2 -> 1 -> 2 field on BH 0x25A, plus injected startup acceptance."
+      }
     },
     {
       "id": "DNA-RELATED-73C-001",
@@ -748,7 +878,7 @@
           2
         ]
       ],
-      "description": "Momentary selector direction: raw 0=released, 1=toward A (byte 0=20), 2=toward D/Race (byte 0=40). All 36 non-neutral pulses match selector-associated mode changes across three sessions. Every N-to-D (8/8) follows onset by 108-112 ms on BH; pulses last 154-294 ms. Five long holds precede Race by 1194-1211 ms. It is not a latched selected-mode report. C1 0x256/DLC 8 is unrelated. Startup replay implemented in 00b4b99; implementation does not promote the capture claim to hardware validated.",
+      "description": "Momentary selector direction: raw 0=released, 1=toward A (byte 0=20), 2=toward D/Race (byte 0=40). All 36 non-neutral pulses match selector-associated mode changes across three sessions. Every N-to-D (8/8) follows onset by 108-112 ms on BH; pulses last 154-294 ms. Five long holds precede Race by 1194-1211 ms. It is not a latched selected-mode report. C1 0x256/DLC 8 is unrelated. Startup replay implemented in 00b4b99; implementation does not promote the capture claim to hardware validated. The new matrix adds 13 operator-associated direction pulses, including two D-to-Race responses after 1196/1210 ms and return through intermediate D before N.",
       "evidence": [
         {
           "session": "20261010-111025Z",
@@ -793,6 +923,38 @@
             12
           ],
           "report": "docs/research/20261023-dna-all-sessions.md"
+        },
+        {
+          "session": "20261024-113104Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ],
+          "report": "docs/research/20261024-three-session-audit.md"
         }
       ],
       "contradictions": [
@@ -800,7 +962,463 @@
         "The final marked Race attempt contains only a short N-to-D pulse and no recorded subsequent long hold.",
         "Earlier narrow searches included the input pulse in their baseline and missed it; whole-window inspection corrected that false negative."
       ],
-      "next_test": "Install matched C1/BH 00b4b99 firmware and verify A/D/Race startup selection, release, sustained factory DNA/transmission reports, cancellation and later physical selector use. N must preserve factory behavior."
+      "next_test": "Install matching corrected C1/BH firmware and repeat fresh-start Race and D/Soft across several ignitions; check reported result, final suspension state and physical-input priority. No extra passive selector-identification capture is needed.",
+      "implementation_update": {
+        "commit": "50f7604b101af33d41ff44428b797554448b1c24",
+        "report": "docs/research/20261024-startup-gesture-correction.md",
+        "owner_report": "Beta-29 D replay works; Race fails; D/Soft missed once.",
+        "acceptance": "Corrected waveform and retry remain unverified in the vehicle."
+      }
+    },
+    {
+      "id": "WIPER-CYCLE-C2-001",
+      "status": "supported",
+      "role": "C2",
+      "can_id": "0x2EC",
+      "dlc": 8,
+      "parts": [
+        [
+          2,
+          5,
+          1
+        ]
+      ],
+      "description": "A repeating wiper-associated cycle phase, not a steady rain or enable state. Median message interval 50 ms; slow rising-edge interval about 1500 ms, fast 950 ms. Independent 20261024-111510Z adds 27 pulses and two slow/fast/OFF controls. Negative control: all 2750 C2 0x2EC frames in the DNA/suspension matrix have cycle phase clear.",
+      "evidence": [
+        {
+          "session": "20261024-105643Z",
+          "event_ids": [
+            6,
+            7,
+            9,
+            10,
+            12,
+            18,
+            19,
+            21,
+            22,
+            24,
+            30,
+            31,
+            33,
+            34,
+            36
+          ],
+          "report": "docs/research/20261024-rain-lights-correlation.md"
+        },
+        {
+          "session": "20261010-111025Z",
+          "event_ids": [
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23
+          ],
+          "report": "docs/research/20261024-rain-lights-correlation.md"
+        },
+        {
+          "session": "20261010-104325Z",
+          "event_ids": [
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78
+          ],
+          "report": "docs/research/20261024-rain-lights-correlation.md"
+        },
+        {
+          "session": "20261024-111510Z",
+          "event_ids": [
+            8,
+            9,
+            10,
+            22,
+            23,
+            24
+          ],
+          "report": "docs/research/20261024-111510-rain-lights-followup.md"
+        },
+        {
+          "session": "20261024-113104Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ],
+          "report": "docs/research/20261024-three-session-audit.md"
+        }
+      ],
+      "contradictions": [
+        "All three new rain_detected markers fall after a pulse, while this bit is clear. Fixed post-marker occupancy would miss the signal.",
+        "One additional pulse at 403.85 s in the old wiper session has no matching wiper marker; it remains unlabelled, not discarded."
+      ],
+      "alternatives": [
+        "motor/park-position phase",
+        "BCM requested wipe phase"
+      ],
+      "next_test": "Observe and count physical sweeps alongside phase edges, especially single wipe and fast speed. Do not repeat the full sensor scenario merely to find a trigger."
+    },
+    {
+      "id": "LIGHT-AUTO-SEPARATION-001",
+      "status": "supported",
+      "role": "BH",
+      "can_id": "0x354",
+      "dlc": 4,
+      "parts": [
+        [
+          3,
+          6,
+          1
+        ]
+      ],
+      "description": "AUTO selection report is separate from the dipped-beam report at b1.6. C2 0x73E carries the same two distinctions. The older auto_low_beam_report label was misleading.",
+      "evidence": [
+        {
+          "session": "20261010-104325Z",
+          "event_ids": [
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78
+          ],
+          "report": "docs/research/20261024-rain-lights-correlation.md"
+        },
+        {
+          "session": "20261024-105643Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36
+          ],
+          "report": "docs/research/20261024-rain-lights-correlation.md"
+        },
+        {
+          "session": "20260928-204607Z",
+          "event_ids": [
+            10,
+            11
+          ],
+          "report": "docs/research/20261024-rain-lights-correlation.md"
+        },
+        {
+          "session": "20261024-111510Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21
+          ],
+          "report": "docs/research/20261024-111510-rain-lights-followup.md"
+        }
+      ],
+      "contradictions": [
+        "September ON/OFF alone confounded switch selection and lit lamps. October daytime AUTO stays set with lamps off."
+      ],
+      "alternatives": [
+        "Reported automatic-lighting enabled state rather than exact physical rotary-switch position"
+      ],
+      "next_test": "Use AUTO indication as a candidate gate; validate stale-data and physical override handling before actuator implementation."
+    },
+    {
+      "id": "LIGHT-SENSOR-CHANNELS-001",
+      "status": "supported",
+      "role": "BH",
+      "can_id": "0x738",
+      "dlc": 8,
+      "parts": [
+        [
+          1,
+          0,
+          8
+        ],
+        [
+          2,
+          0,
+          8
+        ]
+      ],
+      "description": "Two separate raw channels react to covering/uncovering the light sensor: usually 6/6 in daylight and 0/0 while covered in the new session. They return before lamp OFF by about 14\u201320 seconds on the BH clock. The parts describe two channels, not a combined physical value. Independent 20261024-111510Z shows both raw channels falling while lamps remain manually OFF, then AUTO lamp release 14.411/14.474 s after both channels recover. Units and physical source stay unverified.",
+      "evidence": [
+        {
+          "session": "20261024-105643Z",
+          "event_ids": [
+            2,
+            3,
+            4,
+            5,
+            14,
+            15,
+            16,
+            17,
+            26,
+            27,
+            28,
+            29
+          ],
+          "report": "docs/research/20261024-rain-lights-correlation.md"
+        },
+        {
+          "session": "20261010-104325Z",
+          "event_ids": [
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78
+          ],
+          "report": "docs/research/20261024-rain-lights-correlation.md"
+        },
+        {
+          "session": "20261024-111510Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            5,
+            6,
+            7,
+            15,
+            16,
+            17,
+            19,
+            20,
+            21
+          ],
+          "report": "docs/research/20261024-111510-rain-lights-followup.md"
+        }
+      ],
+      "contradictions": [
+        "The entire BH 0x738 frame is not a monotonic counter. Other bytes vary for other reasons.",
+        "A short channel-2 dip also appears during a spray phase; it does not repeat in all rain trials.",
+        "Independent prior sessions contain other baseline values (3/3, 4/5, 0/0), so no universal binary threshold or lux scale is established."
+      ],
+      "alternatives": [
+        "two optical/illumination channels",
+        "ambient or solar-related values relayed by another module"
+      ],
+      "next_test": "A raw light-response association is supported. Establish units/source only if a photometric reading is needed; the next feature acceptance gap is lamp actuation, not another complete input scenario."
+    },
+    {
+      "id": "WIPER-41A-CONFOUNDER-001",
+      "status": "refuted",
+      "role": "C1",
+      "can_id": "0x41A",
+      "dlc": 7,
+      "parts": [
+        [
+          2,
+          5,
+          2
+        ]
+      ],
+      "description": "Byte 2 mask 0x60 is not a specific wiper switch or rain signal; it also changes with unrelated lights in the older capture. This frame already contains battery/IBS fields.",
+      "evidence": [
+        {
+          "session": "20261024-105643Z",
+          "event_ids": [
+            10,
+            22,
+            34
+          ],
+          "report": "docs/research/20261024-rain-lights-correlation.md"
+        },
+        {
+          "session": "20261010-104325Z",
+          "event_ids": [
+            79,
+            80,
+            81,
+            82,
+            83,
+            84,
+            91,
+            92,
+            93,
+            94,
+            95,
+            96
+          ],
+          "report": "docs/research/20261024-rain-lights-correlation.md"
+        }
+      ],
+      "contradictions": [
+        "It switches through all three fog and high-beam trials while C2 0x2EC cycle phase stays clear."
+      ],
+      "alternatives": [
+        "electrical-load-associated battery data, exact meaning unresolved"
+      ],
+      "next_test": "Exclude this field as a rain/wiper trigger; retain it as a negative control."
+    },
+    {
+      "id": "WASHER-2EC-001",
+      "status": "candidate",
+      "role": "C2",
+      "can_id": "0x2EC",
+      "dlc": 8,
+      "parts": [
+        [
+          4,
+          4,
+          1
+        ]
+      ],
+      "description": "Short pulses coincide with spraying in the new session, but the older washer-labelled procedure does not reproduce them. Follow-up spray trials reproduce short pulses; older contradictions remain unresolved.",
+      "evidence": [
+        {
+          "session": "20261024-105643Z",
+          "event_ids": [
+            7,
+            19,
+            31
+          ],
+          "report": "docs/research/20261024-rain-lights-correlation.md"
+        },
+        {
+          "session": "20261010-111025Z",
+          "event_ids": [
+            6,
+            7,
+            8,
+            9,
+            10,
+            11
+          ],
+          "report": "docs/research/20261024-rain-lights-correlation.md"
+        },
+        {
+          "session": "20261024-111510Z",
+          "event_ids": [
+            12,
+            26
+          ],
+          "report": "docs/research/20261024-111510-rain-lights-followup.md"
+        }
+      ],
+      "contradictions": [
+        "The old washer-labelled steps have cycle pulses with b4.4 clear.",
+        "A b4.4 excursion occurs during the old high-beam scenario; labels cannot explain whether a coincident stalk action occurred."
+      ],
+      "alternatives": [
+        "washer request",
+        "another stalk action",
+        "mislabeled or incompletely executed older steps"
+      ],
+      "next_test": "Do not use this bit to suppress washer wipes until physical spray-only and single-wipe controls distinguish it."
     }
   ]
 }

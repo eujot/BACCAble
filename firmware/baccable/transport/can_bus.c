@@ -224,6 +224,12 @@ uint32_t can_tx(CAN_TxHeaderTypeDef *tx_msg_header, uint8_t *tx_msg_data) {
     return HAL_OK;
 }
 
+/* Report an empty software queue only after the hardware has completed its transmissions. */
+uint8_t can_tx_idle(void) {
+    return bus_state == ON_BUS && txqueue.head == txqueue.tail &&
+           HAL_CAN_GetTxMailboxesFreeLevel(&can_handle) == 3;
+}
+
 /* Send waiting vehicle messages and retain any message the controller has not accepted. */
 void can_process(void) {
     if (bus_state != ON_BUS)

@@ -77,6 +77,8 @@ def correlate(database: sqlite3.Connection, catalog: dict, events: list[dict]) -
                 previous = None
                 for frame_id, sequence, host, device_ms, dlc, payload in rows:
                     data = bytes(payload)[:dlc]
+                    if len(data) != message.get("exact_dlc", len(data)):
+                        continue
                     result = extract_signal(signal, data)
                     if result is None or not result["valid"]:
                         continue

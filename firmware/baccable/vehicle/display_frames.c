@@ -24,9 +24,12 @@ void vehicle_handle_display_content(const CAN_RxHeaderTypeDef *rx_header, uint8_
 /* CAN ID 0x0000025A. */
 /* Apply the configured driving-mode presentation on the dashboard. */
 void vehicle_handle_drive_style_display(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
-    if (rx_header->StdId != 0x25A || rx_header->DLC < 1 ||
+    if (rx_header->StdId != 0x25A || rx_header->DLC != 4 ||
         rx_header->IDE != CAN_ID_STD || rx_header->RTR != CAN_RTR_DATA)
         return;
+#if defined(BACCABLE_BH)
+    dna_selector_suspension_status(frame_data);
+#endif
     // msg received by DriveStyle control module
 #if defined(BACCABLE_BH)
     if (chassis_state.stability_inverted) {
