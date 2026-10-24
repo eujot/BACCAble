@@ -59,7 +59,7 @@ void drive_mode_check_observe(uint8_t source, uint8_t value) {
 /* Confirm only fresh, sustained reports at the end of the five-second window. */
 void drive_mode_check_process(void) {
     uint32_t now = currentTime;
-    if ((state != CHECK_BH && state != CHECK_REPORTS) || now - started < (state == CHECK_BH ? 15000U : 5000U))
+    if ((state != CHECK_BH && state != CHECK_REPORTS) || now - started < (state == CHECK_BH ? 20000U : 5000U))
         return;
     uint8_t confirmed = state == CHECK_REPORTS &&
         samples[0] >= 4 && last_match[0] - first_match[0] >= 2000U &&

@@ -37,6 +37,8 @@ void can_set_bitrate(enum can_bitrate bitrate);
 void can_set_silent(uint8_t silent);
 void can_set_autoretransmit(uint8_t autoretransmit);
 uint32_t can_tx(CAN_TxHeaderTypeDef *tx_msg_header, uint8_t *tx_msg_data);
+/* Check that queued frames and all three hardware transmit mailboxes have drained. */
+uint8_t can_tx_idle(void);
 uint32_t can_rx(CAN_RxHeaderTypeDef *rx_msg_header, uint8_t *rx_msg_data);
 uint32_t can_forward(const CAN_RxHeaderTypeDef *received, uint8_t *data);
 

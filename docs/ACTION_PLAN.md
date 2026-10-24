@@ -1,5 +1,44 @@
 # BACCAble action plan and agent handoff
 
+## Startup DNA gesture and suspension reliability correction, 2026-10-24
+
+Task branch `fix/startup-dna-gestures`, isolated worktree
+`/private/tmp/baccable-startup-dna-gestures`, based on the three-session audit.
+The owner reports beta-29 D selection working, Race failing, and one D/Soft
+attempt selecting D without Soft. This provides limited D replay acceptance,
+not repeatable Race/suspension acceptance. No automatic-failure TX recording is
+available, so the exact vehicle cause is not asserted.
+
+Concrete source/waveform weaknesses: beta-29's held input used its own 250 ms
+refresh clock while factory-neutral 0x256 messages still arrived; short pulses
+could start immediately before those neutral messages. Its fixture did not
+exercise recorded cadences or a first accepted pulse ignored by the receiver.
+Nominal 1.8 s already exceeds the 1.196/1.210 s captured Race response times;
+continuity and pacing, rather than duration alone, need correction.
+
+New presses align within 20 ms of a fresh neutral report, wait for all earlier
+software/hardware TX to drain, and require one second of actual-mode stability.
+Incoming factory-neutral reports schedule held-input reassertion. Race holds
+2.2 s with a 250 ms fallback refresh. Suspension retains 150 ms pulses and
+300 ms settled feedback. One retry is allowed only after release plus at least
+one second of fresh, unchanged opposite calibration, drained TX and no observed
+desired-state response. Any desired reply, even brief, or missing/unknown data
+prevents a blind retry. Physical input, stale mode/RPM and engine stop retain
+priority. BH operation is bounded to 12 s after its maximum 3 s engine gate;
+C1 now waits 20 s for BH, then uses the unchanged five-second corroboration.
+UART/settings formats and menu labels are unchanged; update C1/BH together.
+
+Both guides and MENU_UX describe the changed timing/retry and partial-failure
+meaning. [Failure review and limits](research/20261024-startup-gesture-correction.md).
+Two focused regressions fail against beta-29 source and pass after correction:
+neutral during a long hold, and an ignored first suspension pulse. Full native
+Apple Clang ASan/UBSan host tests pass. All 16 board/display builds and cppcheck
+for C1/C2/BH/CAN pass with the full Arm GNU 15.2.Rel1 toolchain and local version
+`startup-dna`. Standard flash/RAM: C1 96,744/15,364 bytes; BH 36,608/13,260.
+Size gates pass. CAN source-provenance refresh and Lab validation follow in the
+same task branch before completion. No push, merge, release, flash or new vehicle
+acceptance. Original captures, user scenario branch and untracked files remain.
+
 ## Three-session audit and labelled Race/Mid result, 2026-10-24
 
 On local `research/rain-lights-correlation`, audited `20261024-105643Z`,

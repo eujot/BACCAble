@@ -69,7 +69,7 @@ static void test_default_mode_result(void) {
     board_sync_restart();
     assert(!strcmp(drive_mode_check_status(), "Start engine"));
     drive_mode_check_engine_started(); /* This test isolates display/result formatting. */
-    now += 15000;
+    now += 20000;
     board_sync_process();
     setup_render_page(page);
     assert(!memcmp(dashboard_setup_screen, "DNA: D No confirm", 17));

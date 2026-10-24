@@ -22,6 +22,7 @@ uint16_t mirror_positions_read(uint8_t id) { (void)id; return 0; }
 static uint8_t sent[8];
 static uint32_t sent_id;
 static unsigned sends, send_rejected;
+uint8_t can_tx_idle(void) { return 1; }
 uint32_t can_tx(CAN_TxHeaderTypeDef *header, uint8_t *data) {
     if (send_rejected) {
         --send_rejected;
@@ -119,7 +120,10 @@ static void check_confirmation(void) {
     now += 5000;
     drive_mode_check_process();
     assert(!strcmp(drive_mode_check_status(), "Waiting")); /* Ignore stale BH results. */
-    now += 10000;
+    now += 14999;
+    drive_mode_check_process();
+    assert(!strcmp(drive_mode_check_status(), "Waiting"));
+    ++now;
     drive_mode_check_process();
     assert(!strcmp(drive_mode_check_status(), "No confirm")); /* Missing BH. */
     arm();

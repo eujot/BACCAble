@@ -206,7 +206,7 @@ static void test_default_mode_engine_gate(void) {
     uart_busy = false; board_sync_process();
     assert(commands == 9 && last_dna_action == 1);
     assert(!strcmp(drive_mode_check_status(), "Waiting"));
-    now += 14999; board_sync_process();
+    now += 19999; board_sync_process();
     assert(!strcmp(drive_mode_check_status(), "Waiting"));
     ++now; board_sync_process();
     assert(!strcmp(drive_mode_check_status(), "No confirm"));
