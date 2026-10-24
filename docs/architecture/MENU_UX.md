@@ -270,15 +270,19 @@ Downgrading does not export the new sets for an old firmware's menu format.
 
 ## Refresh and vehicle boundaries
 
-C1 renders immediately on menu events and starts the next 100 ms periodic
-interval from that render, avoiding a second render in the same loop. Unchanged
+C1 renders the first navigation event immediately. Further directional events
+within 350 ms update the selection without losing clicks; C1 sends the newest
+screen after one transfer interval or 120 ms without another click. The interval
+uses the selected 10/20/50 ms fragment pace. Other events render immediately.
+Each render starts the next 100 ms periodic interval. Unchanged
 screens are resubmitted after 500 ms; duplicate detection precedes UART packet
 assembly and only accepted submissions update the resend clock. BH retains
-20 ms default CAN fragment pacing and a one-second complete reassertion clock.
+20 ms default CAN fragment pacing and reasserts an idle menu one second after
+the last changed screen.
 Settings → BACCAble IPC offers RAM-only Safe 50ms / Quick 20ms / Fast 10ms,
 Write Full / Write Delta, and Reset default. SELECT applies a row immediately;
 UP/DOWN select a row, BACK returns. This experiment is explicitly outside the
-persisted draft workflow. Radio restoration and the separate IPC test patterns stay at 50 ms. No zero-delay burst or blocking wait was added.
+persisted draft workflow. Radio restoration stays at 50 ms. No zero-delay burst or blocking wait was added.
 
 Full is the default: one immutable 39-byte image is sent in order, with one
 replaceable latest target waiting behind it. Repeated submissions and failed
@@ -304,8 +308,7 @@ Factory text uses the existing 100 ms complete-message guard/250 ms incomplete-m
 settle fallback and bounded deferral. Source codes are learned only from complete
 media messages (0x05–0x09 and observed CarPlay context 0x21); no extra audio-source
 selection is injected. Closing restores the last complete radio text when known.
-The explicit Information → IPC display test keeps its temporary forced source,
-fixed patterns and five-second command lease. USB CAN does not suspend the menu;
+USB CAN does not suspend the menu;
 ELM processing can own diagnostics. Race-mask ownership is unchanged.
 
 Run [documented host/ARM checks](../../firmware/baccable/MAKEFILE.md). Host tests
@@ -362,16 +365,6 @@ acknowledgment or an atomic physical screen swap. Host tests check both directio
 off-scale transitions, target reversal, both lines/widths, retries, radio restart,
 missing-data removal and the production 20 ms CAN pacing path.
 
-
-## Oil bar glyph test pattern
-
-The Information → IPC display test menu appends `Oil bar glyphs` after the
-existing four pattern entries, so prior pattern numbers and content remain
-stable. It sends Unicode BMP candidates for horizontal boundaries (`─ ━ ═`),
-fractional ticks (`▏▎▍▌▋▊▉█`), fill density (`░▒▓█`) and markers (`·•●◉■`) to
-the selected IPC source. BH transmits each code point as a 16-bit character.
-This is a visual comparison pattern only: it does not change the oil bar's
-rendering or imply that every IPC font supports the glyphs.
 
 ## Default drive-mode selection and result
 

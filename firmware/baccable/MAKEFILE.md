@@ -101,7 +101,7 @@ For menu, button and LKA changes, use the faster iteration check first:
 It runs legacy/MY23 menu suites, input repeat, C2 drive-mode/LKA and label
 checks. The full `test` target remains the integration check before merging.
 
-`make test` builds and runs 27 native executables, including both legacy menu
+`make test` builds and runs the native executables, including both legacy menu
 widths, both MY23 compiled defaults, normal/large BH display output, UART,
 USB C2/BH mode recovery and the real ST USB lifecycle under ASan/UBSan.
 `test_setup_ui.c`, `test_unified_ui.c`, `test_menu_contract.c`,
@@ -256,12 +256,8 @@ make -C firmware/baccable -j4 FLAVOR=BH TOOLCHAIN="$BACCABLE_ARM_PREFIX" \
     EXTRA_CPPFLAGS=-DLARGE_DISPLAY all
 ```
 
-For a C1 charset test add `-DMENU_DIAGNOSTICS` and use another build directory.
-This flag exists on master. `FREEZE_DIAGNOSTICS` does **not** yet exist on master;
-passing it there does not add logging. Freeze diagnostics are currently obsolete
-because the reported freeze no longer occurs; reopen that work only after new
-evidence. Other profiles include UCAN clock/
-power pins, pedal serial mode and LED support; use the exact combinations in
+The `MENU_DIAGNOSTICS` charset build was removed with the display test screens.
+Other profiles include UCAN clock/power pins, pedal serial mode and LED support; use the exact combinations in
 [UPSTREAM_BUILD_SIZES.md](../../docs/architecture/UPSTREAM_BUILD_SIZES.md).
 `DEBUG_MODE` conflicts with CAN and LEDs; pedal serial mode is C1-only.
 

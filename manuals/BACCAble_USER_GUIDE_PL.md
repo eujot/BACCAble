@@ -172,6 +172,11 @@ ostatni kompletny tekst radia. Oba pola MY23 są osobno czyszczone i dopełniane
 więc skrócenie tytułu nie przesuwa drugiej linii ani nie zostawia starych znaków.
 Czytelność, wyrównanie i odzyskiwanie ekranu po radiu wymagają próby w samochodzie.
 
+Pierwsze naciśnięcie góra/dół odświeża menu od razu. Przy szybkim naciskaniu
+każde naciśnięcie zmienia wybór, lecz ekran może pominąć pośrednie pozycje i po
+krótkiej przerwie pokazać ostatnią. Opóźnienie zależy od wybranego tempa IPC
+(10, 20 lub 50 ms); komunikaty radia mogą je dodatkowo wydłużyć.
+
 | Symbol lub komunikat | Znaczenie i sposób obsługi |
 | --- | --- |
 | `O` / `Ø` przed opcją | Wyłączona / włączona albo niewybrana / wybrana na liście. Krótkie RES zmienia wybór. |
@@ -215,8 +220,7 @@ To IPC decyduje, kiedy pokaże otrzymane fragmenty. Full zapobiega mieszaniu
 różnych ekranów przez firmware, ale nie gwarantuje jednoczesnej podmiany
 wszystkich znaków. W obu trybach pozostaje ponowne wysyłanie całego menu co
 sekundę. Nadal działa rozpoznawanie źródła i oczekiwanie po transmisji radia
-z ograniczonym czasem odroczenia. Przywracanie tekstu radia i osobny test
-Information → IPC display test zachowują odstęp 50 ms.
+z ograniczonym czasem odroczenia. Przywracanie tekstu radia zachowuje odstęp 50 ms.
 
 Wgraj pasujące obrazy C1/C2/BH. Te opcje są tylko w RAM, również wtedy, gdy
 zapiszesz inne ustawienia Features. Pełny restart przywraca Quick + Full.
@@ -748,8 +752,7 @@ razie menu pokaże `! Stop IBS first` — najpierw zatrzymaj podmienianie IBS.
 ## Informacje: Information
 
 Strony ze stanem służą tylko do odczytu. Lekkie naciśnięcia góra/dół przełączają
-między nimi; krótkie RES nie zmienia ich stanu. Ostatnia pozycja `IPC display test`
-otwiera podmenu testowe.
+między nimi; krótkie RES nie zmienia ich stanu.
 
 | Strona, według kolejności | Znaczenie |
 | --- | --- |
@@ -762,36 +765,11 @@ otwiera podmenu testowe.
 | `Gaps:` | Liczba wykrytych przerw w docieraniu komunikatów o przyciskach. |
 | `Max gap:…ms` | Najdłuższy zaobserwowany odstęp między komunikatami o przyciskach, w milisekundach. |
 | `Input age:…ms` | Czas od ostatniego komunikatu o przyciskach. `--` oznacza, że nie ma takiego odczytu. |
-| `> IPC display test` | Test znaków i długości linii wyświetlacza dla wybranego kodu źródła. |
 
 Odpowiedzi z wersją C2/BH starsze niż około pięć sekund są uznawane za nieaktualne.
 Liczniki dotyczą obsługi menu, **nie liczby ramek zapisanych podczas przechwytywania
-CAN**. Specjalne wersje z diagnostyką menu mogą dodatkowo zawierać stronę serwisową
-`IPC diag`.
+CAN**.
 
-Zatrzymaj samochód w bezpiecznym miejscu i otwórz `Information → IPC display test`.
-Krótkim RES wybierz `USB source`, `Bluetooth source` albo `CarPlay source`;
-zaznaczona pozycja ma zwykły symbol wyboru. Wybierasz w ten sposób tylko **kod
-komunikatu na ekranie** (`0x06`, `0x09` albo `0x21` zaobserwowany w sesji CarPlay),
-a nie rzeczywiste źródło dźwięku. Uruchom te same pięć prób dla każdego kodu:
-
-| Pozycja testu | Tekst wysyłany przez BH | Co sprawdzić |
-| --- | --- | --- |
-| `UTF glyphs` | Pierwsza linia `UTF A: ° ± × Ą Ł`; druga `UTF B: • € Ω Ж 中` | Które znaki 16-bitowe wyświetlacz potrafi narysować przy tym źródle. Brak znaku nie dowodzi, że nie dotarła ramka CAN. |
-| `Oil bar glyphs` | Pierwsza linia `Bars: ─ ━ ═  Ticks: ▏▎▍▌▋▊▉█`; druga `Fill: ░▒▓█  Point: ·•●◉■` | Porównaj kreski, podziałkę, wypełnienie i znaczniki jako możliwe znaki paska oleju. Widoczność zależy od IPC i wybranego źródła; test nie zmienia wyglądu paska oleju. |
-| `Line 1 length` | Linijka 48 znaków zaczynająca się od `123456789A123456789B…` w pierwszej linii; `L1: 48 chars` w drugiej | W którym miejscu pierwsza linia jest ucinana, zawijana albo przewijana. `A`, `B`, `C`, `D` oznaczają pozycje 10, 20, 30, 40. |
-| `Line 2 length` | `L2: 48 chars` w pierwszej linii; ta sama linijka 48 znaków w drugiej | Gdzie kończy się widoczny tekst mniejszej linii. |
-| `Both lines` | `TOP:12345678901234567890` oraz `BOTTOM:12345678901234567` | Czy obie linie po 24 znaki są wyświetlane jednocześnie i jak wyglądają. |
-
-Gdy wzorzec jest na ekranie, krótkie RES lub lekkie góra/dół przełącza próbę.
-Dwuklik RES wraca do listy testów; kolejny dwuklik wraca do Information. Po około
-60 sekundach bez naciskania przycisków test kończy się automatycznie. BH ponawia
-cały wybrany wzorzec mniej więcej co trzy sekundy i wznawia go po tekście radia.
-Jeśli polecenia testowe z C1 przestaną docierać do BH, BH zakończy test po pięciu
-sekundach. Używa wybranego kodu, nawet gdy gra inne źródło dźwięku. Ikona, układ linii,
-ucięcie tekstu i zestaw dostępnych znaków wymagają sprawdzenia w samochodzie:
-zapisz, co rzeczywiście widać dla każdego źródła. Zwykły capture BACCAble Lab
-zapisuje odebrane ramki CAN, a nie ramki wyświetlacza nadawane przez BH.
 
 ## Jak rozumieć odczyty
 

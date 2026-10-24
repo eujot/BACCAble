@@ -275,25 +275,6 @@ static void test_request_cancel_and_failure(void) {
     assert(strstr(screen, "Request failed"));
 }
 
-#ifdef MENU_DIAGNOSTICS
-static void test_hidden_diagnostics(void) {
-    fresh_menu();
-    menu_event(MENU_BACK);
-    for (unsigned i = 0; i < 4; ++i) menu_event(MENU_NEXT);
-    menu_event(MENU_SELECT);
-    for (unsigned i = 0; i < 10; ++i) menu_event(MENU_NEXT);
-    assert(strstr(screen, "IPC diag"));
-    menu_event(MENU_SELECT);
-    assert(!strncmp(screen, "20-27 ", 6));
-    for (unsigned i = 0; i < 12; ++i) menu_event(MENU_NEXT);
-    assert(!strncmp(screen, "80-87 ", 6));
-    for (unsigned i = 0; i < 8; ++i) assert((uint8_t)screen[6 + i] == 0x80 + i);
-    menu_event(MENU_SELECT);
-    assert(strstr(screen, "Display A"));
-    menu_event(MENU_BACK);
-    assert(strstr(screen, "IPC diag"));
-}
-#endif
 
 static void test_usb_legacy_and_dependency(void) {
     memset(&settings_state, 0, sizeof(settings_state));

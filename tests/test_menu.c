@@ -9,7 +9,6 @@
 #include "diagnostics/fault_reader.h"
 #include "features/periodic.h"
 #include "features/display_stream.h"
-#include "features/ipc_display_test.h"
 #include "app/powertrain.h"
 #include "diagnostics/parameter_cache.h"
 #include "diagnostics/parameter_request.h"
@@ -892,6 +891,8 @@ static void test_repeat_views(void) {
     assert(strstr(screen, "Shown pages"));
     now += 180;
     menu_button(0x18, true);
+    now += 120;
+    menu_process();
     assert(strstr(screen, "Favorite order"));
     menu_button(0x10, true);
     menu_event(MENU_SELECT);
@@ -1387,9 +1388,7 @@ static void fresh_contract(void);
 #include "test_oil_level.c"
 
 int main(void) {
-#ifdef MENU_DIAGNOSTICS
-    const char *suite = "menu-debug";
-#elif defined(IPC_MY23_IS_INSTALLED)
+#if defined(IPC_MY23_IS_INSTALLED)
     const char *suite = DASHBOARD_MESSAGE_MAX_LENGTH == 24 ? "menu-my23-24" : "menu-my23-18";
 #elif defined(LARGE_DISPLAY)
     const char *suite = "menu-24";
@@ -1406,6 +1405,7 @@ int main(void) {
         HOST_TEST(test_direct_hold_other_editors),
         HOST_TEST(test_my23_glyph_budget),
         HOST_TEST(test_render_interval_after_event),
+        HOST_TEST(test_navigation_snapshot_pacing),
         HOST_TEST(test_saved_feedback),
         HOST_TEST(test_ipc_options_are_volatile),
         HOST_TEST(test_atomic_favorite_selection_identity),
@@ -1430,7 +1430,6 @@ int main(void) {
         HOST_TEST(test_default_mode_result),
         HOST_TEST(test_shared_renderers),
         HOST_TEST(test_navigation_contract),
-        HOST_TEST(test_ipc_display_menu),
         HOST_TEST(test_unnumbered_list_contract),
         HOST_TEST(test_immediate_reading_integrity),
         HOST_TEST(test_entry_renderer_bounds),
@@ -1448,9 +1447,6 @@ int main(void) {
         HOST_TEST(test_usb_legacy_and_dependency),
         HOST_TEST(test_steering_menu_ownership),
         HOST_TEST(test_request_cancel_and_failure),
-#ifdef MENU_DIAGNOSTICS
-        HOST_TEST(test_hidden_diagnostics),
-#endif
         HOST_TEST(test_input),
         HOST_TEST(test_input_diagnostics),
         HOST_TEST(test_display),

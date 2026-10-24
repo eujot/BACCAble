@@ -4,6 +4,29 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Menu navigation pacing and display test removal, 2026-10-25
+
+Branch `fix/menu-navigation-pacing` continues `fix/readings-spacing`. C1 now
+counts every directional click, sends the first view immediately, and coalesces
+rapid subsequent clicks into the latest screen. Snapshots follow one complete
+display transfer at the selected 10/20/50 ms pace; the final view is sent after
+120 ms without another click. SELECT, BACK, HOLD, notices and saves still render
+immediately. BH postpones its idle full-screen reassertion until one second
+after the last changed screen, reducing old-screen traffic during browsing.
+There is no physical IPC acknowledgment; radio arbitration may still delay a
+visible update. Vehicle responsiveness remains to be checked.
+
+The user-facing Information → IPC display test, its UTF/line-length/oil-glyph
+patterns, the hidden `IPC diag` charset screens, their BH sender, dedicated host
+tests and obsolete diagnostics workflow were removed. Ordinary MY23 glyph
+mapping and oil-bar rendering remain. Both user guides, MENU_UX and the Makefile
+guide were updated. Full Apple Clang host suite passes. Arm GNU 15.2.Rel1 builds
+all four C1 display profiles and BH. C1 standard uses 95,952 text + 1,852 data
+= 97,804/98,304 Flash bytes (500 free); large uses 96,280 + 1,852 =
+98,132/98,304 (172 free). BH text fell from 35,744 to 34,540 bytes and BSS
+from 12,400 to 12,200 bytes. No hardware was flashed; CI's separate 15.3.Rel1
+compiler still needs its own size check.
+
 ## MY23 reading spacing, 2026-10-25
 
 Branch `fix/readings-spacing` continues `fix/menu-save-feedback`. The compact

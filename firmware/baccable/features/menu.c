@@ -2,9 +2,8 @@
 #include "features/oil_level.h"
 #include "features/body.h"
 #include "features/ui_entry.h"
-#include "features/menu_diagnostics.h"
-#include "features/ipc_display_test.h"
 #include "features/my23_ui.h"
+#include "features/display_stream.h"
 #include "features/favorite_parameters.h"
 #include "features/rain_test.h"
 #include "diagnostics/fault_reader.h"
@@ -28,13 +27,8 @@ typedef enum {
     ORDER_FAVORITES,
     INFO,
     IPC_OPTIONS,
-    IPC_TEST_MENU,
-    IPC_TEST_ACTIVE,
     FAV_SETS, FAV_SLOTS, FAV_PICK, SORT_EDIT,
     FAULTS, RAIN_TEST
-#ifdef MENU_DIAGNOSTICS
-    , DIAGNOSTICS
-#endif
 } MenuView;
 typedef enum {
     ACTION_READ,
@@ -81,14 +75,7 @@ typedef struct {
 } ActionRequest;
 static ActionRequest requests[ACTION_COUNT];
 #define ACTION_TIMEOUT_MS 10000U
-#ifdef MENU_DIAGNOSTICS
-#define INFO_PAGES 11U
-#else
-#define INFO_PAGES 10U
-#endif
-static const uint8_t ipc_test_sources[] = {0x06, 0x09, 0x21};
-static const char *const ipc_test_source_labels[] = {"USB source", "Bluetooth source", "CarPlay source"};
-static const char *const ipc_test_patterns[] = {"UTF glyphs", "Line 1 length", "Line 2 length", "Both lines", "Oil bar glyphs"};
+#define INFO_PAGES 9U
 static const char *const roots[] = {"Favorites", "Readings", "Actions", "Settings", "Information"};
 static const char *const settings[] = {"Features",   "Page favorites", "Shown pages",
                                        "Favorite order", "Sort order", "Favorites", "BACCAble IPC"};
@@ -121,12 +108,17 @@ static uint8_t gasoline_v6, advanced_pages;
 static uint8_t root, group = 1, function, setting, info, editor_page, engine;
 static uint8_t list[MENU_PAGE_CAPACITY], list_count, selection, order_selected;
 static uint8_t setup_last, fault_index;
-static uint8_t ipc_test_source, ipc_test_entry, ipc_test_pattern;
 /* Experimental display options never enter settings_state or Flash records. */
 static uint8_t ipc_option, ipc_pace, ipc_method;
 static uint32_t ipc_options_sent;
 static bool ipc_options_sync;
 static const char *const ipc_paces[] = {"Safe 50ms", "Quick 20ms", "Fast 10ms"};
+/* Allow one complete display transfer between snapshots of rapid navigation. */
+static uint32_t navigation_interval(void) {
+    static const uint8_t fragment_ms[] = {50, 20, 10};
+    return (settings_state.ipc_my23_is_installed ? DISPLAY_FRAGMENT_COUNT : DISPLAY_LEGACY_FRAGMENT_COUNT) *
+           fragment_ms[ipc_pace] + 20U;
+}
 static void ipc_option_text(char *out, size_t size, unsigned option) {
     if (option == 0) snprintf_(out, size, "%s", ipc_paces[ipc_pace]);
     else if (option == 1) snprintf_(out, size, "Write %s", ipc_method ? "Delta" : "Full");
@@ -139,6 +131,8 @@ static bool ipc_options_send(uint8_t pace, uint8_t method) {
     return true;
 }
 static uint32_t page_changed, last_render, last_query, notice_started;
+static uint32_t navigation_last, navigation_sent;
+static bool navigation_active, navigation_pending;
 static const char *notice;
 static const char *notice_label = "Settings";
 static char notice_text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
@@ -392,16 +386,6 @@ void menu_present(const char *text) {
         close_pending = false;
 }
 
-/* BH generates the full UTF-16 display message; UART only selects its test. */
-static void menu_present_ipc_test(void) {
-    uint8_t content[UART_SCREEN_BUFFER_SIZE - 1];
-    memset(content, ' ', sizeof(content));
-    content[0] = IPC_TEST_SENTINEL;
-    content[1] = ipc_test_sources[ipc_test_source];
-    content[2] = ipc_test_pattern;
-    menu_present_packet(content);
-}
-
 /* Show the complete reading immediately, without a list prefix or title delay. */
 void menu_present_reading(const char *text) {
     menu_present(text);
@@ -537,9 +521,6 @@ void menu_init(void) {
     memset(&input, 0, sizeof(input));
     memset(requests, 0, sizeof(requests));
     setup_cancel_edit();
-#ifdef MENU_DIAGNOSTICS
-    menu_diagnostics_reset();
-#endif
     view = FAVORITES;
     memset(selected_favorite, 0, sizeof(selected_favorite));
     root = 0;
@@ -547,7 +528,7 @@ void menu_init(void) {
     function = 0;
     setting = 0;
     info = 0;
-    ipc_test_source = ipc_test_entry = ipc_test_pattern = 0;
+    navigation_active = navigation_pending = false;
     ipc_option = 0;
     ipc_pace = IPC_DEFAULT_PACE;
     ipc_method = IPC_DEFAULT_METHOD;
@@ -1070,11 +1051,6 @@ void menu_render(void) {
         menu_present_lines(text, next);
         return;
     }
-#ifdef MENU_DIAGNOSTICS
-    case DIAGNOSTICS:
-        menu_diagnostics_render(text, sizeof(text));
-        break;
-#endif
     case INFO:
         if (settings_state.ipc_my23_is_installed && info < 5) {
             if (info == 0) menu_present_lines("C1 firmware", !strncmp(FW_VERSION, "BACCABLE ", 9) ? FW_VERSION + 9 : FW_VERSION);
@@ -1085,14 +1061,7 @@ void menu_render(void) {
             else menu_present_lines("Immobilizer", security_state.immobilizer_enabled ? "ON" : "OFF");
             return;
         }
-#ifdef MENU_DIAGNOSTICS
-        if (info == 10) {
-            ui_render_action(text, sizeof(text), "IPC diag");
-        } else
-#endif
-        if (info == 9) {
-            ui_render_action(text, sizeof(text), "IPC display test");
-        } else if (info == 5)
+        if (info == 5)
             snprintf_(text, sizeof(text), "Reports:%lu", (unsigned long)input.reports_seen);
         else if (info == 6)
             snprintf_(text, sizeof(text), "Gaps:%lu", (unsigned long)input.stream_gaps);
@@ -1121,26 +1090,11 @@ void menu_render(void) {
         }
         if (settings_state.ipc_my23_is_installed) {
             static const char *const next_info[] = {"C1 firmware", "C2 firmware", "BH firmware",
-                "IPC MY23", "Immobilizer", "Reports", "Gaps", "Max gap", "Input age",
-                "IPC display test", "IPC diag"};
+                "IPC MY23", "Immobilizer", "Reports", "Gaps", "Max gap", "Input age"};
             menu_present_view(UI_MODE_LIST, text, next_info[(info + 1) % INFO_PAGES]);
             return;
         }
         break;
-    case IPC_TEST_MENU: {
-        unsigned next = wrap(ipc_test_entry, 3 + IPC_TEST_PATTERN_COUNT, 1);
-        const char *label = ipc_test_entry < 3 ? ipc_test_source_labels[ipc_test_entry] : ipc_test_patterns[ipc_test_entry - 3];
-        if (ipc_test_entry < 3) {
-            if (settings_state.ipc_my23_is_installed)
-                snprintf_(text, sizeof(text), "%s%s", ipc_test_source == ipc_test_entry ? MY23_SAVED : "", label);
-            else ui_render_checkbox(text, sizeof(text), label, ipc_test_source == ipc_test_entry);
-        } else snprintf_(text, sizeof(text), "%s", label);
-        menu_present_view(UI_MODE_LIST, text, next < 3 ? ipc_test_source_labels[next] : ipc_test_patterns[next - 3]);
-        return;
-    }
-    case IPC_TEST_ACTIVE:
-        menu_present_ipc_test();
-        return;
     }
     menu_present(text);
 }
@@ -1216,20 +1170,6 @@ static void back(void) {
         favorite_confirm = false; view = FAV_SETS; return;
     }
     if (view == FAV_SETS || view == IPC_OPTIONS) { view = SETTINGS; return; }
-    if (view == IPC_TEST_ACTIVE) {
-        view = IPC_TEST_MENU;
-        return;
-    }
-    if (view == IPC_TEST_MENU) {
-        view = INFO;
-        return;
-    }
-#ifdef MENU_DIAGNOSTICS
-    if (view == DIAGNOSTICS) {
-        view = INFO;
-        return;
-    }
-#endif
     if (view == FAULTS) {
         fault_reader_cancel();
         view = FUNCTIONS;
@@ -1306,6 +1246,10 @@ static __attribute__((noinline)) void menu_hold(void) {
 void menu_event(MenuEvent event) {
     if (!event)
         return;
+    bool direction_event = event == MENU_NEXT || event == MENU_PREVIOUS ||
+                           event == MENU_NEXT_GROUP || event == MENU_PREVIOUS_GROUP;
+    if (!direction_event)
+        navigation_active = navigation_pending = false;
     last_input = currentTime;
     if (engine != !!settings_state.is_diesel_enabled || gasoline_v6 != !!settings_state.gasoline_v6 ||
         advanced_pages != !!settings_state.advanced_pages)
@@ -1374,19 +1318,8 @@ void menu_event(MenuEvent event) {
             break;
         case RAIN_TEST:
             break;
-#ifdef MENU_DIAGNOSTICS
-        case DIAGNOSTICS:
-            menu_diagnostics_move(direction);
-            break;
-#endif
         case INFO:
             info = wrap(info, INFO_PAGES, direction);
-            break;
-        case IPC_TEST_MENU:
-            ipc_test_entry = wrap(ipc_test_entry, 3 + IPC_TEST_PATTERN_COUNT, direction);
-            break;
-        case IPC_TEST_ACTIVE:
-            ipc_test_pattern = wrap(ipc_test_pattern, IPC_TEST_PATTERN_COUNT, direction);
             break;
         case SETUP:
             if (jump)
@@ -1522,34 +1455,20 @@ void menu_event(MenuEvent event) {
             rain_test_toggle_force();
             break;
         case INFO:
-            if (info == 9) {
-                view = IPC_TEST_MENU;
-                break;
-            }
-#ifdef MENU_DIAGNOSTICS
-            if (info == 10) {
-                view = DIAGNOSTICS;
-                break;
-            }
-#endif
             break;
-        case IPC_TEST_MENU:
-            if (ipc_test_entry < 3)
-                ipc_test_source = ipc_test_entry;
-            else {
-                ipc_test_pattern = ipc_test_entry - 3;
-                view = IPC_TEST_ACTIVE;
-            }
-            break;
-        case IPC_TEST_ACTIVE:
-            ipc_test_pattern = wrap(ipc_test_pattern, IPC_TEST_PATTERN_COUNT, 1);
-            break;
-#ifdef MENU_DIAGNOSTICS
-        case DIAGNOSTICS:
-            menu_diagnostics_select();
-            break;
-#endif
         }
+    }
+    if (direction_event) {
+        bool burst = navigation_active && currentTime != navigation_last &&
+                     currentTime - navigation_last <= 350U;
+        navigation_active = true;
+        navigation_last = currentTime;
+        if (burst && currentTime - navigation_sent < navigation_interval()) {
+            navigation_pending = true;
+            return;
+        }
+        navigation_pending = false;
+        navigation_sent = currentTime;
     }
     menu_render();
 }
@@ -1560,8 +1479,8 @@ void menu_button(uint8_t button, bool allowed) {
     MenuEvent event = menu_input_update(&input, button, allowed, currentTime);
     bool repeat_allowed = allowed && !save_failed && dashboard_state.baccable_dashboard_menu_visible &&
                           (view == FAVORITES || view == VALUES || view == GROUPS ||
-                           view == SETTINGS || view == SETUP || view == IPC_OPTIONS || view == IPC_TEST_MENU ||
-                           view == IPC_TEST_ACTIVE || view == SORT_EDIT || view == FAV_SETS || view == FAV_SLOTS || view == FAV_PICK || is_editor() ||
+                           view == SETTINGS || view == SETUP || view == IPC_OPTIONS ||
+                           view == SORT_EDIT || view == FAV_SETS || view == FAV_SLOTS || view == FAV_PICK || is_editor() ||
                            (view == ORDER_FAVORITES && !order_selected));
     if (event == MENU_NONE)
         event = menu_input_repeat(&input, repeat_allowed, currentTime);
@@ -1593,8 +1512,8 @@ void menu_process(void) {
         dashboard_clear();
     if (!dashboard_state.baccable_dashboard_menu_visible)
         return;
-    bool editor = view == SETTINGS || view == SETUP || view == IPC_OPTIONS || view == IPC_TEST_MENU ||
-                  view == IPC_TEST_ACTIVE || view == SORT_EDIT || view == FAV_SETS || view == FAV_SLOTS || view == FAV_PICK || is_editor() || view == ORDER_FAVORITES;
+    bool editor = view == SETTINGS || view == SETUP || view == IPC_OPTIONS ||
+                  view == SORT_EDIT || view == FAV_SETS || view == FAV_SLOTS || view == FAV_PICK || is_editor() || view == ORDER_FAVORITES;
     /* Reading screens are intentionally persistent; active diagnostics get a fresh grace period. */
     if (fault_reader_busy() || diagnostics_state.clear_faults_request) {
         last_input = currentTime;
@@ -1655,7 +1574,12 @@ void menu_process(void) {
         selected_parameter_element = (selected_parameter_element + 1) % parameter_page_elements(page);
         last_query = currentTime;
     }
-    if (currentTime - last_render >= 100)
+    if (navigation_pending && (currentTime - navigation_last >= 120U ||
+                               currentTime - navigation_sent >= navigation_interval())) {
+        navigation_pending = false;
+        navigation_sent = currentTime;
+        menu_render();
+    } else if (!navigation_pending && currentTime - last_render >= 100)
         menu_render();
 }
 #endif

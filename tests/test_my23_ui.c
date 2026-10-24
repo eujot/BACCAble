@@ -158,11 +158,7 @@ static void test_my23_readings_preview_and_unavailable_gear(void) {
     menu_event(MENU_PREVIOUS); menu_event(MENU_SELECT); /* Information. */
     for (unsigned i = 0; i < 5; ++i) menu_event(MENU_NEXT);
     assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "Gaps", 4));
-    for (unsigned i = 0; i < 4; ++i) menu_event(MENU_NEXT);
-#ifdef MENU_DIAGNOSTICS
-    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "IPC diag", 8));
-    menu_event(MENU_NEXT);
-#endif
+    for (unsigned i = 0; i < 3; ++i) menu_event(MENU_NEXT);
     assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "C1 firmware", 11));
 }
 
@@ -441,13 +437,6 @@ static void test_my23_remaining_list_previews(void) {
     for (unsigned i=0;i<70 && memcmp(screen_packet+4,"Empty",5);++i) menu_event(MENU_PREVIOUS);
     expect_my23_list("Empty", "Power / torque");
     menu_event(MENU_BACK); menu_event(MENU_BACK); menu_event(MENU_BACK); menu_event(MENU_BACK);
-    menu_event(MENU_NEXT); menu_event(MENU_SELECT); /* Information. */
-    for(unsigned i=0;i<9;++i) menu_event(MENU_NEXT);
-    menu_event(MENU_SELECT); /* IPC test source/pattern list. */
-    expect_my23_list(MY23_SAVED "USB source", "Bluetooth source");
-    menu_event(MENU_PREVIOUS); expect_my23_list("Oil bar glyphs", "USB source");
-    menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_NEXT);
-    expect_my23_list("UTF glyphs", "Line 1 length");
     menu_present("1234567890123456›•▲▼✓×°±→…");
     assert(!memcmp(screen_packet + 2, "1234567890123456", MY23_L1_VISIBLE));
     const uint8_t symbols[] = {0x80,0x81,0x82,0x83,0x84,0x85,0xb0,0xb1,0x86,0x87};
@@ -643,6 +632,51 @@ static void test_render_interval_after_event(void) {
         now += 99; menu_process(); assert(native_reads == before);
         now += 1; menu_process(); assert(native_reads > before);
     }
+}
+
+/* Rapid clicks keep every selection while the transport receives only the latest view. */
+static void test_navigation_snapshot_pacing(void) {
+    fresh_contract();
+    menu_event(MENU_BACK);
+    now += 100;
+    menu_event(MENU_NEXT);
+    assert(strstr(screen, "Readings"));
+    now += 100;
+    menu_event(MENU_NEXT);
+    assert(strstr(screen, "Readings"));
+    now += 100;
+    menu_event(MENU_NEXT);
+    assert(strstr(screen, "Readings"));
+    now += 120;
+    menu_process();
+    assert(strstr(screen, "Settings"));
+    now += 100;
+    menu_event(MENU_NEXT);
+    assert(strstr(screen, "Settings"));
+    now += 120;
+    menu_process();
+    assert(strstr(screen, "Information"));
+    menu_event(MENU_SELECT);
+    assert(strstr(screen, "C1"));
+
+    fresh_contract();
+    to_settings();
+    menu_event(MENU_PREVIOUS);
+    menu_event(MENU_SELECT); /* BACCAble IPC. */
+    menu_event(MENU_SELECT); /* Fast 10ms. */
+    menu_event(MENU_BACK);
+    menu_event(MENU_BACK);
+    menu_event(MENU_NEXT);
+    menu_event(MENU_NEXT);
+    now += 400;
+    menu_event(MENU_NEXT);
+    assert(strstr(screen, "Readings"));
+    now += 100;
+    menu_event(MENU_NEXT);
+    assert(strstr(screen, "Readings"));
+    now += 70;
+    menu_process();
+    assert(strstr(screen, "Actions"));
 }
 
 /* Saved feedback keeps a plain result for the three-second window. */

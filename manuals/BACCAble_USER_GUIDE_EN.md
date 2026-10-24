@@ -126,7 +126,7 @@ Main menu
 │  ├─ Shown pages            Show/hide pages in Readings
 │  ├─ Sort order             Grouped or alphabetical reading lists
 │  └─ BACCAble IPC           Temporary refresh experiments
-└─ Information               Versions, input status and IPC display test
+└─ Information               Versions and input status
 ```
 
 This Settings layout applies to MY23 and to any profile after an atomic Favorite set
@@ -154,6 +154,11 @@ and restarts after radio text settles. Closing restores the last complete radio
 text. Both MY23 fields are cleared and padded independently, so shorter titles
 cannot shift the second line or leave old characters. Physical readability,
 alignment and radio takeover still require the vehicle acceptance test.
+
+The first up/down click updates the menu immediately. During rapid clicks,
+every click changes the selection, but the display may skip intermediate
+screens and show the latest choice after a short pause. The delay follows the
+selected IPC pace (10, 20 or 50 ms); radio text can add more delay.
 
 | Mark or message | Meaning and response |
 | --- | --- |
@@ -198,7 +203,7 @@ The IPC decides when received fragments become visible; Full prevents firmware
 from mixing screens, but does not guarantee an instantaneous visual swap.
 The periodic full reassertion remains one second in both modes. Radio source
 tracking, settling and bounded arbitration remain active. Restoring radio text
-and the separate Information → IPC display test keep their original 50 ms pace.
+keeps its original 50 ms pace.
 
 Use matching C1/C2/BH firmware. These choices exist only in RAM, even if other
 Features are saved. A complete power cycle restores Quick + Full. Disconnect
@@ -698,7 +703,7 @@ disable the override; otherwise the menu displays `! Stop IBS first`.
 ## Information
 
 The status pages are read-only. Gentle up/down moves through them; short RES does
-not toggle their state. The final `IPC display test` entry opens a test submenu.
+not toggle their state.
 
 | Page, in order | Meaning |
 | --- | --- |
@@ -711,35 +716,10 @@ not toggle their state. The final `IPC display test` entry opens a test submenu.
 | `Gaps:` | Count of interruptions detected in the input report stream. |
 | `Max gap:…ms` | Longest observed input-report interval in milliseconds. |
 | `Input age:…ms` | Time since the last input report; `--` if none is available. |
-| `> IPC display test` | Open source-specific character and line-length tests on the IPC. |
 
 C2/BH version replies older than about five seconds are treated as stale. Input
-counters describe menu controls, **not CAN capture frame counts**. Special builds
-with menu diagnostics may also add an `IPC diag` service page.
+counters describe menu controls, **not CAN capture frame counts**.
 
-For an IPC test, park safely, open `Information → IPC display test`, and choose
-`USB source`, `Bluetooth source`, or `CarPlay source` with short RES. The selected
-entry has the usual checked mark. This selects only the **display-message code**
-(`0x06`, `0x09`, or the `0x21` observed during the CarPlay capture); it does not
-change the vehicle's audio source. Run the same five tests under each code:
-
-| Test entry | Text sent by BH | What to inspect |
-| --- | --- | --- |
-| `UTF glyphs` | First line `UTF A: ° ± × Ą Ł`; second line `UTF B: • € Ω Ж 中` | Which 16-bit characters the IPC can draw under this source. A missing glyph does not prove the CAN transfer failed. |
-| `Oil bar glyphs` | First line `Bars: ─ ━ ═  Ticks: ▏▎▍▌▋▊▉█`; second line `Fill: ░▒▓█  Point: ·•●◉■` | Compare line, tick, fill and point glyphs as candidates for the oil bar. Visibility depends on the IPC and selected source; this test does not change the oil bar. |
-| `Line 1 length` | A 48-character ruler starting `123456789A123456789B…` on line one; `L1: 48 chars` on line two | Where the first line clips, wraps or scrolls. `A`, `B`, `C`, `D` mark positions 10, 20, 30, 40. |
-| `Line 2 length` | `L2: 48 chars` on line one; the same 48-character ruler on line two | Where the smaller line clips, wraps or scrolls. |
-| `Both lines` | `TOP:12345678901234567890` and `BOTTOM:12345678901234567` | Whether both 24-character lines coexist and how each is rendered. |
-
-Short RES or gentle up/down changes to the next/previous test while its pattern
-is on screen. Double-click RES to return to the test list; double-click again to return to
-Information. The test ends automatically after about 60 seconds without input.
-BH repeats the selected complete pattern about every three seconds and resumes
-it after radio text. If C1's test commands stop reaching BH, BH releases the
-test after five seconds. It uses the chosen message code even if another audio
-source is playing. The icon, line layout, clipping and supported glyphs are
-experimental: record what actually appears for each source. BACCAble Lab's
-ordinary capture records received CAN frames, not BH's own display transmissions.
 
 ## Reading the measurements
 
