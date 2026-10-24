@@ -307,7 +307,7 @@ need `gh`, GitHub credentials, a Docker image, CMake or Python third-party packa
 never part of test/build verification. First review the storage migration and
 hardware requirements in the [flashing guide](../../docs/FLASHING.md).
 
-The C1 linker script allocates 100 KiB for the program; other flavors allocate
+The C1 linker script allocates 96 KiB for the program; other flavors allocate
 64 KiB. RAM is 16 KiB. The current C1 image, persistent records and USB disk need
 128 KiB of physically reported Flash. C1's optional disk is 20 KiB; C2/BH disks
 are 52 KiB. Saved records remain at `0x0801d000..0x0801ffff`.

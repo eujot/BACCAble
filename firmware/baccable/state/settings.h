@@ -55,6 +55,9 @@ typedef struct {
     /* Startup selector target: 0=N/passive, 1=A, 2=D, 3=Race (stable flash encoding). */
     uint8_t default_drive_mode;
 
+    /* 0=stiff; 1=Soft in D or Mid in Race. */
+    uint8_t default_suspension_softer;
+
     /* Force the lane-keeping assist off while set. */
     uint8_t lane_assist_disabled;
 } SettingsState;

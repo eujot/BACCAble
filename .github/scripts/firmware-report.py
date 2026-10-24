@@ -10,7 +10,7 @@ elf = base / f'baccable-{flavor}.elf'
 size = subprocess.check_output([os.getenv('SIZE_TOOL', 'arm-none-eabi-size'), str(elf)], text=True)
 text, data, bss = map(int, size.splitlines()[1].split()[:3])
 flash, ram = text + data, data + bss
-flash_limit = int(os.getenv('FLASH_LIMIT') or (102400 if flavor == 'C1' else 65536))
+flash_limit = int(os.getenv('FLASH_LIMIT') or (98304 if flavor == 'C1' else 65536))
 ram_limit = int(os.getenv('RAM_LIMIT') or 16384)
 info = dict(flavor=flavor, commit=subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
             version=os.environ['VERSION'], extra_cppflags=os.getenv('EXTRA_CPPFLAGS', ''),

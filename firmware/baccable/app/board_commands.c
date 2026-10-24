@@ -139,7 +139,8 @@ void board_commands_dispatch(const uint8_t *message) {
 #if defined(BACCABLE_BH)
         switch (message[1]) {
         case BH_CMD_DNA_DEFAULT:
-            dna_selector_configure(message[2], message[3], message[4]);
+            dna_selector_configure(message[2] & BH_DNA_MODE_MASK, message[3], message[4],
+                                           (message[2] & BH_DNA_SOFT_SUSPENSION) != 0);
             break;
         case BH_CMD_IPC_OPTIONS:
             body_display_options(message[2], message[3]);

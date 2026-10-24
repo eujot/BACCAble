@@ -646,7 +646,7 @@
       "status": "candidate",
       "role": "BH",
       "can_id": "0x25A",
-      "description": "Byte 1 settles at N/A=0x00, D=0x10, Race=0x20 and can lag the known byte-0 mode field. This is not an identified knob press/release signal. Existing firmware only rewrites byte 0.",
+      "description": "Byte 1 settles at N/A=0x00, D=0x10, Race=0x20 and can lag the known byte-0 mode field. This is not an identified knob press/release signal. Existing firmware only rewrites byte 0. Audit 2026-10-24: D button pulses repeatedly toggle byte1[5:4] between 1 (firm) and 0 (Soft), using the owner description to label calibration. Race entry shows 2; the implemented Mid=1 remains a candidate.",
       "evidence": [
         {
           "session": "20261011-190746Z",
@@ -683,10 +683,29 @@
             12
           ],
           "report": "docs/research/20261023-dna-selector.md"
+        },
+        {
+          "session": "20261010-111025Z",
+          "event_ids": [
+            109,
+            110,
+            111,
+            112,
+            113,
+            114,
+            115,
+            116,
+            117,
+            118,
+            119,
+            120
+          ],
+          "report": "docs/research/20261024-startup-audit.md",
+          "note": "Context markers; exact transitions use original CAN frame IDs in the report, not nearest-marker labels."
         }
       ],
       "contradictions": [],
-      "next_test": "Record knob press/hold/release boundaries and distinguish presentation/feedback from an input."
+      "next_test": "Capture labelled Race Stiff -> Mid -> Stiff button actions and validate the inferred 2 -> 1 -> 2 field on BH 0x25A, plus injected startup acceptance."
     },
     {
       "id": "DNA-RELATED-73C-001",

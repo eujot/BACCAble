@@ -13,5 +13,7 @@ TelemetryState telemetry_state = {
 
     .current_rpm_speed = 0,
 
+    .current_rpm_updated_at = 0,
+
     .current_gear = 0,
 };

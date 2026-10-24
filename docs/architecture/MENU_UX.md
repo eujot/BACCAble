@@ -32,24 +32,11 @@ can override it. `LARGE_DISPLAY` independently chooses the legacy 18/24-characte
 width. MY23 always has budgets `MY23_L1_VISIBLE = 16` and
 `MY23_L2_VISIBLE = 22`. Those are visible glyph counts, not UTF-8 byte limits.
 
-The main menu is Favorites, Readings, Actions, Settings, Information, Experiments.
+The main menu is Favorites, Readings, Actions, Settings and Information.
 MY23/atomic Settings contains Features, Favorites, Shown pages, Sort order, BACCAble IPC.
 Legacy before its first five-slot save retains Features, Page favorites,
 Shown pages, Favorite order, Sort order, Favorites, BACCAble IPC. Existing catalogs, engine gates and page IDs are retained.
 The [catalog audit](CATALOG_AUDIT.md) describes the legacy reading model.
-
-`Experiments` has nine source-defined groups and 64 manufacturer `0x22`
-signals. A single named value is shown per screen; MY23 puts the group on line 1
-and name/value on line 2. Only the selected DID is polled. The screens are not
-ordinary reading pages, Favorites or persisted preferences. C1 reassembles
-ISO-TP replies of up to 4095 bytes, retaining only a 40-byte prefix while
-validating every frame through the declared end. It checks source ID/service/DID,
-aborts reordered/truncated transfers, accepts NRC 0x78 within a bounded five-second
-transaction, and decodes OBDb MSB-first fields. Requests are padded to eight CAN
-bytes. Flow control requests a 5 ms separation time to protect the small receive
-FIFO. The source refresh intervals and null/range rules apply; failed attempts
-retry after one second. All resulting labels/values fit 18 characters.
-Vehicle compatibility and scaling still require physical confirmation.
 
 ## Central button recognizer
 
@@ -200,13 +187,11 @@ beta-19 atomic formatter had printed as a decimal. Both Readings and Favorites
 now use the catalog enum formatter, which displays the unknown marker `-`.
 Raw CAN state and the CAN dictionary layout are unchanged.
 
-## Experimental parameter bounds
+## Parameter bounds
 
-The ordinary parameter catalog contains 98 definitions. Display formatting, request
-selection and cache bounds all use `PARAMETER_DEFINITION_COUNT`; a stale limit
-of 100 had left some experimental numeric templates visible as `$` and prevented
-requests or cache updates for those pages. A valid single-frame UDS reply can now
-populate the field; missing or rejected replies still display `--`.
+Formatting, request selection and cache bounds use `PARAMETER_DEFINITION_COUNT`
+for the 98 ordinary definitions. Reading lists use a 72-page capacity matching
+the persisted visibility bitmap.
 
 ## Readings preview polling
 
@@ -389,6 +374,32 @@ retains 0=N (formerly OFF), 1=A, 2=D, 3=Race, so old records need no migration.
 N leaves the factory selection alone. The draft stays separate until save;
 saving changes the next start's preference, not the current vehicle mode.
 
+For an active A/D/Race preference, C1 waits for fresh engine-speed reports
+above 400 RPM for two seconds before sending the request to BH. Until then the
+status is `Start engine`; the BH board independently applies the same fresh-RPM
+and two-second running check before sending any selector input. If the engine
+stops or RPM reports become stale during a gesture, BH releases any pending
+press and ends the attempt. Natural (N) remains passive and does not wait for
+the engine.
+
+`Settings → Features → Suspension` uses new flash slot 41: 0=`Stiff`,
+1=`Soft` for D or `Mid` for Race. For A/N the softer choice is labelled `Softer`
+and is ignored. Slot 36 remains the V6 engine selector. Settings grow from 40
+to 41 slots; loading falls back to the previous 80-byte record and defaults the
+new slot to Stiff. The first save writes 82 bytes without moving the storage
+region. Older firmware may not read this longer record after a downgrade.
+
+BH checks the target mode and fresh, stable suspension status before sending
+at most one 150 ms BH `0x256` byte-1 bit-7 pulse. This applies to both Stiff and
+the softer choice, including when the car already reports the target DNA mode.
+It waits for a post-release matching status before success; a rejected or
+unconfirmed toggle is not repeated. `0x25A` must be a standard DLC-4 data frame.
+Its byte-1 bits 5:4 are decoded by mode: D Stiff=1, Soft=0; Race Stiff=2,
+Mid=1. D transitions are supported by capture and the owner's mode description;
+Race Mid=1 remains an explicit inference requiring hardware confirmation.
+Unknown codes invalidate the previous sample, and the state must settle for
+300 ms before use. See the [audit evidence](../../baccable_lab/docs/research/20261024-startup-audit.md).
+
 `features/dna_selector.c` runs only on BH and uses fresh standard data frames
 `0x256`/DLC 4 and actual `0x46C` mode reports. It preserves every unrelated
 input bit and changes only byte 0 bits 6:5: 20 toward A, 40 toward D/Race,
@@ -412,7 +423,9 @@ with observed target). Tokens reject results from earlier ignition/save events;
 duplicate start requests and transport resync cannot replay a completed gesture.
 Both new commands retain the existing UART framing/checksum. Update C1/BH together.
 
-`features/drive_mode_check.c` waits up to 15 s for BH. A matching completion
+After the engine-running gate and successful UART enqueue, `features/drive_mode_check.c`
+waits up to 15 s for BH. BH allows at most 3 s for its independent engine gate,
+then 10 s for selection and suspension; it cannot apply a timed-out request at a later engine start. A matching completion
 starts a separate five-second observation window; a failure or missing BH ends
 with No confirm. At the window's end, fresh unmodified C1 `0x384` reports must
 match for at least 2 s (at least four samples, gaps at most 600 ms), and CRC-valid
@@ -420,7 +433,7 @@ match for at least 2 s (at least four samples, gaps at most 600 ms), and CRC-val
 Disagreement or gaps reset the matching run. This is corroboration of received
 state, not an explicit ECU acknowledgement or proof of every subsystem.
 
-Browsing a non-N preference displays target and `Next start`, `Waiting`,
+Browsing a non-N preference displays target and `Next start`, `Start engine`, `Waiting`,
 `Confirmed` or `No confirm`. MY23 uses title/result lines; legacy uses compact
 `DNA` and R for Race to retain the complete status. Results remain until OFF, sleep or settings save; resync preserves them.
 A failed check leaves the preference for the next start. The preference never

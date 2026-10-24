@@ -140,6 +140,43 @@ Do not prescribe one universal analysis method. Inspect raw sequences whenever
 an automated heuristic misses a known transition or promotes a counter. A
 negative result means “not demonstrated in this experiment,” not “does not exist.”
 
+### Before claiming that a frame does not exist
+
+A negative claim (“no request frame”, “no signal for this control”) needs its own
+protocol. The BH `0x256` DNA selector input sat unread in 13 of 20 sessions for
+weeks because each of the checks below was skipped. Treat them as blocking.
+
+1. **Identify a frame by bus, ID and DLC, never by ID alone.** `0x256` exists on
+   both C1 (DLC 8, unmapped, high volume) and BH (DLC 4, selector input). The
+   same number on two networks is two different messages; merging them hides one
+   behind the other.
+2. **Do not rank occasional signals by whole-session change frequency.** A
+   154–294 ms pulse inside a 20-minute recording is invisible to a frequency
+   score, while periodic counters dominate it. Search activity around events and
+   report the pulse/edge ranking next to the frequency ranking.
+3. **A “stable” baseline must not contain the first sample of the event.** A
+   pre-window ending 30 ms before the reported change included the pulse onset;
+   the stability test then rejected the very frame that caused the change. End
+   the pre-window well before the earliest plausible onset (the documented
+   default is `[-5,-2]` s) and assert that it holds no non-neutral excursion.
+4. **Search every bus, including boards classified as report-only.** A momentary
+   input can be read locally and still appear on a bus treated as an output.
+5. **A skipped scenario is not a missing experiment.** An action performed
+   outside its scenario, or recorded 23 s after an operator note, is still
+   evidence. Mine the operator notes and the whole session, not only the
+   scenario window.
+6. **Markers are context, not the instant of the action.** Never anchor a search
+   window on a note that describes intent instead of an observed event.
+7. **Match the pulse against every occurrence of the action, not one.** `0x256`
+   was accepted only after 36 non-neutral pulses matched 36 transitions in both
+   directions, including a 1.2 s hold, plus non-matching negative controls.
+8. **Record the refutation with its method.** Write down which windows, buses,
+   DLCs and exclusions produced “not found”, so a later pass can see whether the
+   method, rather than the vehicle, produced the negative result.
+
+Phrase the outcome as “not demonstrated with this method in these recordings”,
+never as “does not exist”. A frequency threshold is not evidence of absence.
+
 ## 5. Analyze compound protocols explicitly
 
 For IPC `BH 0x090`, reconstruct **ordered whole messages**: last fragment index,

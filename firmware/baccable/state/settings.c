@@ -63,6 +63,7 @@ SettingsState settings_state = {
     .has_function_enabled = 0,
 
     .default_drive_mode = 0,
+    .default_suspension_softer = 0,
 
     .lane_assist_disabled = 0,
 };

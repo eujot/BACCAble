@@ -10,10 +10,7 @@ in the same change as the implementation.
 The original **64 gasoline and 60 diesel pages** retain their IDs, physical order,
 parameter IDs and scales. Oil height page 0x31 is now `Oil level`, with a
 status renderer shared with diesel 0x9a. New ordinary pages 0x67 / 0xbd add
-`Oil level bar`. The former gasoline experimental pages 0x41–0x66 were removed
-from the ordinary catalog and replaced by 64 read-only manufacturer signals in
-`Experiments`, grouped by the Pelican/OBDb taxonomy. This is a browsing policy,
-not proof that every ECU supports every inherited diagnostic request.
+`Oil level bar`. Ordinary `Readings` use the shared OBD request path.
 
 ## Profile and compatibility
 
@@ -21,7 +18,7 @@ not proof that every ECU supports every inherited diagnostic request.
 The legacy fuel selector stays in settings slot 16; slot 36 adds gasoline V6
 capability, and slot 37 adds Advanced pages. Unused zero-filled, erased or invalid
 new slots default to zero. Existing diesel remains diesel; existing gasoline
-defaults to I4, so V6 owners must select V6 once. The 40-slot settings record is unchanged. MY23 UI imports the 80-byte
+defaults to I4, so V6 owners must select V6 once. The 41-slot settings record imports the previous 40-slot format and adds suspension in slot 41. MY23 UI imports the 80-byte
 menu preferences into a 142-byte record retaining that original serialization
 and adding five-slot Favorite sets; see [the menu guide](MENU_UX.md).
 

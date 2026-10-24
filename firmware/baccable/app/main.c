@@ -3,7 +3,6 @@
 #include "usb_device.h"
 #include "stm32f0xx_it.h"
 #include "diagnostics/parameter_cache.h"
-#include "diagnostics/experiments.h"
 #include "features/menu.h"
 #include "features/parking.h"
 #include "features/ibs_override.h"
@@ -76,10 +75,6 @@ static void receive_can_frames(void) {
     #endif
         if (header.RTR != CAN_RTR_DATA || header.DLC == 0)
             continue;
-#if defined(BACCABLE_C1)
-        if (menu_experiments_active()) experiment_receive(&header, data);
-        else experiment_cancel();
-#endif
         if (header.IDE == CAN_ID_EXT)
             vehicle_dispatch_diagnostic(&header, data);
         if (header.IDE == CAN_ID_STD)

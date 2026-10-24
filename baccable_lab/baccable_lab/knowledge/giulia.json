@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "dictionary_version": "2026-10-23.4",
+  "dictionary_version": "2026-10-24.1",
   "vehicle": {
     "model": "Alfa Romeo Giulia (owner-reported)",
     "model_year": null,
@@ -8,12 +8,12 @@
     "vin": null,
     "scope": "This checkout and these sessions only; not a universal Alfa Romeo or cross-model DBC."
   },
-  "firmware_source_commit": "00b4b99eba246fa2b9a87dfd0c20ce46333eb5fa",
+  "firmware_source_commit": "1d6a86ec369130d8255e67b6be32974b9fec7713",
   "source_sha256": {
-    "firmware/baccable/vehicle/display_frames.c": "04022cce8ba4b06ac6337244167a158599498816a03a82dd73b87564e51deee9",
+    "firmware/baccable/vehicle/display_frames.c": "0d9eca11b5892f835f5ad922e3a866ffbd596fbb6b2f81e3f57401481cf470bc",
     "firmware/baccable/vehicle/telemetry_frames.c": "83ef051370d33eb44ca25b213242e05f60523a9c45b40339b41bde33e0234aa1",
-    "firmware/baccable/vehicle/engine_status.c": "0437d18d2be6f44f88cb256f9f1f88da549da4fc881acddc0eb4bb7a26760038",
-    "firmware/baccable/features/parking.c": "b7d16c0245879c7392c626a33ec5c1c41aa681444bd23ab544d7d0cd96456f12",
+    "firmware/baccable/vehicle/engine_status.c": "ea177ee9394e39f14e1153a578c9312c92824b7b22d69dc4c26b4b821cce8951",
+    "firmware/baccable/features/parking.c": "067f724edbb8b993e406f04450a98f25a8ca427e0e754a31b43690522a525a09",
     "firmware/baccable/vehicle/controls_frames.c": "5a43bb33bb6d93ca90d89baf50086902c8e5e29965250143a88ad3d60ce9eba9",
     "firmware/baccable/vehicle/body_commands.c": "29ca0d6ceb92f3da3064ad27e6a962028d65c55b416783714420a1848af77333",
     "firmware/baccable/vehicle/start_stop_status.c": "cae7578c5e0515316f19d6e8ef0528f0d2a7faa29fa56b59090752c428c3337d",
@@ -29,7 +29,7 @@
     "firmware/baccable/features/usb_modes.c": "25501a4ac4b3ca52a3884c25c66b27928c44db91f19b79ca13eb2218e0cce7f1",
     "firmware/baccable/diagnostics/uds_decode.c": "25ab4028b943ba1e6bb825019be4208fb4a4739742a314aa8942e9b2708efae4",
     "firmware/baccable/diagnostics/parameter_request.c": "09dcd9c40c48d9b816d70cacc549532b19345ff471998b42c2ea11b4bc8e4832",
-    "firmware/baccable/app/main.c": "f34497ec9508cc9409afc3610b9b7811e4ec82cd6bdc9715c4a25ffa86a10e64",
+    "firmware/baccable/app/main.c": "aa0b292df6534e98a3ed6b7ff3c801174957eb5761c40c8a5ba04b60c8439334",
     "firmware/baccable/vehicle/standard_frames.c": "7eb9cb5f260c021de69154a4b350eaacffe909a6cf42eeff9dcb44b838bcb1d9",
     "firmware/baccable/diagnostics/parameter_catalog.c": "14a710feaf2440ef6dc15a750c6fa957edf9172f224a512d8fe1a355a64f8417",
     "firmware/baccable/diagnostics/parameter_cache.c": "f8a4418ddb715498c04dad012d480bc53d2aab79300f8d471c6bb6380b4477fe",
@@ -39,11 +39,11 @@
     "firmware/baccable/features/my23_ui.c": "6e5c772adfe061fc10c37e84908886858ac483b45b97aae207d6c2bb4b3814f2",
     "firmware/baccable/features/display_stream.c": "fc58c7270c56c0295d364a5ff0333a5e6b22174c935a9b9b377f54147a15e3dd",
     "firmware/baccable/features/oil_bar_animation.c": "6cc953261ef3a50fccecbd80f13639e98d477acb14e6a7210b43b6fe57cd6d6a",
-    "firmware/baccable/features/drive_mode_check.c": "0f3897e8435118018fe022fd631efc669ebc64217c942f16ce061f358d9c5aea",
-    "firmware/baccable/features/board_sync.c": "92de9f889382adb283196b8698f9386c75d233a5a3aec1a1e89f69f302e424a1",
-    "firmware/baccable/features/dna_selector.c": "0b3032a566d34541fe59cad386144d47c3b58b6e2e8272df19f705619ba82742",
-    "firmware/baccable/app/board_commands.c": "0613e802dfdc10f7b7c5ac6a9845811a068dbf198c666dac8c7a3816bb77a8e1",
-    "firmware/baccable/transport/board_uart.h": "5c83a62e828125b57e77390e027b04fd633455cfc4f9d0715e8a4d753ed00bcb"
+    "firmware/baccable/features/drive_mode_check.c": "b0ffc5b4ce6de47e214fe713a57d411e2d656a4153481d1bd3905ea19f093f4e",
+    "firmware/baccable/features/board_sync.c": "8f9cdadfca2196486c43f152ca5029e80586f7d6b3345396dbb28da3210b2435",
+    "firmware/baccable/features/dna_selector.c": "7f5b9abd4d984e0af2707d4b8785b662226e9e83323c9105243cebffb13dac0e",
+    "firmware/baccable/app/board_commands.c": "c5c943936a93a1ba61c1f7b573f3edc5bee96d219546734e5d1cdf54bcb74c47",
+    "firmware/baccable/transport/board_uart.h": "2103da887dfb3990cb3356004d292aef845a760187d330da0018054499569634"
   },
   "byte_convention": "Zero-based byte indexes; bit 0 is LSB. Parts are concatenated in listed most-significant-first order; physical = raw * scale + offset.",
   "capture_limits": [
@@ -260,6 +260,25 @@
             "2": "Toward D/Race"
           },
           "note": "Supported by all 36 directional pulses in three sessions: eight N-to-D transitions follow raw byte 0=40 by 108-112 ms on BH; reverse direction uses 20. These are transient inputs, not selected-mode codes. Raw 3 is unobserved and remains unnamed. Source ECU identity and successful replay remain unverified. See docs/research/20261023-dna-all-sessions.md."
+        },
+        {
+          "name": "suspension_button",
+          "parts": [
+            [
+              1,
+              7,
+              1
+            ]
+          ],
+          "unit": "raw",
+          "scale": 1,
+          "offset": 0,
+          "origin": "capture",
+          "enum": {
+            "0": "Released",
+            "1": "Pressed"
+          },
+          "note": "18 D pulses alternate suspension calibration in 20261010-111025Z; an additional N pulse has no calibration change. Source ECU and replay acceptance are not established. See docs/research/20261024-startup-audit.md."
         }
       ],
       "note": "BH-only DLC 4. C1 0x256/DLC 8 is a different message. Other bytes must be preserved: October-10 also contains 00 80 00 00 without directional input. Resting period is about 250 ms, with event-driven extra reports. Five held inputs precede Race after about 1.2 s. Commit 00b4b99 adds a BH startup selector handler: 200 ms short gestures, 1,800 ms D-to-Race hold refreshed every 250 ms, explicit release and observed intermediate modes. N/passive does not inject. Vehicle acceptance of replay remains unknown.",
@@ -349,9 +368,24 @@
             "1": "Race"
           },
           "note": "Confirmed from the 2026-10-11 dna_all_modes sessions (three runs each): N=16, D=8, A=4, Race=1 (mask 0x7C, byte 0). Dashboard presentation broadcast. Re-analysis 2026-10-23: five successful Race entries across six marked attempts; 191050Z event 12 remained D. See docs/research/20261023-dna-selector.md; scenario completion is not acceptance."
+        },
+        {
+          "name": "suspension_calibration_code",
+          "parts": [
+            [
+              1,
+              4,
+              2
+            ]
+          ],
+          "unit": "raw",
+          "scale": 1,
+          "offset": 0,
+          "origin": "capture",
+          "note": "D: 1=Stiff after mode entry, 0=Soft after button press, supported by repeated toggles and owner description. Race: 2=Stiff after entry; Mid=1 is a firmware inference requiring a labelled Race-button capture. Unknown values remain raw. See docs/research/20261024-startup-audit.md."
         }
       ],
-      "note": "2026-10-23 capture evidence: byte 1 settles at 00 in N/A, 10 in D and 20 in Race (hex); meaning unresolved. Current firmware rewrites only byte 0. See DNA-RELATED-25A-001 and docs/research/20261023-dna-selector.md. Commit 00b4b99 removes the default-mode rewrite; independent ESC/TC presentation still changes byte 0.",
+      "note": "2026-10-23 capture evidence: byte 1 settles at 00 in N/A, 10 in D and 20 in Race (hex); meaning unresolved. Current firmware rewrites only byte 0. See DNA-RELATED-25A-001 and docs/research/20261023-dna-selector.md. Commit 00b4b99 removes the default-mode rewrite; independent ESC/TC presentation still changes byte 0. Audit 2026-10-24 resolves the previously unknown byte-1 field for D; retain the Race/Mid uncertainty described in the calibration signal.",
       "observations": [
         {
           "session": "20260926-181818Z",
@@ -409,7 +443,8 @@
           "session": "20261011-191202Z",
           "frames": 223
         }
-      ]
+      ],
+      "exact_dlc": 4
     },
     {
       "role": "BH",

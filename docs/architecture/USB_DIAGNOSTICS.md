@@ -13,7 +13,7 @@ flashing. The commands below describe runtime USB, not the STM32 DFU bootloader.
 
 ## Small flash disks
 
-C1 reserves 100 KiB for code and 16 KiB for optional file storage; C2/BH retain
+C1 reserves 96 KiB for code and 20 KiB for optional file storage; C2/BH retain
 64 KiB code and 52 KiB file storage. Standard C1 does not enable mass storage.
 The previous FatFs 128-sector minimum rejected all these small disks. The local
 FatFs patch permits format requests down to 32 sectors only for an explicit

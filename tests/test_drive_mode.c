@@ -67,6 +67,7 @@ static void arm(void) {
     now = 100;
 #if defined(BACCABLE_C1)
     drive_mode_check_start(1);
+    drive_mode_check_engine_started();
 #endif
 }
 
@@ -86,6 +87,7 @@ static void check_confirmation(void) {
         if (scenario == 6) {
             now = UINT32_MAX - 1000;
             drive_mode_check_start(1);
+            drive_mode_check_engine_started();
         }
         uint32_t start = now;
         feed_mode(0);
@@ -112,6 +114,7 @@ static void check_confirmation(void) {
     arm();
     uint8_t old_token = drive_mode_check_token();
     drive_mode_check_start(1);
+    drive_mode_check_engine_started();
     drive_mode_check_reply(old_token, 1);
     now += 5000;
     drive_mode_check_process();

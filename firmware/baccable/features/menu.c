@@ -11,7 +11,6 @@
 #include "app/powertrain.h"
 #include "diagnostics/parameter_cache.h"
 #include "diagnostics/parameter_request.h"
-#include "diagnostics/experiments.h"
 #include "storage/flash_records.h"
 #if defined(BACCABLE_C1)
 
@@ -19,8 +18,6 @@ typedef enum {
     ROOT,
     FAVORITES,
     GROUPS,
-    EXP_GROUPS,
-    EXP_VALUES,
     VALUES,
     FUNCTIONS,
     SETTINGS,
@@ -89,7 +86,7 @@ static ActionRequest requests[ACTION_COUNT];
 static const uint8_t ipc_test_sources[] = {0x06, 0x09, 0x21};
 static const char *const ipc_test_source_labels[] = {"USB source", "Bluetooth source", "CarPlay source"};
 static const char *const ipc_test_patterns[] = {"UTF glyphs", "Line 1 length", "Line 2 length", "Both lines", "Oil bar glyphs"};
-static const char *const roots[] = {"Favorites", "Readings", "Actions", "Settings", "Information", "Experiments"};
+static const char *const roots[] = {"Favorites", "Readings", "Actions", "Settings", "Information"};
 static const char *const settings[] = {"Features",   "Page favorites", "Shown pages",
                                        "Favorite order", "Sort order", "Favorites", "BACCAble IPC"};
 static char peer_versions[2][DASHBOARD_MESSAGE_MAX_LENGTH - 2];
@@ -119,10 +116,7 @@ static MenuInput input;
 static MenuView view = FAVORITES;
 static uint8_t gasoline_v6, advanced_pages;
 static uint8_t root, group = 1, function, setting, info, editor_page, engine;
-static uint8_t list[128], list_count, selection, order_selected;
-static uint8_t exp_group, exp_position;
-/* Remembered page for a group; experimental groups are not persisted. */
-static uint16_t group_last_page(uint8_t g) { return g < MENU_GROUPS ? preferences.last[engine][g] : 0; }
+static uint8_t list[MENU_PAGE_CAPACITY], list_count, selection, order_selected;
 static uint8_t setup_last, fault_index;
 static uint8_t ipc_test_source, ipc_test_entry, ipc_test_pattern;
 /* Experimental display options never enter settings_state or Flash records. */
@@ -459,7 +453,7 @@ void menu_engine_changed(void) {
     dashboard_state.dashboard_page_index = 0;
     if (view == FAVORITES || view == VALUES || view == EDIT_FAVORITES || view == EDIT_VISIBLE ||
         view == ORDER_FAVORITES)
-        build_pages(view == FAVORITES ? preferences.last_favorite[engine] : group_last_page(group));
+        build_pages(view == FAVORITES ? preferences.last_favorite[engine] : preferences.last[engine][group]);
 }
 
 /* Import the saved catalog page without flattening its measurements. */
@@ -533,7 +527,6 @@ static uint8_t page_for_old_measurement(uint8_t profile, uint8_t id) {
 
 /* Restore the user's menu layout or start with useful defaults. */
 void menu_init(void) {
-    experiment_cancel();
     memset(&input, 0, sizeof(input));
     memset(requests, 0, sizeof(requests));
     setup_cancel_edit();
@@ -621,12 +614,6 @@ bool menu_parameters_active(void) {
            list_count;
 }
 
-/* Grant Experiments the diagnostic bus only while its value screen is visible. */
-bool menu_experiments_active(void) {
-    return dashboard_state.baccable_dashboard_menu_visible && view == EXP_VALUES &&
-           !diagnostics_state.clear_faults_request && !fault_reader_busy();
-}
-
 /* Only MY23 Readings exposes the following page as a second-line preview. */
 static bool reading_preview(void) {
     return view == VALUES && settings_state.ipc_my23_is_installed && list_count;
@@ -686,7 +673,7 @@ static void select_page(void) {
     uint16_t id = parameter_pages[engine][index].id;
     if (view == FAVORITES)
         preferences.last_favorite[engine] = id;
-    else if (group < MENU_GROUPS) /* Experimental groups are not persisted. */
+    else
         preferences.last[engine][group] = id;
     if (reading_preview()) parameter_request_follow_page();
     else parameter_request_cancel();
@@ -725,7 +712,7 @@ static void build_pages(uint16_t selected) {
 /* Open favorites or a parameter group at its remembered page. */
 static void open_pages(bool favorite) {
     view = favorite ? FAVORITES : VALUES;
-    build_pages(favorite ? preferences.last_favorite[engine] : group_last_page(group));
+    build_pages(favorite ? preferences.last_favorite[engine] : preferences.last[engine][group]);
 }
 
 /* Show an automatic result without changing the user's visibility preferences. */
@@ -947,19 +934,6 @@ void menu_render(void) {
         }
         snprintf_(text, sizeof(text), UI_SYMBOL_ENTER " %s", menu_group_names[group]);
         break;
-    case EXP_GROUPS:
-        if (settings_state.ipc_my23_is_installed) {
-            menu_present_view(UI_MODE_LIST, experiment_group_name(exp_group),
-                              experiment_group_name((exp_group + 1) % MENU_EXPERIMENT_GROUPS)); return;
-        }
-        snprintf_(text, sizeof(text), UI_SYMBOL_ENTER " %s", experiment_group_name(exp_group));
-        break;
-    case EXP_VALUES:
-        experiment_format(experiment_group_signal(exp_group, exp_position), text, sizeof(text));
-        if (settings_state.ipc_my23_is_installed)
-            menu_present_lines(experiment_group_name(exp_group), text);
-        else menu_present(text);
-        return;
     case FAVORITES:
     case VALUES:
         if (!list_count) {
@@ -1155,7 +1129,6 @@ void menu_render(void) {
 
 /* Release the display, retrying a rejected clear until the UART accepts it. */
 static void close_menu(void) {
-    experiment_cancel();
     dashboard_state.baccable_dashboard_menu_visible = 0;
     parameter_request_cancel();
     confirmed_action = 255;
@@ -1262,12 +1235,9 @@ static void back(void) {
         request_exit(ROOT, false);
     } else if (view == VALUES)
         view = GROUPS;
-    else if (view == EXP_VALUES)
-        view = EXP_GROUPS;
     else
         view = ROOT;
     parameter_request_cancel();
-    if (view != EXP_VALUES) experiment_cancel();
 }
 
 /* Apply one navigation gesture to the currently visible menu. */
@@ -1367,16 +1337,6 @@ void menu_event(MenuEvent event) {
         case GROUPS:
             group = wrap(group, MENU_GROUPS, direction);
             break;
-        case EXP_GROUPS:
-            exp_group = wrap(exp_group, MENU_EXPERIMENT_GROUPS, direction);
-            break;
-        case EXP_VALUES:
-            if (jump) {
-                exp_group = wrap(exp_group, MENU_EXPERIMENT_GROUPS, direction);
-                exp_position = 0;
-            } else exp_position = wrap(exp_position, experiment_group_count(exp_group), direction);
-            experiment_select(experiment_group_signal(exp_group, exp_position));
-            break;
         case FUNCTIONS:
             function_move(direction, jump);
             break;
@@ -1414,13 +1374,8 @@ void menu_event(MenuEvent event) {
         case EDIT_FAVORITES:
         case EDIT_VISIBLE:
             if (jump && view != FAVORITES) {
-                if (group >= MENU_GROUPS) {
-                    group = MENU_GROUPS + wrap(group - MENU_GROUPS, MENU_EXPERIMENT_GROUPS, direction);
-                    build_pages(0);
-                } else {
-                    group = wrap(group, MENU_GROUPS, direction);
-                    build_pages(is_editor() ? 0 : preferences.last[engine][group]);
-                }
+                group = wrap(group, MENU_GROUPS, direction);
+                build_pages(is_editor() ? 0 : preferences.last[engine][group]);
             } else {
                 selection = wrap(selection, list_count, direction);
                 select_page();
@@ -1461,23 +1416,13 @@ void menu_event(MenuEvent event) {
             case 4:
                 view = INFO;
                 break;
-            case 5:
-                exp_group = 0;
-                view = EXP_GROUPS;
-                break;
             }
             break;
         case GROUPS:
             open_pages(false);
             break;
-        case EXP_GROUPS:
-            exp_position = 0;
-            view = EXP_VALUES;
-            experiment_select(experiment_group_signal(exp_group, exp_position));
-            break;
         case FAVORITES:
         case VALUES:
-        case EXP_VALUES:
             break; /* Status pages do not use SELECT as hidden backward navigation. */
         case FUNCTIONS:
             if (confirmed_action != actions[function].id || currentTime - confirm_started > 3000) action_run();
@@ -1586,7 +1531,7 @@ void menu_button(uint8_t button, bool allowed) {
     #ifndef HIDE_DASHBOARD_MENU
     MenuEvent event = menu_input_update(&input, button, allowed, currentTime);
     bool repeat_allowed = allowed && !save_failed && dashboard_state.baccable_dashboard_menu_visible &&
-                          (view == FAVORITES || view == VALUES || view == EXP_VALUES || view == GROUPS || view == EXP_GROUPS ||
+                          (view == FAVORITES || view == VALUES || view == GROUPS ||
                            view == SETTINGS || view == SETUP || view == IPC_OPTIONS || view == IPC_TEST_MENU ||
                            view == IPC_TEST_ACTIVE || view == SORT_EDIT || view == FAV_SETS || view == FAV_SLOTS || view == FAV_PICK || is_editor() ||
                            (view == ORDER_FAVORITES && !order_selected));
@@ -1603,7 +1548,7 @@ void menu_button(uint8_t button, bool allowed) {
 
 /* Refresh the display and request readings at their intended intervals. */
 void menu_process(void) {
-    /* Renew only active experiments; a C1 reset stops renewal and BH falls back. */
+    /* Keep non-default IPC display options synchronized with BH. */
     if (ipc_options_sync && currentTime - ipc_options_sent >= 1000U) {
         ipc_options_send(ipc_pace, ipc_method);
         /* Bound queue-full retries too, rather than hammering UART each loop. */
@@ -1617,16 +1562,14 @@ void menu_process(void) {
         menu_engine_changed();
     if (close_pending)
         dashboard_clear();
-    if (!dashboard_state.baccable_dashboard_menu_visible) {
-        experiment_cancel();
+    if (!dashboard_state.baccable_dashboard_menu_visible)
         return;
-    }
     bool editor = view == SETTINGS || view == SETUP || view == IPC_OPTIONS || view == IPC_TEST_MENU ||
                   view == IPC_TEST_ACTIVE || view == SORT_EDIT || view == FAV_SETS || view == FAV_SLOTS || view == FAV_PICK || is_editor() || view == ORDER_FAVORITES;
     /* Reading screens are intentionally persistent; active diagnostics get a fresh grace period. */
     if (fault_reader_busy() || diagnostics_state.clear_faults_request) {
         last_input = currentTime;
-    } else if (view != FAVORITES && view != VALUES && view != EXP_VALUES && !save_failed &&
+    } else if (view != FAVORITES && view != VALUES && !save_failed &&
                currentTime - last_input >= (editor ? EDITOR_IDLE_MS : MENU_IDLE_MS)) {
         if (view == SETUP) {
             setup_cancel_edit();
@@ -1639,9 +1582,6 @@ void menu_process(void) {
         if (!save_failed)
             return;
     }
-    if (menu_experiments_active()) experiment_process();
-    else if (view != EXP_VALUES) experiment_cancel();
-    else experiment_select(experiment_group_signal(exp_group, exp_position));
     if (menu_parameters_active() && settings_state.rotate_readings && currentTime - page_changed >= 5000) {
         selection = wrap(selection, list_count, 1);
         select_page();
