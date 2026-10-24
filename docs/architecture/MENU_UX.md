@@ -33,9 +33,20 @@ width. MY23 always has budgets `MY23_L1_VISIBLE = 16` and
 `MY23_L2_VISIBLE = 22`. Those are visible glyph counts, not UTF-8 byte limits.
 
 The main menu is Favorites, Readings, Actions, Settings and Information.
+Information ends with `Demo`, a timed display-only tour. Its screens use the
+ordinary LIST, PARAMETER and EDIT packet renderers and fixed example values.
+The tour does not call menu actions, setup staging, CAN requests or Flash saves.
+Only the shared double-click BACK event ends it early; all other menu gestures
+are ignored until it finishes. A completed or interrupted tour returns to the
+`Demo` entry in Information. The script varies stays from 1.4 to 2.3 seconds;
+radio arbitration can still delay physical display. No `DEMO` text is placed on
+the active screens, so both user guides explain that their values are examples.
 MY23/atomic Settings contains Features, Favorites, Shown pages, Sort order, BACCAble IPC.
 Legacy before its first five-slot save retains Features, Page favorites,
 Shown pages, Favorite order, Sort order, Favorites, BACCAble IPC. Existing catalogs, engine gates and page IDs are retained.
+The external WS281x LED-strip controller is removed; Flash slot 3 stays hidden
+and is normalized to zero on load. Instrument-cluster `Shift light` is separate
+and keeps its slot and behavior. USB ELM327 and CAN capture remain available.
 The [catalog audit](CATALOG_AUDIT.md) describes the legacy reading model.
 
 ## Central button recognizer

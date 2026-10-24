@@ -126,7 +126,7 @@ Main menu
 │  ├─ Shown pages            Show/hide pages in Readings
 │  ├─ Sort order             Grouped or alphabetical reading lists
 │  └─ BACCAble IPC           Temporary refresh experiments
-└─ Information               Versions and input status
+└─ Information               Versions, input status and Demo
 ```
 
 This Settings layout applies to MY23 and to any profile after an atomic Favorite set
@@ -386,7 +386,6 @@ workflow; their draft does not control the car before successful persistence.
 
 | Option | Values | Purpose |
 | --- | --- | --- |
-| `LED strip` | Off / on | Drive an installed compatible WS281x LED strip using vehicle data such as accelerator position and gear. This requires the optional hardware. Output pauses while USB owns the shared pin. |
 | `Shift light` | Off / on | Request the instrument-panel shift warning above `Shift RPM`, with compatible Race-mode display support. This does not shift the gearbox. |
 | `Shift RPM` | 1500–6000 RPM, step 250 | Engine-speed threshold for the shift warning. |
 | `MY23 display` | Off / on | Use the MY23 menu layout: 16 glyphs on line 1 and 22 on line 2. OFF retains the legacy single-line layout with the compiled 18/24-character width. |
@@ -703,7 +702,7 @@ disable the override; otherwise the menu displays `! Stop IBS first`.
 ## Information
 
 The status pages are read-only. Gentle up/down moves through them; short RES does
-not toggle their state.
+not toggle their state. The final `Demo` entry starts the menu tour with RES.
 
 | Page, in order | Meaning |
 | --- | --- |
@@ -716,9 +715,19 @@ not toggle their state.
 | `Gaps:` | Count of interruptions detected in the input report stream. |
 | `Max gap:…ms` | Longest observed input-report interval in milliseconds. |
 | `Input age:…ms` | Time since the last input report; `--` if none is available. |
+| `> Demo` | Start a timed tour of the displayed menu and example values. |
 
 C2/BH version replies older than about five seconds are treated as stale. Input
 counters describe menu controls, **not CAN capture frame counts**.
+
+Select `Information → Demo` to start the tour. It displays Favorites, Readings,
+Actions and Features in a fixed sequence, including example oil and temperature
+readings and apparent changes to Rain lights, Default mode and Suspension. These
+are presentation examples: Demo does not change settings, write Flash or send
+vehicle actions. A double-click of RES ends the tour and returns to Information;
+other clicks do not operate the displayed items. The tour also returns to
+Information automatically after its final screen. Values such as `77 mm` and
+`2500 rpm` are examples, not current vehicle measurements.
 
 
 ## Reading the measurements

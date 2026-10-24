@@ -71,12 +71,6 @@
         #define DEFAULT_START_STOP 0
     #endif
 
-    #if defined(LED_STRIP_CONTROLLER_ENABLED)
-        #define DEFAULT_LED_CONTROLLER 1
-    #else
-        #define DEFAULT_LED_CONTROLLER 0
-    #endif
-
     #if defined(SHIFT_INDICATOR_ENABLED)
         #define DEFAULT_SHIFT_INDICATOR 1
     #else
@@ -270,8 +264,7 @@ const SetupParam setup_params[] = {
                         settings_state.smart_disable_start_stop_enabled),
     SETUP_NUMBER(SETUP_FLASH_LAUNCH_TORQUE, "Launch Nm", 600, DEFAULT_LAUNCH_TORQUE,
                  SETUP_VALUE_UINT16, settings_state.launch_torque_threshold, NULL, 25, 25),
-    SETUP_TOGGLE(SETUP_FLASH_LED_CONTROLLER, "LED strip", DEFAULT_LED_CONTROLLER,
-                 settings_state.led_strip_controller_enabled),
+    SETUP_HIDDEN_TOGGLE(SETUP_FLASH_LED_CONTROLLER, 0, settings_state.retired_led_strip),
     SETUP_TOGGLE(SETUP_FLASH_SHIFT_INDICATOR, "Shift light", DEFAULT_SHIFT_INDICATOR,
                  settings_state.shift_indicator_enabled),
     SETUP_NUMBER(SETUP_FLASH_SHIFT_RPM, "Shift RPM", 6000, DEFAULT_SHIFT_RPM,

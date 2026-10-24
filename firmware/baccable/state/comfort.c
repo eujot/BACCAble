@@ -16,7 +16,6 @@ ComfortState comfort_state = {
     .acc_engaged = 0,
     .wheel_pressed_button_id = 0x10,
     .last_pressed_speed_up_wheel_button_duration = 0x00,
-    .time_since_last_received_accelerator_message = 0,
     .close_windows_request = 0,
     .door_close_time = 0,
     .door_locks_requests_counter = 0,

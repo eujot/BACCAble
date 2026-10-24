@@ -159,6 +159,8 @@ static void test_my23_readings_preview_and_unavailable_gear(void) {
     for (unsigned i = 0; i < 5; ++i) menu_event(MENU_NEXT);
     assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "Gaps", 4));
     for (unsigned i = 0; i < 3; ++i) menu_event(MENU_NEXT);
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "Demo", 4));
+    menu_event(MENU_NEXT);
     assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "C1 firmware", 11));
 }
 
@@ -677,6 +679,47 @@ static void test_navigation_snapshot_pacing(void) {
     now += 70;
     menu_process();
     assert(strstr(screen, "Actions"));
+}
+
+/* The tour changes only packets and always leaves saved preferences untouched. */
+static void test_display_only_demo(void) {
+    for (unsigned profile = 0; profile < 2; ++profile) {
+        fresh_contract();
+        settings_state.ipc_my23_is_installed = profile;
+        menu_event(MENU_BACK);
+        for (unsigned i = 0; i < 4; ++i) menu_event(MENU_NEXT);
+        menu_event(MENU_SELECT);
+        for (unsigned i = 0; i < 9; ++i) menu_event(MENU_NEXT);
+        unsigned writes = settings_writes + preference_writes;
+        unsigned sent_commands = commands;
+        menu_event(MENU_SELECT);
+        assert(strstr(screen, "Favorites"));
+        menu_event(MENU_HOLD);
+        menu_event(MENU_NEXT);
+        assert(strstr(screen, "Favorites"));
+        uint32_t elapsed = 0;
+        for (unsigned step = 0; step < 13; ++step) elapsed += menu_demo_duration(step);
+        now += elapsed;
+        menu_process();
+        if (profile)
+            assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "ON", 2));
+        else
+            assert(strstr(screen, "Rain lights: ON"));
+        assert(!settings_state.rain_lights_enabled);
+        assert(settings_writes + preference_writes == writes && commands == sent_commands);
+        menu_button(0x10, true);
+        now += 40; menu_button(0x90, true);
+        now += 40; menu_button(0x10, true);
+        now += 100; menu_button(0x90, true);
+        now += 40; menu_button(0x10, true); /* Physical double-click emits BACK. */
+        assert(strstr(screen, "Demo"));
+        menu_event(MENU_SELECT);
+        for (unsigned step = 0; menu_demo_duration(step); ++step)
+            now += menu_demo_duration(step);
+        menu_process();
+        assert(strstr(screen, "Demo"));
+        assert(settings_writes + preference_writes == writes && commands == sent_commands);
+    }
 }
 
 /* Saved feedback keeps a plain result for the three-second window. */

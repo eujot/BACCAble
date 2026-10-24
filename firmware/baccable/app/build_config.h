@@ -99,8 +99,8 @@
     #endif
 #endif
 
-#if defined(DEBUG_MODE) && (defined(ACT_AS_CANABLE) || defined(LED_STRIP_CONTROLLER_ENABLED))
-    #error "DEBUG_MODE conflicts with CANable and LED_STRIP_CONTROLLER_ENABLED"
+#if defined(DEBUG_MODE) && defined(ACT_AS_CANABLE)
+    #error "DEBUG_MODE conflicts with CANable"
 #endif
 #if (defined(ACT_AS_CANABLE) + defined(BACCABLE_C1) + defined(BACCABLE_C2) + defined(BACCABLE_BH)) != 1
     #error "CANable and vehicle board roles are mutually exclusive"

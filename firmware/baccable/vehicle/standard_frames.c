@@ -81,9 +81,6 @@ void vehicle_dispatch_standard(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
     case 0x000003E8:
         vehicle_handle_body_gear(rx_header, frame_data);
         break;
-    case 0x00000412:
-        vehicle_handle_accelerator(rx_header, frame_data);
-        break;
     case 0x0000041A:
         vehicle_handle_battery(rx_header, frame_data);
         break;

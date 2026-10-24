@@ -243,6 +243,8 @@ void setup_load_from_flash(void) {
     setup_menu_pages_count();
     for (uint8_t i = 0; i < setup_params_count; i++)
         setup_set_value(&setup_params[i], settings_read(setup_params[i].flash_index));
+    /* Slot 3 remains reserved, but an old LED preference must never reactivate it. */
+    settings_state.retired_led_strip = 0;
     /* CAN capture already has runtime precedence over ELM327. */
     if (settings_state.usb_sniffer)
         settings_state.usb_elm327 = 0;

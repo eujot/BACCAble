@@ -3,6 +3,7 @@
 #include "features/menu.h"
 #include "features/ui_entry.h"
 #include "features/my23_ui.h"
+#include "features/menu_demo.h"
 #include "features/favorite_parameters.h"
 #include "vehicle/steering_controls.h"
 #include "features/ibs_override.h"
@@ -1406,6 +1407,7 @@ int main(void) {
         HOST_TEST(test_my23_glyph_budget),
         HOST_TEST(test_render_interval_after_event),
         HOST_TEST(test_navigation_snapshot_pacing),
+        HOST_TEST(test_display_only_demo),
         HOST_TEST(test_saved_feedback),
         HOST_TEST(test_ipc_options_are_volatile),
         HOST_TEST(test_atomic_favorite_selection_identity),

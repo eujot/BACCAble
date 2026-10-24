@@ -103,7 +103,7 @@ build/test_drive_mode_bh: $(DRIVE_MODE_SOURCES) $(HEADERS) Makefile
 test: build/test_drive_mode build/test_drive_mode_c2 build/test_drive_mode_bh
 
 MENU_SOURCES := test_menu.c $(addprefix $(FIRMWARE)/, features/menu.c features/menu_model.c \
- features/menu_input.c features/my23_ui.c features/favorite_parameters.c features/ui_entry.c features/display_stream.c features/oil_bar_animation.c features/ibs_override.c features/board_sync.c features/drive_mode_check.c features/dashboard.c features/dashboard_format.c features/oil_level.c features/rain_test.c features/rain_lights.c \
+ features/menu_input.c features/menu_demo.c features/my23_ui.c features/favorite_parameters.c features/ui_entry.c features/display_stream.c features/oil_bar_animation.c features/ibs_override.c features/board_sync.c features/drive_mode_check.c features/dashboard.c features/dashboard_format.c features/oil_level.c features/rain_test.c features/rain_lights.c \
  diagnostics/parameter_cache.c diagnostics/parameter_request.c diagnostics/parameter_catalog.c \
  protocol/checksum.c vehicle/steering_controls.c diagnostics/uds_decode.c diagnostics/fault_reader.c settings/persistence.c settings/setup_menu.c settings/setup_entries.c \
  third_party/printf/printf.c)

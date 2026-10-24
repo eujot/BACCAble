@@ -20,7 +20,7 @@ typedef struct {
     uint8_t regeneration_alert_enabled;
     uint8_t shift_indicator_enabled;
     uint16_t shift_threshold;
-    uint8_t led_strip_controller_enabled;
+    uint8_t retired_led_strip;
     uint8_t dyno_mode_master_enabled;
     uint8_t front_brake_forcer_master;
     uint16_t launch_torque_threshold;

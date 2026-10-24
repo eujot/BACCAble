@@ -17,7 +17,6 @@ void vehicle_handle_stability_status(const CAN_RxHeaderTypeDef *rx_header, uint8
 void vehicle_handle_body_drive_mode(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data);
 void vehicle_handle_lane_state(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data);
 void vehicle_handle_battery(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data);
-void vehicle_handle_accelerator(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data);
 void vehicle_handle_body_gear(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data);
 void vehicle_handle_odometer(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data);
 void vehicle_handle_body_lights(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data);

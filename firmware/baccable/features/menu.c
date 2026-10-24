@@ -4,6 +4,7 @@
 #include "features/ui_entry.h"
 #include "features/my23_ui.h"
 #include "features/display_stream.h"
+#include "features/menu_demo.h"
 #include "features/favorite_parameters.h"
 #include "features/rain_test.h"
 #include "diagnostics/fault_reader.h"
@@ -75,7 +76,7 @@ typedef struct {
 } ActionRequest;
 static ActionRequest requests[ACTION_COUNT];
 #define ACTION_TIMEOUT_MS 10000U
-#define INFO_PAGES 9U
+#define INFO_PAGES 10U
 static const char *const roots[] = {"Favorites", "Readings", "Actions", "Settings", "Information"};
 static const char *const settings[] = {"Features",   "Page favorites", "Shown pages",
                                        "Favorite order", "Sort order", "Favorites", "BACCAble IPC"};
@@ -133,6 +134,9 @@ static bool ipc_options_send(uint8_t pace, uint8_t method) {
 static uint32_t page_changed, last_render, last_query, notice_started;
 static uint32_t navigation_last, navigation_sent;
 static bool navigation_active, navigation_pending;
+static bool demo_active;
+static uint8_t demo_step;
+static uint32_t demo_started;
 static const char *notice;
 static const char *notice_label = "Settings";
 static char notice_text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
@@ -529,6 +533,7 @@ void menu_init(void) {
     setting = 0;
     info = 0;
     navigation_active = navigation_pending = false;
+    demo_active = false;
     ipc_option = 0;
     ipc_pace = IPC_DEFAULT_PACE;
     ipc_method = IPC_DEFAULT_METHOD;
@@ -707,6 +712,7 @@ static void open_pages(bool favorite) {
 void menu_show_parameter(uint8_t index) {
     if (!menu_page_supported(engine, index, gasoline_v6))
         return;
+    demo_active = false;
     group = parameter_pages[engine][index].group;
     view = VALUES;
     build_pages(parameter_pages[engine][index].id);
@@ -885,6 +891,10 @@ void menu_render(void) {
         return;
     /* Event-driven renders also start the next periodic refresh interval. */
     last_render = currentTime;
+    if (demo_active) {
+        menu_demo_render(demo_step);
+        return;
+    }
     action_requests_process();
     if (save_failed) {
         menu_present(UI_SYMBOL_FAILURE " Save failed: RES");
@@ -1073,6 +1083,8 @@ void menu_render(void) {
                           (unsigned long)(currentTime - input.last_seen));
             else
                 snprintf_(text, sizeof(text), "Input age:--");
+        else if (info == 9)
+            ui_render_action(text, sizeof(text), "Demo");
         else if (info == 0)
             ui_render_value(text, sizeof(text), "C1",
                             !strncmp(FW_VERSION, "BACCABLE ", 9) ? FW_VERSION + 9 : FW_VERSION);
@@ -1089,8 +1101,12 @@ void menu_render(void) {
                 snprintf_(text, sizeof(text), UI_SYMBOL_UNKNOWN " %s no reply", peer ? "BH" : "C2");
         }
         if (settings_state.ipc_my23_is_installed) {
+            if (info == 9) {
+                menu_present_view(UI_MODE_LIST, "Demo", "C1 firmware");
+                return;
+            }
             static const char *const next_info[] = {"C1 firmware", "C2 firmware", "BH firmware",
-                "IPC MY23", "Immobilizer", "Reports", "Gaps", "Max gap", "Input age"};
+                "IPC MY23", "Immobilizer", "Reports", "Gaps", "Max gap", "Input age", "Demo"};
             menu_present_view(UI_MODE_LIST, text, next_info[(info + 1) % INFO_PAGES]);
             return;
         }
@@ -1101,6 +1117,7 @@ void menu_render(void) {
 
 /* Release the display, retrying a rejected clear until the UART accepts it. */
 static void close_menu(void) {
+    demo_active = false;
     dashboard_state.baccable_dashboard_menu_visible = 0;
     parameter_request_cancel();
     confirmed_action = 255;
@@ -1246,6 +1263,14 @@ static __attribute__((noinline)) void menu_hold(void) {
 void menu_event(MenuEvent event) {
     if (!event)
         return;
+    if (demo_active) {
+        if (event == MENU_BACK) {
+            demo_active = false;
+            last_input = currentTime;
+            menu_render();
+        }
+        return;
+    }
     bool direction_event = event == MENU_NEXT || event == MENU_PREVIOUS ||
                            event == MENU_NEXT_GROUP || event == MENU_PREVIOUS_GROUP;
     if (!direction_event)
@@ -1455,6 +1480,11 @@ void menu_event(MenuEvent event) {
             rain_test_toggle_force();
             break;
         case INFO:
+            if (info == 9) {
+                demo_active = true;
+                demo_step = 0;
+                demo_started = currentTime;
+            }
             break;
         }
     }
@@ -1510,8 +1540,25 @@ void menu_process(void) {
         menu_engine_changed();
     if (close_pending)
         dashboard_clear();
-    if (!dashboard_state.baccable_dashboard_menu_visible)
+    if (!dashboard_state.baccable_dashboard_menu_visible) {
+        demo_active = false;
         return;
+    }
+    if (demo_active) {
+        uint16_t duration;
+        while ((duration = menu_demo_duration(demo_step)) &&
+               currentTime - demo_started >= duration) {
+            demo_started += duration;
+            ++demo_step;
+        }
+        if (!duration) {
+            demo_active = false;
+            last_input = currentTime;
+        }
+        if (!demo_active || currentTime - last_render >= 100U)
+            menu_render();
+        return;
+    }
     bool editor = view == SETTINGS || view == SETUP || view == IPC_OPTIONS ||
                   view == SORT_EDIT || view == FAV_SETS || view == FAV_SLOTS || view == FAV_PICK || is_editor() || view == ORDER_FAVORITES;
     /* Reading screens are intentionally persistent; active diagnostics get a fresh grace period. */

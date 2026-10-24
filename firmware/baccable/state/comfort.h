@@ -20,7 +20,6 @@ typedef struct {
     uint8_t acc_engaged;
     uint8_t wheel_pressed_button_id;
     uint32_t last_pressed_speed_up_wheel_button_duration;
-    uint32_t time_since_last_received_accelerator_message;
     uint8_t close_windows_request;
     uint32_t door_close_time;
     uint8_t door_locks_requests_counter;

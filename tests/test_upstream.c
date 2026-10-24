@@ -17,8 +17,7 @@ USBD_HandleTypeDef hUsbDeviceFS;
 uint32_t fake_primask;
 void usb_device_status(uint8_t out[8]) { memset(out, 0, 8); out[2] = hUsbDeviceFS.dev_state; }
 void board_uart_status(uint8_t out[5]) { memset(out, 0, 5); }
-static bool usb_serial, led_usb;
-void led_strip_set_usb(uint8_t enabled) { led_usb = enabled; }
+static bool usb_serial;
 void HAL_GPIO_DeInit(void *port, uint32_t pins) {
     (void)port;
     (void)pins;
@@ -360,7 +359,7 @@ static void test_usb_modes(void) {
     settings_state.usb_elm327 = 0;
     usb_modes_apply();
     usb_modes_process();
-    assert(usb_modes_active() && usb_serial && led_usb);
+    assert(usb_modes_active() && usb_serial);
     assert(uart_resumes == 0); /* Preserve a live UART, including pending TX. */
     CAN_RxHeaderTypeDef h = {.StdId = 0x123, .IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .DLC = 3};
     uint8_t data[8] = {1, 2, 3, 99, 99, 99, 99, 99};
@@ -379,7 +378,7 @@ static void test_usb_modes(void) {
     hUsbDeviceFS.dev_state = 0;
     now += 10001;
     usb_modes_process();
-    assert(!usb_modes_active() && !led_usb && !settings_state.usb_sniffer);
+    assert(!usb_modes_active() && !settings_state.usb_sniffer);
     settings_state.usb_sniffer = 1;
     assert(usb_modes_needs_apply());
     runtime_state.low_consume_is_active = 1; /* UART was paused by power_process. */

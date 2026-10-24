@@ -16,8 +16,6 @@ void dashboard_format_values(const char *template, const float *values, const ui
 void dashboard_format_my23_page(const ParameterPage *page, const float *values, char *result);
 uint32_t system_free_ram(void);
 void dashboard_clear(void);
-float accelerator_percent(uint8_t vol);
-uint8_t gear_color(uint8_t col);
 uint8_t settings_save(void);
 uint8_t statistics_reset();
 uint8_t statistics_save_best(void);

@@ -27,9 +27,6 @@ static void application_init(void) {
 #if defined(ACT_AS_CANABLE) || defined(DEBUG_MODE) || defined(ENABLE_USB_MASS_STORAGE) ||                    \
     defined(ACT_AS_SCHIZZAFORTE_SERIAL_CONTROLLER)
     if (RCC->CSR & RCC_CSR_PORRSTF) {
-    #if defined(BACCABLE_C1)
-        led_strip_set_usb(true);
-    #endif
         MX_USB_DEVICE_Init();
     }
 #endif

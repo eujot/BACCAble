@@ -31,7 +31,6 @@ void powertrain_process(void) {
         chassis_state.stability_inverted = 0;
     exhaust_process();
     board_sync_process();
-    led_strip_process();
     drivetrain_process();
     dashboard_feedback_process();
     immobilizer_process();

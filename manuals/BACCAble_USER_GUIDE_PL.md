@@ -135,7 +135,7 @@ Menu główne
 │  ├─ Shown pages            Pokazywanie i ukrywanie stron w Readings
 │  ├─ Sort order             Sortowanie według grup albo alfabetycznie
 │  └─ BACCAble IPC           Tymczasowe próby odświeżania
-└─ Information               Wersje, przyciski i test wyświetlacza IPC
+└─ Information               Wersje, stan przycisków i Demo
 ```
 
 Ten układ Settings dotyczy MY23 oraz każdego profilu po zapisaniu zestawu
@@ -414,7 +414,6 @@ Szkic nie steruje samochodem przed udanym zapisem.
 
 | Opcja | Wartości | Do czego służy |
 | --- | --- | --- |
-| `LED strip` | Wyłączona / włączona | Steruje zamontowaną, zgodną listwą LED WS281x na podstawie danych samochodu, np. położenia pedału przyspieszenia i biegu. Wymaga dodatkowego sprzętu. Sterowanie listwą jest wstrzymywane, gdy USB korzysta ze wspólnego wyprowadzenia. |
 | `Shift light` | Wyłączona / włączona | Wysyła polecenie pokazania sygnału zmiany biegu po przekroczeniu Shift RPM. Wymaga zgodnej obsługi wskazania w trybie Race. Nie zmienia biegu za kierowcę. |
 | `Shift RPM` | 1500–6000 obr./min, co 250 | Próg obrotów silnika dla sygnału zmiany biegu. |
 | `MY23 display` | Wyłączona / włączona | Włącza układ MY23: 16 znaków w pierwszej linii i 22 w drugiej. OFF zachowuje starszy układ jednej linii z szerokością 18/24 znaków wybraną przy kompilacji. |
@@ -752,7 +751,8 @@ razie menu pokaże `! Stop IBS first` — najpierw zatrzymaj podmienianie IBS.
 ## Informacje: Information
 
 Strony ze stanem służą tylko do odczytu. Lekkie naciśnięcia góra/dół przełączają
-między nimi; krótkie RES nie zmienia ich stanu.
+między nimi; krótkie RES nie zmienia ich stanu. Ostatnia pozycja `Demo` uruchamia
+pokaz po naciśnięciu RES.
 
 | Strona, według kolejności | Znaczenie |
 | --- | --- |
@@ -765,10 +765,20 @@ między nimi; krótkie RES nie zmienia ich stanu.
 | `Gaps:` | Liczba wykrytych przerw w docieraniu komunikatów o przyciskach. |
 | `Max gap:…ms` | Najdłuższy zaobserwowany odstęp między komunikatami o przyciskach, w milisekundach. |
 | `Input age:…ms` | Czas od ostatniego komunikatu o przyciskach. `--` oznacza, że nie ma takiego odczytu. |
+| `> Demo` | Uruchamia pokaz menu i przykładowych wartości. |
 
 Odpowiedzi z wersją C2/BH starsze niż około pięć sekund są uznawane za nieaktualne.
 Liczniki dotyczą obsługi menu, **nie liczby ramek zapisanych podczas przechwytywania
 CAN**.
+
+Wybierz `Information → Demo`, aby uruchomić pokaz. Urządzenie przejdzie kolejno
+przez Favorites, Readings, Actions i Features. Pokaże przykładowe odczyty oleju
+i temperatur oraz pozorną zmianę Rain lights, Default mode i Suspension. Są to
+tylko przykłady na ekranie: pokaz nie zmienia ustawień, nie zapisuje Flash ani
+nie wysyła poleceń do samochodu. Dwuklik RES kończy pokaz i wraca do Information;
+pozostałe naciśnięcia nie obsługują wyświetlanych pozycji. Po ostatnim ekranie
+powrót następuje automatycznie. Wartości takie jak `77 mm` i `2500 rpm` nie są
+bieżącymi pomiarami samochodu.
 
 
 ## Jak rozumieć odczyty
