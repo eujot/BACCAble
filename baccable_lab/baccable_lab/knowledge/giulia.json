@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "dictionary_version": "2026-10-24.7",
+  "dictionary_version": "2026-10-24.8",
   "vehicle": {
     "model": "Alfa Romeo Giulia (owner-reported)",
     "model_year": null,
@@ -324,7 +324,7 @@
           ]
         }
       ],
-      "note": "BH-only DLC 4; C1 0x256/DLC 8 is unrelated. Original captured input semantics and unrelated fields are preserved. Implementation 50f7604 aligns a new press to fresh neutral input and drained TX, waits one second of actual-mode stability, refreshes held state after incoming factory-neutral reports and holds Race for 2200 ms with 250 ms fallback refresh. Suspension retains 150 ms pulses with at most one feedback-gated retry. Owner reports beta-29 D working, Race failing and one missed D/Soft change; this correction still needs vehicle acceptance. See docs/research/20261024-startup-gesture-correction.md.",
+      "note": "BH-only DLC 4. C1 0x256/DLC 8 is a different message. Other bytes must be preserved: October-10 also contains 00 80 00 00 without directional input. Resting period is about 250 ms, with event-driven extra reports. Five held inputs precede Race after about 1.2 s. Commit 00b4b99 adds a BH startup selector handler: 200 ms short gestures, 1,800 ms D-to-Race hold refreshed every 250 ms, explicit release and observed intermediate modes. Implementation 50f7604 aligns a new press to fresh neutral input and drained TX, waits one second of actual-mode stability, refreshes held state after incoming factory-neutral reports and holds Race for 2200 ms with 250 ms fallback refresh; suspension retains 150 ms pulses with at most one feedback-gated retry. N/passive does not inject. Owner reported on 2026-10-24 that the beta-29 startup gesture changes the drive mode in the car and other controllers react, so a listener on BH acts on the injected frame; D and Race are confirmed in the vehicle, and so is the injected softer suspension change; the guarded retry path itself was not separately observed. The physical sender is unidentified and this is a single vehicle trial. See docs/research/20261024-startup-gesture-correction.md.",
       "observations": [
         {
           "session": "20260926-181818Z",
@@ -438,7 +438,7 @@
           "scale": 1,
           "offset": 0,
           "origin": "capture",
-          "note": "Supported mode-dependent raw code: D (b0&0x7C=0x20) 1=Stiff, 0=Soft; Race (0x04) 2=Stiff, 1=Mid. The labelled 20261024-113104Z matrix repeats both softer-to-firm pairs twice and supersedes the Mid=1 inference. Entry briefly carries the prior level for 24\u201336 ms, so require settled mode/level; N/A=0 is not a Soft command. Unknown combinations remain raw. Manual input/report evidence does not validate automatic injection. docs/research/20261024-three-session-audit.md",
+          "note": "Supported mode-dependent raw code: D (b0&0x7C=0x20) 1=Stiff, 0=Soft; Race (0x04) 2=Stiff, 1=Mid. The labelled 20261024-113104Z matrix repeats both softer-to-firm pairs twice and supersedes the Mid=1 inference. Entry briefly carries the prior level for 24\u201336 ms, so require settled mode/level; N/A=0 is not a Soft command. Unknown combinations remain raw. Manual input/report evidence establishes the layout. Owner-reported vehicle acceptance on 2026-10-24 for the beta-30 source: the configured Race default selects Race and the configured softer suspension setting is applied in the car. This confirms the injected BH 0x256 gestures and the 150 ms suspension pulse. The feedback-gated retry path itself was not separately observed, and no capture or trace accompanies the report. docs/research/20261024-three-session-audit.md",
           "historical_note": "D: 1=Stiff after mode entry, 0=Soft after button press, supported by repeated toggles and owner description. Race: 2=Stiff after entry; Mid=1 is a firmware inference requiring a labelled Race-button capture. Unknown values remain raw. See docs/research/20261024-startup-audit.md.",
           "capture_evidence": [
             {
@@ -476,7 +476,7 @@
           ]
         }
       ],
-      "note": "Mode presentation with mode-dependent suspension calibration. The labelled 20261024-113104Z matrix directly supports D Stiff/Soft=1/0 and Race Stiff/Mid=2/1 in b1[5:4], with brief old-level carryover during mode entry. Earlier Mid uncertainty is preserved in historical metadata. Default-mode selection now reproduces BH 0x256 input; independent ESC/TC presentation may still change b0. Manual observations do not establish startup replay acceptance. See docs/research/20261024-three-session-audit.md.",
+      "note": "Mode presentation with mode-dependent suspension calibration. The labelled 20261024-113104Z matrix directly supports D Stiff/Soft=1/0 and Race Stiff/Mid=2/1 in b1[5:4], with brief old-level carryover during mode entry. Earlier Mid uncertainty is preserved in historical metadata. Default-mode selection now reproduces BH 0x256 input; independent ESC/TC presentation may still change b0. Manual observations establish the report layout. Owner-reported vehicle acceptance on 2026-10-24 for the beta-30 source: the configured Race default selects Race and the configured softer suspension setting is applied in the car. This confirms the injected BH 0x256 gestures and the 150 ms suspension pulse. The feedback-gated retry path itself was not separately observed, and no capture or trace accompanies the report. See docs/research/20261024-three-session-audit.md.",
       "observations": [
         {
           "session": "20260926-181818Z",
@@ -11293,7 +11293,7 @@
       "role": "BH",
       "topic": "DNA-RELATED-25A-001",
       "source": "docs/research/20261023-dna-selector.md",
-      "status": "candidate: Byte 1 settles at N/A=0x00, D=0x10, Race=0x20 and can lag the known byte-0 mode field. This is not an identified knob press/release signal. Existing firmware only rewrites byte 0."
+      "status": "supported: Byte 1 is the damper setting and is relative to the drive mode. Entering a mode resets it: D=0x10 hard, Race=0x20 hard, N/A=0x00. The console button then sets D=0x00 (soft) or Race=0x10 (mid) and a second press returns to the mode default; 8/8 presses in 20261024-113104Z, with C1/C2 0x384 byte 6 bit 7 and C1/C2 0x1FC byte 0 mirroring the softened state. The same value 0x10 therefore means D hard and Race mid, so decode it together with the mode. Mode entry carries the previous damper level for 24–36 ms, so settle before decoding; returning from Race to N passes through D as a real intermediate mode. The startup preference injects the rotary direction instead of rewriting this report, and the car applies the configured softer setting."
     },
     {
       "can_id": "0x73C",
@@ -11307,7 +11307,7 @@
       "can_id": "0x256",
       "topic": "DNA selector input and sender identity",
       "source": "docs/research/20261023-dna-all-sessions.md",
-      "status": "Directional field is supported and decoded offline. Physical transmitter identity and acceptance of an injected short gesture remain unverified; see DNA-SELECTOR-BH-256-001. BH startup gestures implemented in 00b4b99, hardware acceptance still unknown."
+      "status": "Directional field is supported and decoded offline. Owner-reported acceptance 2026-10-24: the beta-29 startup gesture (00b4b99) changes the drive mode in the car and other controllers react, so a listener on BH acts on the injected frame; D and Race are confirmed in the vehicle. Physical transmitter identity remains unidentified and this is a single vehicle trial; see DNA-SELECTOR-BH-256-001."
     },
     {
       "role": "C2",
@@ -13895,6 +13895,93 @@
       "status": "no_event_decoder"
     },
     {
+      "label": "suspension_hard",
+      "title": "Suspension: hard (default)",
+      "group": "Suspension / chassis",
+      "candidate_signals": [],
+      "observed_events": [
+        {
+          "session": "20261024-113104Z",
+          "event_id": 6,
+          "source": "scenario"
+        },
+        {
+          "session": "20261024-113104Z",
+          "event_id": 8,
+          "source": "scenario"
+        },
+        {
+          "session": "20261024-113104Z",
+          "event_id": 10,
+          "source": "scenario"
+        },
+        {
+          "session": "20261024-113104Z",
+          "event_id": 12,
+          "source": "scenario"
+        },
+        {
+          "session": "20261024-113104Z",
+          "event_id": 19,
+          "source": "scenario"
+        },
+        {
+          "session": "20261024-113104Z",
+          "event_id": 21,
+          "source": "scenario"
+        },
+        {
+          "session": "20261024-113104Z",
+          "event_id": 23,
+          "source": "scenario"
+        },
+        {
+          "session": "20261024-113104Z",
+          "event_id": 25,
+          "source": "scenario"
+        }
+      ],
+      "status": "no_event_decoder"
+    },
+    {
+      "label": "suspension_soft",
+      "title": "Suspension: soft (D)",
+      "group": "Suspension / chassis",
+      "candidate_signals": [],
+      "observed_events": [
+        {
+          "session": "20261024-113104Z",
+          "event_id": 7,
+          "source": "scenario"
+        },
+        {
+          "session": "20261024-113104Z",
+          "event_id": 20,
+          "source": "scenario"
+        }
+      ],
+      "status": "no_event_decoder"
+    },
+    {
+      "label": "suspension_mid",
+      "title": "Suspension: mid (Race)",
+      "group": "Suspension / chassis",
+      "candidate_signals": [],
+      "observed_events": [
+        {
+          "session": "20261024-113104Z",
+          "event_id": 11,
+          "source": "scenario"
+        },
+        {
+          "session": "20261024-113104Z",
+          "event_id": 24,
+          "source": "scenario"
+        }
+      ],
+      "status": "no_event_decoder"
+    },
+    {
       "label": "suspension_mode_changed",
       "title": "Suspension mode changed",
       "group": "Suspension / chassis",
@@ -14365,6 +14452,99 @@
         {
           "session": "20261010-111025Z",
           "event_id": 5,
+          "source": "scenario"
+        }
+      ],
+      "status": "no_event_decoder"
+    },
+    {
+      "label": "light_sensor_dark",
+      "title": "Light sensor: dark (covered)",
+      "group": "Weather / wipers",
+      "candidate_signals": [],
+      "observed_events": [
+        {
+          "session": "20261024-105643Z",
+          "event_id": 2,
+          "source": "scenario"
+        },
+        {
+          "session": "20261024-105643Z",
+          "event_id": 14,
+          "source": "scenario"
+        },
+        {
+          "session": "20261024-105643Z",
+          "event_id": 26,
+          "source": "scenario"
+        },
+        {
+          "session": "20261024-111510Z",
+          "event_id": 2,
+          "source": "scenario"
+        },
+        {
+          "session": "20261024-111510Z",
+          "event_id": 5,
+          "source": "scenario"
+        },
+        {
+          "session": "20261024-111510Z",
+          "event_id": 16,
+          "source": "scenario"
+        },
+        {
+          "session": "20261024-111510Z",
+          "event_id": 19,
+          "source": "scenario"
+        }
+      ],
+      "status": "no_event_decoder"
+    },
+    {
+      "label": "light_sensor_bright",
+      "title": "Light sensor: bright (uncovered)",
+      "group": "Weather / wipers",
+      "candidate_signals": [],
+      "observed_events": [
+        {
+          "session": "20261024-105643Z",
+          "event_id": 1,
+          "source": "scenario"
+        },
+        {
+          "session": "20261024-105643Z",
+          "event_id": 4,
+          "source": "scenario"
+        },
+        {
+          "session": "20261024-105643Z",
+          "event_id": 13,
+          "source": "scenario"
+        },
+        {
+          "session": "20261024-105643Z",
+          "event_id": 16,
+          "source": "scenario"
+        },
+        {
+          "session": "20261024-105643Z",
+          "event_id": 25,
+          "source": "scenario"
+        },
+        {
+          "session": "20261024-105643Z",
+          "event_id": 28,
+          "source": "scenario"
+        },
+        {
+          "session": "20261024-111510Z",
+          "event_id": 1,
+          "source": "scenario"
+        },
+        {
+          "session": "20261024-111510Z",
+          "event_id": 15,
           "source": "scenario"
         }
       ],
@@ -16426,99 +16606,6 @@
       "status": "unresolved"
     },
     {
-      "label": "light_sensor_bright",
-      "title": "light_sensor_bright",
-      "group": "Recorded non-catalog events",
-      "candidate_signals": [],
-      "observed_events": [
-        {
-          "session": "20261024-105643Z",
-          "event_id": 1,
-          "source": "scenario"
-        },
-        {
-          "session": "20261024-105643Z",
-          "event_id": 4,
-          "source": "scenario"
-        },
-        {
-          "session": "20261024-105643Z",
-          "event_id": 13,
-          "source": "scenario"
-        },
-        {
-          "session": "20261024-105643Z",
-          "event_id": 16,
-          "source": "scenario"
-        },
-        {
-          "session": "20261024-105643Z",
-          "event_id": 25,
-          "source": "scenario"
-        },
-        {
-          "session": "20261024-105643Z",
-          "event_id": 28,
-          "source": "scenario"
-        },
-        {
-          "session": "20261024-111510Z",
-          "event_id": 1,
-          "source": "scenario"
-        },
-        {
-          "session": "20261024-111510Z",
-          "event_id": 15,
-          "source": "scenario"
-        }
-      ],
-      "status": "unresolved"
-    },
-    {
-      "label": "light_sensor_dark",
-      "title": "light_sensor_dark",
-      "group": "Recorded non-catalog events",
-      "candidate_signals": [],
-      "observed_events": [
-        {
-          "session": "20261024-105643Z",
-          "event_id": 2,
-          "source": "scenario"
-        },
-        {
-          "session": "20261024-105643Z",
-          "event_id": 14,
-          "source": "scenario"
-        },
-        {
-          "session": "20261024-105643Z",
-          "event_id": 26,
-          "source": "scenario"
-        },
-        {
-          "session": "20261024-111510Z",
-          "event_id": 2,
-          "source": "scenario"
-        },
-        {
-          "session": "20261024-111510Z",
-          "event_id": 5,
-          "source": "scenario"
-        },
-        {
-          "session": "20261024-111510Z",
-          "event_id": 16,
-          "source": "scenario"
-        },
-        {
-          "session": "20261024-111510Z",
-          "event_id": 19,
-          "source": "scenario"
-        }
-      ],
-      "status": "unresolved"
-    },
-    {
       "label": "okno kierwocy zmkniete",
       "title": "okno kierwocy zmkniete",
       "group": "Recorded non-catalog events",
@@ -16547,93 +16634,6 @@
           "session": "20260928-204100Z",
           "event_id": 25,
           "source": "keyboard"
-        }
-      ],
-      "status": "unresolved"
-    },
-    {
-      "label": "suspension_hard",
-      "title": "suspension_hard",
-      "group": "Recorded non-catalog events",
-      "candidate_signals": [],
-      "observed_events": [
-        {
-          "session": "20261024-113104Z",
-          "event_id": 6,
-          "source": "scenario"
-        },
-        {
-          "session": "20261024-113104Z",
-          "event_id": 8,
-          "source": "scenario"
-        },
-        {
-          "session": "20261024-113104Z",
-          "event_id": 10,
-          "source": "scenario"
-        },
-        {
-          "session": "20261024-113104Z",
-          "event_id": 12,
-          "source": "scenario"
-        },
-        {
-          "session": "20261024-113104Z",
-          "event_id": 19,
-          "source": "scenario"
-        },
-        {
-          "session": "20261024-113104Z",
-          "event_id": 21,
-          "source": "scenario"
-        },
-        {
-          "session": "20261024-113104Z",
-          "event_id": 23,
-          "source": "scenario"
-        },
-        {
-          "session": "20261024-113104Z",
-          "event_id": 25,
-          "source": "scenario"
-        }
-      ],
-      "status": "unresolved"
-    },
-    {
-      "label": "suspension_mid",
-      "title": "suspension_mid",
-      "group": "Recorded non-catalog events",
-      "candidate_signals": [],
-      "observed_events": [
-        {
-          "session": "20261024-113104Z",
-          "event_id": 11,
-          "source": "scenario"
-        },
-        {
-          "session": "20261024-113104Z",
-          "event_id": 24,
-          "source": "scenario"
-        }
-      ],
-      "status": "unresolved"
-    },
-    {
-      "label": "suspension_soft",
-      "title": "suspension_soft",
-      "group": "Recorded non-catalog events",
-      "candidate_signals": [],
-      "observed_events": [
-        {
-          "session": "20261024-113104Z",
-          "event_id": 7,
-          "source": "scenario"
-        },
-        {
-          "session": "20261024-113104Z",
-          "event_id": 20,
-          "source": "scenario"
         }
       ],
       "status": "unresolved"
@@ -16688,8 +16688,8 @@
     },
     {
       "topic": "Startup selector implementation",
-      "status": "implemented_hardware_unknown",
-      "detail": "00b4b99 replaces default mode report rewrites with bounded BH 0x256 gestures, keeps slot 38 zero as N/passive, and starts C1 corroboration only after matching BH completion. Active presets A/D/Race require vehicle acceptance. See docs/architecture/MENU_UX.md."
+      "status": "implemented_and_vehicle_accepted",
+      "detail": "00b4b99 replaces default mode report rewrites with bounded BH 0x256 gestures, keeps slot 38 zero as N/passive, and starts C1 corroboration only after matching BH completion. Owner-reported testing on 2026-10-24 confirms the Race preset and the softer suspension setting in the car; A was not reported separately. See docs/architecture/MENU_UX.md."
     },
     {
       "topic": "Rain/wiper-triggered lighting readiness",
@@ -16703,8 +16703,8 @@
     },
     {
       "topic": "Startup gesture reliability correction",
-      "status": "implemented_vehicle_acceptance_pending",
-      "detail": "Implementation 50f7604 addresses factory-neutral interference, mode pacing and an ignored suspension pulse with a guarded retry. Host regressions fail against beta-29 source and pass after correction. No new captured signal layout or injected acceptance claim. Source notes: docs/research/20261024-startup-gesture-correction.md; historical session ledger retains its original source snapshot."
+      "status": "implemented_and_vehicle_accepted",
+      "detail": "Implementation 50f7604 addresses factory-neutral interference, mode pacing and an ignored suspension pulse with a guarded retry. Host regressions fail against beta-29 source and pass after correction. No new captured signal layout or injected acceptance claim. Owner-reported vehicle acceptance on 2026-10-24 for the beta-30 source: the configured Race default selects Race and the configured softer suspension setting is applied in the car. This confirms the injected BH 0x256 gestures and the 150 ms suspension pulse. The feedback-gated retry path itself was not separately observed, and no capture or trace accompanies the report. Source notes: docs/research/20261024-startup-gesture-correction.md; historical session ledger retains its original source snapshot."
     },
     {
       "topic": "Rain lights wiper-cycle controller",

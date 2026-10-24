@@ -86,6 +86,71 @@ class ScenarioModelTests(unittest.TestCase):
         drive = [s for s in ordered if s.group == "drive"]
         self.assertTrue(drive and all(location_label(s) == "jazda – plac" for s in drive))
 
+    def test_dna_suspension_matrix_covers_every_mode_and_state(self):
+        # One matrix: every drive mode, the default damper state on entry, and the
+        # button result where it exists. N and A are negative controls (empty
+        # expect) because those modes have no adaptive setting.
+        scenario = load_scenarios(default_directory())["dna_suspension_matrix"]
+        self.assertEqual((scenario.group, scenario.vehicle), ("drivetrain", "stationary"))
+        self.assertEqual((len(scenario.steps), scenario.runs), (13, 2))
+        expected = [step.expect for step in scenario.steps]
+        self.assertEqual(expected[0:4], ["dna_natural", "", "dna_allweather", ""])
+        self.assertEqual(expected[4:8], ["dna_dynamic", "suspension_hard",
+                                         "suspension_soft", "suspension_hard"])
+        self.assertEqual(expected[8:12], ["dna_race", "suspension_hard",
+                                          "suspension_mid", "suspension_hard"])
+        self.assertEqual(expected[12], "dna_natural")
+        for label in ("dna_allweather", "dna_dynamic", "dna_race"):
+            self.assertEqual(expected.count(label), 1)
+
+    def test_sensor_wiper_lights_separates_lamps_from_the_sensor(self):
+        # With the light switch OFF the sensor still sees darkness; the lamps must
+        # stay off, which proves whether the light flag follows the sensor or the
+        # actual lamps. Then AUTO gives the beam pair, steady wiper states and the
+        # rain trigger, all in one short recording.
+        scenario = load_scenarios(default_directory())["sensor_wiper_lights"]
+        self.assertEqual((scenario.group, scenario.vehicle), ("wipers", "stationary"))
+        self.assertEqual((len(scenario.steps), scenario.runs), (14, 2))
+        expected = [step.expect for step in scenario.steps]
+        self.assertEqual(expected[0:3], ["light_sensor_bright", "light_sensor_dark",
+                                         "dipped_beam_off"])
+        self.assertEqual(expected[3:7], ["automatic_headlights_on", "light_sensor_dark",
+                                         "dipped_beam_on", "dipped_beam_off"])
+        self.assertEqual(expected[7:10], ["wipers_slow", "wipers_fast", "wipers_off"])
+        self.assertEqual(expected[10:], ["wipers_auto", "rain_detected",
+                                         "dipped_beam_off", "rain_stopped"])
+        self.assertIn("OFF", scenario.steps[0].action.upper())
+        self.assertIn("OFF", scenario.steps[2].action.upper())
+
+    def test_rain_lights_auto_isolates_each_cause_and_repeats(self):
+        # One cause per phase: the light sensor is tested with the wipers off,
+        # the rain sensor with the sensor uncovered, then manual cycles. A wrong
+        # order would make covering the sensor start a wipe and mix both signals.
+        scenario = load_scenarios(default_directory())["rain_lights_auto"]
+        self.assertEqual((scenario.group, scenario.vehicle), ("wipers", "stationary"))
+        self.assertGreaterEqual(scenario.runs, 3)
+        expected = [step.expect for step in scenario.steps]
+        # Daylight baseline: the lamps are off, covering the sensor switches them
+        # on and uncovering switches them off.
+        self.assertEqual(expected[:5], ["light_sensor_bright", "light_sensor_dark",
+                                        "dipped_beam_on", "light_sensor_bright",
+                                        "dipped_beam_off"])
+        self.assertEqual(expected[5:9], ["wipers_auto", "rain_detected",
+                                         "dipped_beam_off", "rain_stopped"])
+        self.assertEqual(expected[9:], ["wipers_slow", "dipped_beam_off", "wipers_off"])
+        # The procedure assumes daylight: a dark garage would switch the lamps on
+        # for darkness and invalidate the lamps-off control in the rain phases.
+        self.assertIn("DZIEŃ", scenario.notes.upper())
+        self.assertIn("szmatk", scenario.notes)
+        # The flashlight variant was tried and discarded; no step may depend on it.
+        self.assertNotIn("latark", " ".join(
+            step.action.lower() for step in scenario.steps))
+        # Factory behaviour is the negative control: darkness switches the lamps
+        # on, but wipers and rain do not, because the feature is not implemented.
+        # The rain phases therefore record the lamps staying off.
+        self.assertEqual(expected.count("dipped_beam_on"), 1)
+        self.assertGreaterEqual(expected.count("dipped_beam_off"), 3)
+
     def test_parse_rejects_unknown_label_missing_action_and_duplicates(self):
         with self.assertRaises(ValueError):
             parse_scenarios('[[scenario]]\nid="x"\n[[scenario.steps]]\naction="a"\nexpect="not_a_label"\n')

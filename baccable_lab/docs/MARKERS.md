@@ -46,7 +46,7 @@ Each entry below is written as a manually confirmed timestamp:
 | Body / access | Trunk, hood and fuel door, windows, mirrors, seat belt |
 | IPC / media | Menu opened/overwritten/restored, screen/source/track changes, radio button, phone call, navigation prompt |
 | Suspension / chassis | Suspension active/inactive/mode, ride height, leveling, AWD, steering mode/input |
-| Weather / wipers | Rain start/stop, wiper speeds/off, washer, rear wiper, ambient light, outside temperature |
+| Weather / wipers | Rain start/stop, wiper speeds/off, washer, rear wiper, light sensor dark/bright, ambient light, outside temperature |
 | Lights | Left/right indicators, dipped beam, headlights, high beam, fog and hazard lights |
 | Lighting / visibility | Side/automatic headlights, high-beam/fog/hazard off, interior and brake lights |
 | Climate / comfort | A/C, temperature, fan, front/rear defrost, recirculation, climate mode, seat/steering heat |

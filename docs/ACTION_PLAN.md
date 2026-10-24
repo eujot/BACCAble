@@ -1,5 +1,25 @@
 # BACCAble action plan and agent handoff
 
+## Vehicle acceptance of startup Race and suspension, 2026-10-24
+
+The owner tested the merged beta-30 source in the car and reports that both
+startup actions work: `Default mode` = `Race` selects Race, and `Suspension` =
+`Soft` applies the softer damper setting. Together with the earlier D report
+this accepts the injected BH `0x256` direction gesture and the 150 ms suspension
+pulse on the vehicle. It also supersedes the "Race and suspension still need
+acceptance" notes in beta-29/beta-30 research, the dictionary and both guides.
+
+Limits of this evidence: no capture, marker or CAN trace accompanies the report;
+the feedback-gated retry path (two ignored pulses) was not separately exercised;
+`A` was not reported; and Rain lights output acceptance is unrelated and still
+open. The physical sender of `0x256` remains unidentified. Recorded as
+`implemented_and_vehicle_accepted` for the startup selector and the reliability
+correction, with the retry caveat kept in the detail. Dictionary
+`2026-10-24.8`; the readable catalog was regenerated.
+
+Validation: Lab suite passes; firmware, menus and behaviour are unchanged by
+this documentation commit, so no rebuild or device flash is implied.
+
 ## v5-beta-30 release, 2026-10-24
 
 PR #77 (`241b993`) added `Rain lights`, DNA Race/suspension reliability
@@ -24,6 +44,34 @@ remaining vehicle check is acceptance of BACCAble's additional transmission
 while factory frames continue. Release branch `docs/v5-beta-30` preserves the
 release notes and handoff for integration into master.
 
+## Merge beta-30 into the rain/light scenario branch, 2026-10-24
+
+Branch `merge/rain-scenario-into-beta30`, created from
+`feat/rain-lights-scenario` (`4b07267`, five commits based on `495b335`) and
+merged with `origin/master` (`40f2fa5`, v5-beta-30 source) and the published
+`origin/docs/v5-beta-30`. The branch was 19 commits behind and had no firmware
+changes, so the merge brought in beta-29, Rain lights, the paced DNA/suspension
+correction and all October-24 research.
+
+Conflicts were limited to three files and resolved without discarding either
+side. `giulia.json` keeps the owner-reported `0x256` acceptance while adding
+`50f7604`'s implementation and retry description; it keeps `0x25A` `supported`
+with the mode-relative damper table and adds master's new `0x2EC`, `0x738` and
+`0x73E` research entries. `CAN_DICTIONARY.md` was regenerated from the merged
+dictionary (`2026-10-24.7`). `docs/ACTION_PLAN.md` keeps both histories and
+marks the branch's former "wiper frames not identified" and "Race mid never
+recorded" statements as superseded. The branch's new `suspension_hard/soft/mid`
+and `light_sensor_*` catalog labels were moved out of the `marker_index`
+"Recorded non-catalog events" fallback into their real groups, so the same event
+is not listed twice.
+
+Validation after the merge: 81 Lab tests pass, the full host suite passes, and
+all four flavours build with Arm GNU 15.2.Rel1 and four-flavor `lint`. Standard
+sizes: C1 97,180/15,388 bytes, C2 31,072/12,392, BH 36,608/13,260, CAN 25,196/7,000.
+C1 has only about 1.1 KiB of flash headroom. No firmware behaviour changed in
+this merge and no device was flashed. Still open: acceptance of the Rain lights
+lamp injection while factory frames continue, and observation of the guarded
+suspension retry path.
 
 ## Rain-light UART correction and owner clarification, 2026-10-24
 
@@ -342,6 +390,147 @@ No tests or firmware builds were run for this removal.
 Last updated: **2026-10-24** (dated verification boundaries below). This is the single source of planned work,
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
+
+## Beta-29 drive-mode acceptance and damper decode, 2026-10-24
+
+Owner-reported vehicle acceptance: the default drive-mode gesture shipped in
+`00b4b99` (v5-beta-29) changes the drive mode in the car and other controllers
+react. This is the first confirmed acceptance of an injected frame — a listener
+on the BH body bus acts on the replayed `0x256` selector input and the resulting
+mode reaches the powertrain and chassis controllers. It does **not** identify
+the physical sender of `0x256`, and it is a single vehicle trial, not a repeated
+acceptance test. The `giulia.json` note and the DNA topic status now record the
+result; the generated `CAN_DICTIONARY.md` was refreshed.
+
+Session `20261024-113104Z` (`dna_suspension_matrix`, 26/26 confirmations, two
+runs) also resolved the damper field. BH `0x25A` byte 1 is **mode-relative**:
+D=`0x10` hard, D=`0x00` soft, Race=`0x20` hard, Race=`0x10` mid. Entering a mode
+resets it, and 8/8 button presses matched in both directions. C1/C2 `0x384`
+byte 6 bit 7 and C1/C2 `0x1FC` byte 0 also change with the softer state, but
+`0x1FC` must be read with the actual mode: N/A=`0x50`, D hard/soft=`0x40`/`0x50`,
+Race hard/mid=`0x60`/`0x40`. The same `0x10` in `0x25A` means D hard and Race
+mid, so a decoder must combine it with the mode; mode entry carries the previous
+damper level for 24–36 ms, so settle before decoding (returning from Race to N
+passes through D as a real intermediate mode). The earlier "mid = `0x30`"
+hypothesis is refuted.
+
+Validation: 77 Lab tests pass after regenerating the catalog. Firmware, menus
+and user guides unchanged. When written, the open item was repeated beta-29
+acceptance trials and whether an injected suspension pulse or a `0x25A` rewrite
+is accepted. Superseded on 2026-10-24: D, Race and the injected softer
+suspension pulse were accepted in the car; see the acceptance section above.
+
+## DNA and suspension matrix scenario, 2026-10-24
+
+Added `dna_suspension_matrix` (drivetrain, stationary, 13 steps, 2 runs, 26
+confirmations) on the scenario branch. It answers both questions in one short
+run: which report carries each drive mode, and what the damper does in every
+mode. Sequence:
+
+| Mode | Default | After one press | After a second press |
+| --- | --- | --- | --- |
+| N | control | nothing (control) | — |
+| A | control | nothing (control) | — |
+| D | hard | soft | hard |
+| Race | hard | mid (`0x10`) | hard |
+
+Added catalog labels `suspension_hard`, `suspension_soft` and `suspension_mid`
+(Polish titles, search aliases) because the old `suspension_active` /
+`suspension_inactive` pair cannot distinguish three states. The procedure uses
+the per-mode default as a built-in reset: entering a mode returns the damper to
+factory state, so every mode starts from its own confirmation. N and A are
+explicit negative controls for the console button.
+
+Expected capture evidence: mode codes on `0x384` (C1/C2), `0x46C` and `0x25A`
+(BH); damper state on `0x25A` byte 1, `0x384` byte 6 bit 7 and `0x1FC` byte 0
+bit 4; button pulse on `0x256` byte 1 bit 7. The Race mid code had never been
+recorded before this procedure; the first run (`20261024-113104Z`) closed it at
+Race=`0x10` (mid) versus Race=`0x20` (hard) in `0x25A` byte 1.
+
+Validation: 77 Lab tests pass; library now 84 procedures / 581 confirmations.
+No firmware, menu or user-guide change. Hardware acceptance was UNKNOWN when this
+procedure was written. Superseded: the procedure was run as `20261024-113104Z`
+(26/26 confirmations, two runs) and its matrix is documented in
+`baccable_lab/docs/research/20261024-three-session-audit.md`. The startup Race
+and softer-suspension settings were then accepted in the car on 2026-10-24.
+
+## Rain-to-lights capture scenario, 2026-10-23
+
+Branch `feat/rain-lights-scenario`, based on `495b335`. Replaces the 11-step
+`wipers_lights_auto` procedure with the 12-step `rain_lights_auto` (group
+`wipers`, stationary, 3 runs, 36 confirmations) so the two sensor signals can be
+recorded from one short, repeatable procedure instead of a long mixed test. The
+procedure has **no time targets** (`min_separation_s = 0`, and the dashboard
+hides the separation hint): each step is confirmed when its effect is visible,
+never after a fixed delay.
+
+**The factory car does not switch the dipped beams on because of rain or wiper
+operation** — that is the firmware feature still to be added. The rain phases
+therefore record the lamps staying **off** (`dipped_beam_off`) as the negative
+control, which proves they were not already on for another reason. After the
+firmware change those steps become `dipped_beam_on` and the same procedure is the
+acceptance test. Phases:
+
+1. light sensor covered and uncovered with the wipers **off** — an opaque cloth
+   simulates night and its removal restores daylight; this isolates the
+   light-sensor signal and confirms the factory AUTO function, because covering
+   cannot start a wipe when the wipers are off;
+2. wipers in AUTO plus washer water, then drying, **in daylight** — isolates
+   rain/wiper activation (confirm that the wipers started, not after a set
+   spraying time) while daylight cannot switch the lamps on;
+3. three manual wiper cycles, still in daylight — the third future trigger,
+   separated from the rain sensor.
+
+**Daylight outdoors is a requirement.** The procedure starts with the light
+sensor uncovered and the lamps off. After dark, or in a dark underground garage,
+AUTO switches the lamps on because of darkness and the `dipped_beam_off`
+negative control proves nothing. A flashlight variant was tried in the car and
+**discarded**: this vehicle does not react to a torch pointed at the sensor
+behind the mirror, so the first step never reached the expected lamps-off state.
+The cloth method is the supported one and is now asserted by the test.
+
+Added catalog labels `light_sensor_dark` / `light_sensor_bright` (Polish titles,
+search aliases): the existing `ambient_light_changed` cannot separate the two
+directions. Updated `baccable_lab/docs/SCENARIOS.md` (counts 83 procedures / 555
+confirmations, phase-order rationale, no-time rule and the negative-control
+statement) and `baccable_lab/docs/MARKERS.md`. Tests assert the phase order, the
+daylight assumption, the lamps-off control, the hidden time hint and the absence
+of the discarded flashlight variant.
+
+### Decisive sensor/wiper scenario, 2026-10-24
+
+Added `sensor_wiper_lights` (wipers, stationary, 14 steps, 2 runs, 28
+confirmations) after analysing the first real recording of `rain_lights_auto`
+(`20261024-105643Z`). That session is complete: 36/36 confirmations, three runs,
+no loss during capture (C2/BH lost about one second at USB start-up only). It
+shows one flag toggling exactly three times with the covered sensor on C1/C2
+`0x384` byte 3 bit 7, BH `0x354` byte 1 bit 6 and C1/C2 `0x73E`, but the test
+cannot tell whether that flag is the lamp output or the sensor's dark decision.
+
+The new procedure separates them in phase A: with the light switch **OFF**, the
+sensor is covered while the lamps stay off, so either outcome is decisive. Phase
+B then gives the AUTO lamp pair, phase C gives steady slow/fast/off wiper states
+that AUTO cannot provide, and phase D gives the rain trigger with the lamps-off
+control. It also lets the slow setting complete three sweeps, which covers the
+future three-cycle trigger without an extra step. Wiper frames were **not**
+identified in the first recording: the apparent candidates (`BH 0x738`, C1
+`0x4B1`, C1 `0x4B2`) are monotonic counters, which is why phase C needs steady
+states rather than AUTO cycling.
+
+Superseded on 2026-10-24: the later reviews identified C2 `0x2EC` byte 2 bit 5 as
+a repeating wiper-cycle phase (1.5 s slow, 0.95 s fast, low after OFF). The
+blanket "monotonic counter" dismissal was too broad — BH `0x738` bytes 1–2 are
+light-responsive raw channels even though the frame as a whole changes
+monotonically. Counting edges with a timeout, not steady occupancy, is the
+working input condition. See
+`baccable_lab/docs/research/20261024-rain-lights-correlation.md`.
+
+Validation: 76 Lab tests pass; host tests, firmware and the device user guides
+are untouched (no menu, setting, reading or device action changed). Hardware
+acceptance was UNKNOWN when this procedure was written. Superseded: the
+procedure was run as `20261024-111510Z` (28/28 confirmations, two runs), and
+that recording supplied C2 `0x2EC` wiper phases and the AUTO/lamp separation.
+Rain-light output acceptance remains open.
 
 ## Analysis absence protocol, 2026-10-23
 
@@ -1335,6 +1524,11 @@ make the function uncontrollable. All five bundles were re-checked:
 - Wipers/rain remain **undecoded**: no clean bit survives counter filtering once
   windows are bounded to the scenario span (an earlier “result” was a window run
 to the session end); `wipers_lights_auto` still needs recording.
+
+  *Superseded on 2026-10-24:* C2 `0x2EC` byte 2 bit 5 is a repeating wiper-cycle
+  phase, and BH `0x354` / C2 `0x73E` carry separate AUTO-selection and
+  dipped-beam reports. The negative statement above reflects only the bounded
+  counter-filter method used on 2026-10-11.
 
 Recorded in `docs/research/20261011-dna-lane-decode.md` (correction plus method
 lessons), the playbook anti-patterns, the dictionary (`dna_mode` notes,

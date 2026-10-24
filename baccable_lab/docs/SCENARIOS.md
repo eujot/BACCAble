@@ -131,7 +131,7 @@ vehicle = "stationary"           # stationary | driving | any
 site = "parking"                 # optional, for driving: parking | road
 order = 0                        # optional tie-break within a group
 runs = 3                         # repeated cycles
-min_separation_s = 3             # guidance, shown on screen
+min_separation_s = 3             # guidance shown on screen; 0 = no time target
 confounder_guard = ["drzwi", "szyby", "zapłon"]
 notes = "Dotykać tylko pilota."
 
@@ -155,18 +155,18 @@ drive, adas`, then `order` and `id`.
 
 ## Bundled library
 
-82 procedures (513 confirmations). Groups:
+84 procedures (581 confirmations). Groups:
 
 | Group | Procedures | Location | Examples |
 | --- | --- | --- | --- |
 | access | 10 | postój | zamek, drzwi, bagażnik, maska, klapka paliwa, szyby, lusterka, pas |
 | lighting | 10 | postój | kierunkowskazy, awaryjne, mijania/drogowe, przeciwmgielne, pozycyjne, wnętrze, stop |
-| wipers | 5 | postój/dowolnie | biegi wycieraczek, spryskiwacz, tylna wycieraczka, czujnik deszczu, wycieraczki→światła mijania (AUTO) |
+| wipers | 6 | postój/dowolnie | biegi wycieraczek, spryskiwacz, tylna wycieraczka, czujnik deszczu, czujnik jasności i deszczu + stan świateł (AUTO), rozdzielenie sygnałów |
 | climate | 8 | postój | klimatyzacja, temperatura, nawiew, odmrażanie, recyrkulacja, podgrzewanie |
 | media | 7 | postój (+1 droga) | menu IPC, ekran, źródło audio, utwór, radio, telefon, nawigacja |
 | chassis | 6 | postój (+1 droga) | tryb zawieszenia, prześwit, Q4, tryb kierownicy, ruch kierownicy |
 | brakes | 7 | postój/plac/droga | pedał hamulca, EPB, auto-hold, ABS/ESC/ASR (plac), kontrola zjazdu |
-| drivetrain | 9 | postój | zapłon, silnik, dźwignia P/R/N/D, wsteczny, manual, DNA (D/N/A/Race), Start/Stop |
+| drivetrain | 10 | postój | zapłon, silnik, dźwignia P/R/N/D, wsteczny, manual, DNA (D/N/A/Race), zawieszenie w każdym trybie, Start/Stop |
 | parking | 4 | postój | czujniki parkowania, kamera cofania, asystent, ostrzeżenie drzwi |
 | **drive** | **9** | **jazda – plac** | ruszenie (D), przyspieszanie, hamowanie, zmiana prędkości, skręcanie, biegi, manewr na wstecznym, arming tempomatu, pełznięcie |
 | adas | 7 | postój/droga | tempomat, ACC, asystent pasa (LKA), FCW/AEB, martwe pole, zmęczenie kierowcy |
@@ -176,19 +176,126 @@ so the owner can record while driving without needing a public road. `vehicle =
 "driving"` procedures are grouped last; on-road stability and collision tests
 must never be provoked on a public road.
 
-## Targeted decode tests (DNA modes, lane assist, wipers→lights)
+## Targeted decode tests (DNA modes, lane assist, rain and light sensors)
 
-Three procedures target specific firmware options, using markers in the catalog
+Five procedures target specific firmware options, using markers in the catalog
 (the DNA mode markers `dna_dynamic` / `dna_natural` / `dna_allweather` /
 `dna_race`, the lane toggle `lane_assist_disabled` / `lane_assist_enabled`, and
-`wipers_auto`):
+`wipers_auto` together with the light-sensor pair `light_sensor_dark` /
+`light_sensor_bright`):
 
 - `dna_all_modes` (drivetrain, stationary) — visit D, N, A and Race, each with its
   own marker, to confirm the per-mode code on `0x384` / `0x46C` / `0x25A`.
+- `dna_suspension_matrix` (drivetrain, stationary) — the decisive matrix: N and A
+  as negative controls, then in D the hard/soft/hard sequence, then Race with the
+  hard/mid/hard sequence. It records the mode code, the default damper state on
+  entry and the button result in one short run.
 - `lane_assist_toggle` (adas, stationary) — toggle LKA off/on with a double-click on the left stalk button.
-- `wipers_lights_auto` (wipers, stationary) — drive the wipers through off, slow,
-  fast and automatic (rain-sensor) with the headlights in AUTO, in daylight, and
-  mark the dipped-beam reaction.
+- `rain_lights_auto` (wipers, stationary) — records the two sensor signals and
+  the current dipped-beam state in three phases, repeated three times: the light
+  sensor covered and uncovered with the wipers off, then rain with the wipers in
+  AUTO, then three manual wiper cycles.
+- `sensor_wiper_lights` (wipers, stationary) — the short, decisive procedure:
+  sensor darkness with the light switch **OFF** (lamps must stay off), then the
+  AUTO lamp pair, then steady wiper states, then the rain trigger with the lamps
+  still off. Fourteen steps, two runs.
+
+### What `dna_suspension_matrix` settles
+
+The procedure is built around what the captures already show: entering a mode
+resets the damper to its default, and the same console button then changes it
+differently per mode. Sequence per run:
+
+| Mode | Default | After one press | After a second press |
+| --- | --- | --- | --- |
+| N | — (control) | nothing (control) | — |
+| A | — (control) | nothing (control) | — |
+| D | `suspension_hard` | `suspension_soft` | `suspension_hard` |
+| Race | `suspension_hard` | `suspension_mid` | `suspension_hard` |
+
+The expected codes in the captures are `0x25A` byte 1 (`10` in D, `20` in Race,
+`00` after the D press, `10` for Race mid), `0x384` byte 6 bit 7, `0x1FC`
+byte 0 as a mode/calibration report (bit 4 alone distinguishes D soft), and the
+button pulse on `0x256` byte 1 bit 7. The first run of this procedure
+(`20261024-113104Z`, 26/26 confirmations) recorded Race mid = `10`; the matrix
+now serves as a regression check.
+
+**The factory car does not switch the dipped beams on because of rain or wiper
+operation.** That behaviour is the firmware feature still to be added, so the
+rain phases of both procedures confirm that the lamps stay **off**. Those
+`dipped_beam_off` confirmations are the negative control: they prove the lamps
+were not already on for another reason, which would otherwise look like the
+feature working. After the firmware change the same steps become
+`dipped_beam_on` and the unchanged procedure is the acceptance test.
+
+### What `sensor_wiper_lights` settles
+
+The earlier session showed one flag changing exactly when the sensor was covered
+and the lamps came on. That left two possible meanings: the flag is the lamp
+state, or it is the sensor's own dark decision. Phase A separated them in
+`20261024-111510Z`: with the switch OFF and the sensor covered, `0x384` byte 6
+bit 7 did not move while BH `0x738` bytes 1–2 went to `0/0`. So `0x384` follows
+the dipped-beam report, and `0x738` carries the light-responsive raw channels.
+The procedure remains the shortest repeatable check:
+
+| Phase | Steps | Question answered |
+| --- | --- | --- |
+| A | 1–3 | switch OFF, sensor covered: the flag must **not** move if it means the lamps |
+| B | 4–7 | switch AUTO: the same flag must move with the lamps |
+| C | 8–10 | steady slow/fast/off wipers isolate the wiper state from AUTO cycling |
+| D | 11–14 | rain starts the wipers; the lamps must stay off (negative control) |
+
+Either result of phase A is decisive: if the flag moves with the sensor while
+the lamps stay off, it is a sensor decision; if it stays still, it is the lamp
+output. Phase C also covers the future three-cycle trigger by letting the slow
+setting complete three sweeps.
+
+### Why `rain_lights_auto` uses this phase order
+
+The phases must not run at the same time, because the light sensor and the rain
+sensor share the housing behind the interior mirror:
+
+1. **Light sensor first, wipers OFF.** With the car standing outdoors in
+daylight the lamps are off; an opaque cloth over the sensor simulates night and
+switches them on, and removing it switches them off again. With the wipers off
+an automatic wipe cannot start, so the only change is brightness → dipped beam.
+2. **Rain sensor second, in daylight.** The scene stays bright, so AUTO cannot
+   switch the lamps on because of darkness; the only changes are water → wipers
+   and the lamps staying off. This isolates the rain/wiper signal.
+3. **Manual wipers last, still in daylight.** Three manual cycles produce the
+   wiper signal without the rain sensor, and the lamps again stay off. This is
+   the third future trigger, separated from the rain sensor.
+
+Every phase restores the baseline it started from (wipers off, lamp sensor
+uncovered, lamps off), which is what makes the run repeatable and gives
+correlation a clean `before`/`after` window per expected state. The procedure
+deliberately omits wiper-speed ramps, gear changes and other actions that would
+add markers without adding a distinct CAN transition.
+
+### Daylight is a requirement, not a preference
+
+The procedure is written for **daylight outdoors**, with the light sensor
+uncovered at the start so the lamps are off. Run it after dark or in a dark
+underground garage only if you can restore a bright scene for the rain phases;
+otherwise AUTO switches the lamps on because of darkness and the
+`dipped_beam_off` control proves nothing.
+
+Do **not** try to force a daylight reading with a flashlight. That variant was
+tested and discarded: this car does not react to a torch pointed at the sensor
+behind the mirror, so the first step never produced the expected lamps-off
+state. The opaque cloth for the dark state and its removal for the bright state
+are the supported method.
+
+### No time targets
+
+`rain_lights_auto` sets `min_separation_s = 0`, so the screen shows no "odstęp"
+hint and there is no assumed duration for spraying, covering the sensor or
+waiting. Each step is confirmed when its effect is actually visible: cover the
+sensor → confirm the dark state → confirm the dipped beam; spray → confirm that
+the wipers started → confirm that the lamps stayed off. A repetition begins when
+the lamps and wipers are back at their baseline, not after a fixed delay. The
+same rule should be used when writing new procedures: a step describes a
+physical action and its observable result, not a timed script.
 
 Each DNA mode gets a **distinct** marker (not the shared `dna_mode_changed`) so
 the per-mode code can be correlated without mixing the four modes.
@@ -206,16 +313,24 @@ wipers→lights: you watch the lamps).
 | two sessions | 3 + 3 cycles | cross-session support and confounder rejection |
 | physical check | any | `validated` for wipers→lights |
 
-Do **not** repeat all 82 procedures: run only these three in one session (~10
-minutes), then repeat the same three in a second session. 6–9 ON/OFF
+Do **not** repeat all 84 procedures: run only these five in one session (~10
+minutes), then repeat the same five in a second session. 6–9 ON/OFF
 observations per action is the practical reliability threshold.
 
 ### Controls inside a run
 
 - DNA: end each run on N so the next baseline is known; never touch A or Race.
 - Lane: keep indicators, cruise and gear steady; the left-stalk double-click is the only change.
-- Wipers: run in daylight with the headlights in AUTO so the dark-sensor cannot
-  turn the lamps on by itself; the wiper state is the only change.
+- Wipers: keep the light sensor uncovered during the rain phase so AUTO cannot
+  turn the lamps on by itself; the wiper state is the only change. In the light
+  phase keep the wipers OFF so the covered sensor cannot start a wipe.
+- AUTO rearm: switching the wipers to AUTO on a dry screen produces **one**
+  cycle. Wait for it to finish before confirming `wipers_auto`; a rise within a
+  second of the switch is that rearm sweep, not rain. The firmware trigger needs
+  three rises in 15 s, so one rearm cycle cannot request lamps.
+- Marker names: `automatic_headlights_on/off` is the AUTO **selector** position
+  (BH `0x354` byte 3 bit 6), not a lamp state. Actual lamp ON/OFF is
+  `dipped_beam_on/off`. Do not read an AUTO selection as an illuminated beam.
 
 ## How the results are used
 
