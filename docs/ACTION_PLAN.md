@@ -31,8 +31,11 @@ now explain this distinction. [Correction and evidence](research/20261024-rain-l
 
 Original recordings and the user's scenario checkout/untracked files remain
 untouched. This correction is committed locally; no push, PR, merge, release
-or flash performed. Dictionary provenance and final verification follow in the
-same task branch.
+or flash performed. Implementation `e6159c1`; dictionary snapshot `2026-10-24.7`
+and the readable catalog now identify that source and preserve the owner's
+clarification. All 77 Lab tests and all four size/identity gates pass. Standard
+C1 flash/RAM: 97,176/15,388 bytes; maximum C1 static RAM across display profiles
+is 15,596 bytes. Runtime stack/physical lamp acceptance remain vehicle checks.
 
 
 ## Focused review of merged Rain lights, 2026-10-24
