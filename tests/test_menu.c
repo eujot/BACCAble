@@ -1406,6 +1406,7 @@ int main(void) {
         HOST_TEST(test_direct_hold_other_editors),
         HOST_TEST(test_my23_glyph_budget),
         HOST_TEST(test_render_interval_after_event),
+        HOST_TEST(test_saved_feedback),
         HOST_TEST(test_ipc_options_are_volatile),
         HOST_TEST(test_atomic_favorite_selection_identity),
         HOST_TEST(test_my23_remaining_list_previews),

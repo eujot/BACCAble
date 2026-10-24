@@ -91,7 +91,8 @@ RES w edytorze zapisuje bezpośrednio — wcześniejszy dwuklik nie jest wymagan
 Dwuklik cofa o jeden poziom. Bez zmian wraca od razu. Po zmianie szkicu pierwszy
 dwuklik pokazuje `HOLD SAVE•2X DISCARD` na MY23 albo `Hold save/2x drop` na
 starszym ekranie. Przytrzymanie zapisuje i stosuje zmianę; ustawienie zostaje
-na ekranie z potwierdzeniem zapisu. Osobny dwuklik wraca. Dwuklik zamiast
+na ekranie z komunikatem `SAVED` przez około trzy sekundy. Osobny dwuklik
+wraca. Dwuklik zamiast
 przytrzymania w ekranie potwierdzenia odrzuca szkic i wraca, zachowując oryginał.
 Błąd zapisu pozostawia szkic i możliwość kolejnej próby przytrzymaniem.
 Po restarcie wczytywane są tylko zapisane wartości. Tryb USB zmienia się dopiero
@@ -160,7 +161,7 @@ oraz szkic wartości z `HOLD SAVE`. Druga linia zawiera również pytanie o zapi
 lub jego wynik. Ulubione pokazują po jednej wybranej stronie odczytów w każdej
 linii. Readings pokazuje bieżącą stronę w pierwszej linii, a nazwę następnej
 strony w drugiej.
-`✓` oznacza udany zapis, `×` lokalny błąd.
+`SAVED` potwierdza zapis ustawienia, a `×` lokalny błąd.
 Starszy profil zachowuje pierwszą linię 18/24 znaki i podpis `BACCAble beta`.
 Obsługa przycisków i szkiców jest taka sama, a pytania mieszczą się w jednej linii.
 

@@ -82,7 +82,8 @@ editor to save directly; no preceding double-click is required. Double-click
 returns one level. With an unchanged setting it returns immediately.
 With a changed draft, the first double-click shows `HOLD SAVE•2X DISCARD` on MY23
 (`Hold save/2x drop` on legacy). Hold RES to persist and apply; the setting stays
-visible with saved feedback. A separate double-click returns. Double-click in
+visible with `SAVED` feedback for about three seconds. A separate double-click
+returns. Double-click in
 the confirmation instead to discard and return, keeping the original setting.
 A failed save keeps the draft and confirmation available for another hold.
 A restart loads committed values only. USB mode changes only after a successful
@@ -143,7 +144,7 @@ current item with `›` above the next item. Editors show a setting and its draf
 value, with `HOLD SAVE`. Confirmation and saved feedback use the second line.
 Live Favorites show one complete selected reading page on each line. Readings
 show one page in the first line and preview the next page in the second line.
-`✓` means saved; `×` means a local failure.
+`SAVED` confirms a completed settings save; `×` means a local failure.
 The legacy profile retains its 18/24-character first line and `BACCAble beta`
 footer. It uses the same button and draft rules, with single-line prompts.
 

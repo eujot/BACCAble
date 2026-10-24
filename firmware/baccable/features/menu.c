@@ -156,6 +156,7 @@ static bool preferences_saved;
 #define NOTICE_CONFIRM_MS 750U
 #define NOTICE_WARNING_MS 1800U
 #define NOTICE_REQUEST_MS 1200U
+#define NOTICE_SAVED_MS 3000U
 static uint32_t notice_duration;
 static uint32_t confirm_started, last_input;
 static void build_pages(uint16_t selected);
@@ -424,7 +425,10 @@ void menu_notice(const char *text) {
 
 void menu_notice_saved(const char *title) {
     notice_label = title;
-    menu_notice("Saved");
+    /* Keep the result visible through UART delivery and the IPC fragment transfer. */
+    notice = "Saved";
+    notice_started = currentTime;
+    notice_duration = NOTICE_SAVED_MS;
 }
 
 /* Save favorites, visibility, sort order and remembered pages. */
@@ -912,7 +916,7 @@ void menu_render(void) {
         return;
     }
     if (notice && currentTime - notice_started < notice_duration) {
-        if (settings_state.ipc_my23_is_installed && !strcmp(notice, "Saved")) menu_present_view(UI_MODE_NOTICE, notice_label, MY23_SAVED " SAVED");
+        if (settings_state.ipc_my23_is_installed && !strcmp(notice, "Saved")) menu_present_view(UI_MODE_NOTICE, notice_label, "SAVED");
         else menu_present(notice);
         return;
     }

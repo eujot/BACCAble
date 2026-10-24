@@ -109,7 +109,9 @@ visible slots selectable.
 Long generic notices continue onto L2 instead of replacing useful text with a
 static Back footer. A long active title ends with `…`.
 Settings show draft values with `HOLD SAVE`; confirmation shows
-`HOLD SAVE•2X DISCARD` and saved feedback `✓ SAVED`. Every Reading keeps its
+`HOLD SAVE•2X DISCARD` and plain `SAVED` feedback for three seconds. The save
+event starts with the MY23 title and result instead of first queuing a
+replaceable single-line notice. Every Reading keeps its
 catalog measurements on L1, including multi-value pages; L2 previews the next
 page. `dashboard_format_my23_page()` selects compact templates only in MY23,
 then removes numeric padding. Tests cover both catalogs and both compiled legacy

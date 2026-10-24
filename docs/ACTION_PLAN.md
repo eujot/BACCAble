@@ -4,6 +4,23 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Menu save feedback, 2026-10-25
+
+Branch `fix/menu-save-feedback`, based on `origin/master` after PR #84. The MY23
+save confirmation now uses plain `SAVED` without the checkmark that the owner's
+IPC did not render correctly. It stays visible for three seconds to allow
+normal UART delivery and the fragmented BH display update when a factory
+message briefly defers the menu. The transient one-line `Saved` submission was
+removed so the save event starts with the complete title/result screen. Explicit save, draft,
+discard and action semantics are unchanged. The two user guides and MENU_UX are
+updated. Physical visibility under continuous factory display traffic still
+needs vehicle acceptance; this is not an IPC delivery acknowledgement.
+Validation: `test-menu-fast` passes in legacy and MY23 profiles, including the
+new feedback-duration case; C1 builds with Arm GNU 15.2.Rel1 at
+96,096 bytes of text, 1,852 bytes of data and 13,568 bytes of BSS. No board
+was flashed. The user's existing untracked captures and checkouts were left
+untouched in the original worktree.
+
 ## v5-beta-31 release preparation, 2026-10-24
 
 PR branch `fix/rain-test-reliability` contains the Rain test diagnostic action

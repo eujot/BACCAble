@@ -283,7 +283,7 @@ static void test_staged_setting_failure_and_discard(void) {
         menu_event(MENU_HOLD);
         assert(settings_state.shift_threshold == 3750 && setup_stage_active());
         assert(settings_writes == before + 2);
-        now += 2000; menu_render();
+        now += 3000; menu_render();
         menu_event(MENU_BACK); /* Return only to Features, not Settings. */
         assert(!setup_stage_active());
         if (profile) {
@@ -327,7 +327,7 @@ static void test_favorite_slot_draft_flow(void) {
     assert(preference_writes == writes + 1);
     fail_save = false; menu_event(MENU_HOLD);
     assert(preference_writes == writes + 2);
-    now += 2000; menu_render();
+    now += 3000; menu_render();
     assert(strstr(screen, "S2 ")); /* Successful save stays at selected slot. */
     menu_event(MENU_BACK);
     assert(strstr(screen, "Favorite 1"));
@@ -467,7 +467,7 @@ static void test_page_editor_transactions(void) {
         assert(preference_writes==writes+1 && !memcmp(original,saved,sizeof(saved)));
         fail_save=false; menu_event(MENU_HOLD);
         assert(preference_writes==writes+2 && memcmp(original,saved,sizeof(saved)));
-        now+=2000; menu_render(); menu_event(MENU_BACK); /* Clean editor -> Settings. */
+        now+=3000; menu_render(); menu_event(MENU_BACK); /* Clean editor -> Settings. */
         assert(strstr(screen, editor==2 ? "Shown pages" : "Favorite order"));
         MenuPreferences committed; assert(menu_preferences_decode(&committed,saved));
         for(unsigned f=0;f<FAVORITE_SET_COUNT;++f) {
@@ -509,7 +509,7 @@ static void test_my23_visibility_transaction(void) {
     expect_my23_list("Shown pages","Sort order");
     menu_event(MENU_SELECT); assert(screen_packet[4]==0x84);
     menu_event(MENU_SELECT); menu_event(MENU_BACK); menu_event(MENU_HOLD);
-    now+=2000; menu_render();
+    now+=3000; menu_render();
     assert(screen_packet[4]==0x85 && !memcmp(preview, screen_packet + 2 + MY23_L1_VISIBLE, 22));
     menu_event(MENU_BACK); expect_my23_list("Shown pages","Sort order");
     dashboard_state.baccable_dashboard_menu_visible=0; menu_init(); menu_event(MENU_HOLD);
@@ -631,4 +631,22 @@ static void test_render_interval_after_event(void) {
         now += 99; menu_process(); assert(native_reads == before);
         now += 1; menu_process(); assert(native_reads > before);
     }
+}
+
+/* Saved feedback keeps a plain result for the three-second window. */
+static void test_saved_feedback(void) {
+    fresh_contract(); to_settings();
+    settings_state.ipc_my23_is_installed = 1;
+    menu_render();
+    menu_notice_saved("Sort order");
+    menu_render();
+    assert(!memcmp(screen_packet + 2, "Sort order", 10));
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "SAVED", 5));
+    assert(screen_packet[2 + MY23_L1_VISIBLE + 5] == ' ');
+    now += 2999;
+    menu_render();
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "SAVED", 5));
+    now += 1;
+    menu_render();
+    assert(memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "SAVED", 5));
 }
