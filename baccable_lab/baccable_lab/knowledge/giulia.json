@@ -11293,7 +11293,7 @@
       "role": "BH",
       "topic": "DNA-RELATED-25A-001",
       "source": "docs/research/20261023-dna-selector.md",
-      "status": "supported: Byte 1 is the damper setting and is relative to the drive mode. Entering a mode resets it: D=0x10 hard, Race=0x20 hard, N/A=0x00. The console button then sets D=0x00 (soft) or Race=0x10 (mid) and a second press returns to the mode default; 8/8 presses in 20261024-113104Z, with C1/C2 0x384 byte 6 bit 7 and C1/C2 0x1FC byte 0 mirroring the softened state. The same value 0x10 therefore means D hard and Race mid, so decode it together with the mode. Mode entry and exit show a ~200 ms transient; settle before decoding. The startup preference injects the rotary direction instead of rewriting this report, and the car applies the configured softer setting."
+      "status": "supported: Byte 1 is the damper setting and is relative to the drive mode. Entering a mode resets it: D=0x10 hard, Race=0x20 hard, N/A=0x00. The console button then sets D=0x00 (soft) or Race=0x10 (mid) and a second press returns to the mode default; 8/8 presses in 20261024-113104Z, with C1/C2 0x384 byte 6 bit 7 and C1/C2 0x1FC byte 0 mirroring the softened state. The same value 0x10 therefore means D hard and Race mid, so decode it together with the mode. Mode entry carries the previous damper level for 24–36 ms, so settle before decoding; returning from Race to N passes through D as a real intermediate mode. The startup preference injects the rotary direction instead of rewriting this report, and the car applies the configured softer setting."
     },
     {
       "can_id": "0x73C",

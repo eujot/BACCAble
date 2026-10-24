@@ -406,15 +406,19 @@ Session `20261024-113104Z` (`dna_suspension_matrix`, 26/26 confirmations, two
 runs) also resolved the damper field. BH `0x25A` byte 1 is **mode-relative**:
 D=`0x10` hard, D=`0x00` soft, Race=`0x20` hard, Race=`0x10` mid. Entering a mode
 resets it, and 8/8 button presses matched in both directions. C1/C2 `0x384`
-byte 6 bit 7 and C1/C2 `0x1FC` byte 0 mirror the softened state (`0x80` and
-`0x50`/`0x40`). The same `0x10` value means D hard and Race mid, so a decoder
-must combine it with the mode; mode entry and exit show ~200 ms transients, so
-settle before decoding. The earlier "mid = `0x30`" hypothesis is refuted.
+byte 6 bit 7 and C1/C2 `0x1FC` byte 0 also change with the softer state, but
+`0x1FC` must be read with the actual mode: N/A=`0x50`, D hard/soft=`0x40`/`0x50`,
+Race hard/mid=`0x60`/`0x40`. The same `0x10` in `0x25A` means D hard and Race
+mid, so a decoder must combine it with the mode; mode entry carries the previous
+damper level for 24–36 ms, so settle before decoding (returning from Race to N
+passes through D as a real intermediate mode). The earlier "mid = `0x30`"
+hypothesis is refuted.
 
 Validation: 77 Lab tests pass after regenerating the catalog. Firmware, menus
-and user guides unchanged. Still open: repeated beta-29 acceptance trials (every
-mode, several ignitions), and whether an injected suspension button pulse or a
-`0x25A` rewrite is accepted by the vehicle.
+and user guides unchanged. When written, the open item was repeated beta-29
+acceptance trials and whether an injected suspension pulse or a `0x25A` rewrite
+is accepted. Superseded on 2026-10-24: D, Race and the injected softer
+suspension pulse were accepted in the car; see the acceptance section above.
 
 ## DNA and suspension matrix scenario, 2026-10-24
 
@@ -428,7 +432,7 @@ mode. Sequence:
 | N | control | nothing (control) | — |
 | A | control | nothing (control) | — |
 | D | hard | soft | hard |
-| Race | hard | mid (unknown code) | hard |
+| Race | hard | mid (`0x10`) | hard |
 
 Added catalog labels `suspension_hard`, `suspension_soft` and `suspension_mid`
 (Polish titles, search aliases) because the old `suspension_active` /
@@ -1520,6 +1524,11 @@ make the function uncontrollable. All five bundles were re-checked:
 - Wipers/rain remain **undecoded**: no clean bit survives counter filtering once
   windows are bounded to the scenario span (an earlier “result” was a window run
 to the session end); `wipers_lights_auto` still needs recording.
+
+  *Superseded on 2026-10-24:* C2 `0x2EC` byte 2 bit 5 is a repeating wiper-cycle
+  phase, and BH `0x354` / C2 `0x73E` carry separate AUTO-selection and
+  dipped-beam reports. The negative statement above reflects only the bounded
+  counter-filter method used on 2026-10-11.
 
 Recorded in `docs/research/20261011-dna-lane-decode.md` (correction plus method
 lessons), the playbook anti-patterns, the dictionary (`dna_mode` notes,

@@ -136,7 +136,7 @@ vehicle = "stationary"
 runs = 2
 min_separation_s = 0
 confounder_guard = ["bieg", "hamulec", "kierownica", "silnik"]
-notes = "Silnik pracuje, bieg P, postój, kierownica nieruchoma. Potwierdzaj stan na wyświetlaczu po jego ustabilizowaniu; bez czasów. Cel: (1) kody trybów na 0x384/0x46C/0x25A, (2) stan zawieszenia w każdym trybie na 0x25A bajt 1, 0x384 b6[7] i 0x1FC b0[4], (3) wejście przycisku na 0x256 bajt 1 bit 7. W N i A przycisk ma nie zmieniać niczego — to kontrola negatywna. W D domyślne jest TWARDE, po naciśnięciu SOFT; w Race domyślne TWARDE, po naciśnięciu MID (ten kod jest jeszcze nieznany). Zmiana trybu sama przywraca domyślne zawieszenie, dlatego każdy tryb zaczyna od osobnego potwierdzenia."
+notes = "Silnik pracuje, bieg P, postój, kierownica nieruchoma. Potwierdzaj stan na wyświetlaczu po jego ustabilizowaniu; bez czasów. Cel: (1) kody trybów na 0x384/0x46C/0x25A, (2) stan zawieszenia w każdym trybie na 0x25A bajt 1, 0x384 b6[7] oraz 0x1FC bajt 0 (b0[4] rozróżnia tylko soft w D; odczytuj razem z trybem), (3) wejście przycisku na 0x256 bajt 1 bit 7. W N i A przycisk ma nie zmieniać niczego — to kontrola negatywna. W D domyślne jest TWARDE, po naciśnięciu SOFT; w Race domyślne TWARDE, po naciśnięciu MID (kod 0x10 w 0x25A bajt 1). Zmiana trybu sama przywraca domyślne zawieszenie, dlatego każdy tryb zaczyna od osobnego potwierdzenia. Macierz została już potwierdzona 24.10.2026; ten przebieg służy teraz jako kontrola regresji."
 [[scenario.steps]]
 action = "Ustaw N (Natural) — punkt odniesienia"
 expect = "dna_natural"

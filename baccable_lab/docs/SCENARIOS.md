@@ -214,9 +214,11 @@ differently per mode. Sequence per run:
 | Race | `suspension_hard` | `suspension_mid` | `suspension_hard` |
 
 The expected codes in the captures are `0x25A` byte 1 (`10` in D, `20` in Race,
-`00` after the D press), `0x384` byte 6 bit 7 and `0x1FC` byte 0 bit 4 for the
-comfort flag, and the button pulse on `0x256` byte 1 bit 7. The **Race mid code
-is still unknown** — no recording contains it, so this run is what closes it.
+`00` after the D press, `10` for Race mid), `0x384` byte 6 bit 7, `0x1FC`
+byte 0 as a mode/calibration report (bit 4 alone distinguishes D soft), and the
+button pulse on `0x256` byte 1 bit 7. The first run of this procedure
+(`20261024-113104Z`, 26/26 confirmations) recorded Race mid = `10`; the matrix
+now serves as a regression check.
 
 **The factory car does not switch the dipped beams on because of rain or wiper
 operation.** That behaviour is the firmware feature still to be added, so the
@@ -229,8 +231,12 @@ feature working. After the firmware change the same steps become
 ### What `sensor_wiper_lights` settles
 
 The earlier session showed one flag changing exactly when the sensor was covered
-and the lamps came on. That leaves two possible meanings: the flag is the lamp
-state, or it is the sensor's own dark decision. This procedure separates them:
+and the lamps came on. That left two possible meanings: the flag is the lamp
+state, or it is the sensor's own dark decision. Phase A separated them in
+`20261024-111510Z`: with the switch OFF and the sensor covered, `0x384` byte 6
+bit 7 did not move while BH `0x738` bytes 1–2 went to `0/0`. So `0x384` follows
+the dipped-beam report, and `0x738` carries the light-responsive raw channels.
+The procedure remains the shortest repeatable check:
 
 | Phase | Steps | Question answered |
 | --- | --- | --- |
@@ -308,7 +314,7 @@ wipers→lights: you watch the lamps).
 | physical check | any | `validated` for wipers→lights |
 
 Do **not** repeat all 84 procedures: run only these five in one session (~10
-minutes), then repeat the same three in a second session. 6–9 ON/OFF
+minutes), then repeat the same five in a second session. 6–9 ON/OFF
 observations per action is the practical reliability threshold.
 
 ### Controls inside a run
@@ -318,6 +324,13 @@ observations per action is the practical reliability threshold.
 - Wipers: keep the light sensor uncovered during the rain phase so AUTO cannot
   turn the lamps on by itself; the wiper state is the only change. In the light
   phase keep the wipers OFF so the covered sensor cannot start a wipe.
+- AUTO rearm: switching the wipers to AUTO on a dry screen produces **one**
+  cycle. Wait for it to finish before confirming `wipers_auto`; a rise within a
+  second of the switch is that rearm sweep, not rain. The firmware trigger needs
+  three rises in 15 s, so one rearm cycle cannot request lamps.
+- Marker names: `automatic_headlights_on/off` is the AUTO **selector** position
+  (BH `0x354` byte 3 bit 6), not a lamp state. Actual lamp ON/OFF is
+  `dipped_beam_on/off`. Do not read an AUTO selection as an illuminated beam.
 
 ## How the results are used
 

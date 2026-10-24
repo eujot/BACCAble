@@ -93,7 +93,7 @@ expect = "light_sensor_bright"
 action = "Światła mijania zgasły"
 expect = "dipped_beam_off"
 [[scenario.steps]]
-action = "Wycieraczki AUTO, szyba sucha — wycieraczki nie pracują (kontrola)"
+action = "Wycieraczki AUTO, szyba sucha — jeden cykl uzbrojenia przy przełączeniu, potem stoją (kontrola)"
 expect = "wipers_auto"
 [[scenario.steps]]
 action = "Spryskaj szybę — wycieraczki ruszyły"
@@ -122,7 +122,7 @@ vehicle = "stationary"
 runs = 2
 min_separation_s = 0
 confounder_guard = ["bieg", "silnik", "klimatyzacja"]
-notes = "Dzień, na zewnątrz, zapłon włączony, wycieraczki WYŁ., przełącznik świateł najpierw w OFF. Faza A (kroki 1-3) rozstrzyga, czy flaga w 0x384/0x354/0x73E to stan lamp, czy decyzja czujnika: przy świetle OFF czujnik widzi ciemność, ale lampy muszą pozostać zgaszone. Faza B (4-7) daje jednoznaczne ON/OFF świateł w AUTO. Faza C (8-10) daje stałe stany wycieraczek, których tryb AUTO nie daje. Faza D (11-14) daje wyzwolenie czujnika deszczu i kontrolę negatywną świateł. Potwierdzaj dopiero po zobaczeniu efektu, nie po czasie."
+notes = "Dzień, na zewnątrz, zapłon włączony, wycieraczki WYŁ., przełącznik świateł najpierw w OFF. Faza A (kroki 1-3) rozstrzyga, czy flaga w 0x384/0x354/0x73E to stan lamp, czy decyzja czujnika: przy świetle OFF czujnik widzi ciemność, ale lampy muszą pozostać zgaszone. Faza B (4-7) daje jednoznaczne ON/OFF świateł w AUTO. Faza C (8-10) daje stałe stany wycieraczek, których tryb AUTO nie daje. Faza D (11-14) daje wyzwolenie czujnika deszczu i kontrolę negatywną świateł. Przełączenie wycieraczek na AUTO na suchej szybie daje jeden cykl uzbrojenia — odczekaj, aż się skończy, i dopiero potwierdź tryb. Potwierdzaj dopiero po zobaczeniu efektu, nie po czasie."
 [[scenario.steps]]
 action = "Światła OFF, czujnik jasności odsłonięty — punkt odniesienia (jasno)"
 expect = "light_sensor_bright"
@@ -154,7 +154,7 @@ expect = "wipers_fast"
 action = "Wycieraczki: wyłączone"
 expect = "wipers_off"
 [[scenario.steps]]
-action = "Wycieraczki AUTO, szyba sucha — nie pracują (kontrola)"
+action = "Wycieraczki AUTO, szyba sucha — jeden cykl uzbrojenia przy przełączeniu, potem stoją (kontrola)"
 expect = "wipers_auto"
 [[scenario.steps]]
 action = "Spryskaj szybę — wycieraczki ruszyły"
