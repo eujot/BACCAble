@@ -4,6 +4,22 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## MY23 reading spacing, 2026-10-25
+
+Branch `fix/readings-spacing` continues `fix/menu-save-feedback`. The compact
+four-temperature page now presents `O/W/I/X` before their numbers, moves spare
+padding between values, and preserves all four values when several reach three
+digits. The four misfire counts use slash separators in cylinder order.
+`Oil/coolant temp` keeps a space before both temperatures. Readings and Favorite
+slots share this formatter; legacy page templates and persisted page IDs are
+unchanged. Both user guides and MENU_UX now show the actual compact examples.
+The fast menu suite passes across legacy/MY23 profiles. All four C1 display
+build profiles link with Arm GNU 15.2.Rel1. Standard C1 uses 96,168 text +
+1,852 data bytes; `LARGE_DISPLAY` uses 96,428 text + 1,852 data bytes, leaving
+only 24 bytes below the 98,304-byte Flash limit. CI's 15.3.Rel1 compiler must
+check that tighter build independently. No board was flashed; MY23 readability
+still needs vehicle review.
+
 ## Menu save feedback, 2026-10-25
 
 Branch `fix/menu-save-feedback`, based on `origin/master` after PR #84. The MY23

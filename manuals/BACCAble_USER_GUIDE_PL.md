@@ -287,6 +287,13 @@ format. Na przykład
 pozostaje jednym slotem. `--` oznacza brak aktualnej wartości. `Gear -` obejmuje surowy kod
 `0xF` („brak informacji”); nie jest to piętnasty bieg.
 
+Na MY23 `Oil/water/IC C` pokazuje cztery temperatury jako `O90 W85 I40 X35`:
+olej, płyn chłodzący, wlot i wylot intercoolera. Gdy wartości mają trzy cyfry,
+odstępy są ograniczane, np. `O101W102I103X104`, aby zachować wszystkie odczyty
+w 16 znakach. `Oil/coolant temp` pokazuje `Oil 101° W 88°`, gdzie `W` oznacza
+płyn chłodzący. `Misfires cyl 1-4` pokazuje liczniki w kolejności cylindrów,
+np. `12/ 23/ 34/ 45`.
+
 Wyświetlane i edytowane są tylko Slot 1 i Slot 2. Wcześniejsze rekordy pięciu
 slotów zachowują w pamięci miejsca 3–5 dla zgodności, ale nie są one pokazywane
 ani odpytywane. Zapis dwóch widocznych slotów nie usuwa pozostałych ID.

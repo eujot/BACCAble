@@ -118,6 +118,10 @@ then removes numeric padding. Tests cover both catalogs and both compiled legacy
 widths: formatted MY23 pages fit 16 glyphs, including four-value and status
 pages. Legacy continues using the original catalog templates. The same MY23
 formatter supplies both visible Favorite slots.
+The four-temperature MY23 page places each `O/W/I/X` label before its value
+and uses available spaces between fields. Four three-digit temperatures still
+fit as `O101W102I103X104`. The four misfire counts use slash separators in
+cylinder order; the oil/coolant pair keeps a visible space before its value.
 Favorite polling deduplicates UDS IDs across both pages at one request per
 500 ms. Its diagnostic cache age is max(3000 ms, (unique count + 1) * 500 ms),
 bounded to 4500 ms for eight values. Native values and Readings without a next-page preview retain

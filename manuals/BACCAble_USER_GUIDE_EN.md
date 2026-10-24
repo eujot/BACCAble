@@ -264,6 +264,12 @@ and uses a shorter caption where necessary; legacy keeps the catalog format. A p
 added to Favorites. `--` means unavailable or stale. `Gear -` includes the raw
 `0xF` unavailable code; it is not gear 15.
 
+On MY23, `Oil/water/IC C` shows all four temperatures as `O90 W85 I40 X35`:
+oil, coolant, intercooler inlet and outlet. Spaces shrink when three-digit
+values need the 16-character line, for example `O101W102I103X104`.
+`Oil/coolant temp` uses `Oil 101° W 88°`; `W` is coolant. `Misfires cyl 1-4`
+shows counts in cylinder order, for example `12/ 23/ 34/ 45`.
+
 Only the first two saved slots are shown and editable in this revision. Earlier
 five-slot records retain slots 3–5 in storage for compatibility, but those slots
 are not displayed or polled. Saving Slots 1–2 does not erase those old IDs.
