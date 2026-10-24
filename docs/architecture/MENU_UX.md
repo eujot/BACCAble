@@ -405,8 +405,10 @@ failure can show `No confirm` even if the selected DNA mode itself succeeded.
 `0x25A` must be a standard DLC-4 data frame.
 Its byte-1 bits 5:4 are decoded by mode: D Stiff=1, Soft=0; Race Stiff=2,
 Mid=1. The labelled `20261024-113104Z` manual matrix directly supports both
-D Soft and Race Mid, with two repetitions each. Automatic startup replay still
-requires vehicle acceptance. Mode entry can briefly retain the previous level:
+D Soft and Race Mid, with two repetitions each. Owner-reported vehicle
+testing on 2026-10-24 accepted the automatic startup replay for Race and the
+softer suspension setting; the feedback-gated retry path was not separately
+exercised. Mode entry can briefly retain the previous level:
 Race first reports `04 10 00 00` for 35–36 ms before the default `04 20 00 00`.
 Unknown codes invalidate the previous sample, and the state must settle for
 300 ms before use. See the [three-session audit](../../baccable_lab/docs/research/20261024-three-session-audit.md),
@@ -421,7 +423,9 @@ factory-neutral input and only after older software/hardware transmissions have
 drained. During a press, each new factory-neutral report requests a fresh copy
 with the owned input held; long holds also refresh after 250 ms without a repeat.
 The original received message is not intercepted or modified. This reduces the
-neutral gap on the shared bus; actual ECU acceptance still needs vehicle testing.
+neutral gap on the shared bus; owner-reported testing on 2026-10-24 confirms
+that the car accepts the injected `Race` gesture and the softer suspension
+pulse. The physical sender of `0x256` is still unidentified.
 It takes up to three adjacent steps in A/N/D/Race order. Actual mode must settle
 for one second before each step or suspension action; the preceding release also
 needs at least 300 ms and a new neutral report. No observed step within 3 s
@@ -458,13 +462,14 @@ Browsing a non-N preference displays target and `Next start`, `Start engine`, `W
 A failed check leaves the preference for the next start. The preference never
 rewrites `0x384`, `0x46C`, `0x25A` or transmission status. Existing ESC/TC display
 customization still uses actual observed mode and preserves 0x384 byte 7;
-0x5A8 retains its genuine J1850 CRC. Input replay acceptance remains a vehicle
-check, based on the [capture evidence](../../baccable_lab/docs/research/20261023-dna-all-sessions.md).
+0x5A8 retains its genuine J1850 CRC. Input replay acceptance was reported for
+D and Race on 2026-10-24, based on the
+[capture evidence](../../baccable_lab/docs/research/20261023-dna-all-sessions.md).
 
 The startup-gesture correction and its acceptance limits are described in
 [the beta-29 failure review](../research/20261024-startup-gesture-correction.md).
 
-## Rain lights (unreleased after v5-beta-29)
+## Rain lights (v5-beta-30)
 
 `Settings` → `Features` → `Comfort` → `Rain lights` is an ordinary OFF/ON draft, default OFF,
 persisted in new slot 42. Record 0x101 now has 42 halfwords (84 bytes); loaders

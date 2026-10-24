@@ -720,7 +720,7 @@
       "status": "supported",
       "role": "BH",
       "can_id": "0x25A",
-      "description": "Labelled manual matrix confirms b1[5:4]: D Stiff=1, Soft=0; Race Stiff=2, Mid=1. Two complete repetitions give four D/Race softer-to-firm pairs; N/A button controls have no response. New mode entries carry a 24\u201336 ms transitional old level. This supersedes the Mid=1 inference, not the separate question of injected startup acceptance.",
+      "description": "Labelled manual matrix confirms b1[5:4]: D Stiff=1, Soft=0; Race Stiff=2, Mid=1. Two complete repetitions give four D/Race softer-to-firm pairs; N/A button controls have no response. New mode entries carry a 24\u201336 ms transitional old level. This supersedes the Mid=1 inference. Owner-reported vehicle acceptance on 2026-10-24 for the beta-30 source: the configured Race default selects Race and the configured softer suspension setting is applied in the car. This confirms the injected BH 0x256 gestures and the 150 ms suspension pulse. The feedback-gated retry path itself was not separately observed, and no capture or trace accompanies the report.",
       "evidence": [
         {
           "session": "20261011-190746Z",
@@ -878,7 +878,7 @@
           2
         ]
       ],
-      "description": "Momentary selector direction: raw 0=released, 1=toward A (byte 0=20), 2=toward D/Race (byte 0=40). All 36 non-neutral pulses match selector-associated mode changes across three sessions. Every N-to-D (8/8) follows onset by 108-112 ms on BH; pulses last 154-294 ms. Five long holds precede Race by 1194-1211 ms. It is not a latched selected-mode report. C1 0x256/DLC 8 is unrelated. Startup replay implemented in 00b4b99; implementation does not promote the capture claim to hardware validated. The new matrix adds 13 operator-associated direction pulses, including two D-to-Race responses after 1196/1210 ms and return through intermediate D before N.",
+      "description": "Momentary selector direction: raw 0=released, 1=toward A (byte 0=20), 2=toward D/Race (byte 0=40). All 36 non-neutral pulses match selector-associated mode changes across three sessions. Every N-to-D (8/8) follows onset by 108-112 ms on BH; pulses last 154-294 ms. Five long holds precede Race by 1194-1211 ms. It is not a latched selected-mode report. C1 0x256/DLC 8 is unrelated. Startup replay implemented in 00b4b99. Owner-reported vehicle acceptance on 2026-10-24 for the beta-30 source: the configured Race default selects Race and the configured softer suspension setting is applied in the car. This confirms the injected BH 0x256 gestures and the 150 ms suspension pulse. The feedback-gated retry path itself was not separately observed, and no capture or trace accompanies the report. Replay therefore acts on the vehicle; the physical sender is still unidentified. The new matrix adds 13 operator-associated direction pulses, including two D-to-Race responses after 1196/1210 ms and return through intermediate D before N.",
       "evidence": [
         {
           "session": "20261010-111025Z",

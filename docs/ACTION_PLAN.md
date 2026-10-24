@@ -1,5 +1,25 @@
 # BACCAble action plan and agent handoff
 
+## Vehicle acceptance of startup Race and suspension, 2026-10-24
+
+The owner tested the merged beta-30 source in the car and reports that both
+startup actions work: `Default mode` = `Race` selects Race, and `Suspension` =
+`Soft` applies the softer damper setting. Together with the earlier D report
+this accepts the injected BH `0x256` direction gesture and the 150 ms suspension
+pulse on the vehicle. It also supersedes the "Race and suspension still need
+acceptance" notes in beta-29/beta-30 research, the dictionary and both guides.
+
+Limits of this evidence: no capture, marker or CAN trace accompanies the report;
+the feedback-gated retry path (two ignored pulses) was not separately exercised;
+`A` was not reported; and Rain lights output acceptance is unrelated and still
+open. The physical sender of `0x256` remains unidentified. Recorded as
+`implemented_and_vehicle_accepted` for the startup selector and the reliability
+correction, with the retry caveat kept in the detail. Dictionary
+`2026-10-24.8`; the readable catalog was regenerated.
+
+Validation: Lab suite passes; firmware, menus and behaviour are unchanged by
+this documentation commit, so no rebuild or device flash is implied.
+
 ## v5-beta-30 release, 2026-10-24
 
 PR #77 (`241b993`) added `Rain lights`, DNA Race/suspension reliability
@@ -49,9 +69,9 @@ Validation after the merge: 81 Lab tests pass, the full host suite passes, and
 all four flavours build with Arm GNU 15.2.Rel1 and four-flavor `lint`. Standard
 sizes: C1 97,180/15,388 bytes, C2 31,072/12,392, BH 36,608/13,260, CAN 25,196/7,000.
 C1 has only about 1.1 KiB of flash headroom. No firmware behaviour changed in
-this merge and no device was flashed. Still open: vehicle acceptance of the
-Race startup gesture, the suspension retry, and whether the injected `0x73E`
-lamp bits are accepted while factory frames continue.
+this merge and no device was flashed. Still open: acceptance of the Rain lights
+lamp injection while factory frames continue, and observation of the guarded
+suspension retry path.
 
 ## Rain-light UART correction and owner clarification, 2026-10-24
 
@@ -424,8 +444,11 @@ recorded before this procedure; the first run (`20261024-113104Z`) closed it at
 Race=`0x10` (mid) versus Race=`0x20` (hard) in `0x25A` byte 1.
 
 Validation: 77 Lab tests pass; library now 84 procedures / 581 confirmations.
-No firmware, menu or user-guide change. Hardware acceptance is UNKNOWN until
-the procedure is run in the car.
+No firmware, menu or user-guide change. Hardware acceptance was UNKNOWN when this
+procedure was written. Superseded: the procedure was run as `20261024-113104Z`
+(26/26 confirmations, two runs) and its matrix is documented in
+`baccable_lab/docs/research/20261024-three-session-audit.md`. The startup Race
+and softer-suspension settings were then accepted in the car on 2026-10-24.
 
 ## Rain-to-lights capture scenario, 2026-10-23
 
@@ -500,10 +523,10 @@ working input condition. See
 
 Validation: 76 Lab tests pass; host tests, firmware and the device user guides
 are untouched (no menu, setting, reading or device action changed). Hardware
-acceptance is UNKNOWN: nobody has run the procedure in a car yet. Next: run all
-three phases three times in daylight, then `baccable bundle` and correlate the
-`rain_detected/stopped`, `wipers_*` and `light_sensor_*` steps (with
-`dipped_beam_off` as the baseline) before writing any firmware rule.
+acceptance was UNKNOWN when this procedure was written. Superseded: the
+procedure was run as `20261024-111510Z` (28/28 confirmations, two runs), and
+that recording supplied C2 `0x2EC` wiper phases and the AUTO/lamp separation.
+Rain-light output acceptance remains open.
 
 ## Analysis absence protocol, 2026-10-23
 
