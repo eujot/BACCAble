@@ -1,20 +1,19 @@
 # BACCAble action plan and agent handoff
 
-## v5-beta-29 release preparation, 2026-10-24
+## v5-beta-29 release verification, 2026-10-24
 
-Preparing release notes on `docs/v5-beta-29-release`, based on master after
-PR #74 (`cf158dd`). The release includes the audited engine-gated DNA startup,
-the D/Race suspension preference, removal of the Experiments DID menu, and the
-restored C1 96 KiB application / 20 KiB optional USB-disk layout. Full user-facing
-scope and compatibility notes are in [v5-beta-29](releases/v5-beta-29.md).
+Published [v5-beta-29](https://github.com/eujot/BACCAble/releases/tag/v5-beta-29)
+from master commit `c2b6ba773b35cd15bb6baa7fd5eb380b471aeb81`, after PR #74
+(firmware changes) and PR #75 (release notes). The release workflow
+[40077905379](https://github.com/eujot/BACCAble/actions/runs/40077905379)
+passed host/Lab tests, lint, all C1/C2/BH/CAN builds, independent IPC/display
+profiles, size and identity checks, and packaging. The 14 downloaded assets
+all pass `SHA256SUMS`. The pinned Arm GNU 15.3.Rel1 build records C1 at
+96,500/98,304 flash bytes and 15,364/16,384 RAM bytes.
 
-The audit on PR #74 passed the native ASan/UBSan host suite, release-script
-tests, Lab tests, all board/display builds, cppcheck and size gates using the
-locally documented Arm GNU 15.2.Rel1 toolchain. The release workflow still needs
-to run on the final master revision and verify package identities/checksums.
-No firmware was flashed; Race/Mid feedback and startup behavior still need
-vehicle acceptance. Next: merge this release-note change, dispatch the beta
-workflow for `v5-beta-29`, then record its run and asset checksums here.
+Full notes and compatibility details are in [v5-beta-29](releases/v5-beta-29.md).
+No firmware was flashed. Vehicle acceptance still needs to confirm startup
+selection and suspension behavior, especially Race/Mid feedback.
 
 ## Startup configuration and diagnostic-menu removal audit, 2026-10-24
 
