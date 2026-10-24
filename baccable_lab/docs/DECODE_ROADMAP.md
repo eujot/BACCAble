@@ -36,40 +36,25 @@ claim is written "not demonstrated with this method in these recordings", never
 
 ---
 
-## Phase 1 — Parse the remaining Racelogic REF channels (no car needed)
+## Phase 1 — Parse the Racelogic REF channels (done — no result)
 
-**Goal.** Extract the full channel list from the public Giulia Type 952 REF file
-and cross-check every signal against our captures, not just the four already
-done.
+**Status: completed 2026-10-24 — no new channels.** The downloaded REF
+(SHA-256 `85248788…`) decompresses to **9 unique signals** plus 4 mph
+duplicates, and every one is already handled:
 
-**Context.** `baccable_lab/docs/research/20261013-public-giulia-can-sources.md`
-already mapped `0x0DE`, `0x0EE`, `0x0FC`, `0x101` and rejected `0x257`. The PDF
-describes nine broadcast channels, so several signal definitions are still
-unread. The likely target is the high-volume undecoded block `0x0F0`, `0x0F4`,
-`0x0F9`, `0x0FA`, `0x0FE`, `0x0FF`, `0x100`, `0x103`, `0x107`, `0x118`, `0x11A`,
-`0x120`, `0x122`.
+| Channel | ID | Result |
+| --- | --- | --- |
+| Steering_Angle | `0x0DE` | already supported |
+| Accelerator_Pedal_Position, Engine_Speed | `0x0FC` | already supported |
+| Brake_Position | `0x101` | already supported |
+| Wheel_Speed RR/RL/FR/FL | `0x0EE` | already supported |
+| Seat_Belt_-_Driver | `0x257` | rejected (fails the marker check) |
 
-**Steps**
-
-1. Download the REF from the URL recorded in the public-sources doc; verify the
-   SHA-256 (`85248788…`).
-2. Decompress the embedded zlib descriptors and parse the channel rows:
-   `CAN ID, start bit, length, byte order, scale, offset, name, unit`.
-3. Build the complete `id -> signals` table and convert decimal IDs to hex.
-4. For each signal, find our `(bus, ID, DLC)`; for Motorola fields interpret
-   `start` as the **least-significant bit of a big-endian 64-bit payload** (the
-   already-documented convention, not DBC MSB).
-5. Decode against our sessions and compare with markers: RPM/`0x0FC`,
-   speed/`0x101`, wheel speeds/`0x0EE`, steering/`0x0DE` are the sanity anchors.
-6. Add only signals that pass the marker cross-check.
-
-**Done when.** A markdown table lists every REF channel with
-`mapped / needs-vehicle-check / absent / rejected`, and the verified signals are
-in `giulia.json` with `origin` and evidence. The `0x257` seatbelt lesson stands:
-a public source for another vehicle/config does not by itself make a decoder.
-
-**Don't.** Add a signal on the strength of the source alone; skip the
-start-bit-convention check; clamp or invent saturation rules.
+The "nine broadcast channels" named in the PDF are exactly these nine, not
+nine IDs with some left unread. The high-volume undecoded block (`0x0F0`,
+`0x0F4`, `0x0F9`, `0x0FE`, `0x0FF`, `0x100`, `0x103`, `0x107`, `0x118`, `0x11A`,
+`0x120`, `0x122` and the `0x1Fx` ESP cluster) is **not** in the Racelogic source
+and must come from the vehicle campaigns below.
 
 ---
 
@@ -209,8 +194,8 @@ one at a time.
 
 | # | Campaign | Status | Result |
 | --- | --- | --- | --- |
-| 1 | Racelogic REF parse | ☐ todo | |
-| 2 | Body campaign | ☐ todo | |
+| 1 | Racelogic REF parse | ✅ done — no result | REF defines only 9 signals, all already mapped |
+| 2 | Body campaign | ▶️ next | |
 | 3 | Left indicator `0x42E` | ☐ todo | |
 | 4 | Brake pedal vs EPB | ☐ todo | |
 | 5 | Clean drive / ESP | ☐ todo | |
