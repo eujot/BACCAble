@@ -205,41 +205,36 @@ feature working. After the firmware change the same steps become
 The phases must not run at the same time, because the light sensor and the rain
 sensor share the housing behind the interior mirror:
 
-1. **Light sensor first, wipers OFF.** You force every state explicitly instead
-   of relying on the weather: in a dark garage a torch pointed at the sensor
-   gives "bright" and switching it off gives "dark"; in daylight an opaque
-   cloth gives "dark". With the wipers off an automatic wipe cannot start, so
-   the only change is brightness → dipped beam.
-2. **Rain sensor second, scene forced bright.** The torch (or daylight) keeps the
-   scene bright, so AUTO cannot switch the lamps on because of darkness; the only
-   changes are water → wipers and the lamps staying off. This isolates the
-   rain/wiper signal.
-3. **Manual wipers last, scene still forced bright.** Three manual cycles produce
-   the wiper signal without the rain sensor, and the lamps again stay off. This is
+1. **Light sensor first, wipers OFF.** With the car standing outdoors in
+daylight the lamps are off; an opaque cloth over the sensor simulates night and
+switches them on, and removing it switches them off again. With the wipers off
+an automatic wipe cannot start, so the only change is brightness → dipped beam.
+2. **Rain sensor second, in daylight.** The scene stays bright, so AUTO cannot
+   switch the lamps on because of darkness; the only changes are water → wipers
+   and the lamps staying off. This isolates the rain/wiper signal.
+3. **Manual wipers last, still in daylight.** Three manual cycles produce the
+   wiper signal without the rain sensor, and the lamps again stay off. This is
    the third future trigger, separated from the rain sensor.
 
-Every phase restores the baseline it started from (wipers off, lamps as the
-forced brightness dictates), which is what makes the run repeatable and gives
+Every phase restores the baseline it started from (wipers off, lamp sensor
+uncovered, lamps off), which is what makes the run repeatable and gives
 correlation a clean `before`/`after` window per expected state. The procedure
 deliberately omits wiper-speed ramps, gear changes and other actions that would
 add markers without adding a distinct CAN transition.
 
-### Daylight and dark-garage variants
+### Daylight is a requirement, not a preference
 
-The procedure never assumes the ambient light; you always force the state the
-step names:
+The procedure is written for **daylight outdoors**, with the light sensor
+uncovered at the start so the lamps are off. Run it after dark or in a dark
+underground garage only if you can restore a bright scene for the rain phases;
+otherwise AUTO switches the lamps on because of darkness and the
+`dipped_beam_off` control proves nothing.
 
-| Step says | Daylight, outdoors | Dark underground garage |
-| --- | --- | --- |
-| force DAY (bright) | remove the cloth / step out of shade | point a torch at the sensor behind the mirror |
-| force NIGHT (dark) | opaque cloth over the sensor | switch the torch off |
-
-The dark-garage variant starts with the lamps already on: the car switches the
-dipped beams on at ignition because it is dark. That is the correct night
-baseline, not a fault. Keep the torch on the sensor during both rain phases —
-otherwise AUTO turns the lamps on for darkness and the `dipped_beam_off` control
-proves nothing. Do not cover the sunload sensor on the dashboard; it belongs to
-the climate control, not to the lighting.
+Do **not** try to force a daylight reading with a flashlight. That variant was
+tested and discarded: this car does not react to a torch pointed at the sensor
+behind the mirror, so the first step never produced the expected lamps-off
+state. The opaque cloth for the dark state and its removal for the bright state
+are the supported method.
 
 ### No time targets
 

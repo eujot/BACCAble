@@ -21,29 +21,31 @@ control, which proves they were not already on for another reason. After the
 firmware change those steps become `dipped_beam_on` and the same procedure is the
 acceptance test. Phases:
 
-1. light sensor forced bright and dark with the wipers **off** — a torch in a
-   dark garage, an opaque cloth in daylight; this isolates the light-sensor
-   signal and confirms the factory AUTO function, because forcing brightness
+1. light sensor covered and uncovered with the wipers **off** — an opaque cloth
+   simulates night and its removal restores daylight; this isolates the
+   light-sensor signal and confirms the factory AUTO function, because covering
    cannot start a wipe when the wipers are off;
-2. wipers in AUTO plus washer water, then drying, with the scene **forced
-   bright** — isolates rain/wiper activation (confirm that the wipers started,
-   not after a set spraying time) while darkness cannot switch the lamps on;
-3. three manual wiper cycles with the scene still forced bright — the third
-   future trigger, separated from the rain sensor.
+2. wipers in AUTO plus washer water, then drying, **in daylight** — isolates
+   rain/wiper activation (confirm that the wipers started, not after a set
+   spraying time) while daylight cannot switch the lamps on;
+3. three manual wiper cycles, still in daylight — the third future trigger,
+   separated from the rain sensor.
 
-The procedure works both outdoors in daylight and in a dark underground garage.
-In the garage the dipped beams are already on at ignition (correct night
-baseline, not a fault) and a torch pointed at the sensor behind the mirror is
-the "day" source; outdoors a cloth is the "night" source. The rain phases must
-keep the scene bright, otherwise AUTO turns the lamps on for darkness and the
-`dipped_beam_off` negative control proves nothing.
+**Daylight outdoors is a requirement.** The procedure starts with the light
+sensor uncovered and the lamps off. After dark, or in a dark underground garage,
+AUTO switches the lamps on because of darkness and the `dipped_beam_off`
+negative control proves nothing. A flashlight variant was tried in the car and
+**discarded**: this vehicle does not react to a torch pointed at the sensor
+behind the mirror, so the first step never reached the expected lamps-off state.
+The cloth method is the supported one and is now asserted by the test.
 
 Added catalog labels `light_sensor_dark` / `light_sensor_bright` (Polish titles,
 search aliases): the existing `ambient_light_changed` cannot separate the two
 directions. Updated `baccable_lab/docs/SCENARIOS.md` (counts 82 procedures / 527
 confirmations, phase-order rationale, no-time rule and the negative-control
 statement) and `baccable_lab/docs/MARKERS.md`. Tests assert the phase order, the
-lamps-off control and the hidden time hint.
+daylight assumption, the lamps-off control, the hidden time hint and the absence
+of the discarded flashlight variant.
 
 Validation: 75 Lab tests pass; host tests, firmware and the device user guides
 are untouched (no menu, setting, reading or device action changed). Hardware

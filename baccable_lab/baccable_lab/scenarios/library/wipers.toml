@@ -70,33 +70,33 @@ expect = "rain_stopped"
 
 [[scenario]]
 id = "rain_lights_auto"
-title = "Czujnik jasności i deszczu (AUTO) w dzień i w nocy: stan świateł mijania"
+title = "Czujnik jasności i deszczu (AUTO) w dzień: stan świateł mijania"
 group = "wipers"
 vehicle = "stationary"
 runs = 3
 min_separation_s = 0
 confounder_guard = ["przełącznik świateł", "bieg", "silnik"]
-notes = "Zapłon włączony, przełącznik świateł w AUTO, czułość czujnika deszczu pośrodku. Scenariusz działa w obu warunkach, bo zawsze wymuszasz stan czujnika: (a) CIEMNY GARAŻ — 'jasno' uzyskujesz latarką skierowaną na czujnik za lusterkiem, 'ciemno' przez jej zgaszenie; (b) DZIEŃ NA ZEWNĄTRZ — 'ciemno' uzyskujesz nieprzezroczystą szmatką na czujniku, 'jasno' przez jej zdjęcie. W ciemnym garażu światła mijania palą się od razu po zapłonie — to prawidłowy stan nocny, nie usterka. WAŻNE: auto fabrycznie NIE zapala świateł mijania od pracy wycieraczek ani od deszczu — to funkcja dopiero do dodania w firmware. Dlatego w fazach deszczu potwierdzasz, że światła POZOSTAJĄ zgaszone; to punkt odniesienia (kontrola negatywna). W tych fazach utrzymuj JASNO (latarka na czujniku albo dzień), inaczej AUTO zapali światła od ciemności i kontrola straci sens. Po wdrożeniu funkcji te same kroki zmieniasz na 'światła mijania zapaliły się'. Kolejność faz jest celowa: najpierw czujnik jasności przy WYŁĄCZONYCH wycieraczkach, potem deszcz przy jasnym otoczeniu. DRL świecą zawsze — oceniaj pełne światła mijania. Nie zasłaniaj czujnika nasłonecznienia na desce. Bez czasów: potwierdzasz efekt, gdy go widzisz, a kolejne powtórzenie zaczynasz, gdy światła i wycieraczki wrócą do stanu wyjściowego."
+notes = "Wykonuj w DZIEŃ, na zewnątrz, przy jasnym otoczeniu. Zapłon włączony, przełącznik świateł w AUTO, czułość czujnika deszczu pośrodku. Punkt wyjścia: czujnik jasności odsłonięty, więc światła mijania są ZGASZONE. Ciemność symulujesz nieprzezroczystą szmatką na czujniku za lusterkiem, a powrót do dnia przez jej zdjęcie. Latarka nie jest używana — w praktyce auto nie reaguje na doświetlanie czujnika. WAŻNE: auto fabrycznie NIE zapala świateł mijania od pracy wycieraczek ani od deszczu — to funkcja dopiero do dodania w firmware. Dlatego w fazach deszczu potwierdzasz, że światła POZOSTAJĄ zgaszone; to punkt odniesienia (kontrola negatywna). Faz deszczu nie wykonuj po zmroku ani w ciemnym garażu, bo AUTO zapali światła od ciemności i kontrola straci sens. Po wdrożeniu funkcji te same kroki zmieniasz na 'światła mijania zapaliły się'. Kolejność faz jest celowa: najpierw czujnik jasności przy WYŁĄCZONYCH wycieraczkach, potem deszcz przy jasnym otoczeniu. DRL świecą zawsze — oceniaj pełne światła mijania. Nie zasłaniaj czujnika nasłonecznienia na desce. Bez czasów: potwierdzasz efekt, gdy go widzisz, a kolejne powtórzenie zaczynasz, gdy światła i wycieraczki wrócą do stanu wyjściowego."
 [[scenario.steps]]
-action = "Ciemno (garaż) — światła mijania już się palą; punkt odniesienia nocy"
+action = "Czujnik jasności odsłonięty, wycieraczki WYŁ. — punkt odniesienia (jasno, światła zgaszone)"
+expect = "light_sensor_bright"
+[[scenario.steps]]
+action = "Zasłoń czujnik jasności (szmatką)"
 expect = "light_sensor_dark"
 [[scenario.steps]]
-action = "Wymuś JASNO: oświetl czujnik latarką (na dworze: odsłoń czujnik)"
+action = "Światła mijania zapaliły się (AUTO od ciemności)"
+expect = "dipped_beam_on"
+[[scenario.steps]]
+action = "Odsłoń czujnik jasności"
 expect = "light_sensor_bright"
 [[scenario.steps]]
 action = "Światła mijania zgasły"
 expect = "dipped_beam_off"
 [[scenario.steps]]
-action = "Wymuś CIEMNO: zgaś latarkę (na dworze: zasłoń czujnik)"
-expect = "light_sensor_dark"
-[[scenario.steps]]
-action = "Światła mijania zapaliły się"
-expect = "dipped_beam_on"
-[[scenario.steps]]
-action = "Wymuś JASNO i zostaw; wycieraczki AUTO, szyba sucha — nie pracują (kontrola)"
+action = "Wycieraczki AUTO, szyba sucha — wycieraczki nie pracują (kontrola)"
 expect = "wipers_auto"
 [[scenario.steps]]
-action = "Spryskaj szybę — wycieraczki ruszyły (jasno cały czas)"
+action = "Spryskaj szybę — wycieraczki ruszyły"
 expect = "rain_detected"
 [[scenario.steps]]
 action = "Światła mijania pozostały ZGASZONE (funkcji jeszcze nie ma)"
@@ -105,11 +105,11 @@ expect = "dipped_beam_off"
 action = "Przestań polewać i wysusz szybę — wycieraczki się zatrzymały"
 expect = "rain_stopped"
 [[scenario.steps]]
-action = "Wycieraczki ręcznie: 3 pełne cykle pracy (jasno cały czas)"
+action = "Wycieraczki ręcznie: 3 pełne cykle pracy (trzy ruchy piór)"
 expect = "wipers_slow"
 [[scenario.steps]]
 action = "Światła mijania pozostały ZGASZONE (funkcji jeszcze nie ma)"
 expect = "dipped_beam_off"
 [[scenario.steps]]
-action = "Wyłącz wycieraczki; możesz zdjąć latarkę"
+action = "Wyłącz wycieraczki"
 expect = "wipers_off"

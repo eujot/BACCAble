@@ -94,19 +94,21 @@ class ScenarioModelTests(unittest.TestCase):
         self.assertEqual((scenario.group, scenario.vehicle), ("wipers", "stationary"))
         self.assertGreaterEqual(scenario.runs, 3)
         expected = [step.expect for step in scenario.steps]
-        # Dark baseline first: in a garage the lamps are already on at ignition.
-        # Then brightness is forced (torch or daylight) and darkness returned.
-        self.assertEqual(expected[:5], ["light_sensor_dark", "light_sensor_bright",
-                                        "dipped_beam_off", "light_sensor_dark",
-                                        "dipped_beam_on"])
+        # Daylight baseline: the lamps are off, covering the sensor switches them
+        # on and uncovering switches them off.
+        self.assertEqual(expected[:5], ["light_sensor_bright", "light_sensor_dark",
+                                        "dipped_beam_on", "light_sensor_bright",
+                                        "dipped_beam_off"])
         self.assertEqual(expected[5:9], ["wipers_auto", "rain_detected",
                                          "dipped_beam_off", "rain_stopped"])
         self.assertEqual(expected[9:], ["wipers_slow", "dipped_beam_off", "wipers_off"])
-        # The rain phases must be run with the scene forced bright, otherwise AUTO
-        # switches the lamps on for darkness and the negative control is invalid.
-        for action in (scenario.steps[5].action, scenario.steps[6].action,
-                       scenario.steps[9].action):
-            self.assertIn("jasno", action.lower())
+        # The procedure assumes daylight: a dark garage would switch the lamps on
+        # for darkness and invalidate the lamps-off control in the rain phases.
+        self.assertIn("DZIEŃ", scenario.notes.upper())
+        self.assertIn("szmatk", scenario.notes)
+        # The flashlight variant was tried and discarded; no step may depend on it.
+        self.assertNotIn("latark", " ".join(
+            step.action.lower() for step in scenario.steps))
         # Factory behaviour is the negative control: darkness switches the lamps
         # on, but wipers and rain do not, because the feature is not implemented.
         # The rain phases therefore record the lamps staying off.
