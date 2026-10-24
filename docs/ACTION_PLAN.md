@@ -21,6 +21,9 @@ new slot 42; import both previous 40- and 41-slot records, preserving every
 existing value. Downgrade firmware may not read the extended settings record.
 Both user guides and MENU_UX describe times, prerequisites and acceptance limits.
 
+Implementation `b22543d`; dictionary source snapshot `2026-10-24.6` and
+readable catalog refreshed without changing captured layouts or original evidence.
+All 77 Lab tests and four standard size/identity gates pass.
 Native ASan/UBSan host suite passes, including new C1/C2 threshold/hold/lease/
 manual priority/tick-wrap cases, exact 15-second threshold and old 80-/82-byte
 settings migration. All 16 ARM board/display builds and four-flavor cppcheck
