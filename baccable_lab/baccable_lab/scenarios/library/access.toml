@@ -154,3 +154,82 @@ expect = "seat_belt_fastened"
 [[scenario.steps]]
 action = "Odepnij pas kierowcy"
 expect = "seat_belt_unfastened"
+
+[[scenario]]
+id = "body_decode_matrix"
+title = "Nadwozie i światła: zamki, drzwi, szyby, klapy i po jednej lampie (macierz)"
+group = "access"
+vehicle = "stationary"
+runs = 2
+min_separation_s = 0
+confounder_guard = ["zapłon", "silnik", "klimatyzacja", "bieg"]
+notes = "Jedna kontrola naraz; pozostałe drzwi, szyby i światła w spoczynku. Potwierdzaj dopiero po ustabilizowaniu stanu (bez czasów). Cel: domknąć hipotezy BODY-WINDOW, BODY-CLOSURE, BODY-DOORLOCK i BODY-LIGHTFLAG. Osobne etykiety dla szyby kierowcy i pasażera; aktywne-niskie bity klap na 0x116/0x3DE; stan zamków na 0x0F1; one-hot lamp na 0x0FA bajt 0. Lampy zapalaj PO JEDNEJ i w każdym stanie odczytuj surowy bajt 0 ramki 0x0FA."
+[[scenario.steps]]
+action = "Punkt odniesienia: wszystko zamknięte, światła OFF"
+expect = ""
+[[scenario.steps]]
+action = "Zablokuj pilotem (LOCK), poczekaj na mignięcie"
+expect = "lock"
+[[scenario.steps]]
+action = "Odblokuj pilotem (UNLOCK), poczekaj na mignięcie"
+expect = "unlock"
+[[scenario.steps]]
+action = "Otwórz drzwi kierowcy"
+expect = "driver_door_open"
+[[scenario.steps]]
+action = "Zamknij drzwi kierowcy"
+expect = "driver_door_close"
+[[scenario.steps]]
+action = "Otwórz drzwi pasażera"
+expect = "passenger_door_open"
+[[scenario.steps]]
+action = "Zamknij drzwi pasażera"
+expect = "passenger_door_close"
+[[scenario.steps]]
+action = "Szyba kierowcy do samego dołu"
+expect = "driver_window_open"
+[[scenario.steps]]
+action = "Szyba kierowcy do samej góry"
+expect = "driver_window_close"
+[[scenario.steps]]
+action = "Szyba pasażera do samego dołu"
+expect = "passenger_window_open"
+[[scenario.steps]]
+action = "Szyba pasażera do samej góry"
+expect = "passenger_window_close"
+[[scenario.steps]]
+action = "Otwórz klapę bagażnika"
+expect = "trunk_open"
+[[scenario.steps]]
+action = "Zamknij klapę bagażnika"
+expect = "trunk_close"
+[[scenario.steps]]
+action = "Zwolnij zaczep i otwórz maskę"
+expect = "hood_open"
+[[scenario.steps]]
+action = "Zamknij maskę"
+expect = ""
+[[scenario.steps]]
+action = "Światła pozycyjne WŁ."
+expect = "side_lights_on"
+[[scenario.steps]]
+action = "Światła pozycyjne WYŁ."
+expect = "side_lights_off"
+[[scenario.steps]]
+action = "Światła mijania WŁ. (ręcznie)"
+expect = "dipped_beam_on"
+[[scenario.steps]]
+action = "Światła mijania WYŁ."
+expect = "dipped_beam_off"
+[[scenario.steps]]
+action = "Światła drogowe WŁ. (dźwignia do przodu)"
+expect = "high_beam_on"
+[[scenario.steps]]
+action = "Światła drogowe WYŁ."
+expect = "high_beam_off"
+[[scenario.steps]]
+action = "Przeciwmgielne przednie WŁ."
+expect = "fog_lights_on"
+[[scenario.steps]]
+action = "Przeciwmgielne przednie WYŁ."
+expect = "fog_lights_off"

@@ -155,11 +155,11 @@ drive, adas`, then `order` and `id`.
 
 ## Bundled library
 
-84 procedures (581 confirmations). Groups:
+85 procedures (627 confirmations). Groups:
 
 | Group | Procedures | Location | Examples |
 | --- | --- | --- | --- |
-| access | 10 | postój | zamek, drzwi, bagażnik, maska, klapka paliwa, szyby, lusterka, pas |
+| access | 11 | postój | zamek, drzwi, bagażnik, maska, klapka paliwa, szyby, lusterka, pas, macierz nadwozie+światła |
 | lighting | 10 | postój | kierunkowskazy, awaryjne, mijania/drogowe, przeciwmgielne, pozycyjne, wnętrze, stop |
 | wipers | 6 | postój/dowolnie | biegi wycieraczek, spryskiwacz, tylna wycieraczka, czujnik deszczu, czujnik jasności i deszczu + stan świateł (AUTO), rozdzielenie sygnałów |
 | climate | 8 | postój | klimatyzacja, temperatura, nawiew, odmrażanie, recyrkulacja, podgrzewanie |
@@ -176,14 +176,21 @@ so the owner can record while driving without needing a public road. `vehicle =
 "driving"` procedures are grouped last; on-road stability and collision tests
 must never be provoked on a public road.
 
-## Targeted decode tests (DNA modes, lane assist, rain and light sensors)
+## Targeted decode tests (body, DNA modes, lane assist, rain and light sensors)
 
-Five procedures target specific firmware options, using markers in the catalog
-(the DNA mode markers `dna_dynamic` / `dna_natural` / `dna_allweather` /
-`dna_race`, the lane toggle `lane_assist_disabled` / `lane_assist_enabled`, and
+Six procedures target specific decode gaps, using markers in the catalog
+(the body markers `lock` / `unlock` / `driver_door_*` / `passenger_door_*` /
+`driver_window_*` / `passenger_window_*` / `trunk_*` / `hood_open`, the DNA
+mode markers `dna_dynamic` / `dna_natural` / `dna_allweather` / `dna_race`,
+the lane toggle `lane_assist_disabled` / `lane_assist_enabled`, and
 `wipers_auto` together with the light-sensor pair `light_sensor_dark` /
 `light_sensor_bright`):
 
+- `body_decode_matrix` (access, stationary) — one pass over the body controls that
+  close BODY-WINDOW, BODY-CLOSURE, BODY-DOORLOCK and BODY-LIGHTFLAG: lock/unlock,
+  driver and passenger doors, driver and passenger windows (with distinct labels),
+  boot and bonnet, then one lamp at a time (side, dipped, high beam, fog).
+  Twenty-three steps, two runs.
 - `dna_all_modes` (drivetrain, stationary) — visit D, N, A and Race, each with its
   own marker, to confirm the per-mode code on `0x384` / `0x46C` / `0x25A`.
 - `dna_suspension_matrix` (drivetrain, stationary) — the decisive matrix: N and A
@@ -313,7 +320,7 @@ wipers→lights: you watch the lamps).
 | two sessions | 3 + 3 cycles | cross-session support and confounder rejection |
 | physical check | any | `validated` for wipers→lights |
 
-Do **not** repeat all 84 procedures: run only these five in one session (~10
+Do **not** repeat all 85 procedures: run only these five in one session (~10
 minutes), then repeat the same five in a second session. 6–9 ON/OFF
 observations per action is the practical reliability threshold.
 
