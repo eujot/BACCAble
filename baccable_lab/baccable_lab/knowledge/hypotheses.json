@@ -962,7 +962,13 @@
         "The final marked Race attempt contains only a short N-to-D pulse and no recorded subsequent long hold.",
         "Earlier narrow searches included the input pulse in their baseline and missed it; whole-window inspection corrected that false negative."
       ],
-      "next_test": "Install matched C1/BH 00b4b99 firmware and verify A/D/Race startup selection, release, sustained factory DNA/transmission reports, cancellation and later physical selector use. N must preserve factory behavior."
+      "next_test": "Install matching corrected C1/BH firmware and repeat fresh-start Race and D/Soft across several ignitions; check reported result, final suspension state and physical-input priority. No extra passive selector-identification capture is needed.",
+      "implementation_update": {
+        "commit": "50f7604b101af33d41ff44428b797554448b1c24",
+        "report": "docs/research/20261024-startup-gesture-correction.md",
+        "owner_report": "Beta-29 D replay works; Race fails; D/Soft missed once.",
+        "acceptance": "Corrected waveform and retry remain unverified in the vehicle."
+      }
     },
     {
       "id": "WIPER-CYCLE-C2-001",

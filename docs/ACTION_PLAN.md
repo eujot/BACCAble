@@ -35,8 +35,8 @@ neutral during a long hold, and an ignored first suspension pulse. Full native
 Apple Clang ASan/UBSan host tests pass. All 16 board/display builds and cppcheck
 for C1/C2/BH/CAN pass with the full Arm GNU 15.2.Rel1 toolchain and local version
 `startup-dna`. Standard flash/RAM: C1 96,744/15,364 bytes; BH 36,608/13,260.
-Size gates pass. CAN source-provenance refresh and Lab validation follow in the
-same task branch before completion. No push, merge, release, flash or new vehicle
+Size gates pass. Source snapshot `50f7604` and dictionary `2026-10-24.5` now
+record the correction; all 77 Lab tests pass with the refreshed source hashes. No push, merge, release, flash or new vehicle
 acceptance. Original captures, user scenario branch and untracked files remain.
 
 ## Three-session audit and labelled Race/Mid result, 2026-10-24

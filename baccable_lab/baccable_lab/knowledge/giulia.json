@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "dictionary_version": "2026-10-24.4",
+  "dictionary_version": "2026-10-24.5",
   "vehicle": {
     "model": "Alfa Romeo Giulia (owner-reported)",
     "model_year": null,
@@ -8,7 +8,7 @@
     "vin": null,
     "scope": "This checkout and these sessions only; not a universal Alfa Romeo or cross-model DBC."
   },
-  "firmware_source_commit": "1d6a86ec369130d8255e67b6be32974b9fec7713",
+  "firmware_source_commit": "50f7604b101af33d41ff44428b797554448b1c24",
   "source_sha256": {
     "firmware/baccable/vehicle/display_frames.c": "0d9eca11b5892f835f5ad922e3a866ffbd596fbb6b2f81e3f57401481cf470bc",
     "firmware/baccable/vehicle/telemetry_frames.c": "83ef051370d33eb44ca25b213242e05f60523a9c45b40339b41bde33e0234aa1",
@@ -39,11 +39,13 @@
     "firmware/baccable/features/my23_ui.c": "6e5c772adfe061fc10c37e84908886858ac483b45b97aae207d6c2bb4b3814f2",
     "firmware/baccable/features/display_stream.c": "fc58c7270c56c0295d364a5ff0333a5e6b22174c935a9b9b377f54147a15e3dd",
     "firmware/baccable/features/oil_bar_animation.c": "6cc953261ef3a50fccecbd80f13639e98d477acb14e6a7210b43b6fe57cd6d6a",
-    "firmware/baccable/features/drive_mode_check.c": "b0ffc5b4ce6de47e214fe713a57d411e2d656a4153481d1bd3905ea19f093f4e",
+    "firmware/baccable/features/drive_mode_check.c": "19b8dbdc309906bea3ede2093e087d35f340535b51166f728853a73d754afcd2",
     "firmware/baccable/features/board_sync.c": "8f9cdadfca2196486c43f152ca5029e80586f7d6b3345396dbb28da3210b2435",
-    "firmware/baccable/features/dna_selector.c": "7f5b9abd4d984e0af2707d4b8785b662226e9e83323c9105243cebffb13dac0e",
+    "firmware/baccable/features/dna_selector.c": "483fc63c90689fd3152343639cfc54cf58c54026bc475f63ff174850f0b40386",
     "firmware/baccable/app/board_commands.c": "c5c943936a93a1ba61c1f7b573f3edc5bee96d219546734e5d1cdf54bcb74c47",
-    "firmware/baccable/transport/board_uart.h": "2103da887dfb3990cb3356004d292aef845a760187d330da0018054499569634"
+    "firmware/baccable/transport/board_uart.h": "2103da887dfb3990cb3356004d292aef845a760187d330da0018054499569634",
+    "firmware/baccable/transport/can_bus.c": "a7eafb5395a8001064e1175eebe8c2ec089d09b7464170e982ae9c1bf9691afb",
+    "firmware/baccable/transport/can_bus.h": "d468e9011bfe85258420a065fa5a8888d169c203c901d0f91ffd40bfc7f1105f"
   },
   "byte_convention": "Zero-based byte indexes; bit 0 is LSB. Parts are concatenated in listed most-significant-first order; physical = raw * scale + offset.",
   "capture_limits": [
@@ -319,7 +321,7 @@
           ]
         }
       ],
-      "note": "BH-only DLC 4. C1 0x256/DLC 8 is a different message. Other bytes must be preserved: October-10 also contains 00 80 00 00 without directional input. Resting period is about 250 ms, with event-driven extra reports. Five held inputs precede Race after about 1.2 s. Commit 00b4b99 adds a BH startup selector handler: 200 ms short gestures, 1,800 ms D-to-Race hold refreshed every 250 ms, explicit release and observed intermediate modes. N/passive does not inject. Vehicle acceptance of replay remains unknown.",
+      "note": "BH-only DLC 4; C1 0x256/DLC 8 is unrelated. Original captured input semantics and unrelated fields are preserved. Implementation 50f7604 aligns a new press to fresh neutral input and drained TX, waits one second of actual-mode stability, refreshes held state after incoming factory-neutral reports and holds Race for 2200 ms with 250 ms fallback refresh. Suspension retains 150 ms pulses with at most one feedback-gated retry. Owner reports beta-29 D working, Race failing and one missed D/Soft change; this correction still needs vehicle acceptance. See docs/research/20261024-startup-gesture-correction.md.",
       "observations": [
         {
           "session": "20260926-181818Z",
@@ -385,7 +387,8 @@
           "session": "20261024-113104Z",
           "frames": 597
         }
-      ]
+      ],
+      "historical_note_before_startup_fix": "BH-only DLC 4. C1 0x256/DLC 8 is a different message. Other bytes must be preserved: October-10 also contains 00 80 00 00 without directional input. Resting period is about 250 ms, with event-driven extra reports. Five held inputs precede Race after about 1.2 s. Commit 00b4b99 adds a BH startup selector handler: 200 ms short gestures, 1,800 ms D-to-Race hold refreshed every 250 ms, explicit release and observed intermediate modes. N/passive does not inject. Vehicle acceptance of replay remains unknown."
     },
     {
       "role": "BH",
@@ -16691,6 +16694,11 @@
       "topic": "Three October-24 captures audited",
       "status": "supported_manual_states_actuation_unverified",
       "detail": "Raw/SQLite content hashes agree on every bus in all three captures; earlier two trace reports reproduce exactly. Race Mid=1 is directly labelled twice; N/A button controls do not change calibration. 0x1FC b0.4 engine-running hypothesis is refuted. Source code feedback mapping matches these states, while automatic startup injection remains unverified. docs/research/20261024-three-session-audit.md"
+    },
+    {
+      "topic": "Startup gesture reliability correction",
+      "status": "implemented_vehicle_acceptance_pending",
+      "detail": "Implementation 50f7604 addresses factory-neutral interference, mode pacing and an ignored suspension pulse with a guarded retry. Host regressions fail against beta-29 source and pass after correction. No new captured signal layout or injected acceptance claim. Source notes: docs/research/20261024-startup-gesture-correction.md; historical session ledger retains its original source snapshot."
     }
   ],
   "frame_templates": [
