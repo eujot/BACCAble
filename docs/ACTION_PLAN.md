@@ -40,8 +40,8 @@ Validation: full Apple Clang ASan/UBSan host suite and all eight release-script
 tests pass. All 16 board/display builds and cppcheck for C1/C2/BH/CAN pass using
 full Arm GNU 15.2.Rel1, VERSION=audit-dna. Standard C1 uses 96,740/98,304 flash
 bytes and data+bss 15,364/16,384; largest display variant uses 96,840 flash bytes
-(1,464 spare) and data+bss 15,572. Knowledge source hashes and Lab validation
-are completed with the final handoff commit. No device was flashed and no
+(1,464 spare) and data+bss 15,572. All 73 Lab tests pass with refreshed source hashes for implementation
+commit `1d6a86e`; the readable CAN catalog is regenerated. No device was flashed and no
 hardware acceptance or pinned-CI result is claimed. Race/Mid feedback and
 startup behavior remain vehicle acceptance items. Main checkout files and its
 pre-existing untracked capture/release folders were preserved.
