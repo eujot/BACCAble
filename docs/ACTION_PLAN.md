@@ -6,15 +6,19 @@
 
 ## v5-beta-31 release preparation, 2026-10-24
 
-PR branch `fix/rain-test-reliability` contains the Rain test diagnostic action
-and its reliability correction, based on current `master`. Release notes are
-[v5-beta-31](releases/v5-beta-31.md). Local Apple Clang ASan/UBSan host tests
-and all four Arm GNU 15.2.Rel1 lint/build flavors pass; C1 uses 97,884/98,304
-Flash bytes. PR #84 is open. Its first CI run found stale source hashes in the
-CAN dictionary; snapshot version `2026-10-24.9` and the generated catalog now
-record the reviewed dispatcher and rain-light source. CI must pass before merge
-and the release workflow must pass before publication. No vehicle acceptance is
-claimed; the Rain lights output check remains a hardware task.
+PR [#84](https://github.com/eujot/BACCAble/pull/84) merged to `master` as
+`46bf4d67a099c70be19e338c966dbb595fec3dee`. Its first CI run found stale source
+hashes in the CAN dictionary; snapshot `2026-10-24.9` and the generated catalog
+were refreshed, after which CI run
+[40129272385](https://github.com/eujot/BACCAble/actions/runs/40129272385) passed
+tests, Lab checks, lint and all four firmware builds. Published prerelease
+[v5-beta-31](https://github.com/eujot/BACCAble/releases/tag/v5-beta-31) from the
+merged commit. Release workflow
+[40129492178](https://github.com/eujot/BACCAble/actions/runs/40129492178) passed
+the pinned Arm GNU 15.3.Rel1 build, display matrix, size/identity checks and
+packaging. All 14 release assets passed `SHA256SUMS`; C1 uses 97,640/98,304
+Flash bytes and 15,420/16,384 static RAM bytes. No board was flashed and no
+vehicle lamp acceptance is claimed; the Rain lights output check remains open.
 
 ## Rain lights debug/test surface, 2026-10-24
 

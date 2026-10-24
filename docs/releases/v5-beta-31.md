@@ -29,7 +29,9 @@ beta is claimed.
 
 ## Build and verification
 
-The local Apple Clang ASan/UBSan host suite passed. All four firmware flavors
-passed lint and built with Arm GNU 15.2.Rel1. C1 uses 97,884/98,304 Flash bytes
-and 15,420/16,384 static RAM bytes. Release CI uses the repository-pinned Arm
-GNU 15.3.Rel1 and remains the publication gate. No device was flashed.
+The full host and Lab test suites, four-flavor cppcheck, all four firmware
+builds, display matrix, size/identity gates and packaging passed in
+[release workflow 40129492178](https://github.com/eujot/BACCAble/actions/runs/40129492178)
+with the repository-pinned Arm GNU 15.3.Rel1. C1 uses 97,640/98,304 Flash bytes
+and 15,420/16,384 static RAM bytes. All 14 published assets passed the included
+`SHA256SUMS` check. No device was flashed and no vehicle trial is claimed.
