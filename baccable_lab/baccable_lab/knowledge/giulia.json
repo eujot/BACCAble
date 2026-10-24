@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "dictionary_version": "2026-10-24.8",
+  "dictionary_version": "2026-10-24.9",
   "vehicle": {
     "model": "Alfa Romeo Giulia (owner-reported)",
     "model_year": null,
@@ -8,7 +8,7 @@
     "vin": null,
     "scope": "This checkout and these sessions only; not a universal Alfa Romeo or cross-model DBC."
   },
-  "firmware_source_commit": "e6159c1537b5b2a412cc2ecb9262190c52946beb",
+  "firmware_source_commit": "f6a2a51",
   "source_sha256": {
     "firmware/baccable/vehicle/display_frames.c": "0d9eca11b5892f835f5ad922e3a866ffbd596fbb6b2f81e3f57401481cf470bc",
     "firmware/baccable/vehicle/telemetry_frames.c": "83ef051370d33eb44ca25b213242e05f60523a9c45b40339b41bde33e0234aa1",
@@ -42,11 +42,11 @@
     "firmware/baccable/features/drive_mode_check.c": "19b8dbdc309906bea3ede2093e087d35f340535b51166f728853a73d754afcd2",
     "firmware/baccable/features/board_sync.c": "8f9cdadfca2196486c43f152ca5029e80586f7d6b3345396dbb28da3210b2435",
     "firmware/baccable/features/dna_selector.c": "483fc63c90689fd3152343639cfc54cf58c54026bc475f63ff174850f0b40386",
-    "firmware/baccable/app/board_commands.c": "9c3e1672207e0d29dea437a1840ce6baab667ff46f97387e39e7f696b83792f5",
+    "firmware/baccable/app/board_commands.c": "1fcf578569504b0845a3b5187f3ed0434851e44de285e53d5fca4d70058886df",
     "firmware/baccable/transport/board_uart.h": "703700a320a2eab04bb46c087e77324089dbfd1b6adb067488532bcc12f376fc",
     "firmware/baccable/transport/can_bus.c": "a7eafb5395a8001064e1175eebe8c2ec089d09b7464170e982ae9c1bf9691afb",
     "firmware/baccable/transport/can_bus.h": "d468e9011bfe85258420a065fa5a8888d169c203c901d0f91ffd40bfc7f1105f",
-    "firmware/baccable/features/rain_lights.c": "75754ed69c54738bab22e1ef8eb3c5c8b0cb9ee1b6420803ae63a7625212aee1",
+    "firmware/baccable/features/rain_lights.c": "711ccc471b7d3d4d0f0cf91064016cda57d946f2c85f819e7e27b6ac77dd4449",
     "firmware/baccable/features/rain_lights.h": "557b962b90428fac47dc0674483162e4c7885c9801e83081acfad0a9a0ebbe78",
     "firmware/baccable/transport/board_uart.c": "9db5e6b1f2d833c6143acd868afdb4f0ed3a77a9286fa2aee075378f654a0c45"
   },

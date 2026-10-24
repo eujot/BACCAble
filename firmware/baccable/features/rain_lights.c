@@ -13,8 +13,19 @@ static uint32_t poll_at;
 static uint8_t token, option, poll_known;
 #elif defined(BACCABLE_C2)
 static uint8_t enabled, auto_mode, light_known, wiper_known, phase, count;
+static uint8_t debug_wiper_known, debug_phase, force_exhausted;
 static uint16_t wiper_cycles, lamp_tx;
 static uint32_t light_at, wiper_at, last_cycle, cycles[3];
+static uint32_t force_at, force_started;
+
+#define RAIN_TEST_FORCE_LEASE_MS 3000U
+#define RAIN_TEST_FORCE_LIMIT_MS 30000U
+
+/* C2 releases the test request even when its UART link or C1 stops. */
+static bool force_valid(void) {
+    return forced && currentTime - force_at < RAIN_TEST_FORCE_LEASE_MS &&
+           currentTime - force_started < RAIN_TEST_FORCE_LIMIT_MS;
+}
 
 /* Forget the rain request without transmitting a lights-off command. */
 static void clear_request(void) {
@@ -32,6 +43,20 @@ static bool request_valid(void) {
 /* Force the bus-specific lamp bits regardless of the wiper trigger. */
 void rain_lights_force(uint8_t on) {
 #if defined(BACCABLE_C1) || defined(BACCABLE_C2)
+#if defined(BACCABLE_C2)
+    if (!on) {
+        forced = force_exhausted = 0;
+        return;
+    }
+    if (forced && !force_valid()) {
+        forced = 0;
+        force_exhausted = 1;
+    }
+    if (force_exhausted) return;
+    if (!forced)
+        force_started = currentTime;
+    force_at = currentTime;
+#endif
     forced = on != 0;
 #else
     (void)on;
@@ -43,7 +68,10 @@ void rain_lights_debug(uint8_t out[4]) {
 #if defined(BACCABLE_C2)
     out[0] = (uint8_t)(wiper_cycles & 0xFF);
     out[1] = (uint8_t)(wiper_cycles >> 8);
-    out[2] = (uint8_t)((auto_mode ? 1U : 0U) | (active ? 2U : 0U));
+    bool light_fresh = light_known && currentTime - light_at <= 1000U;
+    out[2] = (uint8_t)((light_fresh && auto_mode ? 1U : 0U) |
+                       (active && request_valid() ? 2U : 0U) |
+                       (light_fresh ? 4U : 0U));
     out[3] = (uint8_t)(lamp_tx & 0xFF);
 #else
     (void)out;
@@ -93,9 +121,12 @@ void rain_lights_observe(const CAN_RxHeaderTypeDef *h, const uint8_t *data) {
     if (h->StdId != 0x2ec || h->DLC != 8)
         return;
     uint8_t next_phase = (data[2] & 0x20) != 0;
+    if (debug_wiper_known && currentTime - wiper_at <= 500U && next_phase && !debug_phase)
+        ++wiper_cycles;
+    debug_wiper_known = 1;
+    debug_phase = next_phase;
     if (!request_valid()) clear_request();
     if (wiper_known && next_phase && !phase) {
-        ++wiper_cycles;
         if (count < 3) cycles[count++] = currentTime;
         else {
             cycles[0] = cycles[1];
@@ -134,6 +165,10 @@ void rain_lights_process(void) {
         poll_known = 1;
     }
 #elif defined(BACCABLE_C2)
+    if (forced && !force_valid()) {
+        forced = 0;
+        force_exhausted = 1;
+    }
     if (!request_valid()) clear_request();
     else if (active && currentTime - last_cycle >= 60000U)
         active = count = 0;
@@ -153,7 +188,7 @@ void rain_lights_frame(const CAN_RxHeaderTypeDef *h, const uint8_t *data) {
         return;
     const uint8_t bits[4] = {0x02, 0, 0x80, 0}; /* C1 left/right position lamps. */
 #else
-    if (!forced && (!active || !request_valid() || currentTime - last_cycle >= 60000U))
+    if (!force_valid() && (!active || !request_valid() || currentTime - last_cycle >= 60000U))
         return;
     const uint8_t bits[4] = {0, 0x40, 0, 0}; /* C2 dipped beams; preserve AUTO. */
 #endif

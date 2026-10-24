@@ -15,7 +15,8 @@ void rain_test_toggle_force(void);
 /* C1: poll C2 counters and expire the force; C2: no-op. */
 void rain_test_process(void);
 /* C1: store a debug reply from C2. */
-void rain_test_reply(uint8_t cycles_lo, uint8_t cycles_hi, uint8_t flags, uint8_t tx);
+void rain_test_reply(uint8_t cycles_lo, uint8_t cycles_hi, uint8_t flags, uint8_t tx,
+                     uint8_t token);
 /* C2: send its detection counters back to C1. */
 void rain_test_debug_reply(uint8_t token);
 /* C1: two-line display text. */
