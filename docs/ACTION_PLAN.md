@@ -4,6 +4,16 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## v5-beta-31 release preparation, 2026-10-24
+
+PR branch `fix/rain-test-reliability` contains the Rain test diagnostic action
+and its reliability correction, based on current `master`. Release notes are
+[v5-beta-31](releases/v5-beta-31.md). Local Apple Clang ASan/UBSan host tests
+and all four Arm GNU 15.2.Rel1 lint/build flavors pass; C1 uses 97,884/98,304
+Flash bytes. Pull request and pinned GitHub release CI are pending. Publish the
+fixed beta tag only from the merged master commit after CI succeeds. No vehicle
+acceptance is claimed; the Rain lights output check remains a hardware task.
+
 ## Rain lights debug/test surface, 2026-10-24
 
 Reliability correction on `fix/rain-test-reliability`: C2 now bounds forced
