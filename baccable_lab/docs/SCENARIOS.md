@@ -155,13 +155,13 @@ drive, adas`, then `order` and `id`.
 
 ## Bundled library
 
-82 procedures (527 confirmations). Groups:
+83 procedures (555 confirmations). Groups:
 
 | Group | Procedures | Location | Examples |
 | --- | --- | --- | --- |
 | access | 10 | postój | zamek, drzwi, bagażnik, maska, klapka paliwa, szyby, lusterka, pas |
 | lighting | 10 | postój | kierunkowskazy, awaryjne, mijania/drogowe, przeciwmgielne, pozycyjne, wnętrze, stop |
-| wipers | 5 | postój/dowolnie | biegi wycieraczek, spryskiwacz, tylna wycieraczka, czujnik deszczu, czujnik jasności i deszczu + stan świateł (AUTO) |
+| wipers | 6 | postój/dowolnie | biegi wycieraczek, spryskiwacz, tylna wycieraczka, czujnik deszczu, czujnik jasności i deszczu + stan świateł (AUTO), rozdzielenie sygnałów |
 | climate | 8 | postój | klimatyzacja, temperatura, nawiew, odmrażanie, recyrkulacja, podgrzewanie |
 | media | 7 | postój (+1 droga) | menu IPC, ekran, źródło audio, utwór, radio, telefon, nawigacja |
 | chassis | 6 | postój (+1 droga) | tryb zawieszenia, prześwit, Q4, tryb kierownicy, ruch kierownicy |
@@ -178,7 +178,7 @@ must never be provoked on a public road.
 
 ## Targeted decode tests (DNA modes, lane assist, rain and light sensors)
 
-Three procedures target specific firmware options, using markers in the catalog
+Four procedures target specific firmware options, using markers in the catalog
 (the DNA mode markers `dna_dynamic` / `dna_natural` / `dna_allweather` /
 `dna_race`, the lane toggle `lane_assist_disabled` / `lane_assist_enabled`, and
 `wipers_auto` together with the light-sensor pair `light_sensor_dark` /
@@ -191,14 +191,36 @@ Three procedures target specific firmware options, using markers in the catalog
   the current dipped-beam state in three phases, repeated three times: the light
   sensor covered and uncovered with the wipers off, then rain with the wipers in
   AUTO, then three manual wiper cycles.
+- `sensor_wiper_lights` (wipers, stationary) — the short, decisive procedure:
+  sensor darkness with the light switch **OFF** (lamps must stay off), then the
+  AUTO lamp pair, then steady wiper states, then the rain trigger with the lamps
+  still off. Fourteen steps, two runs.
 
 **The factory car does not switch the dipped beams on because of rain or wiper
 operation.** That behaviour is the firmware feature still to be added, so the
-rain phases of `rain_lights_auto` confirm that the lamps stay **off**. Those
+rain phases of both procedures confirm that the lamps stay **off**. Those
 `dipped_beam_off` confirmations are the negative control: they prove the lamps
 were not already on for another reason, which would otherwise look like the
 feature working. After the firmware change the same steps become
 `dipped_beam_on` and the unchanged procedure is the acceptance test.
+
+### What `sensor_wiper_lights` settles
+
+The earlier session showed one flag changing exactly when the sensor was covered
+and the lamps came on. That leaves two possible meanings: the flag is the lamp
+state, or it is the sensor's own dark decision. This procedure separates them:
+
+| Phase | Steps | Question answered |
+| --- | --- | --- |
+| A | 1–3 | switch OFF, sensor covered: the flag must **not** move if it means the lamps |
+| B | 4–7 | switch AUTO: the same flag must move with the lamps |
+| C | 8–10 | steady slow/fast/off wipers isolate the wiper state from AUTO cycling |
+| D | 11–14 | rain starts the wipers; the lamps must stay off (negative control) |
+
+Either result of phase A is decisive: if the flag moves with the sensor while
+the lamps stay off, it is a sensor decision; if it stays still, it is the lamp
+output. Phase C also covers the future three-cycle trigger by letting the slow
+setting complete three sweeps.
 
 ### Why `rain_lights_auto` uses this phase order
 
@@ -263,7 +285,7 @@ wipers→lights: you watch the lamps).
 | two sessions | 3 + 3 cycles | cross-session support and confounder rejection |
 | physical check | any | `validated` for wipers→lights |
 
-Do **not** repeat all 82 procedures: run only these three in one session (~10
+Do **not** repeat all 83 procedures: run only these four in one session (~10
 minutes), then repeat the same three in a second session. 6–9 ON/OFF
 observations per action is the practical reliability threshold.
 

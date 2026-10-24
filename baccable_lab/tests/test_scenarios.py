@@ -86,6 +86,25 @@ class ScenarioModelTests(unittest.TestCase):
         drive = [s for s in ordered if s.group == "drive"]
         self.assertTrue(drive and all(location_label(s) == "jazda – plac" for s in drive))
 
+    def test_sensor_wiper_lights_separates_lamps_from_the_sensor(self):
+        # With the light switch OFF the sensor still sees darkness; the lamps must
+        # stay off, which proves whether the light flag follows the sensor or the
+        # actual lamps. Then AUTO gives the beam pair, steady wiper states and the
+        # rain trigger, all in one short recording.
+        scenario = load_scenarios(default_directory())["sensor_wiper_lights"]
+        self.assertEqual((scenario.group, scenario.vehicle), ("wipers", "stationary"))
+        self.assertEqual((len(scenario.steps), scenario.runs), (14, 2))
+        expected = [step.expect for step in scenario.steps]
+        self.assertEqual(expected[0:3], ["light_sensor_bright", "light_sensor_dark",
+                                         "dipped_beam_off"])
+        self.assertEqual(expected[3:7], ["automatic_headlights_on", "light_sensor_dark",
+                                         "dipped_beam_on", "dipped_beam_off"])
+        self.assertEqual(expected[7:10], ["wipers_slow", "wipers_fast", "wipers_off"])
+        self.assertEqual(expected[10:], ["wipers_auto", "rain_detected",
+                                         "dipped_beam_off", "rain_stopped"])
+        self.assertIn("OFF", scenario.steps[0].action.upper())
+        self.assertIn("OFF", scenario.steps[2].action.upper())
+
     def test_rain_lights_auto_isolates_each_cause_and_repeats(self):
         # One cause per phase: the light sensor is tested with the wipers off,
         # the rain sensor with the sensor uncovered, then manual cycles. A wrong

@@ -41,13 +41,33 @@ The cloth method is the supported one and is now asserted by the test.
 
 Added catalog labels `light_sensor_dark` / `light_sensor_bright` (Polish titles,
 search aliases): the existing `ambient_light_changed` cannot separate the two
-directions. Updated `baccable_lab/docs/SCENARIOS.md` (counts 82 procedures / 527
+directions. Updated `baccable_lab/docs/SCENARIOS.md` (counts 83 procedures / 555
 confirmations, phase-order rationale, no-time rule and the negative-control
 statement) and `baccable_lab/docs/MARKERS.md`. Tests assert the phase order, the
 daylight assumption, the lamps-off control, the hidden time hint and the absence
 of the discarded flashlight variant.
 
-Validation: 75 Lab tests pass; host tests, firmware and the device user guides
+### Decisive sensor/wiper scenario, 2026-10-24
+
+Added `sensor_wiper_lights` (wipers, stationary, 14 steps, 2 runs, 28
+confirmations) after analysing the first real recording of `rain_lights_auto`
+(`20261024-105643Z`). That session is complete: 36/36 confirmations, three runs,
+no loss during capture (C2/BH lost about one second at USB start-up only). It
+shows one flag toggling exactly three times with the covered sensor on C1/C2
+`0x384` byte 3 bit 7, BH `0x354` byte 1 bit 6 and C1/C2 `0x73E`, but the test
+cannot tell whether that flag is the lamp output or the sensor's dark decision.
+
+The new procedure separates them in phase A: with the light switch **OFF**, the
+sensor is covered while the lamps stay off, so either outcome is decisive. Phase
+B then gives the AUTO lamp pair, phase C gives steady slow/fast/off wiper states
+that AUTO cannot provide, and phase D gives the rain trigger with the lamps-off
+control. It also lets the slow setting complete three sweeps, which covers the
+future three-cycle trigger without an extra step. Wiper frames were **not**
+identified in the first recording: the apparent candidates (`BH 0x738`, C1
+`0x4B1`, C1 `0x4B2`) are monotonic counters, which is why phase C needs steady
+states rather than AUTO cycling.
+
+Validation: 76 Lab tests pass; host tests, firmware and the device user guides
 are untouched (no menu, setting, reading or device action changed). Hardware
 acceptance is UNKNOWN: nobody has run the procedure in a car yet. Next: run all
 three phases three times in daylight, then `baccable bundle` and correlate the
