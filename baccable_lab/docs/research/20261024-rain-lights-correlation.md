@@ -169,3 +169,9 @@ wiper phase and reviewed light fields; optical and washer interpretations stay
 hypotheses. All 75 Lab tests pass, including real captured payloads, independent
 AUTO/lamp states, exact lengths, bus isolation, source hashes and generated
 catalog consistency. No firmware or hardware test is claimed.
+
+## Subsequent three-session audit
+
+The [consolidated October-24 audit](20261024-three-session-audit.md) verifies
+the original evidence, records the labelled Race/Mid result, and supersedes
+older uncertainty or generic marker interpretations where explicitly stated.

@@ -82,3 +82,9 @@ its empty generic marker-correlation list means not evaluated by the generic
 fixed-window heuristic, not a failed match. Earlier stable templates retain their
 original session coverage. Raw replay was separately checked with the existing
 `BinaryCaptureParser`.
+
+## Subsequent three-session audit
+
+The [consolidated October-24 audit](20261024-three-session-audit.md) verifies
+the original evidence, records the labelled Race/Mid result, and supersedes
+older uncertainty or generic marker interpretations where explicitly stated.

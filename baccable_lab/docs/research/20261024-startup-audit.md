@@ -51,3 +51,9 @@ No absence-of-input claim is made about other recordings.
 
 Software verification and integration status are maintained in
 [the action plan](../../../docs/ACTION_PLAN.md).
+
+## Subsequent three-session audit
+
+The [consolidated October-24 audit](20261024-three-session-audit.md) verifies
+the original evidence, records the labelled Race/Mid result, and supersedes
+older uncertainty or generic marker interpretations where explicitly stated.

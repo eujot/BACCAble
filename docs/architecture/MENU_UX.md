@@ -395,10 +395,13 @@ the softer choice, including when the car already reports the target DNA mode.
 It waits for a post-release matching status before success; a rejected or
 unconfirmed toggle is not repeated. `0x25A` must be a standard DLC-4 data frame.
 Its byte-1 bits 5:4 are decoded by mode: D Stiff=1, Soft=0; Race Stiff=2,
-Mid=1. D transitions are supported by capture and the owner's mode description;
-Race Mid=1 remains an explicit inference requiring hardware confirmation.
+Mid=1. The labelled `20261024-113104Z` manual matrix directly supports both
+D Soft and Race Mid, with two repetitions each. Automatic startup replay still
+requires vehicle acceptance. Mode entry can briefly retain the previous level:
+Race first reports `04 10 00 00` for 35–36 ms before the default `04 20 00 00`.
 Unknown codes invalidate the previous sample, and the state must settle for
-300 ms before use. See the [audit evidence](../../baccable_lab/docs/research/20261024-startup-audit.md).
+300 ms before use. See the [three-session audit](../../baccable_lab/docs/research/20261024-three-session-audit.md),
+which supersedes the earlier [Mid uncertainty](../../baccable_lab/docs/research/20261024-startup-audit.md).
 
 `features/dna_selector.c` runs only on BH and uses fresh standard data frames
 `0x256`/DLC 4 and actual `0x46C` mode reports. It preserves every unrelated

@@ -313,16 +313,54 @@
     },
     {
       "id": "ENGINE-RUN-001",
-      "status": "candidate",
+      "status": "refuted",
       "role": "C2",
       "can_id": "0x1FC",
       "dlc": 8,
-      "description": "Byte 0 bit 4 rises with engine start and clears on stop (ON 0.83 / OFF 0.01). Conflicts with the existing reference-only note that calls 0x1FC active damping; both meanings may coexist on one multiplexed frame.",
-      "evidence": [],
-      "contradictions": [
-        "Prior reference-only interpretation: active damping / differential status."
+      "description": "Refuted as a generic engine-running flag: 0x1FC b0.4 clears in D Stiff and Race while fresh C1 RPM remains 797\u2013974 in the labelled 20261024-113104Z matrix. It also changes with D suspension toggles. The earlier start/stop correlation is preserved in history_before_matrix; actual mode/calibration confounded that interpretation.",
+      "evidence": [
+        {
+          "session": "20261024-113104Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ],
+          "report": "docs/research/20261024-three-session-audit.md"
+        }
       ],
-      "next_test": "Repeat start/stop cycles and inspect the full payload to separate engine-running from the damping reference."
+      "contradictions": [
+        "Prior reference-only interpretation: active damping / differential status.",
+        "The entire labelled matrix has fresh running-engine RPM while the proposed flag changes with DNA/calibration; previous engine-start correlation was confounded. docs/research/20261024-three-session-audit.md"
+      ],
+      "next_test": "Use fresh engine RPM for engine-running decisions; retain this refuted interpretation as history.",
+      "history_before_matrix": {
+        "status": "candidate",
+        "description": "Byte 0 bit 4 rises with engine start and clears on stop (ON 0.83 / OFF 0.01). Conflicts with the existing reference-only note that calls 0x1FC active damping; both meanings may coexist on one multiplexed frame."
+      }
     },
     {
       "id": "WIPER-HVAC-001",
@@ -543,10 +581,10 @@
     },
     {
       "id": "DNA-RELATED-1FC-001",
-      "status": "candidate",
+      "status": "supported",
       "role": "C1",
       "can_id": "0x1FC",
-      "description": "C1/C2 byte 0 correlates with settled N/A=0x50, D=0x40, Race=0x60 in both captures. Mode-dependent response; no evidence it is a selector command. Existing damping/differential reference interpretation remains unvalidated. Across all eight N-to-D edges it follows the local 0x384 by 12-27 ms on C1 and 13-27 ms on C2; median cadence is 20 ms. This strengthens the response interpretation, not the actuator identity.",
+      "description": "C1/C2 raw byte0 tracks mode/calibration: N/A=0x50, D Stiff/Soft=0x40/0x50, Race Stiff/Mid=0x60/0x40. The labelled matrix repeats each softer-to-firm pair twice. b0.4 alone cannot indicate Race softness; no physical ECU or command role is established.",
       "evidence": [
         {
           "session": "20261011-190746Z",
@@ -583,10 +621,46 @@
             12
           ],
           "report": "docs/research/20261023-dna-selector.md"
+        },
+        {
+          "session": "20261024-113104Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ],
+          "report": "docs/research/20261024-three-session-audit.md"
         }
       ],
       "contradictions": [],
-      "next_test": "Isolate damping/selector controls and establish the sender before assigning physical meaning."
+      "next_test": "Use the actual mode with the raw code; assess actuation separately. Do not use bit4 as an engine gate.",
+      "history_before_matrix": {
+        "status": "candidate",
+        "description": "C1/C2 byte 0 correlates with settled N/A=0x50, D=0x40, Race=0x60 in both captures. Mode-dependent response; no evidence it is a selector command. Existing damping/differential reference interpretation remains unvalidated. Across all eight N-to-D edges it follows the local 0x384 by 12-27 ms on C1 and 13-27 ms on C2; median cadence is 20 ms. This strengthens the response interpretation, not the actuator identity."
+      }
     },
     {
       "id": "DNA-RELATED-4AE-001",
@@ -643,10 +717,10 @@
     },
     {
       "id": "DNA-RELATED-25A-001",
-      "status": "candidate",
+      "status": "supported",
       "role": "BH",
       "can_id": "0x25A",
-      "description": "Byte 1 settles at N/A=0x00, D=0x10, Race=0x20 and can lag the known byte-0 mode field. This is not an identified knob press/release signal. Existing firmware only rewrites byte 0. Audit 2026-10-24: D button pulses repeatedly toggle byte1[5:4] between 1 (firm) and 0 (Soft), using the owner description to label calibration. Race entry shows 2; the implemented Mid=1 remains a candidate.",
+      "description": "Labelled manual matrix confirms b1[5:4]: D Stiff=1, Soft=0; Race Stiff=2, Mid=1. Two complete repetitions give four D/Race softer-to-firm pairs; N/A button controls have no response. New mode entries carry a 24\u201336 ms transitional old level. This supersedes the Mid=1 inference, not the separate question of injected startup acceptance.",
       "evidence": [
         {
           "session": "20261011-190746Z",
@@ -702,10 +776,47 @@
           ],
           "report": "docs/research/20261024-startup-audit.md",
           "note": "Context markers; exact transitions use original CAN frame IDs in the report, not nearest-marker labels."
+        },
+        {
+          "session": "20261024-113104Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ],
+          "report": "docs/research/20261024-three-session-audit.md"
         }
       ],
       "contradictions": [],
-      "next_test": "Capture labelled Race Stiff -> Mid -> Stiff button actions and validate the inferred 2 -> 1 -> 2 field on BH 0x25A, plus injected startup acceptance."
+      "next_test": "Validate automatic startup selection/pulse acceptance and driver priority on matching firmware; another passive Race/Mid identification capture is unnecessary.",
+      "history_before_matrix": {
+        "status": "candidate",
+        "description": "Byte 1 settles at N/A=0x00, D=0x10, Race=0x20 and can lag the known byte-0 mode field. This is not an identified knob press/release signal. Existing firmware only rewrites byte 0. Audit 2026-10-24: D button pulses repeatedly toggle byte1[5:4] between 1 (firm) and 0 (Soft), using the owner description to label calibration. Race entry shows 2; the implemented Mid=1 remains a candidate.",
+        "next_test": "Capture labelled Race Stiff -> Mid -> Stiff button actions and validate the inferred 2 -> 1 -> 2 field on BH 0x25A, plus injected startup acceptance."
+      }
     },
     {
       "id": "DNA-RELATED-73C-001",
@@ -767,7 +878,7 @@
           2
         ]
       ],
-      "description": "Momentary selector direction: raw 0=released, 1=toward A (byte 0=20), 2=toward D/Race (byte 0=40). All 36 non-neutral pulses match selector-associated mode changes across three sessions. Every N-to-D (8/8) follows onset by 108-112 ms on BH; pulses last 154-294 ms. Five long holds precede Race by 1194-1211 ms. It is not a latched selected-mode report. C1 0x256/DLC 8 is unrelated. Startup replay implemented in 00b4b99; implementation does not promote the capture claim to hardware validated.",
+      "description": "Momentary selector direction: raw 0=released, 1=toward A (byte 0=20), 2=toward D/Race (byte 0=40). All 36 non-neutral pulses match selector-associated mode changes across three sessions. Every N-to-D (8/8) follows onset by 108-112 ms on BH; pulses last 154-294 ms. Five long holds precede Race by 1194-1211 ms. It is not a latched selected-mode report. C1 0x256/DLC 8 is unrelated. Startup replay implemented in 00b4b99; implementation does not promote the capture claim to hardware validated. The new matrix adds 13 operator-associated direction pulses, including two D-to-Race responses after 1196/1210 ms and return through intermediate D before N.",
       "evidence": [
         {
           "session": "20261010-111025Z",
@@ -812,6 +923,38 @@
             12
           ],
           "report": "docs/research/20261023-dna-all-sessions.md"
+        },
+        {
+          "session": "20261024-113104Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ],
+          "report": "docs/research/20261024-three-session-audit.md"
         }
       ],
       "contradictions": [
@@ -834,7 +977,7 @@
           1
         ]
       ],
-      "description": "A repeating wiper-associated cycle phase, not a steady rain or enable state. Median message interval 50 ms; slow rising-edge interval about 1500 ms, fast 950 ms. Independent 20261024-111510Z adds 27 pulses and two slow/fast/OFF controls.",
+      "description": "A repeating wiper-associated cycle phase, not a steady rain or enable state. Median message interval 50 ms; slow rising-edge interval about 1500 ms, fast 950 ms. Independent 20261024-111510Z adds 27 pulses and two slow/fast/OFF controls. Negative control: all 2750 C2 0x2EC frames in the DNA/suspension matrix have cycle phase clear.",
       "evidence": [
         {
           "session": "20261024-105643Z",
@@ -910,6 +1053,38 @@
             24
           ],
           "report": "docs/research/20261024-111510-rain-lights-followup.md"
+        },
+        {
+          "session": "20261024-113104Z",
+          "event_ids": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ],
+          "report": "docs/research/20261024-three-session-audit.md"
         }
       ],
       "contradictions": [

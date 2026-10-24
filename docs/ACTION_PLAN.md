@@ -1,5 +1,43 @@
 # BACCAble action plan and agent handoff
 
+## Three-session audit and labelled Race/Mid result, 2026-10-24
+
+On local `research/rain-lights-correlation`, audited `20261024-105643Z`,
+`20261024-111510Z` and `20261024-113104Z`: 90/90 human confirmations and
+4,526,576 frames. Ordered timestamp/ID/DLC/payload hashes from all nine raw
+streams match SQLite; original fingerprints and both prior published field
+traces are unchanged. Startup losses, saturated counts and old buffered-clock
+segments remain explicit. No original recording or marker was changed.
+
+The new matrix directly supports D Stiff/Soft=1/0 and Race Stiff/Mid=2/1 in
+BH `0x25A` b1[5:4]. Twelve suspension pulses give four N/A negative controls
+and eight D/Race responses after 25–45 ms. Both complete Race Mid/Stiff pairs
+agree with C1/C2 `0x384` b6.7 and mode-dependent `0x1FC` codes. All 26 confirmed
+matrix states match received reports. Race entry has a 35–36 ms transitional
+`04 10` before default `04 20`; the existing 300 ms settling rule matters.
+Firmware feedback codes already agree. All 151 transmission 0x5A8 frames pass
+CRC and remain Race during Mid. This is manual-input evidence, not automatic
+startup or power-cycle acceptance.
+
+The older 0x1FC b0.4 engine-running hypothesis is now refuted: the flag changes
+with mode/calibration while fresh RPM remains 797–974. Dictionary `2026-10-24.4`
+adds guarded raw calibration reports and retains unknown values. The two earlier
+rain/light analyses are confirmed, including the 14.411/14.474 s delayed lamp
+release. Retired AUTO-as-lamp marker rules remain historical; fresh reviews and
+stable templates now cover all three latest sessions. The generic correlator
+now honors exact DLC, covered by a false-short-frame regression test. Both user
+guides and MENU_UX replace Race/Mid inference with direct capture evidence while
+retaining the startup replay acceptance gap. All 77 Lab tests pass.
+
+[Consolidated report, tables and evidence](../baccable_lab/docs/research/20261024-three-session-audit.md).
+This supersedes older dated Mid uncertainty and incomplete rain/wiper claims.
+No firmware behavior changed. Next hardware acceptance: saved A/D/Race startup
+selection and D Soft/Race Mid application through an actual ignition/start,
+including manual priority; separately test complete lamp-output operation and
+factory/manual priority. Further broad input-identification recordings are not
+needed to rediscover these mapped controls. Work remains local on the committed
+research branch; the user's scenario branch and untracked files are preserved.
+
 ## Rain/light follow-up capture, 2026-10-24
 
 On `research/rain-lights-correlation`, reviewed `20261024-111510Z`: 28/28 steps,

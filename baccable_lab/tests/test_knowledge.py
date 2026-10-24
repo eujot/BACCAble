@@ -11,7 +11,7 @@ import unittest
 
 from baccable_lab.cli import main
 from baccable_lab.knowledge.catalog import crc8_j1850, decode_frame, load_dictionary, validate_dictionary
-from baccable_lab.knowledge.review import display_evidence, fingerprints, open_readonly, review_session
+from baccable_lab.knowledge.review import correlate, display_evidence, fingerprints, open_readonly, review_session
 from baccable_lab.knowledge.profiles import profile_frames
 from baccable_lab.storage.schema import SCHEMA
 
@@ -121,6 +121,48 @@ class KnowledgeTests(unittest.TestCase):
             for payload in ('004000', '0040004000', '0040004000000000'):
                 self.assertFalse(self.values(role, identifier, payload))
         self.assertNotIn('dipped_beam_report', self.values('C1', 0x73E, '02008000'))
+
+    def test_labelled_suspension_matrix_keeps_mode_dependent_codes_raw(self):
+        # Captured D Stiff/Soft and Race Stiff/Mid; raw 1 has two different meanings.
+        for payload, level in [('20100000', 1), ('20000000', 0),
+                               ('04200000', 2), ('04100000', 1), ('04300000', 3)]:
+            decoded = self.values('BH', 0x25A, payload)['suspension_calibration_code']
+            self.assertEqual(decoded['raw'], level)
+            self.assertIsNone(decoded['enum'])
+        for role in ('C1', 'C2'):
+            for payload, softer in [('0809880000040000', 0), ('0809880000048000', 1),
+                                    ('0831880000040000', 0), ('0831880000048000', 1)]:
+                self.assertEqual(self.values(role, 0x384, payload)['softer_suspension_report']['raw'], softer)
+            for payload, code in [('4002000000000000', 4), ('5002000000000000', 5),
+                                  ('6002000000000000', 6), ('7002000000000000', 7)]:
+                decoded = self.values(role, 0x1FC, payload)['mode_calibration_report_code']
+                self.assertEqual(decoded['raw'], code)
+                self.assertIsNone(decoded['enum'])
+            self.assertFalse(self.values(role, 0x1FC, '40'))
+            self.assertFalse(self.values(role, 0x384, '08318800000480'))
+        self.assertFalse(self.values('BH', 0x1FC, '4002000000000000'))
+        self.assertFalse(self.values('C1', 0x25A, '04100000'))
+
+    def test_marker_correlation_enforces_exact_length_before_scoring_edges(self):
+        database = sqlite3.connect(':memory:')
+        self.addCleanup(database.close)
+        database.execute('CREATE TABLE can_frames (id INTEGER, sequence INTEGER, host_ns INTEGER, '
+                         'device_timestamp_ms INTEGER, dlc INTEGER, data BLOB, role TEXT, arbitration_id INTEGER)')
+        def insert(identifier, milliseconds, payload):
+            database.execute('INSERT INTO can_frames VALUES (?,?,?,?,?,?,?,?)',
+                             (identifier, identifier, milliseconds * 1_000_000, milliseconds,
+                              len(payload), payload, 'C1', 0x384))
+        insert(1, 1500, bytes.fromhex('00000000000000'))
+        insert(2, 2000, bytes.fromhex('00000080000000'))
+        events = [dict(id=1, host_ns=2_000_000_000, label='dipped_beam_on', source='scenario')]
+        def low_beam_result():
+            return next(r for r in correlate(database, self.catalog, events)
+                        if r['role'] == 'C1' and r['signal'] == 'low_beam_report')
+        self.assertEqual(low_beam_result()['raw_counts'], {})
+        self.assertEqual(low_beam_result()['result'], 'no_matching_transition')
+        insert(3, 2100, bytes(8))
+        insert(4, 2200, bytes.fromhex('0000008000000000'))
+        self.assertEqual(low_beam_result()['transition']['frame_id'], 4)
 
     def test_payload_guards_and_unknown_frames(self):
         self.assertFalse(self.values('C1', 0x2FA, '5000'))

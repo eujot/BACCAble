@@ -74,18 +74,23 @@ evidence ledger must be refreshed (feeds the attach script).
 ### Step 2 — Classify frame structure **before** trusting any candidate
 The bundle ranking is polluted by counter/checksum frames. For every frame, from
 raw payloads:
-1. Last byte identical across all samples → **checksum** (see `shape_hints`
-   `last_byte_crc8_j1850`). Ignore it.
+1. A byte matching a computed checksum across changing payloads is a
+   **checksum candidate** (see `shape_hints` `last_byte_crc8_j1850`). Verify on
+   held-out payloads before excluding it. A constant last byte, including zero,
+   proves only stability or padding; it is not checksum evidence.
 2. A byte cycling `0,1,…,N-1` with a fixed step, then repeating → **counter**
    (commonly a 4-bit nibble in the second-to-last byte). Ignore it.
-3. Fields that only increase/decrease over long spans → **accumulator** (suspect;
-   its low bits drift and correlate with ordered actions). Downgrade.
+3. Fields that only increase/decrease over long spans may be accumulators,
+   temperatures or other gradual values. Treat an ordered-action correlation
+   cautiously and isolate that field; do not discard other bytes in the frame.
 4. Constant prefix bytes → framing, not signal.
 5. What remains, that jumps and settles, is **candidate state**.
 
-Discard candidates whose changing bytes are all counter/checksum/framing.
-This single step removes most false positives (e.g. `0x4AE`, `0x15A`,
-`0x5A8` bytes 6–7) and usually removes the need to re-record anything.
+Exclude only the proven counter/checksum/framing fields from semantic scoring.
+Other bytes in the same frame may carry useful state: BH `0x738` has supported
+light-responsive channels despite unrelated slow changes elsewhere. Never
+classify an entire frame from one changing field. Known examples include
+counter/check fields in `0x4AE`, `0x15A` and `0x5A8` bytes 6–7.
 
 ### Step 3 — Correlate by **state interval**, not a fixed before/after window
 Markers are confirmed **after** the action, so `[t-Δ, t]` is already the new
@@ -150,12 +155,14 @@ instead of recording the whole library again.
 - Treating diagnostic (`0x18DA…`) transport or counter bits as signals.
 - Overwriting a previous meaning because one dataset disagrees; review labelling
   and applicability first.
-- **Treating a body broadcast as a passive report and hunting for a separate
-  request frame** (the DNA-knob trap). A momentary stalk button or a monostable
-  knob may be read locally, yet the body still *broadcasts* the resulting state —
-  and when other ECUs obey that broadcast, **rewriting it is the actionable
-  path** (`can_forward`), as the ESC/TC and `Default mode` features do. Absence of
-  a request frame does not mean a function cannot be controlled.
+- **Assuming a report cannot influence listeners, or that replaying it must
+  operate an actuator.** Both require evidence. Default mode now reproduces the
+  identified BH `0x256` input instead of rewriting mode reports. `can_forward`
+  queues an additional frame on the current board's bus; it does not establish
+  interception, ECU identity or acceptance of forged lamp status. Search input
+  pulses and reports on every bus, then separate observed meaning from tested
+  control behavior. Failure to identify a request with one method is not proof
+  that a vehicle function cannot be controlled.
 - **Letting the last state interval run to the end of the session.** Bound every
   window to the scenario span; a final interval that reaches the recording end
   fills occupancy with unrelated later activity and invents bits that do not
