@@ -6,6 +6,19 @@
 
 ## Rain lights debug/test surface, 2026-10-24
 
+Reliability correction on `fix/rain-test-reliability`: C2 now bounds forced
+0x73E additions to 30 s and expires them after 3 s without C1 commands; an
+explicit OFF is needed before rearming after expiry. C1 retries a queue-rejected
+STOP even after the screen closes. Its screen accepts only matching, timely C2
+replies, marks missing/stale data and stale AUTO as unknown, and labels queue
+admissions `Q`. The raw 0x2EC rising-phase counter is independent of the saved
+Rain lights setting. This corrects the three review findings without changing
+the normal rain-trigger threshold or output masks. Full native host suite and
+four ARM build/lint flavors pass with Arm GNU 15.2.Rel1. Standard C1 uses
+97,884/98,304 Flash bytes and 15,420/16,384 static RAM bytes. Vehicle lamp
+acceptance remains UNKNOWN; no board was flashed. Next: verify in the car that
+forced output stops on BACK, at 30 s and when the C1/C2 link is interrupted.
+
 Branch `feat/rain-lights-debug`, based on `master`. The owner reported that the
 beta-30 Rain lights feature does not turn the lamps on. This adds a normal-firmware
 test surface to isolate detection from actuation, designed for later removal

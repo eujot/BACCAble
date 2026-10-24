@@ -674,7 +674,7 @@ urządzenie ponownie sprawdza wymagane warunki.
 | `Reset best times` | Nie wymaga osobnego ustawienia w Features | Kasuje zapisane najlepsze czasy przyspieszenia. Wymaga potwierdzenia; udany zapis kończy komunikat `Records cleared`. |
 | `Peak hold` | Nie wymaga osobnego ustawienia w Features | Od razu włącza/wyłącza pokazywanie najwyższych wartości liczbowych dla bieżącej strony. |
 | `IBS SOC override` | Pracujący silnik; potwierdzenie | Włącza/wyłącza tymczasowe, eksperymentalne podmienianie SOC w komunikatach. Ograniczenia opisano niżej. |
-| `Rain test` | Nie wymaga osobnego ustawienia; zgodny firmware C1/C2 | Otwiera ekran testu świateł deszczowych. Pierwsza linia pokazuje liczbę wykrytych cykli wycieraczek i stan AUTO, druga — licznik uzbrojenia i wstrzyknięć. SELECT wymusza bity lamp w `0x73E` na maksymalnie 30 s, aby sprawdzić ścieżkę wyjścia; BACK wychodzi i kończy wymuszanie. |
+| `Rain test` | Nie wymaga osobnego ustawienia; zgodny firmware C1/C2 | Otwiera ekran testu świateł deszczowych. `Wiper` liczy zaobserwowane zbocza ruchu wycieraczek także przy wyłączonym `Rain lights`; pierwsza próbka po przerwie ustala tylko stan początkowy. `A` pokazuje aktualny stan AUTO (`?` oznacza brak danych), `ARM` aktywne żądanie świateł, a `Q` liczbę ramek przyjętych do kolejki C2. `Q` wraca do zera po 255 i nie potwierdza zapalenia lamp. `F` pokazuje żądanie wymuszenia z C1. `C2: no reply` oznacza brak świeżych danych z C2. SELECT wymusza bity lamp w `0x73E` przez maksymalnie 30 s; C2 kończy wymuszenie także po 3 s bez komend. BACK kończy test. |
 
 Polecenia Dyno i hamowania czekają do dziesięciu sekund na odpowiedź kontrolera.
 Upływ tego czasu nie ponawia ani nie anuluje wysłanego polecenia. Odpowiedź może

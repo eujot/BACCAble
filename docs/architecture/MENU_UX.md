@@ -471,6 +471,17 @@ The startup-gesture correction and its acceptance limits are described in
 
 ## Rain lights (v5-beta-30)
 
+The `Actions` → `Rain test` diagnostic screen counts C2 0x2EC b2.5 rising
+phases independently of the saved `Rain lights` setting. The first sample after
+a gap longer than 500 ms is a baseline, not a cycle. C2 replies carry a poll
+token; C1 shows `C2: no reply` until a matching reply arrives and again when it
+is older than 3 s. A stale C2 light-selector sample shows `A=?`. `ARM` reports
+the live rain request, `Q` counts C2 queue admissions modulo 256, and `F` is
+only C1's local force request; none confirms physical lamps. Forced C2 additions
+expire after 3 s without a command and have an independent 30 s limit. A new
+force requires an explicit OFF after either expiry. C1 retries a queue-rejected
+STOP after leaving the screen; C2's own expiry bounds lost or undelivered STOP.
+
 `Settings` → `Features` → `Comfort` → `Rain lights` is an ordinary OFF/ON draft, default OFF,
 persisted in new slot 42. Record 0x101 now has 42 halfwords (84 bytes); loaders
 accept the preceding 41- and 40-slot records and default new options to OFF.

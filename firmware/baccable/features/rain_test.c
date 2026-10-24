@@ -14,9 +14,22 @@
 #if defined(BACCABLE_C1)
 static uint8_t shown;
 static uint8_t force_on;
+static uint8_t stop_pending, poll_known, reply_known, token;
 static uint16_t cycles;
 static uint8_t flags, tx;
-static uint32_t force_started, poll_at;
+static uint32_t force_started, poll_at, reply_at;
+
+/* Queue one C2 command and remember which reply belongs to it. */
+static bool send_test_command(void) {
+    uint8_t next_token = (uint8_t)(token + 1U);
+    uint8_t command[] = {C2BusID, C2_CMD_RAIN_TEST, force_on ? 1 : 0, next_token};
+    if (!board_uart_send(command, sizeof(command))) return false;
+    token = next_token;
+    poll_at = currentTime;
+    poll_known = 1;
+    if (!force_on) stop_pending = 0;
+    return true;
+}
 #endif
 
 void rain_test_enter(void) {
@@ -26,19 +39,17 @@ void rain_test_enter(void) {
     cycles = 0;
     flags = 0;
     tx = 0;
+    poll_known = reply_known = 0;
     force_started = 0;
-    poll_at = 0;
 #endif
 }
 
 void rain_test_exit(void) {
 #if defined(BACCABLE_C1)
-    if (force_on) {
-        force_on = 0;
-        rain_lights_force(0);
-        uint8_t command[] = {C2BusID, C2_CMD_RAIN_TEST, 0, 0};
-        board_uart_send(command, sizeof(command));
-    }
+    force_on = 0;
+    rain_lights_force(0);
+    stop_pending = 1;
+    send_test_command();
     shown = 0;
 #endif
 }
@@ -47,23 +58,29 @@ void rain_test_toggle_force(void) {
 #if defined(BACCABLE_C1)
     force_on = !force_on;
     rain_lights_force(force_on);
-    uint8_t command[] = {C2BusID, C2_CMD_RAIN_TEST, force_on ? 1 : 0, 0};
-    board_uart_send(command, sizeof(command));
+    stop_pending = !force_on;
+    send_test_command();
     if (force_on)
         force_started = currentTime;
 #endif
 }
 
-void rain_test_reply(uint8_t cycles_lo, uint8_t cycles_hi, uint8_t value_flags, uint8_t tx_count) {
+void rain_test_reply(uint8_t cycles_lo, uint8_t cycles_hi, uint8_t value_flags, uint8_t tx_count,
+                     uint8_t reply_token) {
 #if defined(BACCABLE_C1)
+    if (!shown || !poll_known || reply_token != token || currentTime - poll_at >= RAIN_TEST_POLL_MS)
+        return;
     cycles = (uint16_t)cycles_lo | ((uint16_t)cycles_hi << 8);
     flags = value_flags;
     tx = tx_count;
+    reply_known = 1;
+    reply_at = currentTime;
 #else
     (void)cycles_lo;
     (void)cycles_hi;
     (void)value_flags;
     (void)tx_count;
+    (void)reply_token;
 #endif
 }
 
@@ -71,13 +88,14 @@ void rain_test_process(void) {
 #if defined(BACCABLE_C1)
     if (force_on && currentTime - force_started >= RAIN_TEST_FORCE_MS)
         rain_test_toggle_force();
+    if (stop_pending) {
+        send_test_command();
+        if (stop_pending) return;
+    }
     if (!shown)
         return;
-    if (currentTime - poll_at >= RAIN_TEST_POLL_MS) {
-        uint8_t command[] = {C2BusID, C2_CMD_RAIN_TEST, force_on ? 1 : 0, 0};
-        if (board_uart_send(command, sizeof(command)))
-            poll_at = currentTime;
-    }
+    if (!poll_known || currentTime - poll_at >= RAIN_TEST_POLL_MS)
+        send_test_command();
 #endif
 }
 
@@ -94,8 +112,14 @@ void rain_test_debug_reply(uint8_t token) {
 
 void rain_test_render(char *first, size_t first_size, char *second, size_t second_size) {
 #if defined(BACCABLE_C1)
-    snprintf_(first, first_size, "Wiper %u A=%c", cycles, (flags & 1) ? '1' : '0');
-    snprintf_(second, second_size, "ARM=%c TX=%u F=%s", (flags & 2) ? '1' : '0', tx,
+    if (!reply_known || currentTime - reply_at >= 3000U) {
+        snprintf_(first, first_size, "C2: no reply");
+        snprintf_(second, second_size, "F=%s (C1 only)", force_on ? "ON" : "off");
+        return;
+    }
+    snprintf_(first, first_size, "Wiper %u A=%c", cycles,
+              (flags & 4) ? ((flags & 1) ? '1' : '0') : '?');
+    snprintf_(second, second_size, "ARM=%c Q=%u F=%s", (flags & 2) ? '1' : '0', tx,
               force_on ? "ON" : "off");
 #else
     (void)first;

@@ -40,7 +40,7 @@ void board_commands_dispatch(const uint8_t *message) {
             rain_lights_reply(message[2], message[3]);
             break;
         case C1_CMD_RAIN_TEST:
-            rain_test_reply(message[2], message[3], message[4], message[5]);
+            rain_test_reply(message[2], message[3], message[4], message[5], message[6]);
             break;
         case C1_CMD_DNA_RESULT:
             drive_mode_check_reply(message[2], message[3]);
