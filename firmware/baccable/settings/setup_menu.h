@@ -16,7 +16,7 @@
 #if defined(BACCABLE_C1)
 
     #define SETUP_FLASH_SLOTS 30 // minimum reserved flash slots (1..SETUP_FLASH_SLOTS)
-    #define SETUP_FLASH_PARAM_BUFFER_SIZE 41
+    #define SETUP_FLASH_PARAM_BUFFER_SIZE 42
 extern uint8_t setup_dashboardPageIndex;
 extern uint8_t dashboard_setup_screen[DASHBOARD_MESSAGE_MAX_LENGTH];
 extern uint8_t total_pages_in_setup_dashboard_menu;

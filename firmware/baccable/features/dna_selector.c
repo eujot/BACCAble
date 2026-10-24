@@ -7,9 +7,9 @@ static uint8_t phase, target, expected, actual = 255, token, have_token;
 static uint8_t data[4], have_input, physical_input, direction, steps;
 static uint8_t reply_pending, reply_result, cancelled, suspension_step;
 static uint8_t softer_suspension, suspension_known, suspension_mode, suspension_level;
-static uint8_t engine_running;
+static uint8_t engine_running, refresh_input, suspension_attempts, suspension_changed;
 static uint32_t started, step_at, last_input, last_mode, last_press;
-static uint32_t engine_running_since, last_suspension, suspension_stable_since;
+static uint32_t engine_running_since, last_suspension, suspension_stable_since, mode_stable_since;
 static uint16_t hold_ms;
 
 /* Map the factory codes into the physical A/N/D/Race selector order. */
@@ -26,6 +26,7 @@ static uint8_t mode_position(uint8_t mode) {
 /* Keep an outcome until the inter-board queue accepts it. */
 static void finish(uint8_t result) {
     phase = SELECT_IDLE;
+    refresh_input = 0;
     reply_result = result;
     reply_pending = 1;
 }
@@ -64,6 +65,7 @@ void dna_selector_configure(uint8_t mode, uint8_t action, uint8_t request_token,
     phase = SELECT_ENGINE;
     started = currentTime;
     steps = reply_pending = cancelled = suspension_step = 0;
+    refresh_input = suspension_attempts = suspension_changed = 0;
     have_input = suspension_known = 0;
     actual = 255; /* Require new input, mode and suspension reports after arming. */
 }
@@ -78,15 +80,24 @@ void dna_selector_observe(const CAN_RxHeaderTypeDef *header, const uint8_t *fram
     last_input = currentTime;
     /* Do not inject a release over the driver's press or repeat their other button. */
     if (physical_input && phase != SELECT_IDLE) finish(0);
+    else if (phase == SELECT_PRESS) refresh_input = 1;
 }
 
 /* Unknown factory values remain unknown rather than being treated as Natural. */
 void dna_selector_mode(uint8_t mode) {
-    actual = mode_position(mode);
+    uint8_t position = mode_position(mode);
+    if (position != actual || currentTime - last_mode > 1000U)
+        mode_stable_since = currentTime;
+    actual = position;
     last_mode = currentTime;
 }
 
-/* Decode the calibration field: D uses 0/1, Race uses 1/2 (Race Mid needs vehicle validation). */
+/* Return the requested calibration within the selected drive mode. */
+static uint8_t wanted_suspension(void) {
+    return target == 2 ? (softer_suspension ? 0 : 1) : (softer_suspension ? 1 : 2);
+}
+
+/* Decode the recorded calibration field: D Stiff/Soft=1/0, Race Stiff/Mid=2/1. */
 void dna_selector_suspension_status(const uint8_t *frame) {
     uint8_t mode = frame[0] & 0x7C;
     uint8_t level = (frame[1] >> 4) & 3;
@@ -97,17 +108,14 @@ void dna_selector_suspension_status(const uint8_t *frame) {
         return;
     }
     if (!suspension_known || suspension_mode != mode || suspension_level != level ||
-        currentTime - last_suspension > 1000U)
+        currentTime - last_suspension > 400U)
         suspension_stable_since = currentTime;
     suspension_mode = mode;
     suspension_level = level;
     suspension_known = 1;
     last_suspension = currentTime;
-}
-
-/* Return the requested calibration within the selected drive mode. */
-static uint8_t wanted_suspension(void) {
-    return target == 2 ? (softer_suspension ? 0 : 1) : (softer_suspension ? 1 : 2);
+    if (suspension_attempts && mode == target && level == wanted_suspension())
+        suspension_changed = 1; /* An observed response must never trigger another toggle. */
 }
 
 /* Use only fresh, settled suspension feedback for the actual target mode. */
@@ -117,8 +125,17 @@ static uint8_t suspension_ready(void) {
            currentTime - suspension_stable_since >= 300U;
 }
 
+/* Permit a second toggle only while the first reply window still has fresh unchanged feedback. */
+static uint8_t suspension_retry_ready(void) {
+    return suspension_attempts == 1 && !suspension_changed && suspension_ready() &&
+           currentTime - step_at >= 1000U && currentTime - suspension_stable_since >= 1000U &&
+           currentTime - last_suspension <= 300U && can_tx_idle();
+}
+
 /* Copy the observed input and change only the field owned by the current gesture. */
 static uint8_t send_input(uint8_t pressed) {
+    /* Do not start or repeat a press behind older frames; a release must still queue. */
+    if (pressed && !can_tx_idle()) return 0;
     CAN_TxHeaderTypeDef header = {.StdId = 0x256, .DLC = 4,
         .IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .TransmitGlobalTime = DISABLE};
     uint8_t frame[4];
@@ -144,7 +161,7 @@ static uint8_t engine_ready(void) {
     return currentTime - engine_running_since >= 2000U;
 }
 
-/* Perform bounded selector steps and at most one suspension toggle, then report the outcome. */
+/* Select settled modes, reproduce held input, and conditionally retry one unaccepted suspension pulse. */
 void dna_selector_process(void) {
     uint32_t now = currentTime;
     uint8_t running = engine_ready();
@@ -155,13 +172,20 @@ void dna_selector_process(void) {
             started = now;
             phase = SELECT_READY;
         }
-    } else if (phase != SELECT_IDLE && (!running || now - started >= 10000U)) cancel();
+    } else if (phase != SELECT_IDLE && (!running || now - started >= 12000U)) cancel();
+
+    if (phase == SELECT_READY && suspension_step &&
+        (actual != target || (suspension_attempts && now - step_at >= 1500U))) finish(0);
 
     if (phase == SELECT_PRESS) {
         if (now - last_input > 600U || now - last_mode > 1000U ||
             (suspension_step && actual != target)) cancel();
         else if (now - step_at >= hold_ms) phase = SELECT_RELEASE;
-        else if (hold_ms > 200 && now - last_press >= 250U && send_input(1)) last_press = now;
+        else if ((refresh_input || (hold_ms > 200 && now - last_press >= 250U)) && send_input(1)) {
+            /* A factory neutral report can otherwise cut a virtual press short. */
+            last_press = now;
+            refresh_input = 0;
+        }
     }
     if (phase == SELECT_RELEASE) {
         if (send_input(0)) {
@@ -173,23 +197,29 @@ void dna_selector_process(void) {
         if (now - last_mode > 1000U || actual == 255 || now - step_at >= 1500U) finish(0);
         else if (suspension_step) {
             if (actual != target) finish(0);
-            else if (suspension_ready() && suspension_level == wanted_suspension() &&
-                     last_suspension != step_at && last_suspension - step_at <= now - step_at)
-                finish(1);
+            else if (suspension_ready() && can_tx_idle() && last_suspension != step_at &&
+                     last_suspension - step_at <= now - step_at) {
+                if (suspension_level == wanted_suspension()) finish(1);
+                else if (suspension_retry_ready()) phase = SELECT_READY;
+            }
         } else if (actual == expected && now - step_at >= 300U && now - last_input <= 600U &&
                    last_input != step_at && last_input - step_at <= now - step_at)
             phase = SELECT_READY;
     } else if (phase == SELECT_READY && have_input && !physical_input &&
-               now - last_input <= 600U && now - last_mode <= 1000U && actual != 255) {
+               now - last_input <= 20U && now - last_mode <= 1000U && actual != 255 &&
+               now - mode_stable_since >= 1000U) {
         if (actual == target) {
             if (target == 0) finish(1);
             else if (suspension_ready()) {
                 if (suspension_level == wanted_suspension()) finish(1);
-                else {
+                else if (suspension_attempts && (suspension_changed || suspension_attempts >= 2)) finish(0);
+                else if (!suspension_attempts || suspension_retry_ready()) {
                     suspension_step = 1;
                     hold_ms = 150;
                     if (send_input(1)) {
-                        step_at = now;
+                        ++suspension_attempts;
+                        step_at = last_press = now;
+                        refresh_input = 0;
                         phase = SELECT_PRESS;
                     }
                 }
@@ -199,10 +229,11 @@ void dna_selector_process(void) {
             suspension_step = 0;
             direction = actual < target ? 0x40 : 0x20;
             expected = actual < target ? actual + 1 : actual - 1;
-            hold_ms = actual == 2 && expected == 3 ? 1800 : 200;
+            hold_ms = actual == 2 && expected == 3 ? 2200 : 200;
             if (send_input(1)) {
                 ++steps;
                 step_at = last_press = now;
+                refresh_input = 0;
                 phase = SELECT_PRESS;
             }
         }

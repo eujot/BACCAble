@@ -33,6 +33,7 @@ typedef struct {
     uint8_t eujot_enabled;
     uint8_t parking_sensor_mute;
     uint8_t reverse_audio_mute;
+    uint8_t rain_lights_enabled;
     uint8_t rotate_readings;
     uint8_t usb_sniffer, usb_elm327;
 #endif

@@ -1,7 +1,7 @@
 # BACCAble — in-car user guide
 
 This guide describes the current dashboard-menu firmware source, including the
-updated startup drive-mode and suspension settings after v5-beta-28.
+unreleased startup drive-mode/suspension corrections and Rain lights after v5-beta-29.
 Startup suspension behavior still requires vehicle acceptance testing. It starts after BACCAble has been installed and
 connected to the vehicle. Installation, wiring and firmware flashing are outside
 its scope. Use a matching C1/C2/BH firmware set.
@@ -390,8 +390,25 @@ workflow; their draft does not control the car before successful persistence.
 | `Close windows` | OFF / 1 lock / 2 locks | Choose the key-fob lock gesture that starts window closing. Narrow screens use `Close win`. |
 | `Open windows` | OFF / 1 unlock / 2 unlocks | Choose the key-fob unlock gesture that starts window opening. Narrow screens use `Open win`. |
 | `QV exhaust` | Off / on | Permit the exhaust-valve request action and the gear-lever release-button gesture on compatible hardware. |
+| `Rain lights` | OFF / ON; default OFF | In AUTO, request dipped beams and position lamps after three detected wiper cycles within 15 seconds. Keep the request until 60 seconds after the last cycle. Requires matching C1/C2 firmware. Vehicle lamp operation remains unverified. |
 | `Auto PDC mute` | Off / on | Temporarily mute active parking-sensor beeps while braking outside Reverse, then restore the change BACCAble made when braking is released or Reverse is selected. Requires current brake, gear and PDC reports. |
 | `Mute audio in R` | Off / on | Mute audio in Reverse and restore audio afterwards if BACCAble muted it. Previously muted audio and a manual unmute are respected. This is independent of PDC mute. |
+
+
+`Settings` → `Features` → `Comfort` → `Rain lights`: select ON and hold to save. Times are fixed.
+Each further detected cycle renews the 60-second hold. One sweep alone does not
+trigger the function; several washer sweeps can trigger it. This uses wiper
+activity, not a measured rain intensity. Very sparse wiping may not reach the threshold.
+
+Leaving AUTO, disabling the option, or stale input/link data ends the request.
+C2 stops its dipped-beam additions immediately on a received non-AUTO report;
+C1's position-lamp request follows the next reply (normally within one second,
+expiring after three seconds without a fresh reply). Ending a request stops adding
+lamp bits; it never sends an explicit lights-off command. Factory darkness
+control therefore retains control of the lights. Observe actual front and rear
+lamps during the first stationary trial: CAN transmission is not confirmation
+that the lamp controllers accepted it. The output method still needs vehicle
+verification, including manual priority and release in darkness.
 
 ### Assistance group
 
@@ -407,8 +424,8 @@ workflow; their draft does not control the car before successful persistence.
 | Option | Values | Purpose |
 | --- | --- | --- |
 | `Launch Nm` | 25–600 Nm, step 25 | Reported engine torque at which launch assist requests release of the forced front brakes. It is not a torque limit or a tuning setting. |
-| `Default mode` | A / N / D / Race | At vehicle start-up, BH simulates the recorded DNA selector input on `0x256` (four bytes). For A/D/Race, C1 and BH wait for fresh RPM above 400 for two seconds; the menu shows `Start engine` while C1 waits. `N` leaves factory selection untouched; old saved OFF becomes N without changing stored settings. A/D use 200 ms deflections; Race first reaches D, then holds the D direction for 1.8 s, repeating reports every 250 ms. Intermediate steps follow fresh mode reports, with at most three gestures and a ten-second operation limit. The physical selector takes priority, and any pending press is released on cancellation, engine stop or stale data. C1 waits up to 15 s for BH after the engine gate, then checks DNA and CRC-valid transmission reports for five seconds. `Confirmed` requires sustained fresh matching reports; it corroborates reported state, not every subsystem. The actual mode, including an intermediate mode before Race, remains selected. Settings save or ignition OFF cancels; transport resync does not re-arm. Update C1 and BH together. |
-| `Suspension` | Stiff / Soft / Mid | Sets the next-start suspension preference: D offers `Stiff` or `Soft`; Race offers `Stiff` or `Mid`. For A/N the softer choice is labelled `Softer` and has no effect. After confirming the drive mode, BACCAble checks the reported suspension state and presses the button once only if a change is needed, including when the car already starts in D/Race. It releases after 150 ms and waits for feedback; an unconfirmed press is not repeated. Manual selector or suspension input cancels the automatic operation. Requires matching C1/BH firmware. D feedback is supported by recordings; the Race/Mid feedback code is inferred and still needs confirmation in the car. |
+| `Default mode` | A / N / D / Race | At vehicle start-up, BH simulates the recorded DNA selector input on `0x256` (four bytes). For A/D/Race, C1 and BH wait for fresh RPM above 400 for two seconds; the menu shows `Start engine` while C1 waits. `N` leaves factory selection untouched; old saved OFF becomes N without changing stored settings. A/D use 200 ms deflections; Race first reaches D, then holds the D direction for 2.2 s. Held input is refreshed after factory-neutral reports, with a 250 ms fallback refresh for the long hold. Each new press follows a fresh neutral report and waits for an idle CAN transmitter. The actual mode must remain stable for one second before the next gesture. At most three mode gestures are allowed within twelve seconds. The physical selector takes priority, and any pending press is released on cancellation, engine stop or stale data. C1 waits up to 20 s for BH after the engine gate, then checks DNA and CRC-valid transmission reports for five seconds. `Confirmed` requires sustained fresh matching reports; it corroborates reported state, not every subsystem. The actual mode, including an intermediate mode before Race, remains selected. Settings save or ignition OFF cancels; transport resync does not re-arm. Update C1 and BH together. |
+| `Suspension` | Stiff / Soft / Mid | Sets the next-start suspension preference: D offers `Stiff` or `Soft`; Race offers `Stiff` or `Mid`. For A/N the softer choice is labelled `Softer` and has no effect. After the actual mode is stable for one second and suspension feedback for 300 ms, BACCAble presses the button for 150 ms only if a change is needed, including when already in D/Race. It waits for fresh feedback after release. One retry is permitted only after at least one second with fresh, continuously unchanged opposite-state feedback and completed earlier CAN transmission. Any observed desired-state reply or missing/unknown feedback prevents that retry. There are at most two presses. `No confirm` can mean suspension was not confirmed even though the DNA mode changed. Manual selector or suspension input cancels the automatic operation. Requires matching C1/BH firmware. Manual D and Race/Mid feedback codes are supported by recordings, including two complete labelled Race cycles on 2026-10-24. Automatic startup replay still requires vehicle acceptance. |
 | `ESC/TC control` | Off / on | Permit the ESC/traction-control toggle and supported lane-button gesture. Vehicle configuration must support the function. |
 | `Dyno action` | Off / on | Permit `Toggle Dyno mode`; enabling this preference alone does not enter Dyno. |
 | `Brake action` | Off / on | Permit `Brake override` and `Disable launch`. Enabling this preference alone does not apply the brakes. |

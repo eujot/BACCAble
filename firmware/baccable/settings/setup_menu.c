@@ -157,6 +157,7 @@ static uint8_t setup_group(uint8_t id) {
     case 28:
     case 31:
     case 32:
+    case 42:
         return 1; /* Comfort */
     case 9:
     case 24:

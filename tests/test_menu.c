@@ -149,10 +149,17 @@ static void test_settings_migration(void) {
     settings_record[35] = 1; /* V6 in the old record. */
     settings_record[37] = 3; /* Race. */
     settings_record[39] = 2; /* Q4. */
-    settings_record_size = 80;
+#ifdef LARGE_DISPLAY
+    const unsigned old_size = 82;
+    settings_record[40] = 1;
+#else
+    const unsigned old_size = 80;
+#endif
+    settings_record_size = old_size;
     setup_load_from_flash();
-    assert(old_settings_reads == 1);
-    assert(settings_state.gasoline_v6 == 1 && settings_state.default_suspension_softer == 0);
+    assert(old_settings_reads == (old_size == 80));
+    assert(settings_state.gasoline_v6 == 1 && settings_state.default_suspension_softer == (old_size == 82));
+    assert(settings_state.rain_lights_enabled == 0);
     assert(settings_state.default_drive_mode == 3 && settings_state.drivetrain == 2);
     for (unsigned i = 0; i < setup_params_count; ++i) {
         assert(setup_params[i].flash_index <= SETUP_FLASH_PARAM_BUFFER_SIZE);
@@ -160,15 +167,17 @@ static void test_settings_migration(void) {
             assert(setup_params[i].flash_index != setup_params[j].flash_index);
     }
     settings_state.default_suspension_softer = 1;
+    settings_state.rain_lights_enabled = 1;
     fail_save = true;
-    assert(settings_save() != 0 && settings_record_size == 80);
+    assert(settings_save() != 0 && settings_record_size == old_size);
     fail_save = false;
-    assert(settings_save() == 0 && settings_record_size == 82);
-    assert(settings_record[35] == 1 && settings_record[40] == 1);
+    assert(settings_save() == 0 && settings_record_size == 84);
+    assert(settings_record[35] == 1 && settings_record[40] == 1 && settings_record[41] == 1);
     settings_state.gasoline_v6 = 0;
     settings_state.default_suspension_softer = 0;
     setup_load_from_flash();
     assert(settings_state.gasoline_v6 == 1 && settings_state.default_suspension_softer == 1);
+    assert(settings_state.rain_lights_enabled == 1);
     settings_state.gasoline_v6 = 0;
     assert(settings_save() == 0);
     assert(settings_record[35] == 0 && settings_record[40] == 1);
@@ -206,7 +215,7 @@ static void test_default_mode_engine_gate(void) {
     uart_busy = false; board_sync_process();
     assert(commands == 9 && last_dna_action == 1);
     assert(!strcmp(drive_mode_check_status(), "Waiting"));
-    now += 14999; board_sync_process();
+    now += 19999; board_sync_process();
     assert(!strcmp(drive_mode_check_status(), "Waiting"));
     ++now; board_sync_process();
     assert(!strcmp(drive_mode_check_status(), "No confirm"));

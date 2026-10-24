@@ -76,6 +76,7 @@ static void test_can(void) {
     CAN_TxHeaderTypeDef header = {.StdId = 0x123, .DLC = 8};
     uint8_t data[8] = {1, 2, 3, 4, 5, 6, 7, 8};
     can_init();
+    assert(!can_tx_idle());
     assert(can_tx(&header, data) == HAL_ERROR);
     can_set_silent(1);
     can_set_bitrate(CAN_BITRATE_1000K);
@@ -84,9 +85,11 @@ static void test_can(void) {
     assert(can_gethandle()->Init.Mode == CAN_MODE_SILENT);
     assert(can_gethandle()->Init.Prescaler == 6);
     assert(!can_gethandle()->Init.AutoRetransmission);
+    assert(can_tx_idle());
     can_set_bitrate(CAN_BITRATE_10K);
     assert(can_gethandle()->Init.Prescaler == 6);
     assert(can_tx(&header, data) == HAL_OK);
+    assert(!can_tx_idle());
     data[0] = 99;
     tx_result = HAL_BUSY;
     can_process();
@@ -94,6 +97,10 @@ static void test_can(void) {
     tx_result = HAL_OK;
     can_process();
     assert(sent_count == 1 && sent_data[0] == 1);
+    assert(can_tx_idle());
+    free_mailboxes = 2;
+    assert(!can_tx_idle()); /* An empty software queue does not prove transmission completion. */
+    free_mailboxes = 3;
     can_process();
     assert(sent_count == 1);
     header.DLC = 9;
@@ -112,6 +119,7 @@ static void test_can(void) {
     can_process();
     assert(sent_count == 1);
     can_disable();
+    assert(!can_tx_idle());
     free_mailboxes = 3;
     can_enable();
     can_process();

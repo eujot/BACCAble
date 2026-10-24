@@ -1,5 +1,174 @@
 # BACCAble action plan and agent handoff
 
+## Rain-triggered lights menu and controller, 2026-10-24
+
+Local branch `feat/rain-lights-auto`, isolated at `/private/tmp/baccable-rain-lights`,
+based on `60c6484` (includes the committed three-session analysis and startup
+DNA/suspension correction). Added `Settings` → `Features` → `Comfort` → `Rain lights`, OFF/ON,
+default OFF. Three fresh C2 0x2EC/DLC8 b2.5 rising phases within 15 seconds
+request lights; each further cycle renews a 60-second hold. First-high samples,
+repeated highs, malformed frames and stale streams do not count. AUTO is required
+from fresh C2 0x73E/DLC4 b3.6. Washer cycles are intentionally not excluded.
+
+Output adds only dipped-beam bits on C2 and position-lamp bits on C1 to new
+factory 0x73E templates, preserving all other fields. It stops additions on
+release; no explicit OFF is transmitted. Factory frames are not intercepted.
+C1/C2 poll/response tokens and three-second leases bound missing-link behavior;
+manual non-AUTO stops C2 immediately and C1 on its next reply (normally <=1 s,
+<=3 s without a reply). A missed poll response alone does not expire C1 within
+the next ordinary poll interval. C1 sleep stops requests. Setting is stored in
+new slot 42; import both previous 40- and 41-slot records, preserving every
+existing value. Downgrade firmware may not read the extended settings record.
+Both user guides and MENU_UX describe times, prerequisites and acceptance limits.
+
+Implementation `b22543d`; dictionary source snapshot `2026-10-24.6` and
+readable catalog refreshed without changing captured layouts or original evidence.
+All 77 Lab tests and four standard size/identity gates pass.
+Native ASan/UBSan host suite passes, including new C1/C2 threshold/hold/lease/
+manual priority/tick-wrap cases, exact 15-second threshold and old 80-/82-byte
+settings migration. All 16 ARM board/display builds and four-flavor cppcheck
+pass with full Arm GNU 15.2.Rel1; final source size and dictionary provenance
+are recorded with this task's verification. Standard flash/RAM: C1
+97,288/15,388 bytes; C2 31,072/12,392. Largest C1 RAM is 15,596 bytes
+(large display); runtime stack headroom remains a hardware acceptance item. Original captures and the user's
+scenario checkout/untracked files remain untouched.
+
+Hardware acceptance is UNKNOWN. The input evidence is sufficient for this
+implementation, but 0x73E injection has not demonstrated sustained dipped-beam
+and complete front/rear position-lamp acceptance. Next is one stationary trial
+with visible front/rear lamps, AUTO daylight after three cycles, 60-second
+release, darkness handover, manual selection and lost-link behavior. Record
+physical outcomes; a C2 rain-request reply and queue admission are not lamp
+success. No push, PR, merge, release or flash performed.
+
+
+## Startup DNA gesture and suspension reliability correction, 2026-10-24
+
+Task branch `fix/startup-dna-gestures`, isolated worktree
+`/private/tmp/baccable-startup-dna-gestures`, based on the three-session audit.
+The owner reports beta-29 D selection working, Race failing, and one D/Soft
+attempt selecting D without Soft. This provides limited D replay acceptance,
+not repeatable Race/suspension acceptance. No automatic-failure TX recording is
+available, so the exact vehicle cause is not asserted.
+
+Concrete source/waveform weaknesses: beta-29's held input used its own 250 ms
+refresh clock while factory-neutral 0x256 messages still arrived; short pulses
+could start immediately before those neutral messages. Its fixture did not
+exercise recorded cadences or a first accepted pulse ignored by the receiver.
+Nominal 1.8 s already exceeds the 1.196/1.210 s captured Race response times;
+continuity and pacing, rather than duration alone, need correction.
+
+New presses align within 20 ms of a fresh neutral report, wait for all earlier
+software/hardware TX to drain, and require one second of actual-mode stability.
+Incoming factory-neutral reports schedule held-input reassertion. Race holds
+2.2 s with a 250 ms fallback refresh. Suspension retains 150 ms pulses and
+300 ms settled feedback. One retry is allowed only after release plus at least
+one second of fresh, unchanged opposite calibration, drained TX and no observed
+desired-state response. Any desired reply, even brief, or missing/unknown data
+prevents a blind retry. Physical input, stale mode/RPM and engine stop retain
+priority. BH operation is bounded to 12 s after its maximum 3 s engine gate;
+C1 now waits 20 s for BH, then uses the unchanged five-second corroboration.
+UART/settings formats and menu labels are unchanged; update C1/BH together.
+
+Both guides and MENU_UX describe the changed timing/retry and partial-failure
+meaning. [Failure review and limits](research/20261024-startup-gesture-correction.md).
+Two focused regressions fail against beta-29 source and pass after correction:
+neutral during a long hold, and an ignored first suspension pulse. Full native
+Apple Clang ASan/UBSan host tests pass. All 16 board/display builds and cppcheck
+for C1/C2/BH/CAN pass with the full Arm GNU 15.2.Rel1 toolchain and local version
+`startup-dna`. Standard flash/RAM: C1 96,744/15,364 bytes; BH 36,608/13,260.
+Size gates pass. Source snapshot `50f7604` and dictionary `2026-10-24.5` now
+record the correction; all 77 Lab tests pass with the refreshed source hashes. No push, merge, release, flash or new vehicle
+acceptance. Original captures, user scenario branch and untracked files remain.
+
+## Three-session audit and labelled Race/Mid result, 2026-10-24
+
+On local `research/rain-lights-correlation`, audited `20261024-105643Z`,
+`20261024-111510Z` and `20261024-113104Z`: 90/90 human confirmations and
+4,526,576 frames. Ordered timestamp/ID/DLC/payload hashes from all nine raw
+streams match SQLite; original fingerprints and both prior published field
+traces are unchanged. Startup losses, saturated counts and old buffered-clock
+segments remain explicit. No original recording or marker was changed.
+
+The new matrix directly supports D Stiff/Soft=1/0 and Race Stiff/Mid=2/1 in
+BH `0x25A` b1[5:4]. Twelve suspension pulses give four N/A negative controls
+and eight D/Race responses after 25–45 ms. Both complete Race Mid/Stiff pairs
+agree with C1/C2 `0x384` b6.7 and mode-dependent `0x1FC` codes. All 26 confirmed
+matrix states match received reports. Race entry has a 35–36 ms transitional
+`04 10` before default `04 20`; the existing 300 ms settling rule matters.
+Firmware feedback codes already agree. All 151 transmission 0x5A8 frames pass
+CRC and remain Race during Mid. This is manual-input evidence, not automatic
+startup or power-cycle acceptance.
+
+The older 0x1FC b0.4 engine-running hypothesis is now refuted: the flag changes
+with mode/calibration while fresh RPM remains 797–974. Dictionary `2026-10-24.4`
+adds guarded raw calibration reports and retains unknown values. The two earlier
+rain/light analyses are confirmed, including the 14.411/14.474 s delayed lamp
+release. Retired AUTO-as-lamp marker rules remain historical; fresh reviews and
+stable templates now cover all three latest sessions. The generic correlator
+now honors exact DLC, covered by a false-short-frame regression test. Both user
+guides and MENU_UX replace Race/Mid inference with direct capture evidence while
+retaining the startup replay acceptance gap. All 77 Lab tests pass.
+
+[Consolidated report, tables and evidence](../baccable_lab/docs/research/20261024-three-session-audit.md).
+This supersedes older dated Mid uncertainty and incomplete rain/wiper claims.
+No firmware behavior changed. Next hardware acceptance: saved A/D/Race startup
+selection and D Soft/Race Mid application through an actual ignition/start,
+including manual priority; separately test complete lamp-output operation and
+factory/manual priority. Further broad input-identification recordings are not
+needed to rediscover these mapped controls. Work remains local on the committed
+research branch; the user's scenario branch and untracked files are preserved.
+
+## Rain/light follow-up capture, 2026-10-24
+
+On `research/rain-lights-correlation`, reviewed `20261024-111510Z`: 28/28 steps,
+1,644,370 frames, context Giulia 2.0 / v5-beta-29 / daylight / outdoors. Raw
+replay matches SQLite and fingerprints are unchanged; saturated C1/C2 startup
+losses and the initial C1/BH old-clock segment remain explicit. No recorded
+later drops, with the usual capture-quality limitations.
+
+Two sensor-covered trials with lights manually OFF independently support BH
+`0x738` b1/b2 as light-responsive raw channels. The raw-response hypothesis is
+now supported, with no units/source claim. In the labelled AUTO cycles, lamp OFF
+follows both channels returning to 6 by 14.411 and 14.474 s on the BH clock;
+short correlation windows would be misleading. C2 `0x2EC` adds 27 wiper-phase
+pulses and two independent slow/fast/OFF controls. Spray pulses repeat, but old
+washer contradictions remain. No new raw rain decoder or proven lamp command.
+
+[Follow-up evidence and timing](../baccable_lab/docs/research/20261024-111510-rain-lights-followup.md).
+Dictionary `2026-10-24.3` retains layouts and adds cumulative evidence. The next
+vehicle check remains lamp-output acceptance with factory/manual priority.
+All 75 Lab tests pass; no firmware or user-facing behavior changed.
+
+## Rain/wiper and automatic-lighting correlation, 2026-10-24
+
+Research branch `research/rain-lights-correlation`, based on `939a85e`; isolated
+worktree `/private/tmp/baccable-rain-lights-correlation`. Reviewed complete
+`20261024-105643Z` and compared all 24 databases through that session: 23,535,295
+frames, including failed/empty recordings. The target has 36/36 confirmations
+and 2,157,769 frames; raw replay matches SQLite on every bus. Original hashes,
+startup losses, malformed bytes, events and notes remain in the evidence.
+
+C2 `0x2EC` DLC 8 byte 2 bit 5 supports a wiper-cycle phase: 28 pulses in the
+new capture and 44 in `20261010-111025Z`; slow rises are about 1.50 s apart,
+fast about 0.95 s. Physical one-edge-per-sweep semantics remain unverified.
+BH `0x354` / C2 `0x73E` separate AUTO mode (byte 3 bit 6) from dipped indication
+(byte 1 bit 6), supported by the constant-AUTO/variable-lamp recording and older
+manual-light controls. BH `0x738` bytes 1/2 respond to covering/uncovering before
+delayed lamp OFF; they remain raw-channel candidates with unknown units/source.
+Rejecting that whole frame as a counter in the scenario-branch handoff was too
+broad. C1 `0x41A` mask 0x60 also follows unrelated consumers and is rejected as
+a specific wiper trigger. Raw rain and the apparent washer bit remain unresolved.
+
+[Report and reproducible evidence](../baccable_lab/docs/research/20261024-rain-lights-correlation.md).
+Dictionary `2026-10-24.2`, hypotheses and the regenerated catalog retain prior
+provenance and contradictions. The cumulative ledger references the immutable
+old detailed review and adds the fresh target. All 75 Lab tests pass, including
+captured fields, length/bus guards, source snapshots and catalog generation.
+No firmware, menu, user guide or vehicle action changed. Next: a small stationary
+lamp-output check with front/rear observation and factory/manual priority. A full
+repeat of the sensor scenario is unnecessary to find a wiper trigger.
+
 ## v5-beta-29 release verification, 2026-10-24
 
 Published [v5-beta-29](https://github.com/eujot/BACCAble/releases/tag/v5-beta-29)

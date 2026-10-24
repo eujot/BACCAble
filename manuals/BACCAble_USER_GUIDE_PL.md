@@ -1,8 +1,8 @@
 # BACCAble — instrukcja obsługi w samochodzie
 
 Ta instrukcja opisuje menu na zestawie wskaźników i funkcje w bieżącym kodzie
-firmware. Uwzględnia poprawione ustawienia startowego trybu jazdy i zawieszenia
-po v5-beta-28. Startowe ustawienie zawieszenia wymaga jeszcze próby w samochodzie. Instrukcja dotyczy urządzenia już zamontowanego
+firmware. Uwzględnia niewydane jeszcze poprawki niezawodności startowego trybu
+jazdy i zawieszenia oraz funkcję Rain lights po v5-beta-29. Startowe ustawienie zawieszenia wymaga jeszcze próby w samochodzie. Instrukcja dotyczy urządzenia już zamontowanego
 i podłączonego do samochodu. Nie obejmuje montażu, okablowania ani wgrywania
 oprogramowania. Kontrolery C1, C2 i BH powinny mieć pasujący do siebie zestaw
 oprogramowania z tego samego wydania.
@@ -417,8 +417,27 @@ Szkic nie steruje samochodem przed udanym zapisem.
 | `Close windows` | OFF / 1 lock / 2 locks | Wybiera zamykanie szyb po jednym lub dwóch naciśnięciach zamykania na pilocie. OFF wyłącza funkcję. Krótsza nazwa na wyświetlaczu to `Close win`. |
 | `Open windows` | OFF / 1 unlock / 2 unlocks | Wybiera otwieranie szyb po jednym lub dwóch naciśnięciach otwierania na pilocie. OFF wyłącza funkcję. Krótsza nazwa to `Open win`. |
 | `QV exhaust` | Wyłączona / włączona | Udostępnia sterowanie klapami wydechu przez akcję w menu i podwójne naciśnięcie przycisku odblokowania dźwigni zmiany biegów. Wymaga zgodnego sprzętu. |
+| `Rain lights` | OFF / ON; domyślnie OFF | W AUTO wysyła żądanie świateł mijania i pozycyjnych po trzech wykrytych cyklach wycieraczek w ciągu 15 sekund. Podtrzymuje żądanie przez 60 sekund od ostatniego cyklu. Wymaga zgodnego firmware C1/C2. Działanie lamp wymaga jeszcze potwierdzenia w samochodzie. |
 | `Auto PDC mute` | Wyłączona / włączona | Chwilowo wycisza aktywny sygnał czujników parkowania podczas hamowania poza biegiem wstecznym. Przywraca działanie zmienione przez BACCAble po odpuszczeniu hamulca lub wybraniu wstecznego. Wymaga aktualnych danych o hamulcu, biegu i czujnikach PDC. |
 | `Mute audio in R` | Wyłączona / włączona | Wycisza dźwięk systemu audio na wstecznym i przywraca go po zakończeniu cofania, jeśli to BACCAble go wyciszyło. Uwzględnia wcześniejsze wyciszenie oraz ręczne przywrócenie dźwięku. Działa niezależnie od wyciszania PDC. |
+
+
+`Settings` → `Features` → `Comfort` → `Rain lights`: wybierz ON i przytrzymaj przycisk, aby zapisać.
+Czasy są stałe. Każdy kolejny wykryty cykl rozpoczyna od nowa 60 sekund
+podtrzymania. Jeden ruch nie uruchamia funkcji; kilka ruchów po użyciu
+spryskiwacza może ją uruchomić. Funkcja reaguje na pracę wycieraczek, nie mierzy
+intensywności deszczu. Bardzo rzadkie ruchy mogą nie osiągnąć progu.
+
+Opuszczenie AUTO, wyłączenie opcji lub brak aktualnych danych albo łączności
+kończy żądanie. C2 przestaje dodawać żądanie świateł mijania po odebraniu
+informacji o opuszczeniu AUTO; C1 kończy żądanie pozycyjnych po kolejnej odpowiedzi
+(zwykle w ciągu sekundy, a bez nowej odpowiedzi po trzech sekundach).
+Zakończenie żądania oznacza zaprzestanie dodawania bitów lamp, bez wysyłania
+polecenia ich zgaszenia. Fabryczne sterowanie po zmroku zachowuje więc kontrolę.
+Podczas pierwszej próby na postoju obserwuj rzeczywiste przednie i tylne lampy:
+wysłanie ramki CAN nie potwierdza przyjęcia żądania przez sterowniki.
+Ten sposób sterowania wymaga sprawdzenia w samochodzie, także dla ręcznego
+przełączenia świateł i zakończenia podtrzymania w ciemności.
 
 ### Grupa wspomagania kierowcy
 
@@ -434,8 +453,8 @@ Szkic nie steruje samochodem przed udanym zapisem.
 | Opcja | Wartości | Do czego służy |
 | --- | --- | --- |
 | `Launch Nm` | 25–600 Nm, co 25 | Wartość momentu obrotowego zgłaszanego przez silnik, przy której wspomaganie startu wysyła polecenie zwolnienia wymuszonych przednich hamulców. To nie jest ograniczenie momentu ani ustawienie tuningu. |
-| `Default mode` | A / N / D / Race | Przy uruchomieniu auta BH symuluje sygnał pokrętła DNA w czterobajtowej ramce `0x256`. Dla A/D/Race C1 i BH czekają na świeże raporty obrotów powyżej 400 RPM przez dwie sekundy; podczas oczekiwania menu pokazuje `Start engine`. `N` pozostawia fabryczny wybór bez ingerencji; wcześniejsze zapisane OFF staje się N bez zmiany ustawień. A/D używają wychyleń po 200 ms. Race najpierw przechodzi do D, następnie przytrzymuje kierunek D przez 1,8 s, powtarzając raport co 250 ms. Kolejne kroki zależą od świeżych raportów trybu; obowiązuje limit trzech gestów i dziesięciu sekund. Fizyczne pokrętło ma pierwszeństwo, a rozpoczęte wirtualne naciśnięcie jest zwalniane po anulowaniu, zatrzymaniu silnika lub utracie aktualnych danych. Po bramce uruchomienia C1 czeka do 15 s na BH, a potem sprawdza raporty DNA i skrzyni przez pięć sekund. `Confirmed` potwierdza świeże raporty stanu, nie działanie każdego układu. Zapis ustawień lub wyłączenie zapłonu anuluje próbę; ponowna synchronizacja łącza jej nie uzbraja. Zaktualizuj C1 i BH razem. |
-| `Suspension` | Stiff / Soft / Mid | Ustawia zawieszenie przy następnym uruchomieniu: dla D dostępne jest `Stiff` lub `Soft`, a dla Race `Stiff` lub `Mid`. Dla A/N łagodniejszy wybór ma etykietę `Softer` i nie działa. Po potwierdzeniu trybu jazdy BACCAble sprawdza stan zawieszenia i naciska przycisk jeden raz tylko wtedy, gdy potrzebna jest zmiana, również gdy auto już uruchamia się w D/Race. Zwalnia przycisk po 150 ms i czeka na odpowiedź; brak potwierdzenia nie powoduje ponownego naciśnięcia. Ręczne użycie pokrętła lub przycisku zawieszenia przerywa automat. Wymaga zgodnego firmware C1/BH. Raporty D są potwierdzone nagraniami; kod odpowiedzi Race/Mid jest wnioskiem i wymaga jeszcze sprawdzenia w samochodzie. |
+| `Default mode` | A / N / D / Race | Przy uruchomieniu auta BH symuluje sygnał pokrętła DNA w czterobajtowej ramce `0x256`. Dla A/D/Race C1 i BH czekają na świeże raporty obrotów powyżej 400 RPM przez dwie sekundy; podczas oczekiwania menu pokazuje `Start engine`. `N` pozostawia fabryczny wybór bez ingerencji; wcześniejsze zapisane OFF staje się N bez zmiany ustawień. A/D używają wychyleń po 200 ms. Race najpierw przechodzi do D, następnie przytrzymuje kierunek D przez 2,2 s. Stan naciśnięcia jest odświeżany po fabrycznych raportach neutralnych, a podczas długiego przytrzymania także po 250 ms bez powtórzenia. Nowe naciśnięcie następuje po świeżym raporcie neutralnym i opróżnieniu nadajnika CAN. Rzeczywisty tryb musi być stabilny przez sekundę przed kolejnym gestem. Obowiązuje limit trzech gestów zmiany trybu w ciągu dwunastu sekund. Fizyczne pokrętło ma pierwszeństwo, a rozpoczęte wirtualne naciśnięcie jest zwalniane po anulowaniu, zatrzymaniu silnika lub utracie aktualnych danych. Po bramce uruchomienia C1 czeka do 20 s na BH, a potem sprawdza raporty DNA i skrzyni przez pięć sekund. `Confirmed` potwierdza świeże raporty stanu, nie działanie każdego układu. Zapis ustawień lub wyłączenie zapłonu anuluje próbę; ponowna synchronizacja łącza jej nie uzbraja. Zaktualizuj C1 i BH razem. |
+| `Suspension` | Stiff / Soft / Mid | Ustawia zawieszenie przy następnym uruchomieniu: dla D dostępne jest `Stiff` lub `Soft`, a dla Race `Stiff` lub `Mid`. Dla A/N łagodniejszy wybór ma etykietę `Softer` i nie działa. Po sekundzie stabilnego rzeczywistego trybu i 300 ms stabilnego raportu zawieszenia BACCAble naciska przycisk na 150 ms tylko wtedy, gdy potrzebna jest zmiana, również gdy auto jest już w D/Race. Czeka na świeży raport po zwolnieniu. Jedna ponowna próba jest dozwolona dopiero po co najmniej sekundzie, przy świeżych, niezmiennych raportach przeciwnego stanu oraz zakończeniu wcześniejszej transmisji CAN. Choćby chwilowe zgłoszenie stanu docelowego albo brak/nieznana odpowiedź wykluczają tę ponowną próbę. Łącznie mogą być najwyżej dwa naciśnięcia. `No confirm` może oznaczać brak potwierdzenia zawieszenia, mimo że tryb DNA się zmienił. Ręczne użycie pokrętła lub przycisku zawieszenia przerywa automat. Wymaga zgodnego firmware C1/BH. Kody raportów po ręcznym wyborze D i Race/Mid są potwierdzone nagraniami, w tym dwoma pełnymi, opisanymi cyklami Race z 24 października 2026. Automatyczne ustawianie po uruchomieniu nadal wymaga sprawdzenia w samochodzie. |
 | `ESC/TC control` | Wyłączona / włączona | Udostępnia przełączanie kontroli stabilności i trakcji oraz obsługiwany skrót przyciskiem asystenta pasa. Samochód musi mieć odpowiednią konfigurację. |
 | `Dyno action` | Wyłączona / włączona | Udostępnia `Toggle Dyno mode`. Samo włączenie tego ustawienia nie uruchamia trybu Dyno. |
 | `Brake action` | Wyłączona / włączona | Udostępnia `Brake override` i `Disable launch`. Samo włączenie ustawienia nie uruchamia hamulców. |
