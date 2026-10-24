@@ -1,12 +1,37 @@
 # BACCAble action plan and agent handoff
 
+## v5-beta-30 release, 2026-10-24
+
+PR #77 (`241b993`) added `Rain lights`, DNA Race/suspension reliability
+changes and the October 24 CAN research reports. PR #78 (`40f2fa5`) fixes the
+rain-command UART scheduler so C2/BH status and USB polls remain fresh. Full
+notes: [v5-beta-30](releases/v5-beta-30.md).
+
+Published prerelease: https://github.com/eujot/BACCAble/releases/tag/v5-beta-30
+from `1bd28fab7b5048ebf99aa2cc3e85d263f04583f8`, embedded identity
+`beta-1bd28fa`. Official workflow [40099405814](https://github.com/eujot/BACCAble/actions/runs/40099405814)
+passed host/Lab tests, lint, all four firmware builds, display/IPC matrix,
+size/identity gates, packaging and publication. All 12 firmware assets plus
+`BUILD_INFO.json` and `SHA256SUMS` were downloaded and verified; C1 uses
+96,936/98,304 flash bytes and 15,388/16,384 static RAM. No hardware flash or
+vehicle acceptance is claimed.
+
+The local regression demonstrates that the prior scheduler stops a C2-only
+capture and that the correction keeps status/USB active during display updates
+and one lost rain reply. It also asserts captured C1/C2 lighting payloads.
+Owner-confirmed lamps-on trials used the light sensor or physical switch; the
+remaining vehicle check is acceptance of BACCAble's additional transmission
+while factory frames continue. Release branch `docs/v5-beta-30` preserves the
+release notes and handoff for integration into master.
+
 ## Merge beta-30 into the rain/light scenario branch, 2026-10-24
 
 Branch `merge/rain-scenario-into-beta30`, created from
 `feat/rain-lights-scenario` (`4b07267`, five commits based on `495b335`) and
-merged with `origin/master` (`40f2fa5`, v5-beta-30 source). The branch was 19
-commits behind and had no firmware changes, so the merge brought in beta-29,
-Rain lights, the paced DNA/suspension correction and all October-24 research.
+merged with `origin/master` (`40f2fa5`, v5-beta-30 source) and the published
+`origin/docs/v5-beta-30`. The branch was 19 commits behind and had no firmware
+changes, so the merge brought in beta-29, Rain lights, the paced DNA/suspension
+correction and all October-24 research.
 
 Conflicts were limited to three files and resolved without discarding either
 side. `giulia.json` keeps the owner-reported `0x256` acceptance while adding
@@ -22,7 +47,7 @@ is not listed twice.
 
 Validation after the merge: 81 Lab tests pass, the full host suite passes, and
 all four flavours build with Arm GNU 15.2.Rel1 and four-flavor `lint`. Standard
-sizes: C1 97,176/15,388 bytes, C2 31,068/12,392, BH 36,604/13,260, CAN 25,196/7,000.
+sizes: C1 97,180/15,388 bytes, C2 31,072/12,392, BH 36,608/13,260, CAN 25,196/7,000.
 C1 has only about 1.1 KiB of flash headroom. No firmware behaviour changed in
 this merge and no device was flashed. Still open: vehicle acceptance of the
 Race startup gesture, the suspension retry, and whether the injected `0x73E`
