@@ -1,7 +1,7 @@
 # BACCAble — in-car user guide
 
 This guide describes the current dashboard-menu firmware source, including the
-unreleased startup drive-mode and suspension reliability corrections after v5-beta-29.
+unreleased startup drive-mode/suspension corrections and Rain lights after v5-beta-29.
 Startup suspension behavior still requires vehicle acceptance testing. It starts after BACCAble has been installed and
 connected to the vehicle. Installation, wiring and firmware flashing are outside
 its scope. Use a matching C1/C2/BH firmware set.
@@ -390,8 +390,25 @@ workflow; their draft does not control the car before successful persistence.
 | `Close windows` | OFF / 1 lock / 2 locks | Choose the key-fob lock gesture that starts window closing. Narrow screens use `Close win`. |
 | `Open windows` | OFF / 1 unlock / 2 unlocks | Choose the key-fob unlock gesture that starts window opening. Narrow screens use `Open win`. |
 | `QV exhaust` | Off / on | Permit the exhaust-valve request action and the gear-lever release-button gesture on compatible hardware. |
+| `Rain lights` | OFF / ON; default OFF | In AUTO, request dipped beams and position lamps after three detected wiper cycles within 15 seconds. Keep the request until 60 seconds after the last cycle. Requires matching C1/C2 firmware. Vehicle lamp operation remains unverified. |
 | `Auto PDC mute` | Off / on | Temporarily mute active parking-sensor beeps while braking outside Reverse, then restore the change BACCAble made when braking is released or Reverse is selected. Requires current brake, gear and PDC reports. |
 | `Mute audio in R` | Off / on | Mute audio in Reverse and restore audio afterwards if BACCAble muted it. Previously muted audio and a manual unmute are respected. This is independent of PDC mute. |
+
+
+`Settings` → `Features` → `Comfort` → `Rain lights`: select ON and hold to save. Times are fixed.
+Each further detected cycle renews the 60-second hold. One sweep alone does not
+trigger the function; several washer sweeps can trigger it. This uses wiper
+activity, not a measured rain intensity. Very sparse wiping may not reach the threshold.
+
+Leaving AUTO, disabling the option, or stale input/link data ends the request.
+C2 stops its dipped-beam additions immediately on a received non-AUTO report;
+C1's position-lamp request follows the next reply (normally within one second,
+expiring after three seconds without a fresh reply). Ending a request stops adding
+lamp bits; it never sends an explicit lights-off command. Factory darkness
+control therefore retains control of the lights. Observe actual front and rear
+lamps during the first stationary trial: CAN transmission is not confirmation
+that the lamp controllers accepted it. The output method still needs vehicle
+verification, including manual priority and release in darkness.
 
 ### Assistance group
 

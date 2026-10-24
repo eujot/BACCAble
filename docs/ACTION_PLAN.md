@@ -1,5 +1,44 @@
 # BACCAble action plan and agent handoff
 
+## Rain-triggered lights menu and controller, 2026-10-24
+
+Local branch `feat/rain-lights-auto`, isolated at `/private/tmp/baccable-rain-lights`,
+based on `60c6484` (includes the committed three-session analysis and startup
+DNA/suspension correction). Added `Settings` → `Features` → `Comfort` → `Rain lights`, OFF/ON,
+default OFF. Three fresh C2 0x2EC/DLC8 b2.5 rising phases within 15 seconds
+request lights; each further cycle renews a 60-second hold. First-high samples,
+repeated highs, malformed frames and stale streams do not count. AUTO is required
+from fresh C2 0x73E/DLC4 b3.6. Washer cycles are intentionally not excluded.
+
+Output adds only dipped-beam bits on C2 and position-lamp bits on C1 to new
+factory 0x73E templates, preserving all other fields. It stops additions on
+release; no explicit OFF is transmitted. Factory frames are not intercepted.
+C1/C2 poll/response tokens and three-second leases bound missing-link behavior;
+manual non-AUTO stops C2 immediately and C1 on its next reply (normally <=1 s,
+<=3 s without a reply). A missed poll response alone does not expire C1 within
+the next ordinary poll interval. C1 sleep stops requests. Setting is stored in
+new slot 42; import both previous 40- and 41-slot records, preserving every
+existing value. Downgrade firmware may not read the extended settings record.
+Both user guides and MENU_UX describe times, prerequisites and acceptance limits.
+
+Native ASan/UBSan host suite passes, including new C1/C2 threshold/hold/lease/
+manual priority/tick-wrap cases, exact 15-second threshold and old 80-/82-byte
+settings migration. All 16 ARM board/display builds and four-flavor cppcheck
+pass with full Arm GNU 15.2.Rel1; final source size and dictionary provenance
+are recorded with this task's verification. Standard flash/RAM: C1
+97,288/15,388 bytes; C2 31,072/12,392. Largest C1 RAM is 15,596 bytes
+(large display); runtime stack headroom remains a hardware acceptance item. Original captures and the user's
+scenario checkout/untracked files remain untouched.
+
+Hardware acceptance is UNKNOWN. The input evidence is sufficient for this
+implementation, but 0x73E injection has not demonstrated sustained dipped-beam
+and complete front/rear position-lamp acceptance. Next is one stationary trial
+with visible front/rear lamps, AUTO daylight after three cycles, 60-second
+release, darkness handover, manual selection and lost-link behavior. Record
+physical outcomes; a C2 rain-request reply and queue admission are not lamp
+success. No push, PR, merge, release or flash performed.
+
+
 ## Startup DNA gesture and suspension reliability correction, 2026-10-24
 
 Task branch `fix/startup-dna-gestures`, isolated worktree

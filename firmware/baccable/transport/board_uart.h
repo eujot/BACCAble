@@ -50,6 +50,8 @@ uint8_t board_uart_diagnostic_send(const uint8_t *data, size_t length);
 #define BH_CMD_DNA_DEFAULT 0x4A /* Mode/soft-suspension flag, startup action and request token. */
 #define BH_DNA_MODE_MASK 0x7F
 #define BH_DNA_SOFT_SUSPENSION 0x80
+#define C2_CMD_RAIN_LIGHTS 0x4C /* Enabled flag and poll token; three-second lease. */
+#define C1_CMD_RAIN_LIGHTS 0x4D /* Active request and echoed token; not lamp confirmation. */
 #define C1_CMD_DNA_RESULT 0x4B /* Request token and completed/failed outcome. */
 #define BH_CMD_IPC_OPTIONS 0x47 /* RAM-only pace/method, five-second lease. */
 #define BOARD_CMD_USB_STATE 0x45

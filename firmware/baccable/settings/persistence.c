@@ -13,8 +13,9 @@ static void load_settings(void) {
     if (settings_loaded)
         return;
     memset(saved_settings, 0xff, sizeof(saved_settings));
-    /* Import the previous 40-slot record; the new suspension slot stays erased/default. */
-    if (!flash_record_load(SETTINGS_RECORD, 0x101, saved_settings, sizeof(saved_settings)))
+    /* Import older records without changing their slots; new options remain erased/default. */
+    if (!flash_record_load(SETTINGS_RECORD, 0x101, saved_settings, sizeof(saved_settings)) &&
+        !flash_record_load(SETTINGS_RECORD, 0x101, saved_settings, 41U * sizeof(uint16_t)))
         flash_record_load(SETTINGS_RECORD, 0x101, saved_settings, 40U * sizeof(uint16_t));
     settings_loaded = 1;
 }

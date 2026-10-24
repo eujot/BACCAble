@@ -2,7 +2,7 @@
 
 Ta instrukcja opisuje menu na zestawie wskaźników i funkcje w bieżącym kodzie
 firmware. Uwzględnia niewydane jeszcze poprawki niezawodności startowego trybu
-jazdy i zawieszenia po v5-beta-29. Startowe ustawienie zawieszenia wymaga jeszcze próby w samochodzie. Instrukcja dotyczy urządzenia już zamontowanego
+jazdy i zawieszenia oraz funkcję Rain lights po v5-beta-29. Startowe ustawienie zawieszenia wymaga jeszcze próby w samochodzie. Instrukcja dotyczy urządzenia już zamontowanego
 i podłączonego do samochodu. Nie obejmuje montażu, okablowania ani wgrywania
 oprogramowania. Kontrolery C1, C2 i BH powinny mieć pasujący do siebie zestaw
 oprogramowania z tego samego wydania.
@@ -417,8 +417,27 @@ Szkic nie steruje samochodem przed udanym zapisem.
 | `Close windows` | OFF / 1 lock / 2 locks | Wybiera zamykanie szyb po jednym lub dwóch naciśnięciach zamykania na pilocie. OFF wyłącza funkcję. Krótsza nazwa na wyświetlaczu to `Close win`. |
 | `Open windows` | OFF / 1 unlock / 2 unlocks | Wybiera otwieranie szyb po jednym lub dwóch naciśnięciach otwierania na pilocie. OFF wyłącza funkcję. Krótsza nazwa to `Open win`. |
 | `QV exhaust` | Wyłączona / włączona | Udostępnia sterowanie klapami wydechu przez akcję w menu i podwójne naciśnięcie przycisku odblokowania dźwigni zmiany biegów. Wymaga zgodnego sprzętu. |
+| `Rain lights` | OFF / ON; domyślnie OFF | W AUTO wysyła żądanie świateł mijania i pozycyjnych po trzech wykrytych cyklach wycieraczek w ciągu 15 sekund. Podtrzymuje żądanie przez 60 sekund od ostatniego cyklu. Wymaga zgodnego firmware C1/C2. Działanie lamp wymaga jeszcze potwierdzenia w samochodzie. |
 | `Auto PDC mute` | Wyłączona / włączona | Chwilowo wycisza aktywny sygnał czujników parkowania podczas hamowania poza biegiem wstecznym. Przywraca działanie zmienione przez BACCAble po odpuszczeniu hamulca lub wybraniu wstecznego. Wymaga aktualnych danych o hamulcu, biegu i czujnikach PDC. |
 | `Mute audio in R` | Wyłączona / włączona | Wycisza dźwięk systemu audio na wstecznym i przywraca go po zakończeniu cofania, jeśli to BACCAble go wyciszyło. Uwzględnia wcześniejsze wyciszenie oraz ręczne przywrócenie dźwięku. Działa niezależnie od wyciszania PDC. |
+
+
+`Settings` → `Features` → `Comfort` → `Rain lights`: wybierz ON i przytrzymaj przycisk, aby zapisać.
+Czasy są stałe. Każdy kolejny wykryty cykl rozpoczyna od nowa 60 sekund
+podtrzymania. Jeden ruch nie uruchamia funkcji; kilka ruchów po użyciu
+spryskiwacza może ją uruchomić. Funkcja reaguje na pracę wycieraczek, nie mierzy
+intensywności deszczu. Bardzo rzadkie ruchy mogą nie osiągnąć progu.
+
+Opuszczenie AUTO, wyłączenie opcji lub brak aktualnych danych albo łączności
+kończy żądanie. C2 przestaje dodawać żądanie świateł mijania po odebraniu
+informacji o opuszczeniu AUTO; C1 kończy żądanie pozycyjnych po kolejnej odpowiedzi
+(zwykle w ciągu sekundy, a bez nowej odpowiedzi po trzech sekundach).
+Zakończenie żądania oznacza zaprzestanie dodawania bitów lamp, bez wysyłania
+polecenia ich zgaszenia. Fabryczne sterowanie po zmroku zachowuje więc kontrolę.
+Podczas pierwszej próby na postoju obserwuj rzeczywiste przednie i tylne lampy:
+wysłanie ramki CAN nie potwierdza przyjęcia żądania przez sterowniki.
+Ten sposób sterowania wymaga sprawdzenia w samochodzie, także dla ręcznego
+przełączenia świateł i zakończenia podtrzymania w ciemności.
 
 ### Grupa wspomagania kierowcy
 

@@ -7,6 +7,8 @@ SOURCES := test_core.c $(FIRMWARE)/protocol/slcan_codec.c $(FIRMWARE)/diagnostic
  $(FIRMWARE)/storage/record_store.c
 
 test: build/test_core build/test_transport build/test_catalog build/test_menu build/test_menu_large build/test_uart_menu build/test_input_repeat build/test_engine_status build/test_exhaust labels
+	./build/test_rain_lights_c1
+	./build/test_rain_lights_c2
 	./build/test_dna_selector
 	./build/test_fatfs
 	./build/test_core
@@ -197,3 +199,12 @@ build/test_dna_selector: test_dna_selector.c $(FIRMWARE)/features/dna_selector.c
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DBH_FLAVOR=1 $< $(FIRMWARE)/features/dna_selector.c -o $@
 
 test: build/test_dna_selector
+
+RAIN_LIGHT_SOURCES := test_rain_lights.c $(FIRMWARE)/features/rain_lights.c
+build/test_rain_lights_c1: $(RAIN_LIGHT_SOURCES) $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC1_FLAVOR=1 $(RAIN_LIGHT_SOURCES) -o $@
+build/test_rain_lights_c2: $(RAIN_LIGHT_SOURCES) $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC2_FLAVOR=1 $(RAIN_LIGHT_SOURCES) -o $@
+test: build/test_rain_lights_c1 build/test_rain_lights_c2
