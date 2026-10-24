@@ -4,6 +4,31 @@ Last updated: **2026-10-23** (dated verification boundaries below). This is the 
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
+## Beta-29 drive-mode acceptance and damper decode, 2026-10-24
+
+Owner-reported vehicle acceptance: the default drive-mode gesture shipped in
+`00b4b99` (v5-beta-29) changes the drive mode in the car and other controllers
+react. This is the first confirmed acceptance of an injected frame — a listener
+on the BH body bus acts on the replayed `0x256` selector input and the resulting
+mode reaches the powertrain and chassis controllers. It does **not** identify
+the physical sender of `0x256`, and it is a single vehicle trial, not a repeated
+acceptance test. The `giulia.json` note and the DNA topic status now record the
+result; the generated `CAN_DICTIONARY.md` was refreshed.
+
+Session `20261024-113104Z` (`dna_suspension_matrix`, 26/26 confirmations, two
+runs) also resolved the damper field. BH `0x25A` byte 1 is **mode-relative**:
+D=`0x10` hard, D=`0x00` soft, Race=`0x20` hard, Race=`0x10` mid. Entering a mode
+resets it, and 8/8 button presses matched in both directions. C1/C2 `0x384`
+byte 6 bit 7 and C1/C2 `0x1FC` byte 0 mirror the softened state (`0x80` and
+`0x50`/`0x40`). The same `0x10` value means D hard and Race mid, so a decoder
+must combine it with the mode; mode entry and exit show ~200 ms transients, so
+settle before decoding. The earlier "mid = `0x30`" hypothesis is refuted.
+
+Validation: 77 Lab tests pass after regenerating the catalog. Firmware, menus
+and user guides unchanged. Still open: repeated beta-29 acceptance trials (every
+mode, several ignitions), and whether an injected suspension button pulse or a
+`0x25A` rewrite is accepted by the vehicle.
+
 ## DNA and suspension matrix scenario, 2026-10-24
 
 Added `dna_suspension_matrix` (drivetrain, stationary, 13 steps, 2 runs, 26
