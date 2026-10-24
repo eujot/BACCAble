@@ -1,5 +1,9 @@
 # BACCAble action plan and agent handoff
 
+> The step-by-step CAN decode backlog lives in
+> [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
+> this file records status and acceptance, not the per-campaign procedure.
+
 ## Vehicle acceptance of startup Race and suspension, 2026-10-24
 
 The owner tested the merged beta-30 source in the car and reports that both
