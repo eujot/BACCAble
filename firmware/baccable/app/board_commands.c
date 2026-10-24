@@ -6,6 +6,7 @@
 #include "features/menu.h"
 #include "features/parking.h"
 #include "features/rain_lights.h"
+#include "features/rain_test.h"
 #include "features/usb_modes.h"
 #include "transport/diagnostic_link.h"
 #if defined(BACCABLE_C2) || defined(BACCABLE_BH)
@@ -37,6 +38,9 @@ void board_commands_dispatch(const uint8_t *message) {
         switch (message[1]) {
         case C1_CMD_RAIN_LIGHTS:
             rain_lights_reply(message[2], message[3]);
+            break;
+        case C1_CMD_RAIN_TEST:
+            rain_test_reply(message[2], message[3], message[4], message[5]);
             break;
         case C1_CMD_DNA_RESULT:
             drive_mode_check_reply(message[2], message[3]);
@@ -91,6 +95,11 @@ void board_commands_dispatch(const uint8_t *message) {
         case C2_CMD_RAIN_LIGHTS:
             runtime_state.we_can_send_a_message_reply = currentTime;
             rain_lights_options(message[2], message[3]);
+            break;
+        case C2_CMD_RAIN_TEST:
+            runtime_state.we_can_send_a_message_reply = currentTime;
+            rain_lights_force(message[2]);
+            rain_test_debug_reply(message[3]);
             break;
         case C2cmdtoggleDyno: // dyno request
             if (chassis_state.front_brake_forced == 0)

@@ -674,6 +674,7 @@ urządzenie ponownie sprawdza wymagane warunki.
 | `Reset best times` | Nie wymaga osobnego ustawienia w Features | Kasuje zapisane najlepsze czasy przyspieszenia. Wymaga potwierdzenia; udany zapis kończy komunikat `Records cleared`. |
 | `Peak hold` | Nie wymaga osobnego ustawienia w Features | Od razu włącza/wyłącza pokazywanie najwyższych wartości liczbowych dla bieżącej strony. |
 | `IBS SOC override` | Pracujący silnik; potwierdzenie | Włącza/wyłącza tymczasowe, eksperymentalne podmienianie SOC w komunikatach. Ograniczenia opisano niżej. |
+| `Rain test` | Nie wymaga osobnego ustawienia; zgodny firmware C1/C2 | Otwiera ekran testu świateł deszczowych. Pierwsza linia pokazuje liczbę wykrytych cykli wycieraczek i stan AUTO, druga — licznik uzbrojenia i wstrzyknięć. SELECT wymusza bity lamp w `0x73E` na maksymalnie 30 s, aby sprawdzić ścieżkę wyjścia; BACK wychodzi i kończy wymuszanie. |
 
 Polecenia Dyno i hamowania czekają do dziesięciu sekund na odpowiedź kontrolera.
 Upływ tego czasu nie ponawia ani nie anuluje wysłanego polecenia. Odpowiedź może

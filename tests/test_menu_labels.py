@@ -39,6 +39,7 @@ EXPECTED_ACTIONS = (
     "Reset best times",
     "Peak hold",
     "IBS SOC override",
+    "Rain test",
 )
 
 RETIRED_SETUP = (
