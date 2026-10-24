@@ -42,12 +42,12 @@
     "firmware/baccable/features/drive_mode_check.c": "19b8dbdc309906bea3ede2093e087d35f340535b51166f728853a73d754afcd2",
     "firmware/baccable/features/board_sync.c": "8f9cdadfca2196486c43f152ca5029e80586f7d6b3345396dbb28da3210b2435",
     "firmware/baccable/features/dna_selector.c": "483fc63c90689fd3152343639cfc54cf58c54026bc475f63ff174850f0b40386",
-    "firmware/baccable/app/board_commands.c": "158a3c74fbaafd4f33bb93a163cf32142fd44e96c04fc24995a28ace7fa4126a",
-    "firmware/baccable/transport/board_uart.h": "77a932bad4eae24c1605f5053fbcf0b6312442099349554d407d2c451141c9e1",
+    "firmware/baccable/app/board_commands.c": "9c3e1672207e0d29dea437a1840ce6baab667ff46f97387e39e7f696b83792f5",
+    "firmware/baccable/transport/board_uart.h": "703700a320a2eab04bb46c087e77324089dbfd1b6adb067488532bcc12f376fc",
     "firmware/baccable/transport/can_bus.c": "a7eafb5395a8001064e1175eebe8c2ec089d09b7464170e982ae9c1bf9691afb",
     "firmware/baccable/transport/can_bus.h": "d468e9011bfe85258420a065fa5a8888d169c203c901d0f91ffd40bfc7f1105f",
-    "firmware/baccable/features/rain_lights.c": "f55d47075ff7284dcfce48a4ce78055725a50c8222d40cc987b6c4dd8670267d",
-    "firmware/baccable/features/rain_lights.h": "4ee22a9374c4a546cf2b20c49a9b2f4d2453adc4ed34ea89e65f54e4db0e2656",
+    "firmware/baccable/features/rain_lights.c": "75754ed69c54738bab22e1ef8eb3c5c8b0cb9ee1b6420803ae63a7625212aee1",
+    "firmware/baccable/features/rain_lights.h": "557b962b90428fac47dc0674483162e4c7885c9801e83081acfad0a9a0ebbe78",
     "firmware/baccable/transport/board_uart.c": "9db5e6b1f2d833c6143acd868afdb4f0ed3a77a9286fa2aee075378f654a0c45"
   },
   "byte_convention": "Zero-based byte indexes; bit 0 is LSB. Parts are concatenated in listed most-significant-first order; physical = raw * scale + offset.",
@@ -11293,7 +11293,7 @@
       "role": "BH",
       "topic": "DNA-RELATED-25A-001",
       "source": "docs/research/20261023-dna-selector.md",
-      "status": "supported: Byte 1 is the damper setting and is relative to the drive mode. Entering a mode resets it: D=0x10 hard, Race=0x20 hard, N/A=0x00. The console button then sets D=0x00 (soft) or Race=0x10 (mid) and a second press returns to the mode default; 8/8 presses in 20261024-113104Z, with C1/C2 0x384 byte 6 bit 7 and C1/C2 0x1FC byte 0 mirroring the softened state. The same value 0x10 therefore means D hard and Race mid, so decode it together with the mode. Mode entry carries the previous damper level for 24–36 ms, so settle before decoding; returning from Race to N passes through D as a real intermediate mode. The startup preference injects the rotary direction instead of rewriting this report, and the car applies the configured softer setting."
+      "status": "supported: Byte 1 is the damper setting and is relative to the drive mode. Entering a mode resets it: D=0x10 hard, Race=0x20 hard, N/A=0x00. The console button then sets D=0x00 (soft) or Race=0x10 (mid) and a second press returns to the mode default; 8/8 presses in 20261024-113104Z, with C1/C2 0x384 byte 6 bit 7 and C1/C2 0x1FC byte 0 mirroring the softened state. The same value 0x10 therefore means D hard and Race mid, so decode it together with the mode. Mode entry carries the previous damper level for 24\u201336 ms, so settle before decoding; returning from Race to N passes through D as a real intermediate mode. The startup preference injects the rotary direction instead of rewriting this report, and the car applies the configured softer setting."
     },
     {
       "can_id": "0x73C",

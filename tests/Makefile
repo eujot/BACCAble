@@ -10,6 +10,8 @@ test: build/test_core build/test_transport build/test_catalog build/test_menu bu
 	./build/test_rain_uart
 	./build/test_rain_lights_c1
 	./build/test_rain_lights_c2
+	./build/test_rain_test_c1
+	./build/test_rain_test_c2
 	./build/test_dna_selector
 	./build/test_fatfs
 	./build/test_core
@@ -103,7 +105,7 @@ build/test_drive_mode_bh: $(DRIVE_MODE_SOURCES) $(HEADERS) Makefile
 test: build/test_drive_mode build/test_drive_mode_c2 build/test_drive_mode_bh
 
 MENU_SOURCES := test_menu.c $(addprefix $(FIRMWARE)/, features/menu.c features/menu_model.c \
- features/menu_input.c features/my23_ui.c features/favorite_parameters.c features/ui_entry.c features/menu_diagnostics.c features/display_stream.c features/oil_bar_animation.c features/ibs_override.c features/board_sync.c features/drive_mode_check.c features/dashboard.c features/dashboard_format.c features/oil_level.c \
+ features/menu_input.c features/my23_ui.c features/favorite_parameters.c features/ui_entry.c features/menu_diagnostics.c features/display_stream.c features/oil_bar_animation.c features/ibs_override.c features/board_sync.c features/drive_mode_check.c features/dashboard.c features/dashboard_format.c features/oil_level.c features/rain_test.c features/rain_lights.c \
  diagnostics/parameter_cache.c diagnostics/parameter_request.c diagnostics/parameter_catalog.c \
  protocol/checksum.c vehicle/steering_controls.c diagnostics/uds_decode.c diagnostics/fault_reader.c settings/persistence.c settings/setup_menu.c settings/setup_entries.c \
  third_party/printf/printf.c)
@@ -209,6 +211,15 @@ build/test_rain_lights_c2: $(RAIN_LIGHT_SOURCES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC2_FLAVOR=1 $(RAIN_LIGHT_SOURCES) -o $@
 test: build/test_rain_lights_c1 build/test_rain_lights_c2
+
+RAIN_TEST_SOURCES := test_rain_test.c $(FIRMWARE)/features/rain_test.c $(FIRMWARE)/features/rain_lights.c $(FIRMWARE)/third_party/printf/printf.c
+build/test_rain_test_c1: $(RAIN_TEST_SOURCES) $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC1_FLAVOR=1 $(RAIN_TEST_SOURCES) -o $@
+build/test_rain_test_c2: $(RAIN_TEST_SOURCES) $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC2_FLAVOR=1 $(RAIN_TEST_SOURCES) -o $@
+test: build/test_rain_test_c1 build/test_rain_test_c2
 
 RAIN_UART_SOURCES := test_rain_uart.c $(FIRMWARE)/features/rain_lights.c $(FIRMWARE)/transport/board_uart.c $(FIRMWARE)/features/usb_modes.c
 build/test_rain_uart: $(RAIN_UART_SOURCES) $(HEADERS) Makefile

@@ -4,6 +4,32 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Rain lights debug/test surface, 2026-10-24
+
+Branch `feat/rain-lights-debug`, based on `master`. The owner reported that the
+beta-30 Rain lights feature does not turn the lamps on. This adds a normal-firmware
+test surface to isolate detection from actuation, designed for later removal
+(`features/rain_test.c/h` plus clearly marked hooks).
+
+Dipped beam verified on the vehicle: C2 `0x73E` byte 1 bit 6 (BH `0x354` byte 1
+bit 6 mirrors it; C1/C2 `0x384` byte 3 bit 7 follows). DRL is a separate,
+always-on signal and is not affected by these bits.
+
+- `rain_lights_force()` and detection counters (`wiper_cycles`, `lamp_tx`) were
+  added to `features/rain_lights.c`; `rain_lights_frame()` now injects the
+  bus-specific bits when `active` **or** forced.
+- New UART commands `C2_CMD_RAIN_TEST 0x4E` / `C1_CMD_RAIN_TEST 0x4F` carry the
+  force flag and C2 detection counters to C1.
+- One menu action `Rain test` (Actions, no permission) opens a two-line screen:
+  wiper-cycle count + AUTO on line 1, armed/injected counters on line 2. SELECT
+  forces the `0x73E` lamp bits for up to 30 s; BACK exits and stops forcing.
+
+Verification: new host tests `test_rain_test.c` (C1/C2) pass; the full host
+suite passes; all four flavours build and lint with Arm GNU 15.2.Rel1. C1 size
+is 97,604/15,412 bytes (about 700 bytes of flash headroom). Both user guides
+and this plan record the new action. No device flashed; vehicle acceptance of
+the force test is the next step.
+
 ## Vehicle acceptance of startup Race and suspension, 2026-10-24
 
 The owner tested the merged beta-30 source in the car and reports that both

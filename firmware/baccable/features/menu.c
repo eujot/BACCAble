@@ -6,6 +6,7 @@
 #include "features/ipc_display_test.h"
 #include "features/my23_ui.h"
 #include "features/favorite_parameters.h"
+#include "features/rain_test.h"
 #include "diagnostics/fault_reader.h"
 #include "features/ibs_override.h"
 #include "app/powertrain.h"
@@ -30,7 +31,7 @@ typedef enum {
     IPC_TEST_MENU,
     IPC_TEST_ACTIVE,
     FAV_SETS, FAV_SLOTS, FAV_PICK, SORT_EDIT,
-    FAULTS
+    FAULTS, RAIN_TEST
 #ifdef MENU_DIAGNOSTICS
     , DIAGNOSTICS
 #endif
@@ -48,6 +49,7 @@ typedef enum {
     ACTION_PEAK,
     ACTION_IBS,
     ACTION_LAUNCH,
+    ACTION_RAIN_TEST,
     ACTION_COUNT
 } MenuAction;
 typedef struct {
@@ -68,7 +70,8 @@ static const ActionEntry actions[] = {
     {ACTION_CLEAR, 3, "Clear DTCs", UI_ENTRY_CONDITIONAL_ACTION},
     {ACTION_STATS, 3, "Reset best times", UI_ENTRY_ACTION},
     {ACTION_PEAK, 3, "Peak hold", UI_ENTRY_TOGGLE},
-    {ACTION_IBS, 3, "IBS SOC override", UI_ENTRY_CONDITIONAL_ACTION}
+    {ACTION_IBS, 3, "IBS SOC override", UI_ENTRY_CONDITIONAL_ACTION},
+    {ACTION_RAIN_TEST, 2, "Rain test", UI_ENTRY_ACTION}
 };
 typedef enum { REQUEST_NONE, REQUEST_WAIT, REQUEST_SENT, REQUEST_FAILED, REQUEST_TIMEOUT } RequestState;
 typedef struct {
@@ -757,6 +760,11 @@ static void action_run(void) {
         menu_notice(text);
         return;
     }
+    if (id == ACTION_RAIN_TEST) {
+        rain_test_enter();
+        view = RAIN_TEST;
+        return;
+    }
     if (confirmed_action != id || currentTime - confirm_started > 3000) {
         confirmed_action = id;
         confirm_started = currentTime;
@@ -1052,6 +1060,12 @@ void menu_render(void) {
             return;
         }
         break;
+    case RAIN_TEST: {
+        char next[24];
+        rain_test_render(text, sizeof(text), next, sizeof(next));
+        menu_present_lines(text, next);
+        return;
+    }
 #ifdef MENU_DIAGNOSTICS
     case DIAGNOSTICS:
         menu_diagnostics_render(text, sizeof(text));
@@ -1217,6 +1231,11 @@ static void back(void) {
         view = FUNCTIONS;
         return;
     }
+    if (view == RAIN_TEST) {
+        rain_test_exit();
+        view = FUNCTIONS;
+        return;
+    }
     if (view == ROOT) {
         request_exit(ROOT, true);
         return;
@@ -1348,6 +1367,8 @@ void menu_event(MenuEvent event) {
             break;
         case FAULTS:
             fault_index = wrap(fault_index, fault_reader_count(), direction);
+            break;
+        case RAIN_TEST:
             break;
 #ifdef MENU_DIAGNOSTICS
         case DIAGNOSTICS:
@@ -1493,6 +1514,9 @@ void menu_event(MenuEvent event) {
                 fault_index = 0;
             }
             break;
+        case RAIN_TEST:
+            rain_test_toggle_force();
+            break;
         case INFO:
             if (info == 9) {
                 view = IPC_TEST_MENU;
@@ -1556,6 +1580,7 @@ void menu_process(void) {
     }
     menu_event(menu_input_poll(&input, input.armed, currentTime));
     fault_reader_process();
+    rain_test_process();
     action_requests_process();
     if (engine != !!settings_state.is_diesel_enabled || gasoline_v6 != !!settings_state.gasoline_v6 ||
         advanced_pages != !!settings_state.advanced_pages)
@@ -1578,6 +1603,8 @@ void menu_process(void) {
         confirmed_action = 255;
         order_selected = 0;
         editor_confirm = false; editor_draft = preferences;
+        if (view == RAIN_TEST)
+            rain_test_exit();
         request_exit(FAVORITES, false);
         if (!save_failed)
             return;

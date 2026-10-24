@@ -118,7 +118,7 @@ static void test_unnumbered_list_contract(void) {
     fresh_contract();
     menu_event(MENU_BACK);
     menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_SELECT);
-    for (unsigned i = 0; i < 3; ++i) {
+    for (unsigned i = 0; i < 4; ++i) {
         expect_no_position();
         menu_event(MENU_NEXT);
     }

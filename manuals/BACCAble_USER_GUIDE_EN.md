@@ -635,6 +635,7 @@ action executes.
 | `Reset best times` | No feature permission required | Clear the saved best acceleration records. Confirmation is required; a completed save reports `Records cleared`. |
 | `Peak hold` | No feature permission required | Immediately toggle numerical maximum hold for the current reading page. |
 | `IBS SOC override` | Running engine; explicit confirmation | Toggle a temporary experimental SOC-message override. See the limitations below. |
+| `Rain test` | No permission required; matching C1/C2 firmware | Open the rain-lights debug screen. Line 1 shows the detected wiper-cycle count and AUTO state, line 2 the armed and injected counters. SELECT forces the `0x73E` lamp bits for up to 30 s to test the output path; BACK exits and stops any force. |
 
 Dyno/brake requests wait up to ten seconds for their board confirmation. A timeout
 does not replay or cancel a sent command, and a later response may still arrive.
