@@ -4,6 +4,36 @@ Last updated: **2026-10-23** (dated verification boundaries below). This is the 
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
+## DNA and suspension matrix scenario, 2026-10-24
+
+Added `dna_suspension_matrix` (drivetrain, stationary, 13 steps, 2 runs, 26
+confirmations) on the scenario branch. It answers both questions in one short
+run: which report carries each drive mode, and what the damper does in every
+mode. Sequence:
+
+| Mode | Default | After one press | After a second press |
+| --- | --- | --- | --- |
+| N | control | nothing (control) | — |
+| A | control | nothing (control) | — |
+| D | hard | soft | hard |
+| Race | hard | mid (unknown code) | hard |
+
+Added catalog labels `suspension_hard`, `suspension_soft` and `suspension_mid`
+(Polish titles, search aliases) because the old `suspension_active` /
+`suspension_inactive` pair cannot distinguish three states. The procedure uses
+the per-mode default as a built-in reset: entering a mode returns the damper to
+factory state, so every mode starts from its own confirmation. N and A are
+explicit negative controls for the console button.
+
+Expected capture evidence: mode codes on `0x384` (C1/C2), `0x46C` and `0x25A`
+(BH); damper state on `0x25A` byte 1, `0x384` byte 6 bit 7 and `0x1FC` byte 0
+bit 4; button pulse on `0x256` byte 1 bit 7. The Race mid code has never been
+recorded — this procedure is what closes it.
+
+Validation: 77 Lab tests pass; library now 84 procedures / 581 confirmations.
+No firmware, menu or user-guide change. Hardware acceptance is UNKNOWN until
+the procedure is run in the car.
+
 ## Rain-to-lights capture scenario, 2026-10-23
 
 Branch `feat/rain-lights-scenario`, based on `495b335`. Replaces the 11-step

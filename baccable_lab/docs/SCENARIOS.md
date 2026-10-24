@@ -155,7 +155,7 @@ drive, adas`, then `order` and `id`.
 
 ## Bundled library
 
-83 procedures (555 confirmations). Groups:
+84 procedures (581 confirmations). Groups:
 
 | Group | Procedures | Location | Examples |
 | --- | --- | --- | --- |
@@ -166,7 +166,7 @@ drive, adas`, then `order` and `id`.
 | media | 7 | postój (+1 droga) | menu IPC, ekran, źródło audio, utwór, radio, telefon, nawigacja |
 | chassis | 6 | postój (+1 droga) | tryb zawieszenia, prześwit, Q4, tryb kierownicy, ruch kierownicy |
 | brakes | 7 | postój/plac/droga | pedał hamulca, EPB, auto-hold, ABS/ESC/ASR (plac), kontrola zjazdu |
-| drivetrain | 9 | postój | zapłon, silnik, dźwignia P/R/N/D, wsteczny, manual, DNA (D/N/A/Race), Start/Stop |
+| drivetrain | 10 | postój | zapłon, silnik, dźwignia P/R/N/D, wsteczny, manual, DNA (D/N/A/Race), zawieszenie w każdym trybie, Start/Stop |
 | parking | 4 | postój | czujniki parkowania, kamera cofania, asystent, ostrzeżenie drzwi |
 | **drive** | **9** | **jazda – plac** | ruszenie (D), przyspieszanie, hamowanie, zmiana prędkości, skręcanie, biegi, manewr na wstecznym, arming tempomatu, pełznięcie |
 | adas | 7 | postój/droga | tempomat, ACC, asystent pasa (LKA), FCW/AEB, martwe pole, zmęczenie kierowcy |
@@ -178,7 +178,7 @@ must never be provoked on a public road.
 
 ## Targeted decode tests (DNA modes, lane assist, rain and light sensors)
 
-Four procedures target specific firmware options, using markers in the catalog
+Five procedures target specific firmware options, using markers in the catalog
 (the DNA mode markers `dna_dynamic` / `dna_natural` / `dna_allweather` /
 `dna_race`, the lane toggle `lane_assist_disabled` / `lane_assist_enabled`, and
 `wipers_auto` together with the light-sensor pair `light_sensor_dark` /
@@ -186,6 +186,10 @@ Four procedures target specific firmware options, using markers in the catalog
 
 - `dna_all_modes` (drivetrain, stationary) — visit D, N, A and Race, each with its
   own marker, to confirm the per-mode code on `0x384` / `0x46C` / `0x25A`.
+- `dna_suspension_matrix` (drivetrain, stationary) — the decisive matrix: N and A
+  as negative controls, then in D the hard/soft/hard sequence, then Race with the
+  hard/mid/hard sequence. It records the mode code, the default damper state on
+  entry and the button result in one short run.
 - `lane_assist_toggle` (adas, stationary) — toggle LKA off/on with a double-click on the left stalk button.
 - `rain_lights_auto` (wipers, stationary) — records the two sensor signals and
   the current dipped-beam state in three phases, repeated three times: the light
@@ -195,6 +199,24 @@ Four procedures target specific firmware options, using markers in the catalog
   sensor darkness with the light switch **OFF** (lamps must stay off), then the
   AUTO lamp pair, then steady wiper states, then the rain trigger with the lamps
   still off. Fourteen steps, two runs.
+
+### What `dna_suspension_matrix` settles
+
+The procedure is built around what the captures already show: entering a mode
+resets the damper to its default, and the same console button then changes it
+differently per mode. Sequence per run:
+
+| Mode | Default | After one press | After a second press |
+| --- | --- | --- | --- |
+| N | — (control) | nothing (control) | — |
+| A | — (control) | nothing (control) | — |
+| D | `suspension_hard` | `suspension_soft` | `suspension_hard` |
+| Race | `suspension_hard` | `suspension_mid` | `suspension_hard` |
+
+The expected codes in the captures are `0x25A` byte 1 (`10` in D, `20` in Race,
+`00` after the D press), `0x384` byte 6 bit 7 and `0x1FC` byte 0 bit 4 for the
+comfort flag, and the button pulse on `0x256` byte 1 bit 7. The **Race mid code
+is still unknown** — no recording contains it, so this run is what closes it.
 
 **The factory car does not switch the dipped beams on because of rain or wiper
 operation.** That behaviour is the firmware feature still to be added, so the
@@ -285,7 +307,7 @@ wipers→lights: you watch the lamps).
 | two sessions | 3 + 3 cycles | cross-session support and confounder rejection |
 | physical check | any | `validated` for wipers→lights |
 
-Do **not** repeat all 83 procedures: run only these four in one session (~10
+Do **not** repeat all 84 procedures: run only these five in one session (~10
 minutes), then repeat the same three in a second session. 6–9 ON/OFF
 observations per action is the practical reliability threshold.
 

@@ -86,6 +86,23 @@ class ScenarioModelTests(unittest.TestCase):
         drive = [s for s in ordered if s.group == "drive"]
         self.assertTrue(drive and all(location_label(s) == "jazda – plac" for s in drive))
 
+    def test_dna_suspension_matrix_covers_every_mode_and_state(self):
+        # One matrix: every drive mode, the default damper state on entry, and the
+        # button result where it exists. N and A are negative controls (empty
+        # expect) because those modes have no adaptive setting.
+        scenario = load_scenarios(default_directory())["dna_suspension_matrix"]
+        self.assertEqual((scenario.group, scenario.vehicle), ("drivetrain", "stationary"))
+        self.assertEqual((len(scenario.steps), scenario.runs), (13, 2))
+        expected = [step.expect for step in scenario.steps]
+        self.assertEqual(expected[0:4], ["dna_natural", "", "dna_allweather", ""])
+        self.assertEqual(expected[4:8], ["dna_dynamic", "suspension_hard",
+                                         "suspension_soft", "suspension_hard"])
+        self.assertEqual(expected[8:12], ["dna_race", "suspension_hard",
+                                          "suspension_mid", "suspension_hard"])
+        self.assertEqual(expected[12], "dna_natural")
+        for label in ("dna_allweather", "dna_dynamic", "dna_race"):
+            self.assertEqual(expected.count(label), 1)
+
     def test_sensor_wiper_lights_separates_lamps_from_the_sensor(self):
         # With the light switch OFF the sensor still sees darkness; the lamps must
         # stay off, which proves whether the light flag follows the sensor or the

@@ -129,6 +129,55 @@ action = "Ustaw tryb Race (jeśli dostępny)"
 expect = "dna_race"
 
 [[scenario]]
+id = "dna_suspension_matrix"
+title = "DNA i zawieszenie: N/A/D/Race oraz twarde/soft/mid"
+group = "drivetrain"
+vehicle = "stationary"
+runs = 2
+min_separation_s = 0
+confounder_guard = ["bieg", "hamulec", "kierownica", "silnik"]
+notes = "Silnik pracuje, bieg P, postój, kierownica nieruchoma. Potwierdzaj stan na wyświetlaczu po jego ustabilizowaniu; bez czasów. Cel: (1) kody trybów na 0x384/0x46C/0x25A, (2) stan zawieszenia w każdym trybie na 0x25A bajt 1, 0x384 b6[7] i 0x1FC b0[4], (3) wejście przycisku na 0x256 bajt 1 bit 7. W N i A przycisk ma nie zmieniać niczego — to kontrola negatywna. W D domyślne jest TWARDE, po naciśnięciu SOFT; w Race domyślne TWARDE, po naciśnięciu MID (ten kod jest jeszcze nieznany). Zmiana trybu sama przywraca domyślne zawieszenie, dlatego każdy tryb zaczyna od osobnego potwierdzenia."
+[[scenario.steps]]
+action = "Ustaw N (Natural) — punkt odniesienia"
+expect = "dna_natural"
+[[scenario.steps]]
+action = "W N naciśnij przycisk zawieszenia — nic się nie zmienia (kontrola)"
+expect = ""
+[[scenario.steps]]
+action = "Ustaw A (Advanced Efficiency)"
+expect = "dna_allweather"
+[[scenario.steps]]
+action = "W A naciśnij przycisk zawieszenia — nic się nie zmienia (kontrola)"
+expect = ""
+[[scenario.steps]]
+action = "Ustaw D (Dynamic)"
+expect = "dna_dynamic"
+[[scenario.steps]]
+action = "W D potwierdź zawieszenie TWARDE (domyślne)"
+expect = "suspension_hard"
+[[scenario.steps]]
+action = "W D naciśnij przycisk zawieszenia — SOFT"
+expect = "suspension_soft"
+[[scenario.steps]]
+action = "W D naciśnij ponownie — powrót do TWARDEGO"
+expect = "suspension_hard"
+[[scenario.steps]]
+action = "Z D przytrzymaj pokrętło w stronę D/Race około 2 s — Race"
+expect = "dna_race"
+[[scenario.steps]]
+action = "W Race potwierdź zawieszenie TWARDE (domyślne)"
+expect = "suspension_hard"
+[[scenario.steps]]
+action = "W Race naciśnij przycisk zawieszenia — MID"
+expect = "suspension_mid"
+[[scenario.steps]]
+action = "W Race naciśnij ponownie — powrót do TWARDEGO"
+expect = "suspension_hard"
+[[scenario.steps]]
+action = "Wróć do N (Natural) i zakończ"
+expect = "dna_natural"
+
+[[scenario]]
 id = "start_stop_button"
 title = "Start/Stop: wyłączenie i przywrócenie przyciskiem"
 group = "drivetrain"
