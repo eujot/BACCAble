@@ -1,5 +1,22 @@
 # BACCAble action plan and agent handoff
 
+## v5-beta-30 release preparation, 2026-10-24
+
+PR #77 (`241b993`) added `Rain lights`, DNA Race/suspension reliability
+changes and the October 24 CAN research reports. PR #78 (`40f2fa5`) fixes the
+rain-command UART scheduler so C2/BH status and USB polls remain fresh. Full
+notes: [v5-beta-30](releases/v5-beta-30.md).
+
+Release preparation branch `docs/v5-beta-30` is based on merged master
+`40f2fa5`. The local regression demonstrates that the prior scheduler stops a
+C2-only capture and that the correction keeps status/USB active during display
+updates and one lost rain reply. It also asserts the captured C1/C2 lighting
+payloads. Owner-confirmed lamps-on trials used the light sensor or physical
+switch; the remaining vehicle check is acceptance of BACCAble's additional
+transmission while factory frames continue. No release CI or device flash is
+claimed until recorded below.
+
+
 ## Rain-light UART correction and owner clarification, 2026-10-24
 
 Branch `fix/rain-lights-polling`, worktree `/private/tmp/baccable-rain-lights-review`,
