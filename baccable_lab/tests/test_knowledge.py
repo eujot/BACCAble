@@ -91,13 +91,36 @@ class KnowledgeTests(unittest.TestCase):
 
     def test_bus_specific_light_fields_and_origin(self):
         c1 = self.values('C1', 0x73E, '0080020000000000')
-        c2 = self.values('C2', 0x73E, '0080020000000000')
+        c2 = self.values('C2', 0x73E, '00800200')
         self.assertIn('left_lamp_report', c1)
         self.assertNotIn('left_activation_report', c1)
         self.assertIn('left_activation_report', c2)
         self.assertNotIn('left_lamp_report', c2)
-        self.assertEqual(self.values('BH', 0x354, '0080000000000000')['left_lamp_report']['origin'], 'comment')
+        self.assertEqual(self.values('BH', 0x354, '00800000')['left_lamp_report']['origin'], 'comment')
         self.assertFalse(decode_frame(self.catalog, 'BH', 0x41A, bytes(8))['signals'])
+
+    def test_captured_wiper_phase_is_not_a_steady_enable_or_washer_flag(self):
+        # Both values occur during wiping; the separate spray candidate must not leak in.
+        for payload, phase in [('0000000000000000', 0), ('0000200000000000', 1),
+                               ('0000000010000000', 0), ('0000200010000000', 1)]:
+            self.assertEqual(self.values('C2', 0x2EC, payload)['wiper_cycle_phase']['raw'], phase)
+        for role, payload in [('C1', '0000200000000000'), ('BH', '0000200000000000'),
+                              ('C2', '00002000000000')]:
+            self.assertFalse(self.values(role, 0x2EC, payload))
+
+    def test_captured_auto_selection_and_dipped_lamps_are_independent(self):
+        for role, identifier, cases in [
+                ('BH', 0x354, [('00000000', 0, 0), ('00000040', 1, 0),
+                               ('02408000', 0, 1), ('02408040', 1, 1)]),
+                ('C2', 0x73E, [('00000000', 0, 0), ('00000040', 1, 0),
+                               ('00400000', 0, 1), ('00400040', 1, 1)])]:
+            for payload, automatic, dipped in cases:
+                decoded = self.values(role, identifier, payload)
+                self.assertEqual(decoded['auto_lights_mode_report']['raw'], automatic)
+                self.assertEqual(decoded['dipped_beam_report']['raw'], dipped)
+            for payload in ('004000', '0040004000', '0040004000000000'):
+                self.assertFalse(self.values(role, identifier, payload))
+        self.assertNotIn('dipped_beam_report', self.values('C1', 0x73E, '02008000'))
 
     def test_payload_guards_and_unknown_frames(self):
         self.assertFalse(self.values('C1', 0x2FA, '5000'))

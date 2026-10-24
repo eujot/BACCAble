@@ -1,5 +1,34 @@
 # BACCAble action plan and agent handoff
 
+## Rain/wiper and automatic-lighting correlation, 2026-10-24
+
+Research branch `research/rain-lights-correlation`, based on `939a85e`; isolated
+worktree `/private/tmp/baccable-rain-lights-correlation`. Reviewed complete
+`20261024-105643Z` and compared all 24 databases through that session: 23,535,295
+frames, including failed/empty recordings. The target has 36/36 confirmations
+and 2,157,769 frames; raw replay matches SQLite on every bus. Original hashes,
+startup losses, malformed bytes, events and notes remain in the evidence.
+
+C2 `0x2EC` DLC 8 byte 2 bit 5 supports a wiper-cycle phase: 28 pulses in the
+new capture and 44 in `20261010-111025Z`; slow rises are about 1.50 s apart,
+fast about 0.95 s. Physical one-edge-per-sweep semantics remain unverified.
+BH `0x354` / C2 `0x73E` separate AUTO mode (byte 3 bit 6) from dipped indication
+(byte 1 bit 6), supported by the constant-AUTO/variable-lamp recording and older
+manual-light controls. BH `0x738` bytes 1/2 respond to covering/uncovering before
+delayed lamp OFF; they remain raw-channel candidates with unknown units/source.
+Rejecting that whole frame as a counter in the scenario-branch handoff was too
+broad. C1 `0x41A` mask 0x60 also follows unrelated consumers and is rejected as
+a specific wiper trigger. Raw rain and the apparent washer bit remain unresolved.
+
+[Report and reproducible evidence](../baccable_lab/docs/research/20261024-rain-lights-correlation.md).
+Dictionary `2026-10-24.2`, hypotheses and the regenerated catalog retain prior
+provenance and contradictions. The cumulative ledger references the immutable
+old detailed review and adds the fresh target. All 75 Lab tests pass, including
+captured fields, length/bus guards, source snapshots and catalog generation.
+No firmware, menu, user guide or vehicle action changed. Next: a small stationary
+lamp-output check with front/rear observation and factory/manual priority. A full
+repeat of the sensor scenario is unnecessary to find a wiper trigger.
+
 ## v5-beta-29 release verification, 2026-10-24
 
 Published [v5-beta-29](https://github.com/eujot/BACCAble/releases/tag/v5-beta-29)
