@@ -53,7 +53,7 @@ class KnowledgeTests(unittest.TestCase):
             self.assertEqual(hashlib.sha256((root / path).read_bytes()).hexdigest(), expected, path)
         dispatcher = (root / 'firmware/baccable/vehicle/standard_frames.c').read_text()
         ids = {int(value, 16) for value in re.findall(r'case\s+(0x[0-9a-fA-F]+)', dispatcher)}
-        self.assertEqual(len(ids), 34)
+        self.assertEqual(len(ids), 33)
         self.assertLessEqual(ids, {int(m['can_id'], 16) for m in self.catalog['messages']})
 
     def test_duplicate_bus_identity_and_bad_bit_layout_rejected(self):

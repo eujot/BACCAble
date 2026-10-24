@@ -4,6 +4,30 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Display-only menu tour and LED-strip removal, 2026-10-25
+
+Branch `feat/menu-demo-no-led` continues `fix/menu-navigation-pacing`. The
+external WS281x LED-strip controller, its hardware timer/DMA setup, CAN and USB
+hooks, and its visible Settings row were removed to recover C1 Flash space.
+Flash setting slot 3 remains reserved and is cleared on load, preserving later
+setting positions. The separate IPC `Shift light` feature remains available.
+
+`Information → Demo` starts a timed tour of ordinary-looking menu screens and
+illustrative readings. It varies pauses from 1.4 to 2.3 seconds, shows example
+setting changes without applying them, and exits at the end or on a RES double
+click. It makes no Flash writes or vehicle commands. Both user guides and the
+menu UX guide describe the controls. The CAN dictionary now retains C1 `0x412`
+as a historical LED-strip interpretation, removes its current dispatcher entry,
+and records the provenance in a research note; no capture was reinterpreted.
+
+Apple Clang's full host suite and the Lab knowledge tests pass. Arm GNU
+15.2.Rel1 builds C1 in all four display profiles plus C2, BH and CAN. C1 uses
+91,012/98,304 Flash bytes in the standard and MY23 profiles and
+91,340/98,304 in both large profiles, leaving at least 6,964 bytes. The
+previous large build left 172 bytes. No board was flashed; acceptance still
+needs an in-car check of menu appearance, timing, exit gesture and Flash-slot
+migration. CI's 15.3.Rel1 compiler must verify its own size.
+
 ## Menu navigation pacing and display test removal, 2026-10-25
 
 Branch `fix/menu-navigation-pacing` continues `fix/readings-spacing`. C1 now
