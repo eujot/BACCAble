@@ -499,3 +499,23 @@ This additional-transmission output follows the existing animation's bus-specifi
 lamp mapping, but sustained front/rear lamp acceptance, factory darkness handover
 and manual priority still require a stationary vehicle trial. No physical-success
 claim is made by the menu. Use matching C1/C2 images.
+
+### Rain-light polling correction
+
+Status/USB poll deadlines are independent of rain-control transmissions and
+advance only when their own request enters the queue. Rejected queue attempts
+retain the same USB/version poll choice. This prevents the 1-second rain
+requests from repeatedly deferring C2's 1,010 ms status timer. A combined host
+regression uses the production UART, rain controller and USB manager with
+continuous display updates, C2-only USB capture and one missing rain reply.
+C2/BH status remains fresh and the rain request remains active.
+
+The owner clarified on 2026-10-24 that earlier lamp confirmations came from
+covering the light sensor or operating the physical switch. These confirmations
+are valid evidence for the captured ON/OFF values; C2 AUTO/daylight
+`00 00 00 40` becomes `00 40 00 40` with dipped beams, and the associated C1
+position-lamp pattern is `02 00 80 00`. Rain lights generates these patterns
+on their respective buses while preserving unrelated fields. The remaining
+check is the receiver's reaction to BACCAble's additional transmission while
+factory frames continue. The earlier physical observations are not discarded
+or reclassified as missing evidence. See the [focused correction report](../research/20261024-rain-light-polling-correction.md).

@@ -407,8 +407,11 @@ expiring after three seconds without a fresh reply). Ending a request stops addi
 lamp bits; it never sends an explicit lights-off command. Factory darkness
 control therefore retains control of the lights. Observe actual front and rear
 lamps during the first stationary trial: CAN transmission is not confirmation
-that the lamp controllers accepted it. The output method still needs vehicle
-verification, including manual priority and release in darkness.
+that the lamp controllers accepted it. Earlier vehicle trials confirmed lamps turning on after covering the sensor
+or operating the physical switch; the corresponding CAN values are known.
+The remaining trial concerns activation by BACCAble itself, including manual
+priority and release in darkness. The polling correction keeps C2 status and
+USB capture responsive while Rain lights is enabled.
 
 ### Assistance group
 

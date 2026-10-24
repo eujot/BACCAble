@@ -436,8 +436,11 @@ Zakończenie żądania oznacza zaprzestanie dodawania bitów lamp, bez wysyłani
 polecenia ich zgaszenia. Fabryczne sterowanie po zmroku zachowuje więc kontrolę.
 Podczas pierwszej próby na postoju obserwuj rzeczywiste przednie i tylne lampy:
 wysłanie ramki CAN nie potwierdza przyjęcia żądania przez sterowniki.
-Ten sposób sterowania wymaga sprawdzenia w samochodzie, także dla ręcznego
-przełączenia świateł i zakończenia podtrzymania w ciemności.
+Wcześniejsze próby potwierdziły zapalenie lamp po zasłonięciu czujnika lub użyciu
+pokrętła; odpowiadające temu wartości CAN są znane. Pozostała próba dotyczy
+włączenia przez samo BACCAble, także pierwszeństwa ręcznego przełączenia
+i zakończenia podtrzymania w ciemności. Poprawka odpytywania utrzymuje aktualny
+status C2 i działanie nagrywania USB przy włączonym Rain lights.
 
 ### Grupa wspomagania kierowcy
 

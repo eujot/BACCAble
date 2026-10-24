@@ -71,7 +71,7 @@ void usb_modes_ack(uint8_t peer, const uint8_t status[16]) {
 uint8_t usb_modes_poll(uint8_t peer, uint8_t command[4]) {
     #if defined(BACCABLE_C1)
     command[0] = peer ? BhBusID : C2BusID;
-    if ((pending_mask & (1U << peer)) || (alternate[peer] ^= 1)) {
+    if ((pending_mask & (1U << peer)) || (alternate[peer] ^ 1)) {
         command[1] = BOARD_CMD_USB_STATE;
         command[2] = 255;
         command[3] = generation;
@@ -92,7 +92,11 @@ uint8_t usb_modes_poll(uint8_t peer, uint8_t command[4]) {
 
 void usb_modes_poll_queued(uint8_t peer, const uint8_t command[4]) {
     #if defined(BACCABLE_C1)
-    if (peer < 2 && command[1] == BOARD_CMD_USB_STATE && command[2] <= 1 && attempts[peer] < 3)
+    if (peer > 1) return;
+    /* A rejected queue attempt must retry the same poll, not skip USB or version status. */
+    if (!(pending_mask & (1U << peer)))
+        alternate[peer] ^= 1;
+    if (command[1] == BOARD_CMD_USB_STATE && command[2] <= 1 && attempts[peer] < 3)
         ++attempts[peer];
     #else
     (void)peer;

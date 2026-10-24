@@ -62,6 +62,13 @@ static void reset(void) {
 }
 int main(void) {
     now = 10000;
+    /* Captured AUTO daylight and dipped-ON payloads from 20261024-105643Z. */
+    const uint8_t captured_on[4] = {0, 0x40, 0, 0x40};
+    memset(lamp, 0, sizeof(lamp)); lamp[3] = 0x40;
+    reset(); cycle(); cycle(); cycle(); output(true);
+    assert(!memcmp(sent, captured_on, sizeof(sent)));
+    lamp[1] = 0x40; output(false); /* Factory darkness already supplies the requested bits. */
+    lamp[0] = 0x10; lamp[1] = 0x80; lamp[2] = 0x08;
     reset();
     /* First high and repeated highs cannot invent cycles; malformed frames cannot count. */
     rain_lights_options(0, 7); rain_lights_options(1, 7);
@@ -102,6 +109,9 @@ int main(void) {
     uint8_t token = uart[3];
     rain_lights_reply(1, token - 1); output(false);
     rain_lights_reply(1, token); output(true);
+    const uint8_t captured_position[4] = {2, 0, 0x80, 0};
+    memset(lamp, 0, sizeof(lamp)); output(true);
+    assert(!memcmp(sent, captured_position, sizeof(sent)));
     now += 3000; output(false);
     rain_lights_process(); rain_lights_reply(1, uart[3]); output(true);
     settings_state.rain_lights_enabled = 0; output(false); rain_lights_process();
