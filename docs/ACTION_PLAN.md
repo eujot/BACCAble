@@ -26,7 +26,15 @@ Apple Clang's full host suite and the Lab knowledge tests pass. Arm GNU
 91,340/98,304 in both large profiles, leaving at least 6,964 bytes. The
 previous large build left 172 bytes. No board was flashed; acceptance still
 needs an in-car check of menu appearance, timing, exit gesture and Flash-slot
-migration. CI's 15.3.Rel1 compiler must verify its own size.
+migration. PR #86 CI passed with the pinned 15.3.Rel1 compiler: host tests,
+lint, all four firmware roles and the aggregate result.
+
+PR #86 regression review checked the full pending UX change against `master`,
+including navigation coalescing, save feedback, reading formatting, demo input
+handling and removal of the LED timer/DMA and setting. No blocking firmware
+defect was found. The demo renders fixed examples without calling setup edits
+or vehicle actions; the reserved Flash slot preserves subsequent settings.
+No firmware changes or additional hardware acceptance are claimed by this review.
 
 ## Menu navigation pacing and display test removal, 2026-10-25
 
