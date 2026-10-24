@@ -1,5 +1,39 @@
 # BACCAble action plan and agent handoff
 
+## Focused review of merged Rain lights, 2026-10-24
+
+Reviewed current `origin/master` `241b993` (PR #77 merged), concentrating on
+serious rain-light failures. Firmware is unchanged by this review. One confirmed
+integration defect remains: C1 `rain_lights_process()` sends C2 requests every
+1,000 ms; every C2-addressed transmission resets `last_c2_poll_time` in
+`board_uart_process()`. Ordinary version/USB polling waits for 1,010 ms and
+is therefore delayed repeatedly. Version and USB queries alternate, while their
+consumers require replies within five seconds.
+
+A scratch Apple Clang ASan/UBSan harness linked the actual board UART and rain
+controller, used the existing HAL fixture, completed TX after 6 ms, and ran the
+normal main-loop ordering for 60 simulated seconds. With the production
+alternating poll types, maximum C2 version-query gaps were 2,522 ms (Rain OFF),
+8,001 ms (Rain ON), and 9,789 ms (Rain ON with repeated screen updates).
+The harness is `/private/tmp/review_rain_uart.c`; no hardware result is claimed.
+This can produce `No reply`, stale USB status and cancellation of a capture
+connected only to C2 once C1's ten-second disconnected grace has expired.
+Fix the scheduler so rain requests cannot postpone required status/USB polls;
+verify both poll freshness and rain leases together. Existing isolated rain
+unit tests stub UART delivery and do not exercise this interaction.
+
+The other material limit remains physical output acceptance: 0x73E is added
+after factory frames without suppressing the original values, and there is no
+independent physical lamp confirmation. The resulting steady front/rear lamp
+operation and manual/darkness handover still require the documented vehicle
+trial; this review does not call that unresolved behavior a proven failure.
+No additional serious issue was identified in the focused 15/60-second timer,
+cycle-edge, setting migration and field-preservation inspection. No full-suite
+rerun, firmware change, push or release. Review handoff is committed on
+`review/rain-lights-master`; the user's scenario checkout and untracked files
+remain untouched.
+
+
 ## Rain-triggered lights menu and controller, 2026-10-24
 
 Local branch `feat/rain-lights-auto`, isolated at `/private/tmp/baccable-rain-lights`,
