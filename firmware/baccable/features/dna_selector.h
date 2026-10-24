@@ -3,8 +3,7 @@
 #include "app/application_state.h"
 
 /* Arm one startup selection, preserve it on resync, or cancel it on OFF/save. */
-void dna_selector_configure(uint8_t mode, uint8_t action, uint8_t token);
-void dna_selector_configure_default(uint8_t mode, uint8_t action, uint8_t token, uint8_t softer_suspension);
+void dna_selector_configure(uint8_t mode, uint8_t action, uint8_t token, uint8_t softer_suspension);
 /* Observe the physical BH selector without altering its factory report. */
 void dna_selector_observe(const CAN_RxHeaderTypeDef *header, const uint8_t *data);
 /* Observe the suspension state reported with the current BH drive mode. */

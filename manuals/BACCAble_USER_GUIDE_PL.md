@@ -1,8 +1,8 @@
 # BACCAble — instrukcja obsługi w samochodzie
 
 Ta instrukcja opisuje menu na zestawie wskaźników i funkcje w bieżącym kodzie
-firmware. Uwzględnia niewydane jeszcze **odczyty poziomu oleju i ustawienie napędu**
-po v5-beta-27. Nowy ekran oleju wymaga jeszcze próby w samochodzie. Instrukcja dotyczy urządzenia już zamontowanego
+firmware. Uwzględnia poprawione ustawienia startowego trybu jazdy i zawieszenia
+po v5-beta-28. Startowe ustawienie zawieszenia wymaga jeszcze próby w samochodzie. Instrukcja dotyczy urządzenia już zamontowanego
 i podłączonego do samochodu. Nie obejmuje montażu, okablowania ani wgrywania
 oprogramowania. Kontrolery C1, C2 i BH powinny mieć pasujący do siebie zestaw
 oprogramowania z tego samego wydania.
@@ -435,7 +435,7 @@ Szkic nie steruje samochodem przed udanym zapisem.
 | --- | --- | --- |
 | `Launch Nm` | 25–600 Nm, co 25 | Wartość momentu obrotowego zgłaszanego przez silnik, przy której wspomaganie startu wysyła polecenie zwolnienia wymuszonych przednich hamulców. To nie jest ograniczenie momentu ani ustawienie tuningu. |
 | `Default mode` | A / N / D / Race | Przy uruchomieniu auta BH symuluje sygnał pokrętła DNA w czterobajtowej ramce `0x256`. Dla A/D/Race C1 i BH czekają na świeże raporty obrotów powyżej 400 RPM przez dwie sekundy; podczas oczekiwania menu pokazuje `Start engine`. `N` pozostawia fabryczny wybór bez ingerencji; wcześniejsze zapisane OFF staje się N bez zmiany ustawień. A/D używają wychyleń po 200 ms. Race najpierw przechodzi do D, następnie przytrzymuje kierunek D przez 1,8 s, powtarzając raport co 250 ms. Kolejne kroki zależą od świeżych raportów trybu; obowiązuje limit trzech gestów i dziesięciu sekund. Fizyczne pokrętło ma pierwszeństwo, a rozpoczęte wirtualne naciśnięcie jest zwalniane po anulowaniu, zatrzymaniu silnika lub utracie aktualnych danych. Po bramce uruchomienia C1 czeka do 15 s na BH, a potem sprawdza raporty DNA i skrzyni przez pięć sekund. `Confirmed` potwierdza świeże raporty stanu, nie działanie każdego układu. Zapis ustawień lub wyłączenie zapłonu anuluje próbę; ponowna synchronizacja łącza jej nie uzbraja. Zaktualizuj C1 i BH razem. |
-| `Suspension` | Stiff / Soft / Mid | Ustawia kalibrację zawieszenia przy następnym uruchomieniu zgodnie z `Default mode`: dla D można wybrać `Stiff` lub `Soft`, a dla Race `Stiff` lub `Mid`. Dla A/N zapisany wybór łagodniejszego ustawienia jest wyświetlany jako `Soft / Mid`, ale nie działa. Po wybraniu D/Race domyślne `Stiff` nie wymaga dodatkowego naciśnięcia. Dla Soft/Mid BH sprawdza świeży status `0x25A` i wysyła pojedyncze naciśnięcie bitu 7 bajtu 1 ramki `0x256` tylko wtedy, gdy raport nie pokazuje już łagodniejszego ustawienia; zwalnia je po 150 ms i czeka na zgodny raport. Wymaga zgodnego firmware C1 i BH. Status D widać w nagraniach; działanie Race/Mid wymaga potwierdzenia w samochodzie. |
+| `Suspension` | Stiff / Soft / Mid | Ustawia zawieszenie przy następnym uruchomieniu: dla D dostępne jest `Stiff` lub `Soft`, a dla Race `Stiff` lub `Mid`. Dla A/N łagodniejszy wybór ma etykietę `Softer` i nie działa. Po potwierdzeniu trybu jazdy BACCAble sprawdza stan zawieszenia i naciska przycisk jeden raz tylko wtedy, gdy potrzebna jest zmiana, również gdy auto już uruchamia się w D/Race. Zwalnia przycisk po 150 ms i czeka na odpowiedź; brak potwierdzenia nie powoduje ponownego naciśnięcia. Ręczne użycie pokrętła lub przycisku zawieszenia przerywa automat. Wymaga zgodnego firmware C1/BH. Raporty D są potwierdzone nagraniami; kod odpowiedzi Race/Mid jest wnioskiem i wymaga jeszcze sprawdzenia w samochodzie. |
 | `ESC/TC control` | Wyłączona / włączona | Udostępnia przełączanie kontroli stabilności i trakcji oraz obsługiwany skrót przyciskiem asystenta pasa. Samochód musi mieć odpowiednią konfigurację. |
 | `Dyno action` | Wyłączona / włączona | Udostępnia `Toggle Dyno mode`. Samo włączenie tego ustawienia nie uruchamia trybu Dyno. |
 | `Brake action` | Wyłączona / włączona | Udostępnia `Brake override` i `Disable launch`. Samo włączenie ustawienia nie uruchamia hamulców. |
@@ -970,13 +970,12 @@ diagnostyczne mogą nie być obsługiwane przez daną wersję sterownika.
 
 ## Przechwytywanie CAN i diagnostyka przez USB
 
-Obszar aplikacji C1 zwiększono z 96 do 100 KiB, a zarezerwowany obszar plików
-USB zmniejszono z 20 do 16 KiB. Standardowe firmware C1 korzysta z szeregowego USB
-i **nie udostępnia tego dysku**. Jeśli używasz własnej kompilacji C1 z włączonym
-dyskiem USB, skopiuj jego pliki przed wgraniem: pierwsze 4 KiB starego obszaru
-zajmie aplikacja. Biblioteka systemu plików obsługuje teraz formatowanie i odczyt
-małych dysków FAT12. Obszar ustawień pozostał bez zmian. Pojemność nagrań CAN
-nie zmienia się, ponieważ nagrania są zapisywane na komputerze.
+C1 rezerwuje 96 KiB na aplikację i 20 KiB na opcjonalny dysk USB.
+Standardowe firmware C1 korzysta z szeregowego USB i **nie udostępnia tego dysku**.
+Przy aktualizacji własnej kompilacji z dyskiem 16 KiB skopiuj pliki przed
+wgraniem: zmienia się adres początku dysku i może być potrzebne formatowanie.
+Ustawienia zachowują dotychczasowy adres w pamięci. Nagrania CAN są zapisywane
+na komputerze, więc ich pojemność się nie zmienia.
 
 USB nie jest potrzebne do zwykłej obsługi menu. Tryby USB działające w aplikacji
 różnią się od **bootloadera DFU** układu STM32, który służy do wgrywania

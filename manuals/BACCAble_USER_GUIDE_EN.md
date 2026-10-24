@@ -1,8 +1,8 @@
 # BACCAble — in-car user guide
 
 This guide describes the current dashboard-menu firmware source, including the
-unreleased **oil level readings and drivetrain setting** after v5-beta-27.
-The new oil display still requires vehicle acceptance testing. It starts after BACCAble has been installed and
+updated startup drive-mode and suspension settings after v5-beta-28.
+Startup suspension behavior still requires vehicle acceptance testing. It starts after BACCAble has been installed and
 connected to the vehicle. Installation, wiring and firmware flashing are outside
 its scope. Use a matching C1/C2/BH firmware set.
 
@@ -408,7 +408,7 @@ workflow; their draft does not control the car before successful persistence.
 | --- | --- | --- |
 | `Launch Nm` | 25–600 Nm, step 25 | Reported engine torque at which launch assist requests release of the forced front brakes. It is not a torque limit or a tuning setting. |
 | `Default mode` | A / N / D / Race | At vehicle start-up, BH simulates the recorded DNA selector input on `0x256` (four bytes). For A/D/Race, C1 and BH wait for fresh RPM above 400 for two seconds; the menu shows `Start engine` while C1 waits. `N` leaves factory selection untouched; old saved OFF becomes N without changing stored settings. A/D use 200 ms deflections; Race first reaches D, then holds the D direction for 1.8 s, repeating reports every 250 ms. Intermediate steps follow fresh mode reports, with at most three gestures and a ten-second operation limit. The physical selector takes priority, and any pending press is released on cancellation, engine stop or stale data. C1 waits up to 15 s for BH after the engine gate, then checks DNA and CRC-valid transmission reports for five seconds. `Confirmed` requires sustained fresh matching reports; it corroborates reported state, not every subsystem. The actual mode, including an intermediate mode before Race, remains selected. Settings save or ignition OFF cancels; transport resync does not re-arm. Update C1 and BH together. |
-| `Suspension` | Stiff / Soft / Mid | Sets the next-start calibration for `Default mode`: D offers `Stiff` or `Soft`; Race offers `Stiff` or `Mid`. For A/N, the saved softer choice is shown as `Soft / Mid` and has no effect. Stiff is the default after D/Race is selected, so no extra press is sent. For Soft/Mid, BH checks fresh `0x25A` status and sends one `0x256` byte 1 bit 7 press only if the softer state is not already reported; it releases the press after 150 ms and waits for matching feedback. This option needs matched C1/BH firmware. D status was observed in captures; confirm Race/Mid operation in the vehicle. |
+| `Suspension` | Stiff / Soft / Mid | Sets the next-start suspension preference: D offers `Stiff` or `Soft`; Race offers `Stiff` or `Mid`. For A/N the softer choice is labelled `Softer` and has no effect. After confirming the drive mode, BACCAble checks the reported suspension state and presses the button once only if a change is needed, including when the car already starts in D/Race. It releases after 150 ms and waits for feedback; an unconfirmed press is not repeated. Manual selector or suspension input cancels the automatic operation. Requires matching C1/BH firmware. D feedback is supported by recordings; the Race/Mid feedback code is inferred and still needs confirmation in the car. |
 | `ESC/TC control` | Off / on | Permit the ESC/traction-control toggle and supported lane-button gesture. Vehicle configuration must support the function. |
 | `Dyno action` | Off / on | Permit `Toggle Dyno mode`; enabling this preference alone does not enter Dyno. |
 | `Brake action` | Off / on | Permit `Brake override` and `Disable launch`. Enabling this preference alone does not apply the brakes. |
@@ -912,13 +912,12 @@ supported by an individual ECU version.
 
 ## USB CAN capture and diagnostics
 
-The C1 application allocation grows from 96 to 100 KiB; its reserved USB
-file area shrinks from 20 to 16 KiB. Standard C1 firmware uses serial USB and
-**does not expose this disk**. If a custom C1 build enabled mass storage, copy
-its files before flashing: the old area's first 4 KiB become application flash.
-Small FAT12 volumes can now be formatted and mounted by the bundled filesystem.
-Saved settings remain in their existing flash area; CAN capture capacity is
-unaffected because captures are written on the computer.
+C1 reserves 96 KiB for the application and 20 KiB for optional USB file storage.
+Standard C1 firmware uses serial USB and **does not expose this disk**. When
+upgrading a custom mass-storage build from the 16 KiB layout, copy its files
+before flashing: the disk start address changes and the disk may need formatting.
+Saved settings keep their existing storage address. CAN recordings are stored
+on the computer, so their capacity is unaffected.
 
 USB is optional for normal menu use. Runtime USB modes are different from the
 STM32 **DFU bootloader** used for flashing: seeing a device in `dfu-util --list`

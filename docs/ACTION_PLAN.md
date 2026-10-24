@@ -1,5 +1,51 @@
 # BACCAble action plan and agent handoff
 
+## Startup configuration and diagnostic-menu removal audit, 2026-10-24
+
+Integrated `8337bbf` (engine gate/suspension) and `d576d11` (menu removal) on
+`fix/audit-dna-suspension`, worktree `/private/tmp/baccable-audit-dna-suspension`.
+This audit supersedes the initial implementation/validation statements below.
+
+Corrected concrete defects:
+
+- Suspension incorrectly reused slot 36, already assigned to V6. Slot 41 and
+  82-byte records now import the existing 80-byte settings with default Stiff;
+  engine and suspension values persist independently, including failed-save handling.
+- Two calls to the removed reading-position helper broke compilation. Removed
+  those dependencies, corrected remaining six-entry navigation fixtures and
+  reduced reading-list buffers from 128 to 72 entries (visibility capacity).
+- D suspension feedback was inverted. Capture plus owner description establish
+  Stiff=1 and Soft=0 in BH 0x25A byte1[5:4]. Race Stiff=2 is observed after entry;
+  Mid=1 remains an explicit inference, documented in the source, guides and dictionary.
+- Stiff now checks the actual state even when already in D/Race. Both preferences
+  require fresh, settled feedback. Unknown codes invalidate old data. A single
+  accepted suspension pulse is never retried merely because feedback is absent.
+- A manual button/selector press immediately hands control to the driver, without
+  injecting a synthetic release over their input. Engine loss, timeout and stale
+  data still release accepted synthetic presses; failed release queues retry.
+- C1 starts the 15-second reply deadline only after UART accepts the request.
+  BH has at most 3 seconds to corroborate engine readiness, then 10 seconds to
+  complete its sequence, preventing delayed execution of an old start request.
+- Unified selector/suspension press and release phases, removed the redundant
+  configuration wrapper and C1 timeout flag, and fitted startup labels to 18 glyphs.
+- Restored the 96 KiB C1 application budget and 20 KiB optional USB disk, including
+  linker, storage boundary, CI report limit and both guides. Files on custom
+  16 KiB C1 mass-storage builds need backup before the disk-layout change.
+
+The removed menu has no remaining executable module, symbol, catalog, test or
+build dependency. Ordinary Readings/OBD, CAN capture and unrelated IPC diagnostics
+remain. Dated release/research history describes older versions, not active code.
+
+Validation: full Apple Clang ASan/UBSan host suite and all eight release-script
+tests pass. All 16 board/display builds and cppcheck for C1/C2/BH/CAN pass using
+full Arm GNU 15.2.Rel1, VERSION=audit-dna. Standard C1 uses 96,740/98,304 flash
+bytes and data+bss 15,364/16,384; largest display variant uses 96,840 flash bytes
+(1,464 spare) and data+bss 15,572. Knowledge source hashes and Lab validation
+are completed with the final handoff commit. No device was flashed and no
+hardware acceptance or pinned-CI result is claimed. Race/Mid feedback and
+startup behavior remain vehicle acceptance items. Main checkout files and its
+pre-existing untracked capture/release folders were preserved.
+
 ## Remove the Experiments DID menu, 2026-10-23
 
 On `remove/experiments-menu-wt`, removed the standalone Experiments root-menu
@@ -12,7 +58,7 @@ vehicle parameter readings already used by `Readings` and `Favorites`.
 
 No tests or firmware builds were run for this removal.
 
-Last updated: **2026-10-23** (dated verification boundaries below). This is the single source of planned work,
+Last updated: **2026-10-24** (dated verification boundaries below). This is the single source of planned work,
 integration status and outstanding acceptance checks. Technical guides describe
 implementation; they are not separate backlogs. Update this file after each task.
 
@@ -51,7 +97,8 @@ acceptance have not yet been performed for this correction.
 
 ## Default suspension calibration, 2026-10-23
 
-Added the `Suspension` setup option in free flash slot 36. `Stiff` leaves the
+Initial implementation (superseded by the 2026-10-24 audit) incorrectly placed
+the `Suspension` setup option in occupied flash slot 36. `Stiff` leaves the
 mode's firm startup calibration; the softer choice means Soft in D and Mid in
 Race, and is ignored for A/N. Stiff needs no extra press because selecting
 D/Race sets the suspension firm. For Soft/Mid, after the selector reaches D/Race, BH checks fresh `0x25A` byte 1

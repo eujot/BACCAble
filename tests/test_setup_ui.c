@@ -15,6 +15,8 @@ static uint8_t setup_page_for(uint8_t slot) {
         static const char *const dna[] = {"N", "A", "D", "Race"};
         static const char *const drivetrain[] = {"Not set", "RWD", "Q4"};
         if (slot == 40) label = drivetrain[value];
+        if (slot == 41) label = !value ? "Stiff" : settings_state.default_drive_mode == 2 ? "Soft" :
+                                settings_state.default_drive_mode == 3 ? "Mid" : "Softer";
         if (slot == 16) label = value ? "2.2 D" : settings_state.gasoline_v6 ? "2.9 V6" : "2.0 I4";
         if (slot == 20) label = pedal[value];
         if (slot == 24) label = acc[value];
@@ -25,7 +27,9 @@ static uint8_t setup_page_for(uint8_t slot) {
             char result[24];
             if (value == 3 && !settings_state.ipc_my23_is_installed) label = "R";
             snprintf_(result, sizeof(result), "%s %s", label, drive_mode_check_status());
-            ui_render_value(expected, sizeof(expected), "DNA", result);
+            if (!strcmp(drive_mode_check_status(), "Start engine"))
+                ui_render_value(expected, sizeof(expected), dna[value], "Start engine");
+            else ui_render_value(expected, sizeof(expected), "DNA", result);
         }
     } else if (slot == 39)
         ui_render_value(expected, sizeof(expected), "LKA", *(uint8_t *)param->value ? "OFF" : "ON");
@@ -35,7 +39,7 @@ static uint8_t setup_page_for(uint8_t slot) {
         ui_render_action(expected, sizeof(expected), param->menu_text);
     else
         snprintf_(expected, sizeof(expected), "%s", param->menu_text);
-    for (uint8_t page = 0; page < 40; ++page) {
+    for (uint8_t page = 0; page < SETUP_FLASH_PARAM_BUFFER_SIZE; ++page) {
         setup_render_page(page);
         if (!memcmp(dashboard_setup_screen, expected, strlen(expected))) {
             setup_dashboardPageIndex = page;
@@ -61,9 +65,10 @@ static void test_default_mode_result(void) {
     board_sync_ignition(8);
     uint8_t page = setup_page_for(38);
     setup_render_page(page);
-    assert(!memcmp(dashboard_setup_screen, "DNA: D Waiting", 14));
+    assert(!memcmp(dashboard_setup_screen, "D: Start engine", 15));
     board_sync_restart();
-    assert(!strcmp(drive_mode_check_status(), "Waiting"));
+    assert(!strcmp(drive_mode_check_status(), "Start engine"));
+    drive_mode_check_engine_started(); /* This test isolates display/result formatting. */
     now += 15000;
     board_sync_process();
     setup_render_page(page);
@@ -79,15 +84,15 @@ static void test_default_mode_result(void) {
     assert(settings_state.default_drive_mode == 2);
     board_sync_ignition(2);
     board_sync_ignition(8);
-    assert(!strcmp(drive_mode_check_status(), "Waiting"));
+    assert(!strcmp(drive_mode_check_status(), "Start engine"));
     board_sync_saved();
     assert(!strcmp(drive_mode_check_status(), "Next start"));
 }
 
 static void test_setup_ui(void) {
     fresh_menu();
-    const uint8_t enum_slots[] = {16, 20, 24, 25, 26, 38, 40};
-    const uint8_t enum_sizes[] = {3, 9, 3, 3, 3, 4, 3};
+    const uint8_t enum_slots[] = {16, 20, 24, 25, 26, 38, 40, 41};
+    const uint8_t enum_sizes[] = {3, 9, 3, 3, 3, 4, 3, 2};
     for (unsigned entry = 0; entry < sizeof(enum_slots); ++entry) {
         const SetupParam *param = setup_find_by_flash_index(enum_slots[entry]);
         assert(param->entry_type == UI_ENTRY_ENUM);

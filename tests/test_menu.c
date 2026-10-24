@@ -40,6 +40,9 @@ static unsigned commands, queries, blank_screens;
 static unsigned settings_writes, preference_writes, usb_applies;
 static bool usb_needs_apply;
 static uint16_t fail_type;
+static uint16_t settings_record[SETUP_FLASH_PARAM_BUFFER_SIZE];
+static size_t settings_record_size;
+static unsigned old_settings_reads;
 static uint8_t last_command;
 static uint8_t last_ipc_pace, last_ipc_method, last_driver_rearm;
 static uint8_t last_dna_action, last_dna_token;
@@ -65,7 +68,8 @@ uint8_t board_uart_send(const uint8_t *data, size_t size) {
             last_driver_rearm = data[4];
         }
         if (data[0] == BhBusID && last_command == BH_CMD_DNA_DEFAULT) {
-            assert(size == 5 && data[2] == settings_state.default_drive_mode);
+            assert(size == 5 && (data[2] & BH_DNA_MODE_MASK) == settings_state.default_drive_mode);
+            assert(!!(data[2] & BH_DNA_SOFT_SUSPENSION) == !!settings_state.default_suspension_softer);
             last_dna_action = data[3]; last_dna_token = data[4];
         }
         if (data[0] == BhBusID && last_command == BH_CMD_IPC_OPTIONS) {
@@ -101,6 +105,11 @@ static unsigned native_reads;
 float native_parameter_read(uint8_t id) { ++native_reads; return (float)id + 0.5f; }
 bool flash_record_load(unsigned slot, uint16_t type, void *data, size_t size) {
     (void)slot;
+    if (type == 0x101 && size == settings_record_size) {
+        memcpy(data, settings_record, size);
+        if (size == 80) ++old_settings_reads;
+        return true;
+    }
     if (type == 0x103 && have_old) {
         assert(size == sizeof(old_visibility));
         memcpy(data, old_visibility, size);
@@ -122,6 +131,11 @@ bool flash_record_save(unsigned slot, uint16_t type, const void *data, size_t si
     if (type == 0x105) ++preference_writes;
     if (fail_save || type == fail_type)
         return false;
+    if (type == 0x101) {
+        assert(size == sizeof(settings_record));
+        memcpy(settings_record, data, size);
+        settings_record_size = size;
+    }
     if (type == 0x105) {
         assert(size == sizeof(saved));
         memcpy(saved, data, size);
@@ -129,6 +143,78 @@ bool flash_record_save(unsigned slot, uint16_t type, const void *data, size_t si
     }
     return true;
 }
+/* Import a real old settings payload, keep every slot unique, and preserve engine/suspension independently. */
+static void test_settings_migration(void) {
+    memset(settings_record, 0, sizeof(settings_record));
+    settings_record[35] = 1; /* V6 in the old record. */
+    settings_record[37] = 3; /* Race. */
+    settings_record[39] = 2; /* Q4. */
+    settings_record_size = 80;
+    setup_load_from_flash();
+    assert(old_settings_reads == 1);
+    assert(settings_state.gasoline_v6 == 1 && settings_state.default_suspension_softer == 0);
+    assert(settings_state.default_drive_mode == 3 && settings_state.drivetrain == 2);
+    for (unsigned i = 0; i < setup_params_count; ++i) {
+        assert(setup_params[i].flash_index <= SETUP_FLASH_PARAM_BUFFER_SIZE);
+        for (unsigned j = 0; j < i; ++j)
+            assert(setup_params[i].flash_index != setup_params[j].flash_index);
+    }
+    settings_state.default_suspension_softer = 1;
+    fail_save = true;
+    assert(settings_save() != 0 && settings_record_size == 80);
+    fail_save = false;
+    assert(settings_save() == 0 && settings_record_size == 82);
+    assert(settings_record[35] == 1 && settings_record[40] == 1);
+    settings_state.gasoline_v6 = 0;
+    settings_state.default_suspension_softer = 0;
+    setup_load_from_flash();
+    assert(settings_state.gasoline_v6 == 1 && settings_state.default_suspension_softer == 1);
+    settings_state.gasoline_v6 = 0;
+    assert(settings_save() == 0);
+    assert(settings_record[35] == 0 && settings_record[40] == 1);
+    assert(setup_read_flash_value(41, 0xffff) == 0 && setup_read_flash_value(41, 2) == 0);
+    memset(&settings_state, 0, sizeof(settings_state));
+    settings_writes = usb_applies = 0;
+}
+
+/* The reply timeout starts on successful transmission, never while cranking or UART is full. */
+static void test_default_mode_engine_gate(void) {
+    now = 20000;
+    runtime_state.all_processors_wakeup_time = 0;
+    settings_state.default_drive_mode = 3;
+    settings_state.default_suspension_softer = 1;
+    telemetry_state.current_rpm_speed = 0;
+    board_sync_rearm(); board_sync_ignition(8);
+    commands = 0;
+    for (unsigned i = 0; i < 10; ++i) board_sync_process();
+    assert(commands == 8 && !strcmp(drive_mode_check_status(), "Start engine"));
+    now += 30000;
+    board_sync_process();
+    assert(commands == 8 && !strcmp(drive_mode_check_status(), "Start engine"));
+    telemetry_state.current_rpm_speed = 800;
+    for (unsigned t = 0; t < 2000; t += 100) {
+        now += 100; telemetry_state.current_rpm_updated_at = now; board_sync_process();
+        assert(commands == 8);
+    }
+    /* A stale report resets the two-second gate. */
+    now += 1001; board_sync_process();
+    uart_busy = true;
+    for (unsigned t = 0; t < 20000; t += 100) {
+        now += 100; telemetry_state.current_rpm_updated_at = now; board_sync_process();
+    }
+    assert(commands == 8 && !strcmp(drive_mode_check_status(), "Start engine"));
+    uart_busy = false; board_sync_process();
+    assert(commands == 9 && last_dna_action == 1);
+    assert(!strcmp(drive_mode_check_status(), "Waiting"));
+    now += 14999; board_sync_process();
+    assert(!strcmp(drive_mode_check_status(), "Waiting"));
+    ++now; board_sync_process();
+    assert(!strcmp(drive_mode_check_status(), "No confirm"));
+    board_sync_saved();
+    settings_state.default_drive_mode = settings_state.default_suspension_softer = 0;
+    telemetry_state.current_rpm_speed = 0;
+}
+
 /* Distinguish clicks, holds and stream loss at exact boundaries, including tick wrap. */
 static void test_input(void) {
     const uint32_t starts[] = {100, UINT32_MAX - 500};
@@ -260,7 +346,7 @@ static void test_display(void) {
 static void test_preferences(void) {
     MenuPreferences prefs, copy;
     menu_preferences_default(&prefs);
-    uint8_t list[128], raw[MENU_PREFS_SIZE];
+    uint8_t list[MENU_PAGE_CAPACITY], raw[MENU_PREFS_SIZE];
     for (unsigned e = 0; e < 2; ++e) {
         assert(menu_page_list(&prefs, e, 0, true, false, list) == (e == 0 ? 6 : 4));
         unsigned total = 0;
@@ -1030,7 +1116,7 @@ static void test_readable_screens(void) {
 /* Engine and complexity filters preserve saved identities, including temporarily unavailable favorites. */
 static void test_engine_filters(void) {
     MenuPreferences prefs, restored;
-    uint8_t raw[MENU_PREFS_SIZE], list[128];
+    uint8_t raw[MENU_PREFS_SIZE], list[MENU_PAGE_CAPACITY];
     menu_preferences_default(&prefs);
     seed_filtered_favorites(&prefs);
     menu_preferences_encode(&prefs, raw);
@@ -1247,6 +1333,7 @@ static void test_maximum_hold(void) {
 
 /* Retry auxiliary-board preferences after a busy link without losing or duplicating a setting. */
 static void test_board_sync_retry(void) {
+    settings_state.default_drive_mode = 0;
     now = 20000;
     runtime_state.all_processors_wakeup_time = 0;
     commands = 0;
@@ -1271,7 +1358,7 @@ static void test_board_sync_retry(void) {
 
     board_sync_rearm();
     board_sync_ignition(8);
-    assert(!strcmp(drive_mode_check_status(), settings_state.default_drive_mode ? "Waiting" : "Next start"));
+    assert(!strcmp(drive_mode_check_status(), settings_state.default_drive_mode ? "Start engine" : "Next start"));
     board_sync_restart(); /* Preserve an undelivered ignition event across transport resync. */
     for (unsigned i = 0; i < 10; ++i) board_sync_process();
     assert(last_driver_rearm == 1);
@@ -1301,6 +1388,8 @@ int main(void) {
     const char *suite = "menu-18";
 #endif
     const HostTest tests[] = {
+        HOST_TEST(test_settings_migration),
+        HOST_TEST(test_default_mode_engine_gate),
         HOST_TEST(test_oil_level),
         HOST_TEST(test_oil_favorites),
         HOST_TEST(test_lka_save_gestures),

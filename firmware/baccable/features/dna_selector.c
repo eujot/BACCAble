@@ -2,17 +2,14 @@
 #include "app/powertrain.h"
 
 #if defined(BACCABLE_BH)
-enum { SELECT_IDLE, SELECT_READY, SELECT_PRESS, SELECT_RELEASE, SELECT_WAIT,
-       SELECT_SUSPENSION_PRESS, SELECT_SUSPENSION_RELEASE, SELECT_SUSPENSION_WAIT };
+enum { SELECT_IDLE, SELECT_ENGINE, SELECT_READY, SELECT_PRESS, SELECT_RELEASE, SELECT_WAIT };
 static uint8_t phase, target, expected, actual = 255, token, have_token;
 static uint8_t data[4], have_input, physical_input, direction, steps;
-static uint8_t reply_pending, reply_result, cancelled;
-static uint8_t softer_suspension;
-static uint8_t suspension_status_known, suspension_mode, suspension_is_softer;
-static uint8_t engine_running, selection_started;
+static uint8_t reply_pending, reply_result, cancelled, suspension_step;
+static uint8_t softer_suspension, suspension_known, suspension_mode, suspension_level;
+static uint8_t engine_running;
 static uint32_t started, step_at, last_input, last_mode, last_press;
-static uint32_t engine_running_since;
-static uint32_t last_suspension_status, suspension_status_before_release;
+static uint32_t engine_running_since, last_suspension, suspension_stable_since;
 static uint16_t hold_ms;
 
 /* Map the factory codes into the physical A/N/D/Race selector order. */
@@ -29,35 +26,29 @@ static uint8_t mode_position(uint8_t mode) {
 /* Keep an outcome until the inter-board queue accepts it. */
 static void finish(uint8_t result) {
     phase = SELECT_IDLE;
-    selection_started = 0;
     reply_result = result;
     reply_pending = 1;
 }
 
-/* A cancellation releases our pending press before ending the operation. */
-void dna_selector_configure(uint8_t mode, uint8_t action, uint8_t request_token) {
-    dna_selector_configure_default(mode, action, request_token, 0);
+/* Release an accepted synthetic press before stopping on cancellation or stale data. */
+static void cancel(void) {
+    cancelled = 1;
+    if (phase == SELECT_PRESS || phase == SELECT_RELEASE) phase = SELECT_RELEASE;
+    else finish(0);
 }
 
-/* Start the saved drive mode and suspension preference for the next ignition. */
-void dna_selector_configure_default(uint8_t mode, uint8_t action, uint8_t request_token,
-                                    uint8_t softer_suspension_setting) {
+/* Arm one startup preference, preserve it on resync, or cancel it on OFF/save. */
+void dna_selector_configure(uint8_t mode, uint8_t action, uint8_t request_token,
+                            uint8_t softer_suspension_setting) {
     if (action == 0) {
         if (have_token && request_token == token && phase == SELECT_IDLE) reply_pending = 1;
         return;
     }
     if (action != 1 && action != 2) return;
     if (action == 2 || mode == 0 || mode > 3) {
-        cancelled = 1;
+        if (phase != SELECT_IDLE) cancel();
         reply_pending = 0;
         have_token = 0;
-        if (phase == SELECT_PRESS || phase == SELECT_RELEASE) phase = SELECT_RELEASE;
-        else if (phase == SELECT_SUSPENSION_PRESS || phase == SELECT_SUSPENSION_RELEASE)
-            phase = SELECT_SUSPENSION_RELEASE;
-        else {
-            phase = SELECT_IDLE;
-            selection_started = 0;
-        }
         return;
     }
     if (have_token && request_token == token) {
@@ -69,31 +60,24 @@ void dna_selector_configure_default(uint8_t mode, uint8_t action, uint8_t reques
     token = request_token;
     have_token = 1;
     target = mode == 1 ? 0 : mode == 2 ? 2 : 3;
-    softer_suspension = softer_suspension_setting && (mode == 2 || mode == 3);
-    phase = SELECT_READY;
-    started = 0;
-    selection_started = 0;
-    steps = reply_pending = cancelled = 0;
-    have_input = 0; /* Require a new neutral report after arming. */
-    actual = 255;
+    softer_suspension = !!softer_suspension_setting;
+    phase = SELECT_ENGINE;
+    started = currentTime;
+    steps = reply_pending = cancelled = suspension_step = 0;
+    have_input = suspension_known = 0;
+    actual = 255; /* Require new input, mode and suspension reports after arming. */
 }
 
-/* Only BH 0x256/DLC 4 carries this input; preserve every unrelated bit. */
+/* Only BH 0x256/DLC 4 carries this input; a physical press takes full control. */
 void dna_selector_observe(const CAN_RxHeaderTypeDef *header, const uint8_t *frame) {
     if (header->StdId != 0x256 || header->DLC != 4 ||
         header->IDE != CAN_ID_STD || header->RTR != CAN_RTR_DATA) return;
     memcpy(data, frame, 4);
     have_input = 1;
-    physical_input = frame[0] & 0x60;
+    physical_input = (frame[0] & 0x60) || (frame[1] & 0x80);
     last_input = currentTime;
-    /* The physical driver owns either selector or suspension input. */
-    if ((physical_input || (frame[1] & 0x80)) && phase != SELECT_IDLE) {
-        if (phase == SELECT_PRESS || phase == SELECT_RELEASE) phase = SELECT_RELEASE;
-        else if (phase == SELECT_SUSPENSION_PRESS || phase == SELECT_SUSPENSION_RELEASE)
-            phase = SELECT_SUSPENSION_RELEASE;
-        else finish(0);
-        cancelled = 1;
-    }
+    /* Do not inject a release over the driver's press or repeat their other button. */
+    if (physical_input && phase != SELECT_IDLE) finish(0);
 }
 
 /* Unknown factory values remain unknown rather than being treated as Natural. */
@@ -102,131 +86,126 @@ void dna_selector_mode(uint8_t mode) {
     last_mode = currentTime;
 }
 
-/* Track whether the current mode reports its softer suspension calibration. */
+/* Decode the calibration field: D uses 0/1, Race uses 1/2 (Race Mid needs vehicle validation). */
 void dna_selector_suspension_status(const uint8_t *frame) {
-    switch (frame[0] & 0x7C) {
-    case 0x40: suspension_mode = 1; break;
-    case 0x20: suspension_mode = 2; break;
-    case 0x04: suspension_mode = 3; break;
-    default: return;
+    uint8_t mode = frame[0] & 0x7C;
+    uint8_t level = (frame[1] >> 4) & 3;
+    mode = mode == 0x20 ? 2 : mode == 0x04 ? 3 : 255;
+    if ((mode != 2 && mode != 3) || (mode == 2 && level > 1) ||
+        (mode == 3 && (level < 1 || level > 2))) {
+        suspension_known = 0;
+        return;
     }
-    suspension_is_softer = (frame[1] & 0x10) != 0;
-    suspension_status_known = 1;
-    last_suspension_status = currentTime;
+    if (!suspension_known || suspension_mode != mode || suspension_level != level ||
+        currentTime - last_suspension > 1000U)
+        suspension_stable_since = currentTime;
+    suspension_mode = mode;
+    suspension_level = level;
+    suspension_known = 1;
+    last_suspension = currentTime;
 }
 
-/* Queue a fresh copy of the observed input with only its direction changed. */
-static uint8_t send_direction(uint8_t value) {
+/* Return the requested calibration within the selected drive mode. */
+static uint8_t wanted_suspension(void) {
+    return target == 2 ? (softer_suspension ? 0 : 1) : (softer_suspension ? 1 : 2);
+}
+
+/* Use only fresh, settled suspension feedback for the actual target mode. */
+static uint8_t suspension_ready(void) {
+    return suspension_known && suspension_mode == target && actual == target &&
+           currentTime - last_suspension <= 1000U &&
+           currentTime - suspension_stable_since >= 300U;
+}
+
+/* Copy the observed input and change only the field owned by the current gesture. */
+static uint8_t send_input(uint8_t pressed) {
     CAN_TxHeaderTypeDef header = {.StdId = 0x256, .DLC = 4,
         .IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .TransmitGlobalTime = DISABLE};
     uint8_t frame[4];
     memcpy(frame, data, 4);
-    frame[0] = (frame[0] & (uint8_t)~0x60) | value;
+    if (suspension_step)
+        frame[1] = (frame[1] & (uint8_t)~0x80) | (pressed ? 0x80 : 0);
+    else
+        frame[0] = (frame[0] & (uint8_t)~0x60) | (pressed ? direction : 0);
     return can_tx(&header, frame) == HAL_OK;
 }
 
-/* Press or release the suspension button without changing the DNA direction. */
-static uint8_t send_suspension_button(uint8_t pressed) {
-    CAN_TxHeaderTypeDef header = {.StdId = 0x256, .DLC = 4,
-        .IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .TransmitGlobalTime = DISABLE};
-    uint8_t frame[4];
-    memcpy(frame, data, 4);
-    frame[1] = (frame[1] & (uint8_t)~0x80) | (pressed ? 0x80 : 0);
-    return can_tx(&header, frame) == HAL_OK;
+/* Require fresh RPM above 400 for two seconds, independently of the C1 gate. */
+static uint8_t engine_ready(void) {
+    if (telemetry_state.current_rpm_speed <= 400 ||
+        currentTime - telemetry_state.current_rpm_updated_at > 1000U) {
+        engine_running = 0;
+        return 0;
+    }
+    if (!engine_running) {
+        engine_running = 1;
+        engine_running_since = currentTime;
+    }
+    return currentTime - engine_running_since >= 2000U;
 }
 
-/* Match recorded short deflections and the longer Dynamic-to-Race hold. */
+/* Perform bounded selector steps and at most one suspension toggle, then report the outcome. */
 void dna_selector_process(void) {
     uint32_t now = currentTime;
-    uint8_t engine_ready = telemetry_state.current_rpm_speed > 400 &&
-                           now - telemetry_state.current_rpm_updated_at <= 1000U;
-    if (engine_ready) {
-        if (!engine_running) {
-            engine_running = 1;
-            engine_running_since = now;
+    uint8_t running = engine_ready();
+    if (phase == SELECT_ENGINE) {
+        /* C1 has already seen a running engine; missing BH reports must not arm a late change. */
+        if (now - started >= 3000U) finish(0);
+        else if (running) {
+            started = now;
+            phase = SELECT_READY;
         }
-        engine_ready = now - engine_running_since >= 2000U;
-    } else {
-        engine_running = 0;
-    }
-    if (phase != SELECT_IDLE && !selection_started && engine_ready) {
-        selection_started = 1;
-        started = now;
-    } else if (phase != SELECT_IDLE && selection_started && !engine_ready) {
-        cancelled = 1;
-        if (phase == SELECT_PRESS || phase == SELECT_RELEASE) phase = SELECT_RELEASE;
-        else if (phase == SELECT_SUSPENSION_PRESS || phase == SELECT_SUSPENSION_RELEASE)
-            phase = SELECT_SUSPENSION_RELEASE;
-        else finish(0);
-    }
-    if (selection_started && phase != SELECT_IDLE && now - started >= 10000U) {
-        cancelled = 1;
-        if (phase == SELECT_PRESS || phase == SELECT_RELEASE) phase = SELECT_RELEASE;
-        else if (phase == SELECT_SUSPENSION_PRESS || phase == SELECT_SUSPENSION_RELEASE)
-            phase = SELECT_SUSPENSION_RELEASE;
-        else finish(0);
-    }
-    if (selection_started && phase == SELECT_PRESS) {
-        if (now - step_at >= hold_ms) phase = SELECT_RELEASE;
-        else if (now - last_input > 600U || now - last_mode > 1000U) {
-            cancelled = 1;
-            phase = SELECT_RELEASE;
-        } else if (hold_ms > 200 && now - last_press >= 250U && send_direction(direction))
-            last_press = now;
+    } else if (phase != SELECT_IDLE && (!running || now - started >= 10000U)) cancel();
+
+    if (phase == SELECT_PRESS) {
+        if (now - last_input > 600U || now - last_mode > 1000U ||
+            (suspension_step && actual != target)) cancel();
+        else if (now - step_at >= hold_ms) phase = SELECT_RELEASE;
+        else if (hold_ms > 200 && now - last_press >= 250U && send_input(1)) last_press = now;
     }
     if (phase == SELECT_RELEASE) {
-        if (send_direction(0)) {
+        if (send_input(0)) {
             step_at = now;
             phase = SELECT_WAIT;
             if (cancelled) finish(0);
         }
-    } else if (selection_started && phase == SELECT_WAIT) {
-        if (now - last_mode > 1000U || now - step_at >= 1500U) finish(0);
-        else if (actual == expected && now - step_at >= 300U && now - last_input <= 600U &&
-                 last_input != step_at && last_input - step_at <= now - step_at)
+    } else if (phase == SELECT_WAIT) {
+        if (now - last_mode > 1000U || actual == 255 || now - step_at >= 1500U) finish(0);
+        else if (suspension_step) {
+            if (actual != target) finish(0);
+            else if (suspension_ready() && suspension_level == wanted_suspension() &&
+                     last_suspension != step_at && last_suspension - step_at <= now - step_at)
+                finish(1);
+        } else if (actual == expected && now - step_at >= 300U && now - last_input <= 600U &&
+                   last_input != step_at && last_input - step_at <= now - step_at)
             phase = SELECT_READY;
-    } else if (selection_started && phase == SELECT_READY && have_input && !physical_input &&
+    } else if (phase == SELECT_READY && have_input && !physical_input &&
                now - last_input <= 600U && now - last_mode <= 1000U && actual != 255) {
         if (actual == target) {
-            if (target == 0 || target == 1 || !softer_suspension) finish(1);
-            else if (suspension_status_known && suspension_mode == target &&
-                     now - last_suspension_status <= 1000U) {
-                if (suspension_is_softer == softer_suspension) finish(1);
-                else if (send_suspension_button(1)) {
-                    step_at = now;
-                    phase = SELECT_SUSPENSION_PRESS;
+            if (target == 0) finish(1);
+            else if (suspension_ready()) {
+                if (suspension_level == wanted_suspension()) finish(1);
+                else {
+                    suspension_step = 1;
+                    hold_ms = 150;
+                    if (send_input(1)) {
+                        step_at = now;
+                        phase = SELECT_PRESS;
+                    }
                 }
             }
         } else if (steps >= 3) finish(0);
         else {
+            suspension_step = 0;
             direction = actual < target ? 0x40 : 0x20;
             expected = actual < target ? actual + 1 : actual - 1;
             hold_ms = actual == 2 && expected == 3 ? 1800 : 200;
-            if (send_direction(direction)) {
+            if (send_input(1)) {
                 ++steps;
                 step_at = last_press = now;
                 phase = SELECT_PRESS;
             }
         }
-    }
-    if (selection_started && phase == SELECT_SUSPENSION_PRESS) {
-        if (cancelled || now - last_input > 600U) {
-            cancelled = 1;
-            phase = SELECT_SUSPENSION_RELEASE;
-        } else if (now - step_at >= 150U) phase = SELECT_SUSPENSION_RELEASE;
-    }
-    if (phase == SELECT_SUSPENSION_RELEASE) {
-        if (send_suspension_button(0)) {
-            step_at = now;
-            suspension_status_before_release = last_suspension_status;
-            phase = SELECT_SUSPENSION_WAIT;
-            if (cancelled) finish(0);
-        }
-    } else if (selection_started && phase == SELECT_SUSPENSION_WAIT) {
-        if (now - step_at >= 1500U) finish(0);
-        else if (last_suspension_status != suspension_status_before_release &&
-                 now - last_suspension_status <= 1000U && suspension_mode == target &&
-                 suspension_is_softer == softer_suspension) finish(1);
     }
     if (reply_pending) {
         uint8_t reply[] = {C1BusID, C1_CMD_DNA_RESULT, token, reply_result};

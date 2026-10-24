@@ -116,7 +116,7 @@ static MenuInput input;
 static MenuView view = FAVORITES;
 static uint8_t gasoline_v6, advanced_pages;
 static uint8_t root, group = 1, function, setting, info, editor_page, engine;
-static uint8_t list[128], list_count, selection, order_selected;
+static uint8_t list[MENU_PAGE_CAPACITY], list_count, selection, order_selected;
 static uint8_t setup_last, fault_index;
 static uint8_t ipc_test_source, ipc_test_entry, ipc_test_pattern;
 /* Experimental display options never enter settings_state or Flash records. */
@@ -453,7 +453,7 @@ void menu_engine_changed(void) {
     dashboard_state.dashboard_page_index = 0;
     if (view == FAVORITES || view == VALUES || view == EDIT_FAVORITES || view == EDIT_VISIBLE ||
         view == ORDER_FAVORITES)
-        build_pages(view == FAVORITES ? preferences.last_favorite[engine] : group_last_page(group));
+        build_pages(view == FAVORITES ? preferences.last_favorite[engine] : preferences.last[engine][group]);
 }
 
 /* Import the saved catalog page without flattening its measurements. */
@@ -712,7 +712,7 @@ static void build_pages(uint16_t selected) {
 /* Open favorites or a parameter group at its remembered page. */
 static void open_pages(bool favorite) {
     view = favorite ? FAVORITES : VALUES;
-    build_pages(favorite ? preferences.last_favorite[engine] : group_last_page(group));
+    build_pages(favorite ? preferences.last_favorite[engine] : preferences.last[engine][group]);
 }
 
 /* Show an automatic result without changing the user's visibility preferences. */

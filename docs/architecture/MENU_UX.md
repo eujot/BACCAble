@@ -187,13 +187,11 @@ beta-19 atomic formatter had printed as a decimal. Both Readings and Favorites
 now use the catalog enum formatter, which displays the unknown marker `-`.
 Raw CAN state and the CAN dictionary layout are unchanged.
 
-## Experimental parameter bounds
+## Parameter bounds
 
-The ordinary parameter catalog contains 98 definitions. Display formatting, request
-selection and cache bounds all use `PARAMETER_DEFINITION_COUNT`; a stale limit
-of 100 had left some experimental numeric templates visible as `$` and prevented
-requests or cache updates for those pages. A valid single-frame UDS reply can now
-populate the field; missing or rejected replies still display `--`.
+Formatting, request selection and cache bounds use `PARAMETER_DEFINITION_COUNT`
+for the 98 ordinary definitions. Reading lists use a 72-page capacity matching
+the persisted visibility bitmap.
 
 ## Readings preview polling
 
@@ -384,14 +382,23 @@ stops or RPM reports become stale during a gesture, BH releases any pending
 press and ends the attempt. Natural (N) remains passive and does not wait for
 the engine.
 
-`Settings → Features → Suspension` uses flash slot 36: `Stiff` is value 0;
-value 1 is shown as `Soft` when Default mode is D and `Mid` when it is Race.
-For A/N it is shown as `Soft / Mid` and has no effect. The saved default is
-Stiff. Selecting D/Race sets the firm calibration. For Soft/Mid, after the
-mode is confirmed, BH reads fresh `0x25A` reports (byte 1 bit 4) and presses BH
-`0x256` byte 1 bit 7 once for 150 ms only if the softer state is not already
-reported; it releases the input and waits for matching feedback. This avoids
-treating a toggle as an absolute command or sending it before the target mode.
+`Settings → Features → Suspension` uses new flash slot 41: 0=`Stiff`,
+1=`Soft` for D or `Mid` for Race. For A/N the softer choice is labelled `Softer`
+and is ignored. Slot 36 remains the V6 engine selector. Settings grow from 40
+to 41 slots; loading falls back to the previous 80-byte record and defaults the
+new slot to Stiff. The first save writes 82 bytes without moving the storage
+region. Older firmware may not read this longer record after a downgrade.
+
+BH checks the target mode and fresh, stable suspension status before sending
+at most one 150 ms BH `0x256` byte-1 bit-7 pulse. This applies to both Stiff and
+the softer choice, including when the car already reports the target DNA mode.
+It waits for a post-release matching status before success; a rejected or
+unconfirmed toggle is not repeated. `0x25A` must be a standard DLC-4 data frame.
+Its byte-1 bits 5:4 are decoded by mode: D Stiff=1, Soft=0; Race Stiff=2,
+Mid=1. D transitions are supported by capture and the owner's mode description;
+Race Mid=1 remains an explicit inference requiring hardware confirmation.
+Unknown codes invalidate the previous sample, and the state must settle for
+300 ms before use. See the [audit evidence](../../baccable_lab/docs/research/20261024-startup-audit.md).
 
 `features/dna_selector.c` runs only on BH and uses fresh standard data frames
 `0x256`/DLC 4 and actual `0x46C` mode reports. It preserves every unrelated
@@ -416,8 +423,9 @@ with observed target). Tokens reject results from earlier ignition/save events;
 duplicate start requests and transport resync cannot replay a completed gesture.
 Both new commands retain the existing UART framing/checksum. Update C1/BH together.
 
-After the engine-running gate, `features/drive_mode_check.c` waits up to 15 s
-for BH. A matching completion
+After the engine-running gate and successful UART enqueue, `features/drive_mode_check.c`
+waits up to 15 s for BH. BH allows at most 3 s for its independent engine gate,
+then 10 s for selection and suspension; it cannot apply a timed-out request at a later engine start. A matching completion
 starts a separate five-second observation window; a failure or missing BH ends
 with No confirm. At the window's end, fresh unmodified C1 `0x384` reports must
 match for at least 2 s (at least four samples, gaps at most 600 ms), and CRC-valid
@@ -425,7 +433,7 @@ match for at least 2 s (at least four samples, gaps at most 600 ms), and CRC-val
 Disagreement or gaps reset the matching run. This is corroboration of received
 state, not an explicit ECU acknowledgement or proof of every subsystem.
 
-Browsing a non-N preference displays target and `Next start`, `Waiting`,
+Browsing a non-N preference displays target and `Next start`, `Start engine`, `Waiting`,
 `Confirmed` or `No confirm`. MY23 uses title/result lines; legacy uses compact
 `DNA` and R for Race to retain the complete status. Results remain until OFF, sleep or settings save; resync preserves them.
 A failed check leaves the preference for the next start. The preference never
