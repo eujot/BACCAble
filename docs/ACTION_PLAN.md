@@ -6,6 +6,11 @@
 
 ## Halogen/xenon and competing-message review, 2026-10-25
 
+Follow-up diagram inspection records the basic headlamp connector: pin 1 dipped,
+pin 5 high-beam positive controls. This pinout is not assigned to xenon/LED.
+D3S HDU/lamp/shutter wiring and AFLM CAN/LIN adjustment paths are distinct;
+no waveform, output-driver implementation or facelift wiring is inferred.
+
 The [lighting report](../baccable_lab/docs/research/20261025-light-origin-timing.md)
 now records visual inspection of OEM 2018 techCONNECT diagrams (download hash
 retained) and official Stelvio references. Basic halogen uses H7/H15 rather than

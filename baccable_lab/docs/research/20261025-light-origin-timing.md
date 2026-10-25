@@ -356,3 +356,30 @@ modification, diagnostic actuation or new transmission was attempted here.
 This strengthens the decision to stop treating status-copy injection as a
 validated Rain lights solution. It does not prove every older layout applies
 to the owner's LEDs or that all possible CAN request mechanisms are absent.
+
+### Verified connector detail and interpretation boundary
+
+Reinspection of the 2018 figures: the basic-lamp connector (page 10) assigns
+pin 1 to positive dipped control, pin 5 to positive high-beam control, pins 2/3
+to DRL/side-light control/signal, pins 9/12 to adjustment power/signal and pins
+13/14 to ground. Page 8 draws discrete wires from BCM to the lamps. This pinout
+is scoped to that basic assembly, not the xenon or facelift connector.
+
+Page 11 explicitly describes direct BCM control for D5S 25 W. Page 12 shows
+BCM-to-HDU/lamp and shutter paths for D3S 35 W, separately from AFLM's CAN-C2
+connection and LIN adjustment branches. Lamp electronics perform discharge
+lamp power conversion; "direct BCM control" does not mean the BCM directly
+produces the discharge lamp ignition voltage. Exact semiconductor switching,
+PWM waveform and variant-specific electrical ratings are not established by
+these functional drawings.
+
+Consequently, for the illustrated older variants the last control/power path
+to dipped illumination is discrete wiring. It is incorrect to infer a CAN
+command accepted by the lamp from a correlated CAN indicator alone. This does
+not exclude BCM receiving upstream CAN inputs, publishing its output state,
+or an adaptive ECU using that state as a prerequisite for adjustment. It also
+does not assign the source/function of 0x73E in a particular newer vehicle.
+
+No BCM cavity number or xenon/LED connector pin is prescribed for installation:
+those require the exact-variant harness schematic. The page-10 basic connector
+is evidence of topology, not an instruction to connect to the owner's LED lamp.
