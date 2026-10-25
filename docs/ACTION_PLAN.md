@@ -6,8 +6,9 @@
 
 ## Rain test light-response page, 2026-10-25
 
-Branch `feat/rain-test-light-sensor` builds on PR #86, whose LED removal
-provides C1 Flash space. `Actions → Rain test` now has a second page selected
+The two commits from `feat/rain-test-light-sensor` are included in PR #86
+(`feat/menu-demo-no-led`); its LED removal provides C1 Flash space.
+`Actions → Rain test` now has a second page selected
 with up/down. BH observes only standard data `0x738`/DLC 8, bytes 1 and 2,
 and answers a C1 poll only while that page is visible. C1 distinguishes a
 missing BH reply from a reply without a fresh CAN frame; raw zero remains valid.
