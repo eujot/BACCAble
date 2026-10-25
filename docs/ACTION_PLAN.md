@@ -4,6 +4,17 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Headlamp switch input documentation, 2026-10-26
+
+The [lighting report follow-up](../baccable_lab/docs/research/20261025-light-origin-timing.md)
+records a wired, resistor-multiplexed exterior rotary-switch input to BCM in
+older documentation. The 2018 panel pinout assigns exterior-light signal to
+pin 4; the 2019 Giulia Sport LHD BCM C8 pinout assigns M9 to cavity 42
+(white/yellow, 0.35 mm2). These are variant-scoped endpoints, not a confirmed
+facelift harness mapping. Exact resistance/voltage values and the owner's
+factory/retrofit LED topology remain unknown. No firmware or hardware change;
+documentation diff checked. User checkout changes remain untouched.
+
 ## Halogen/xenon and competing-message review, 2026-10-25
 
 Follow-up diagram inspection records the basic headlamp connector: pin 1 dipped,

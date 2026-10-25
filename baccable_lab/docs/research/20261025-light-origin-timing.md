@@ -383,3 +383,36 @@ does not assign the source/function of 0x73E in a particular newer vehicle.
 No BCM cavity number or xenon/LED connector pin is prescribed for installation:
 those require the exact-variant harness schematic. The page-10 basic connector
 is evidence of topology, not an instruction to connect to the owner's LED lamp.
+
+## Headlamp rotary switch to BCM, follow-up 2026-10-26
+
+The 2018 techCONNECT document, pages 16–17, explicitly connects the headlamp
+control panel to BCM. Its 12-pin panel connector identifies pin 4 as exterior
+light signal, pin 1 as fused ignition-on supply and pin 12 as ground. The
+panel pinout contains dedicated signals, not CAN-H/CAN-L or a LIN connection.
+The equivalent [Fiat Stelvio training page 76](https://lab-aftersales.fiat.com/elearn_testreda/949001497.pdf#page=76)
+also describes the panel-to-BCM connection and those functions (indexed excerpt;
+full live download of that source was previously unavailable).
+
+A reproduced [2018 Giulia Ti service description](https://lemon-manuals.la/Alfa%20Romeo/2018/Giulia%20Ti%2C%20RWD/Repair%20and%20Diagnosis%20%28Single%20Page%29/Accessories%20%26%20Equipment/Interior%2FIllumination%20Lights/Lamps%2FLighting%20-%20Interior%20%28Service%20Information%29/Description%20And%20Operation/)
+explicitly identifies a hardwired resistor-multiplexed input from the exterior
+rotary knob. BCM interprets the encoded selection; the knob does not carry the
+lamp operating current. No resistor values, voltage thresholds or validated
+position-to-resistance table were obtained. Do not invent them or infer that
+shorting the input produces dipped ON.
+
+The reproduced [2019 Giulia Sport RWD, LHD BCM C8 pinout D2762H](https://lemon-manuals.la/Alfa%20Romeo/2019/Giulia%20Sport%2C%20RWD/Repair%20and%20Diagnosis%20%28Single%20Page%29/Quick%20Lookups/Electrical%20Component%20Locations/Connector%20End%20Views%20%26%20Electrical%20Component%20Locations%20%285%20Of%2011%29/Module-Body%20Control%20C8%20%28Standard%29%20Connector%20End%20View%20%28D2762H%29/)
+identifies cavity 42 as headlamp switch signal, circuit M9, white/yellow,
+0.35 mm2. Cavity 13 is the separate panel-dimmer MUX input. These documents
+identify corresponding endpoints but are not a single VIN-matched end-to-end
+harness drawing; pin 4 -> BCM C8/42 must not be prescribed for the owner's
+facelift without matching its variant. Connector C8 is not the name of a CAN bus.
+
+Functional conclusion for documented older versions: knob selection -> wired
+resistive input -> BCM decision -> dedicated lamp outputs, with CAN reports
+available to other controllers. This explains why no independent switch CAN
+pulse need appear before the observed 0x73E/0x354 changes. It does not prove
+that no alternative BCM request exists. Emulating this input would require an
+appropriate electrical interface and exact variant measurements; sending a
+copy of a CAN state publication is not equivalent. No hardware connection,
+firmware modification or actuation was made.
