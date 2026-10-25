@@ -167,11 +167,14 @@ int main(void) {
     assert(strstr(first, "BH738 6/0") != NULL && strstr(second, "Raw") != NULL);
     now += 1000;
     rain_test_process();
+    assert(uart[0] == C2BusID && uart[1] == C2_CMD_RAIN_TEST);
+    now += 4000;
+    rain_test_process();
     assert(uart[0] == BhBusID && uart[1] == BH_CMD_RAIN_SENSOR);
     rain_test_sensor_reply(0, 0, 0, uart[2]);
     rain_test_render(first, sizeof(first), second, sizeof(second));
     assert(strstr(first, "no frame") != NULL);
-    now += 3000;
+    now += 7000;
     rain_test_render(first, sizeof(first), second, sizeof(second));
     assert(strstr(first, "no reply") != NULL);
     rain_test_move_page();

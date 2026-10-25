@@ -58,6 +58,7 @@ uint32_t HAL_UART_Transmit(UART_HandleTypeDef *uart, uint8_t *data, uint16_t siz
 }
 void status_led_activity(void) {}
 void status_led_error(void) {}
+uint8_t rain_test_visible(void) { return 0; }
 void Error_Handler(uint16_t value) {
     (void)value;
     assert(0);

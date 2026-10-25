@@ -333,8 +333,11 @@ static void function_move(int direction, bool next_group) {
 
 /* Queue a screen payload, including diagnostic control bytes, with normal coalescing. */
 static bool menu_present_packet(const uint8_t *content) {
+    /* Keep unchanged screens without consuming the slots needed by C2/BH replies. */
+    uint32_t resend_ms = rain_test_forcing() ? 2000U :
+                         (view == RAIN_TEST || settings_state.rain_lights_enabled ? 1500U : 500U);
     if (previous_valid && !memcmp(previous_text, content, sizeof(previous_text)) &&
-        currentTime - previous_sent < 500)
+        currentTime - previous_sent < resend_ms)
         return false;
     uint8_t message[UART_SCREEN_BUFFER_SIZE];
     message[0] = BhBusIDparamString;

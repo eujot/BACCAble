@@ -13,7 +13,7 @@ void rain_test_enter(void);
 void rain_test_exit(void);
 /* C1: toggle forced lamp bits on/off (30 s auto-off). */
 void rain_test_toggle_force(void);
-/* C1: poll C2 counters and expire the force; C2: no-op. */
+/* C1: poll the visible page and maintain the force lease; C2: no-op. */
 void rain_test_process(void);
 /* C1: store a debug reply from C2. */
 void rain_test_reply(uint8_t cycles_lo, uint8_t cycles_hi, uint8_t flags, uint8_t tx,
@@ -26,6 +26,10 @@ void rain_test_sensor_debug_reply(uint8_t token);
 /* C1: accept a matching BH reply and switch between diagnostic pages. */
 void rain_test_sensor_reply(uint8_t first, uint8_t second, uint8_t valid, uint8_t token);
 void rain_test_move_page(void);
+/* C1: report whether the temporary lamp force needs the faster UART lease. */
+uint8_t rain_test_forcing(void);
+/* C1: report whether the diagnostic screen is using UART poll slots. */
+uint8_t rain_test_visible(void);
 /* C1: two-line display text. */
 void rain_test_render(char *first, size_t first_size, char *second, size_t second_size);
 

@@ -286,7 +286,8 @@ within 350 ms update the selection without losing clicks; C1 sends the newest
 screen after one transfer interval or 120 ms without another click. The interval
 uses the selected 10/20/50 ms fragment pace. Other events render immediately.
 Each render starts the next 100 ms periodic interval. Unchanged
-screens are resubmitted after 500 ms; duplicate detection precedes UART packet
+screens are resubmitted after 500 ms, or after 1,500 ms while Rain lights is ON
+or Rain test is open (2,000 ms during a forced Rain test); duplicate detection precedes UART packet
 assembly and only accepted submissions update the resend clock. BH retains
 20 ms default CAN fragment pacing and reasserts an idle menu one second after
 the last changed screen.
@@ -492,6 +493,13 @@ expire after 3 s without a command and have an independent 30 s limit. A new
 force requires an explicit OFF after either expiry. C1 retries a queue-rejected
 STOP after leaving the screen; C2's own expiry bounds lost or undelivered STOP.
 Up/down switches to a second page with the two raw BH 0x738/DLC8 bytes 1 and 2.
+Only the visible page is polled every 2 s. During a forced test, C2 force
+commands continue every 1 s from either page; the BH sample page polls every
+5 s and retains a reply for 7 s. The ordinary status polls move to 2,000 ms
+for C2 and 2,200 ms for BH only while Rain test is open, preserving the
+shared UART budget and keeping alternating USB/version reports within 5 s.
+`BH738 no reply` with `UART/BH timeout` means there is no current accepted
+reply; it does not by itself prove a failed BH board.
 BH keeps only an exact standard data frame and reports whether its last sample
 is at most 2.5 s old. C1 polls BH only while this page is visible and accepts
 only the latest matching reply; missing BH replies and stale CAN samples have
