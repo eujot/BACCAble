@@ -4,6 +4,42 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Rain test replies expire under shared UART load, 2026-10-25
+
+Owner's v5-beta-32 vehicle trial: `Rain test` initially showed C2 wiper/AUTO
+data and BH `0x738` raw values, then both pages showed `no reply` after a few
+seconds. Menu navigation still changed the IPC text. Leaving and re-entering
+`Rain test` or cycling ignition did not promptly restore the readings; removing
+power did. The same failure was reported with `Rain lights` ON and OFF; whether
+the OFF choice was saved was not established in this trial.
+
+Source review identifies a sufficient software cause even with `Rain lights`
+OFF: C1 starts at most one board UART frame every 250 ms (about four per
+second). With the BH page open, C2 and BH diagnostic polls each enqueue once
+per second, regular C2/BH status polls add about 1.8 per second, and the
+unchanged menu screen is retransmitted at least twice per second. Demand
+exceeds service. The ten-slot command queue fills, while the separate screen
+buffer still allows navigation. Diagnostic tokens and their one-second reply
+deadlines start at enqueue, so valid replies to delayed transmissions are
+discarded; the UI says `no reply` after three seconds without an accepted
+reply. This message does not establish a broken BH or C2 physical link.
+
+A scratch Apple Clang/ASan host replay linked the published `board_uart.c`,
+`rain_test.c`, `rain_lights.c` and `usb_modes.c` with peers that always reply
+immediately and `Rain lights` OFF. It showed BH values at seconds 2–4, BH
+`no reply` from second 5, and C2 `no reply` after switching pages at second
+15, while peer transmissions and screen updates continued. After 60 seconds
+outside `Rain test`, values returned briefly on re-entry, then expired again.
+The reproduction did not use vehicle hardware, so additional electrical
+faults remain possible. The owner's `ARM=1` reading also needs separate
+confirmation: the C2 implementation requires its rain-light option enabled
+for that flag, whereas a confirmed saved OFF setting should report `ARM=0`.
+
+Next correction: budget normal status, display and diagnostic traffic together;
+keep at most one outstanding diagnostic poll per peer, measure reply age from
+actual UART transmission, and add an integration regression covering both
+pages and the shared queue. No firmware changed in this audit.
+
 ## v5-beta-32 release, 2026-10-25
 
 PR [#86](https://github.com/eujot/BACCAble/pull/86) merged as
