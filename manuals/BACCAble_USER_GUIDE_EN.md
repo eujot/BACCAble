@@ -82,7 +82,8 @@ editor to save directly; no preceding double-click is required. Double-click
 returns one level. With an unchanged setting it returns immediately.
 With a changed draft, the first double-click shows `HOLD SAVE•2X DISCARD` on MY23
 (`Hold save/2x drop` on legacy). Hold RES to persist and apply; the setting stays
-visible with saved feedback. A separate double-click returns. Double-click in
+visible with `SAVED` feedback for about three seconds. A separate double-click
+returns. Double-click in
 the confirmation instead to discard and return, keeping the original setting.
 A failed save keeps the draft and confirmation available for another hold.
 A restart loads committed values only. USB mode changes only after a successful
@@ -125,7 +126,7 @@ Main menu
 │  ├─ Shown pages            Show/hide pages in Readings
 │  ├─ Sort order             Grouped or alphabetical reading lists
 │  └─ BACCAble IPC           Temporary refresh experiments
-└─ Information               Versions, input status and IPC display test
+└─ Information               Versions, input status and Demo
 ```
 
 This Settings layout applies to MY23 and to any profile after an atomic Favorite set
@@ -143,7 +144,7 @@ current item with `›` above the next item. Editors show a setting and its draf
 value, with `HOLD SAVE`. Confirmation and saved feedback use the second line.
 Live Favorites show one complete selected reading page on each line. Readings
 show one page in the first line and preview the next page in the second line.
-`✓` means saved; `×` means a local failure.
+`SAVED` confirms a completed settings save; `×` means a local failure.
 The legacy profile retains its 18/24-character first line and `BACCAble beta`
 footer. It uses the same button and draft rules, with single-line prompts.
 
@@ -153,6 +154,11 @@ and restarts after radio text settles. Closing restores the last complete radio
 text. Both MY23 fields are cleared and padded independently, so shorter titles
 cannot shift the second line or leave old characters. Physical readability,
 alignment and radio takeover still require the vehicle acceptance test.
+
+The first up/down click updates the menu immediately. During rapid clicks,
+every click changes the selection, but the display may skip intermediate
+screens and show the latest choice after a short pause. The delay follows the
+selected IPC pace (10, 20 or 50 ms); radio text can add more delay.
 
 | Mark or message | Meaning and response |
 | --- | --- |
@@ -197,7 +203,7 @@ The IPC decides when received fragments become visible; Full prevents firmware
 from mixing screens, but does not guarantee an instantaneous visual swap.
 The periodic full reassertion remains one second in both modes. Radio source
 tracking, settling and bounded arbitration remain active. Restoring radio text
-and the separate Information → IPC display test keep their original 50 ms pace.
+keeps its original 50 ms pace.
 
 Use matching C1/C2/BH firmware. These choices exist only in RAM, even if other
 Features are saved. A complete power cycle restores Quick + Full. Disconnect
@@ -262,6 +268,12 @@ and uses a shorter caption where necessary; legacy keeps the catalog format. A p
 `Oil/coolant temp` contains two values in one line; it remains one slot when
 added to Favorites. `--` means unavailable or stale. `Gear -` includes the raw
 `0xF` unavailable code; it is not gear 15.
+
+On MY23, `Oil/water/IC C` shows all four temperatures as `O90 W85 I40 X35`:
+oil, coolant, intercooler inlet and outlet. Spaces shrink when three-digit
+values need the 16-character line, for example `O101W102I103X104`.
+`Oil/coolant temp` uses `Oil 101° W 88°`; `W` is coolant. `Misfires cyl 1-4`
+shows counts in cylinder order, for example `12/ 23/ 34/ 45`.
 
 Only the first two saved slots are shown and editable in this revision. Earlier
 five-slot records retain slots 3–5 in storage for compatibility, but those slots
@@ -374,7 +386,6 @@ workflow; their draft does not control the car before successful persistence.
 
 | Option | Values | Purpose |
 | --- | --- | --- |
-| `LED strip` | Off / on | Drive an installed compatible WS281x LED strip using vehicle data such as accelerator position and gear. This requires the optional hardware. Output pauses while USB owns the shared pin. |
 | `Shift light` | Off / on | Request the instrument-panel shift warning above `Shift RPM`, with compatible Race-mode display support. This does not shift the gearbox. |
 | `Shift RPM` | 1500–6000 RPM, step 250 | Engine-speed threshold for the shift warning. |
 | `MY23 display` | Off / on | Use the MY23 menu layout: 16 glyphs on line 1 and 22 on line 2. OFF retains the legacy single-line layout with the compiled 18/24-character width. |
@@ -635,7 +646,19 @@ action executes.
 | `Reset best times` | No feature permission required | Clear the saved best acceleration records. Confirmation is required; a completed save reports `Records cleared`. |
 | `Peak hold` | No feature permission required | Immediately toggle numerical maximum hold for the current reading page. |
 | `IBS SOC override` | Running engine; explicit confirmation | Toggle a temporary experimental SOC-message override. See the limitations below. |
-| `Rain test` | No permission required; matching C1/C2 firmware | Open the rain-lights debug screen. `Wiper` counts observed rising wiper phases even with `Rain lights` OFF; the first sample after a gap is only a baseline. `A` shows fresh AUTO state (`?` means unknown), `ARM` the active rain request, and `Q` the C2 queue-admission count, which wraps at 255 and does not confirm lamp operation. `F` shows the C1 force request. `C2: no reply` means the displayed C2 data expired. SELECT forces the `0x73E` lamp bits for at most 30 s; C2 also stops if commands cease for 3 s. BACK ends the test. |
+| `Rain test` | No permission required; matching C1/C2/BH firmware | Open two rain-lights diagnostic pages; up/down switches between wiper/lamp status and the BH light-responsive sample. SELECT forces the `0x73E` lamp bits for at most 30 s from either page; C2 also stops if commands cease for 3 s. BACK ends the test. |
+
+The first `Rain test` page is unchanged: `Wiper` counts rising wiper phases even
+with `Rain lights` OFF; the first sample after a gap is only a baseline. `A`
+shows fresh AUTO state (`?` means unknown), `ARM` the active rain request, `Q`
+the C2 queue-admission count modulo 256, and `F` the C1 force request.
+`C2: no reply` means the C2 data expired. `Q` does not confirm lamp operation.
+The second page shows `BH738 6/6` for example: the two **raw**, separate values
+from BH `0x738` bytes 1 and 2. Daylight was usually `6/6` and a covered light
+sensor `0/0` in recorded tests; these are not lux or calibrated dark/bright
+thresholds. `BH738 no reply` means no fresh reply from BH; `BH738 no frame`
+means BH replied but has no recent `0x738` frame. The sample is for observation
+only and does not control the Rain lights request.
 
 Dyno/brake requests wait up to ten seconds for their board confirmation. A timeout
 does not replay or cancel a sent command, and a later response may still arrive.
@@ -691,7 +714,7 @@ disable the override; otherwise the menu displays `! Stop IBS first`.
 ## Information
 
 The status pages are read-only. Gentle up/down moves through them; short RES does
-not toggle their state. The final `IPC display test` entry opens a test submenu.
+not toggle their state. The final `Demo` entry starts the menu tour with RES.
 
 | Page, in order | Meaning |
 | --- | --- |
@@ -704,35 +727,20 @@ not toggle their state. The final `IPC display test` entry opens a test submenu.
 | `Gaps:` | Count of interruptions detected in the input report stream. |
 | `Max gap:…ms` | Longest observed input-report interval in milliseconds. |
 | `Input age:…ms` | Time since the last input report; `--` if none is available. |
-| `> IPC display test` | Open source-specific character and line-length tests on the IPC. |
+| `> Demo` | Start a timed tour of the displayed menu and example values. |
 
 C2/BH version replies older than about five seconds are treated as stale. Input
-counters describe menu controls, **not CAN capture frame counts**. Special builds
-with menu diagnostics may also add an `IPC diag` service page.
+counters describe menu controls, **not CAN capture frame counts**.
 
-For an IPC test, park safely, open `Information → IPC display test`, and choose
-`USB source`, `Bluetooth source`, or `CarPlay source` with short RES. The selected
-entry has the usual checked mark. This selects only the **display-message code**
-(`0x06`, `0x09`, or the `0x21` observed during the CarPlay capture); it does not
-change the vehicle's audio source. Run the same five tests under each code:
+Select `Information → Demo` to start the tour. It displays Favorites, Readings,
+Actions and Features in a fixed sequence, including example oil and temperature
+readings and apparent changes to Rain lights, Default mode and Suspension. These
+are presentation examples: Demo does not change settings, write Flash or send
+vehicle actions. A double-click of RES ends the tour and returns to Information;
+other clicks do not operate the displayed items. The tour also returns to
+Information automatically after its final screen. Values such as `77 mm` and
+`2500 rpm` are examples, not current vehicle measurements.
 
-| Test entry | Text sent by BH | What to inspect |
-| --- | --- | --- |
-| `UTF glyphs` | First line `UTF A: ° ± × Ą Ł`; second line `UTF B: • € Ω Ж 中` | Which 16-bit characters the IPC can draw under this source. A missing glyph does not prove the CAN transfer failed. |
-| `Oil bar glyphs` | First line `Bars: ─ ━ ═  Ticks: ▏▎▍▌▋▊▉█`; second line `Fill: ░▒▓█  Point: ·•●◉■` | Compare line, tick, fill and point glyphs as candidates for the oil bar. Visibility depends on the IPC and selected source; this test does not change the oil bar. |
-| `Line 1 length` | A 48-character ruler starting `123456789A123456789B…` on line one; `L1: 48 chars` on line two | Where the first line clips, wraps or scrolls. `A`, `B`, `C`, `D` mark positions 10, 20, 30, 40. |
-| `Line 2 length` | `L2: 48 chars` on line one; the same 48-character ruler on line two | Where the smaller line clips, wraps or scrolls. |
-| `Both lines` | `TOP:12345678901234567890` and `BOTTOM:12345678901234567` | Whether both 24-character lines coexist and how each is rendered. |
-
-Short RES or gentle up/down changes to the next/previous test while its pattern
-is on screen. Double-click RES to return to the test list; double-click again to return to
-Information. The test ends automatically after about 60 seconds without input.
-BH repeats the selected complete pattern about every three seconds and resumes
-it after radio text. If C1's test commands stop reaching BH, BH releases the
-test after five seconds. It uses the chosen message code even if another audio
-source is playing. The icon, line layout, clipping and supported glyphs are
-experimental: record what actually appears for each source. BACCAble Lab's
-ordinary capture records received CAN frames, not BH's own display transmissions.
 
 ## Reading the measurements
 

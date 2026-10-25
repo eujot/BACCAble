@@ -152,7 +152,7 @@ static const char *my23_template(const ParameterPage *page) {
     switch (page->id) {
     case 0x01: case 0x81: return "Pwr$3.0fPS Tq$3.0fNm";
     case 0x02: case 0x82: return "Oil$1.1fbar W$3.0f\xb0" "C";
-    case 0x04: case 0x84: return "Oil$3.0f\xb0 Cool$3.0f\xb0";
+    case 0x04: case 0x84: return "Oil $3.0f\xb0 W $3.0f\xb0";
     case 0x05: return "Oil $1.1fL Q$3.0f%";
     case 0x06: case 0x86: return "SOC$3.0f% $4.1fA";
     case 0x07: case 0x87: return "Bat$2.1fV $4.1fA";
@@ -168,6 +168,7 @@ static const char *my23_template(const ParameterPage *page) {
     case 0x29: case 0xb1: return "Belt $enum";
     case 0x2c: case 0xb4: return "Best0-100 $2.2fs";
     case 0x2d: case 0xb5: return "B 100-200 $2.2fs";
+    case 0x37: return "$3.0f/$3.0f/$3.0f/$3.0f";
     case 0x39: return "O$3.0fW$3.0fI$3.0fX$3.0f";
     case 0x3a: case 0xbc: return "Oil$3.0f W$3.0f G$3.0f";
     case 0x3c: case 0xb9: return "IBS B0$3.0f B1$3.0f";
@@ -190,6 +191,16 @@ static const char *my23_template(const ParameterPage *page) {
 void dashboard_format_my23_page(const ParameterPage *page, const float *values, char *result) {
     if (oil_level_format(page, values[0], 16, result)) return;
     dashboard_format_values(my23_template(page), values, page->parameter_ids, result);
+    if (page->id == 0x39) {
+        /* Place each number's left padding after it, between temperature fields. */
+        for (char *number = result + 1; number < result + 16; number += 4) {
+            if (number[0] == ' ') {
+                number[0] = number[1];
+                number[1] = number[2];
+                number[2] = ' ';
+            }
+        }
+    }
     size_t read = 0, write = 0;
     while (result[read]) {
         char glyph = result[read++];

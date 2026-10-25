@@ -3,7 +3,6 @@ DisplayState display_state = {
     .reserved = 0,
 #if defined(BACCABLE_C1) || defined(ACT_AS_SCHIZZAFORTE_SERIAL_CONTROLLER)
     .shift_msg_header = {.IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .StdId = 0x2ED, .DLC = 8},
-    .leds_strip_is_on = 0,
 #endif
 #if defined(BACCABLE_BH)
     .last_sent_telematic_display_info_msg_time = 0,

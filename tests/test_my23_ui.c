@@ -78,10 +78,22 @@ static void test_my23_reading_formats_fit(void) {
     assert(!strcmp(text, "Oil 35.0mm Q 80%"));
     const float four_temps[] = {90, 85, 40, 35};
     dashboard_format_my23_page(&parameter_pages[0][0x39 - 1], four_temps, text);
-    assert(!strcmp(text, "O 90W 85I 40X 35"));
+    assert(!strcmp(text, "O90 W85 I40 X35"));
+    const float hot_temps[] = {101, 102, 103, 104};
+    dashboard_format_my23_page(&parameter_pages[0][0x39 - 1], hot_temps, text);
+    assert(!strcmp(text, "O101W102I103X104"));
+    const float mixed_temps[] = {101, 102, 55, 45};
+    dashboard_format_my23_page(&parameter_pages[0][0x39 - 1], mixed_temps, text);
+    assert(!strcmp(text, "O101W102I55 X45"));
     const float oil_coolant[] = {101, 88, 0, 0};
     dashboard_format_my23_page(&parameter_pages[0][0x04 - 1], oil_coolant, text);
-    assert(!strcmp(text, "Oil101\xb0 Cool 88\xb0"));
+    assert(!strcmp(text, "Oil 101\xb0 W 88\xb0"));
+    const float misfires[] = {12, 23, 34, 45};
+    dashboard_format_my23_page(&parameter_pages[0][0x37 - 1], misfires, text);
+    assert(!strcmp(text, "12/ 23/ 34/ 45"));
+    const float high_misfires[] = {123, 234, 345, 456};
+    dashboard_format_my23_page(&parameter_pages[0][0x37 - 1], high_misfires, text);
+    assert(!strcmp(text, "123/234/345/456"));
     const float best[] = {8.54f, 8.54f, 0, 0};
     dashboard_format_my23_page(&parameter_pages[0][0x2d - 1], best, text);
     assert(!strcmp(text, "B 100-200 8.54s"));
@@ -146,11 +158,9 @@ static void test_my23_readings_preview_and_unavailable_gear(void) {
     menu_event(MENU_PREVIOUS); menu_event(MENU_SELECT); /* Information. */
     for (unsigned i = 0; i < 5; ++i) menu_event(MENU_NEXT);
     assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "Gaps", 4));
-    for (unsigned i = 0; i < 4; ++i) menu_event(MENU_NEXT);
-#ifdef MENU_DIAGNOSTICS
-    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "IPC diag", 8));
+    for (unsigned i = 0; i < 3; ++i) menu_event(MENU_NEXT);
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "Demo", 4));
     menu_event(MENU_NEXT);
-#endif
     assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "C1 firmware", 11));
 }
 
@@ -283,7 +293,7 @@ static void test_staged_setting_failure_and_discard(void) {
         menu_event(MENU_HOLD);
         assert(settings_state.shift_threshold == 3750 && setup_stage_active());
         assert(settings_writes == before + 2);
-        now += 2000; menu_render();
+        now += 3000; menu_render();
         menu_event(MENU_BACK); /* Return only to Features, not Settings. */
         assert(!setup_stage_active());
         if (profile) {
@@ -327,7 +337,7 @@ static void test_favorite_slot_draft_flow(void) {
     assert(preference_writes == writes + 1);
     fail_save = false; menu_event(MENU_HOLD);
     assert(preference_writes == writes + 2);
-    now += 2000; menu_render();
+    now += 3000; menu_render();
     assert(strstr(screen, "S2 ")); /* Successful save stays at selected slot. */
     menu_event(MENU_BACK);
     assert(strstr(screen, "Favorite 1"));
@@ -429,13 +439,6 @@ static void test_my23_remaining_list_previews(void) {
     for (unsigned i=0;i<70 && memcmp(screen_packet+4,"Empty",5);++i) menu_event(MENU_PREVIOUS);
     expect_my23_list("Empty", "Power / torque");
     menu_event(MENU_BACK); menu_event(MENU_BACK); menu_event(MENU_BACK); menu_event(MENU_BACK);
-    menu_event(MENU_NEXT); menu_event(MENU_SELECT); /* Information. */
-    for(unsigned i=0;i<9;++i) menu_event(MENU_NEXT);
-    menu_event(MENU_SELECT); /* IPC test source/pattern list. */
-    expect_my23_list(MY23_SAVED "USB source", "Bluetooth source");
-    menu_event(MENU_PREVIOUS); expect_my23_list("Oil bar glyphs", "USB source");
-    menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_NEXT); menu_event(MENU_NEXT);
-    expect_my23_list("UTF glyphs", "Line 1 length");
     menu_present("1234567890123456›•▲▼✓×°±→…");
     assert(!memcmp(screen_packet + 2, "1234567890123456", MY23_L1_VISIBLE));
     const uint8_t symbols[] = {0x80,0x81,0x82,0x83,0x84,0x85,0xb0,0xb1,0x86,0x87};
@@ -467,7 +470,7 @@ static void test_page_editor_transactions(void) {
         assert(preference_writes==writes+1 && !memcmp(original,saved,sizeof(saved)));
         fail_save=false; menu_event(MENU_HOLD);
         assert(preference_writes==writes+2 && memcmp(original,saved,sizeof(saved)));
-        now+=2000; menu_render(); menu_event(MENU_BACK); /* Clean editor -> Settings. */
+        now+=3000; menu_render(); menu_event(MENU_BACK); /* Clean editor -> Settings. */
         assert(strstr(screen, editor==2 ? "Shown pages" : "Favorite order"));
         MenuPreferences committed; assert(menu_preferences_decode(&committed,saved));
         for(unsigned f=0;f<FAVORITE_SET_COUNT;++f) {
@@ -509,7 +512,7 @@ static void test_my23_visibility_transaction(void) {
     expect_my23_list("Shown pages","Sort order");
     menu_event(MENU_SELECT); assert(screen_packet[4]==0x84);
     menu_event(MENU_SELECT); menu_event(MENU_BACK); menu_event(MENU_HOLD);
-    now+=2000; menu_render();
+    now+=3000; menu_render();
     assert(screen_packet[4]==0x85 && !memcmp(preview, screen_packet + 2 + MY23_L1_VISIBLE, 22));
     menu_event(MENU_BACK); expect_my23_list("Shown pages","Sort order");
     dashboard_state.baccable_dashboard_menu_visible=0; menu_init(); menu_event(MENU_HOLD);
@@ -631,4 +634,108 @@ static void test_render_interval_after_event(void) {
         now += 99; menu_process(); assert(native_reads == before);
         now += 1; menu_process(); assert(native_reads > before);
     }
+}
+
+/* Rapid clicks keep every selection while the transport receives only the latest view. */
+static void test_navigation_snapshot_pacing(void) {
+    fresh_contract();
+    menu_event(MENU_BACK);
+    now += 100;
+    menu_event(MENU_NEXT);
+    assert(strstr(screen, "Readings"));
+    now += 100;
+    menu_event(MENU_NEXT);
+    assert(strstr(screen, "Readings"));
+    now += 100;
+    menu_event(MENU_NEXT);
+    assert(strstr(screen, "Readings"));
+    now += 120;
+    menu_process();
+    assert(strstr(screen, "Settings"));
+    now += 100;
+    menu_event(MENU_NEXT);
+    assert(strstr(screen, "Settings"));
+    now += 120;
+    menu_process();
+    assert(strstr(screen, "Information"));
+    menu_event(MENU_SELECT);
+    assert(strstr(screen, "C1"));
+
+    fresh_contract();
+    to_settings();
+    menu_event(MENU_PREVIOUS);
+    menu_event(MENU_SELECT); /* BACCAble IPC. */
+    menu_event(MENU_SELECT); /* Fast 10ms. */
+    menu_event(MENU_BACK);
+    menu_event(MENU_BACK);
+    menu_event(MENU_NEXT);
+    menu_event(MENU_NEXT);
+    now += 400;
+    menu_event(MENU_NEXT);
+    assert(strstr(screen, "Readings"));
+    now += 100;
+    menu_event(MENU_NEXT);
+    assert(strstr(screen, "Readings"));
+    now += 70;
+    menu_process();
+    assert(strstr(screen, "Actions"));
+}
+
+/* The tour changes only packets and always leaves saved preferences untouched. */
+static void test_display_only_demo(void) {
+    for (unsigned profile = 0; profile < 2; ++profile) {
+        fresh_contract();
+        settings_state.ipc_my23_is_installed = profile;
+        menu_event(MENU_BACK);
+        for (unsigned i = 0; i < 4; ++i) menu_event(MENU_NEXT);
+        menu_event(MENU_SELECT);
+        for (unsigned i = 0; i < 9; ++i) menu_event(MENU_NEXT);
+        unsigned writes = settings_writes + preference_writes;
+        unsigned sent_commands = commands;
+        menu_event(MENU_SELECT);
+        assert(strstr(screen, "Favorites"));
+        menu_event(MENU_HOLD);
+        menu_event(MENU_NEXT);
+        assert(strstr(screen, "Favorites"));
+        uint32_t elapsed = 0;
+        for (unsigned step = 0; step < 13; ++step) elapsed += menu_demo_duration(step);
+        now += elapsed;
+        menu_process();
+        if (profile)
+            assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "ON", 2));
+        else
+            assert(strstr(screen, "Rain lights: ON"));
+        assert(!settings_state.rain_lights_enabled);
+        assert(settings_writes + preference_writes == writes && commands == sent_commands);
+        menu_button(0x10, true);
+        now += 40; menu_button(0x90, true);
+        now += 40; menu_button(0x10, true);
+        now += 100; menu_button(0x90, true);
+        now += 40; menu_button(0x10, true); /* Physical double-click emits BACK. */
+        assert(strstr(screen, "Demo"));
+        menu_event(MENU_SELECT);
+        for (unsigned step = 0; menu_demo_duration(step); ++step)
+            now += menu_demo_duration(step);
+        menu_process();
+        assert(strstr(screen, "Demo"));
+        assert(settings_writes + preference_writes == writes && commands == sent_commands);
+    }
+}
+
+/* Saved feedback keeps a plain result for the three-second window. */
+static void test_saved_feedback(void) {
+    fresh_contract(); to_settings();
+    settings_state.ipc_my23_is_installed = 1;
+    menu_render();
+    menu_notice_saved("Sort order");
+    menu_render();
+    assert(!memcmp(screen_packet + 2, "Sort order", 10));
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "SAVED", 5));
+    assert(screen_packet[2 + MY23_L1_VISIBLE + 5] == ' ');
+    now += 2999;
+    menu_render();
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "SAVED", 5));
+    now += 1;
+    menu_render();
+    assert(memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "SAVED", 5));
 }

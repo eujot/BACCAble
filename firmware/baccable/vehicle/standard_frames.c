@@ -1,6 +1,7 @@
 #include "vehicle/standard_frames.h"
 #include "vehicle/frame_handlers.h"
 #include "features/dna_selector.h"
+#include "features/rain_test.h"
 
 /* Route supported vehicle updates to their features and honor explicit message-routing requests. */
 void vehicle_dispatch_standard(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
@@ -81,9 +82,6 @@ void vehicle_dispatch_standard(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
     case 0x000003E8:
         vehicle_handle_body_gear(rx_header, frame_data);
         break;
-    case 0x00000412:
-        vehicle_handle_accelerator(rx_header, frame_data);
-        break;
     case 0x0000041A:
         vehicle_handle_battery(rx_header, frame_data);
         break;
@@ -128,6 +126,11 @@ void vehicle_dispatch_standard(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
         break;
     case 0x000005B0:
         vehicle_handle_park_assist(rx_header, frame_data);
+        break;
+    case 0x00000738:
+#if defined(BACCABLE_BH)
+        rain_test_sensor_observe(rx_header, frame_data);
+#endif
         break;
     case 0x0000073C:
         vehicle_handle_adaptive_cruise(rx_header, frame_data);

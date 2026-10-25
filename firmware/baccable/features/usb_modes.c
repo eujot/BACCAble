@@ -247,12 +247,6 @@ static void switch_mode(uint8_t mode) {
     if (active || mode)
         usb_device_stop();
     #if defined(BACCABLE_C1)
-        #if defined(DEBUG_MODE) || defined(ACT_AS_SCHIZZAFORTE_SERIAL_CONTROLLER) ||                         \
-            defined(ENABLE_USB_MASS_STORAGE)
-    led_strip_set_usb(true);
-        #else
-    led_strip_set_usb(mode != 0);
-        #endif
     if (mode) {
         parameter_request_cancel();
         fault_reader_cancel();

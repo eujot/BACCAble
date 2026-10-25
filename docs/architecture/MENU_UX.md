@@ -33,9 +33,20 @@ width. MY23 always has budgets `MY23_L1_VISIBLE = 16` and
 `MY23_L2_VISIBLE = 22`. Those are visible glyph counts, not UTF-8 byte limits.
 
 The main menu is Favorites, Readings, Actions, Settings and Information.
+Information ends with `Demo`, a timed display-only tour. Its screens use the
+ordinary LIST, PARAMETER and EDIT packet renderers and fixed example values.
+The tour does not call menu actions, setup staging, CAN requests or Flash saves.
+Only the shared double-click BACK event ends it early; all other menu gestures
+are ignored until it finishes. A completed or interrupted tour returns to the
+`Demo` entry in Information. The script varies stays from 1.4 to 2.3 seconds;
+radio arbitration can still delay physical display. No `DEMO` text is placed on
+the active screens, so both user guides explain that their values are examples.
 MY23/atomic Settings contains Features, Favorites, Shown pages, Sort order, BACCAble IPC.
 Legacy before its first five-slot save retains Features, Page favorites,
 Shown pages, Favorite order, Sort order, Favorites, BACCAble IPC. Existing catalogs, engine gates and page IDs are retained.
+The external WS281x LED-strip controller is removed; Flash slot 3 stays hidden
+and is normalized to zero on load. Instrument-cluster `Shift light` is separate
+and keeps its slot and behavior. USB ELM327 and CAN capture remain available.
 The [catalog audit](CATALOG_AUDIT.md) describes the legacy reading model.
 
 ## Central button recognizer
@@ -109,13 +120,19 @@ visible slots selectable.
 Long generic notices continue onto L2 instead of replacing useful text with a
 static Back footer. A long active title ends with `…`.
 Settings show draft values with `HOLD SAVE`; confirmation shows
-`HOLD SAVE•2X DISCARD` and saved feedback `✓ SAVED`. Every Reading keeps its
+`HOLD SAVE•2X DISCARD` and plain `SAVED` feedback for three seconds. The save
+event starts with the MY23 title and result instead of first queuing a
+replaceable single-line notice. Every Reading keeps its
 catalog measurements on L1, including multi-value pages; L2 previews the next
 page. `dashboard_format_my23_page()` selects compact templates only in MY23,
 then removes numeric padding. Tests cover both catalogs and both compiled legacy
 widths: formatted MY23 pages fit 16 glyphs, including four-value and status
 pages. Legacy continues using the original catalog templates. The same MY23
 formatter supplies both visible Favorite slots.
+The four-temperature MY23 page places each `O/W/I/X` label before its value
+and uses available spaces between fields. Four three-digit temperatures still
+fit as `O101W102I103X104`. The four misfire counts use slash separators in
+cylinder order; the oil/coolant pair keeps a visible space before its value.
 Favorite polling deduplicates UDS IDs across both pages at one request per
 500 ms. Its diagnostic cache age is max(3000 ms, (unique count + 1) * 500 ms),
 bounded to 4500 ms for eight values. Native values and Readings without a next-page preview retain
@@ -264,15 +281,19 @@ Downgrading does not export the new sets for an old firmware's menu format.
 
 ## Refresh and vehicle boundaries
 
-C1 renders immediately on menu events and starts the next 100 ms periodic
-interval from that render, avoiding a second render in the same loop. Unchanged
+C1 renders the first navigation event immediately. Further directional events
+within 350 ms update the selection without losing clicks; C1 sends the newest
+screen after one transfer interval or 120 ms without another click. The interval
+uses the selected 10/20/50 ms fragment pace. Other events render immediately.
+Each render starts the next 100 ms periodic interval. Unchanged
 screens are resubmitted after 500 ms; duplicate detection precedes UART packet
 assembly and only accepted submissions update the resend clock. BH retains
-20 ms default CAN fragment pacing and a one-second complete reassertion clock.
+20 ms default CAN fragment pacing and reasserts an idle menu one second after
+the last changed screen.
 Settings → BACCAble IPC offers RAM-only Safe 50ms / Quick 20ms / Fast 10ms,
 Write Full / Write Delta, and Reset default. SELECT applies a row immediately;
 UP/DOWN select a row, BACK returns. This experiment is explicitly outside the
-persisted draft workflow. Radio restoration and the separate IPC test patterns stay at 50 ms. No zero-delay burst or blocking wait was added.
+persisted draft workflow. Radio restoration stays at 50 ms. No zero-delay burst or blocking wait was added.
 
 Full is the default: one immutable 39-byte image is sent in order, with one
 replaceable latest target waiting behind it. Repeated submissions and failed
@@ -298,8 +319,7 @@ Factory text uses the existing 100 ms complete-message guard/250 ms incomplete-m
 settle fallback and bounded deferral. Source codes are learned only from complete
 media messages (0x05–0x09 and observed CarPlay context 0x21); no extra audio-source
 selection is injected. Closing restores the last complete radio text when known.
-The explicit Information → IPC display test keeps its temporary forced source,
-fixed patterns and five-second command lease. USB CAN does not suspend the menu;
+USB CAN does not suspend the menu;
 ELM processing can own diagnostics. Race-mask ownership is unchanged.
 
 Run [documented host/ARM checks](../../firmware/baccable/MAKEFILE.md). Host tests
@@ -356,16 +376,6 @@ acknowledgment or an atomic physical screen swap. Host tests check both directio
 off-scale transitions, target reversal, both lines/widths, retries, radio restart,
 missing-data removal and the production 20 ms CAN pacing path.
 
-
-## Oil bar glyph test pattern
-
-The Information → IPC display test menu appends `Oil bar glyphs` after the
-existing four pattern entries, so prior pattern numbers and content remain
-stable. It sends Unicode BMP candidates for horizontal boundaries (`─ ━ ═`),
-fractional ticks (`▏▎▍▌▋▊▉█`), fill density (`░▒▓█`) and markers (`·•●◉■`) to
-the selected IPC source. BH transmits each code point as a 16-bit character.
-This is a visual comparison pattern only: it does not change the oil bar's
-rendering or imply that every IPC font supports the glyphs.
 
 ## Default drive-mode selection and result
 
@@ -481,6 +491,14 @@ only C1's local force request; none confirms physical lamps. Forced C2 additions
 expire after 3 s without a command and have an independent 30 s limit. A new
 force requires an explicit OFF after either expiry. C1 retries a queue-rejected
 STOP after leaving the screen; C2's own expiry bounds lost or undelivered STOP.
+Up/down switches to a second page with the two raw BH 0x738/DLC8 bytes 1 and 2.
+BH keeps only an exact standard data frame and reports whether its last sample
+is at most 2.5 s old. C1 polls BH only while this page is visible and accepts
+only the latest matching reply; missing BH replies and stale CAN samples have
+distinct messages. Zero is a valid sample. The displayed values have no lux
+scale or calibrated threshold, and this diagnostic path does not enter the
+automatic lamp-request logic. SELECT and BACK keep their original behavior on
+both pages; all three boards need matching firmware.
 
 `Settings` → `Features` → `Comfort` → `Rain lights` is an ordinary OFF/ON draft, default OFF,
 persisted in new slot 42. Record 0x101 now has 42 halfwords (84 bytes); loaders

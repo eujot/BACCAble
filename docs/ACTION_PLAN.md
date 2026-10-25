@@ -4,6 +4,114 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Rain test light-response page, 2026-10-25
+
+The two commits from `feat/rain-test-light-sensor` are included in PR #86
+(`feat/menu-demo-no-led`); its LED removal provides C1 Flash space.
+`Actions → Rain test` now has a second page selected
+with up/down. BH observes only standard data `0x738`/DLC 8, bytes 1 and 2,
+and answers a C1 poll only while that page is visible. C1 distinguishes a
+missing BH reply from a reply without a fresh CAN frame; raw zero remains valid.
+The original C2 wiper/AUTO/force page and rain-light request logic are unchanged.
+The two raw values are diagnostic observations, without a lux scale or a proven
+darkness threshold. The machine and readable CAN catalogs now map both channels
+using the existing 5,106 captured frames from 16 recordings and retain the
+2026-10-24 isolation evidence. All C1/C2/BH boards need matching firmware.
+
+Native host tests pass, including BH frame guards and C1 reply age/token checks.
+Arm GNU 15.2.Rel1 builds C1 standard (90,388 text + 1,836 data = 92,224/98,304
+Flash), C1 large (89,916 + 1,836 = 91,752/98,304), C2, BH and CAN. No board
+was flashed. Vehicle acceptance remains open for the live `0x738` display,
+BH link status and the separate rain-light actuation test.
+
+## Display-only menu tour and LED-strip removal, 2026-10-25
+
+Branch `feat/menu-demo-no-led` continues `fix/menu-navigation-pacing`. The
+external WS281x LED-strip controller, its hardware timer/DMA setup, CAN and USB
+hooks, and its visible Settings row were removed to recover C1 Flash space.
+Flash setting slot 3 remains reserved and is cleared on load, preserving later
+setting positions. The separate IPC `Shift light` feature remains available.
+
+`Information → Demo` starts a timed tour of ordinary-looking menu screens and
+illustrative readings. It varies pauses from 1.4 to 2.3 seconds, shows example
+setting changes without applying them, and exits at the end or on a RES double
+click. It makes no Flash writes or vehicle commands. Both user guides and the
+menu UX guide describe the controls. The CAN dictionary now retains C1 `0x412`
+as a historical LED-strip interpretation, removes its current dispatcher entry,
+and records the provenance in a research note; no capture was reinterpreted.
+
+Apple Clang's full host suite and the Lab knowledge tests pass. Arm GNU
+15.2.Rel1 builds C1 in all four display profiles plus C2, BH and CAN. C1 uses
+91,012/98,304 Flash bytes in the standard and MY23 profiles and
+91,340/98,304 in both large profiles, leaving at least 6,964 bytes. The
+previous large build left 172 bytes. No board was flashed; acceptance still
+needs an in-car check of menu appearance, timing, exit gesture and Flash-slot
+migration. PR #86 CI passed with the pinned 15.3.Rel1 compiler: host tests,
+lint, all four firmware roles and the aggregate result.
+
+PR #86 regression review checked the full pending UX change against `master`,
+including navigation coalescing, save feedback, reading formatting, demo input
+handling and removal of the LED timer/DMA and setting. No blocking firmware
+defect was found. The demo renders fixed examples without calling setup edits
+or vehicle actions; the reserved Flash slot preserves subsequent settings.
+No firmware changes or additional hardware acceptance are claimed by this review.
+
+## Menu navigation pacing and display test removal, 2026-10-25
+
+Branch `fix/menu-navigation-pacing` continues `fix/readings-spacing`. C1 now
+counts every directional click, sends the first view immediately, and coalesces
+rapid subsequent clicks into the latest screen. Snapshots follow one complete
+display transfer at the selected 10/20/50 ms pace; the final view is sent after
+120 ms without another click. SELECT, BACK, HOLD, notices and saves still render
+immediately. BH postpones its idle full-screen reassertion until one second
+after the last changed screen, reducing old-screen traffic during browsing.
+There is no physical IPC acknowledgment; radio arbitration may still delay a
+visible update. Vehicle responsiveness remains to be checked.
+
+The user-facing Information → IPC display test, its UTF/line-length/oil-glyph
+patterns, the hidden `IPC diag` charset screens, their BH sender, dedicated host
+tests and obsolete diagnostics workflow were removed. Ordinary MY23 glyph
+mapping and oil-bar rendering remain. Both user guides, MENU_UX and the Makefile
+guide were updated. Full Apple Clang host suite passes. Arm GNU 15.2.Rel1 builds
+all four C1 display profiles and BH. C1 standard uses 95,952 text + 1,852 data
+= 97,804/98,304 Flash bytes (500 free); large uses 96,280 + 1,852 =
+98,132/98,304 (172 free). BH text fell from 35,744 to 34,540 bytes and BSS
+from 12,400 to 12,200 bytes. No hardware was flashed; CI's separate 15.3.Rel1
+compiler still needs its own size check.
+
+## MY23 reading spacing, 2026-10-25
+
+Branch `fix/readings-spacing` continues `fix/menu-save-feedback`. The compact
+four-temperature page now presents `O/W/I/X` before their numbers, moves spare
+padding between values, and preserves all four values when several reach three
+digits. The four misfire counts use slash separators in cylinder order.
+`Oil/coolant temp` keeps a space before both temperatures. Readings and Favorite
+slots share this formatter; legacy page templates and persisted page IDs are
+unchanged. Both user guides and MENU_UX now show the actual compact examples.
+The fast menu suite passes across legacy/MY23 profiles. All four C1 display
+build profiles link with Arm GNU 15.2.Rel1. Standard C1 uses 96,168 text +
+1,852 data bytes; `LARGE_DISPLAY` uses 96,428 text + 1,852 data bytes, leaving
+only 24 bytes below the 98,304-byte Flash limit. CI's 15.3.Rel1 compiler must
+check that tighter build independently. No board was flashed; MY23 readability
+still needs vehicle review.
+
+## Menu save feedback, 2026-10-25
+
+Branch `fix/menu-save-feedback`, based on `origin/master` after PR #84. The MY23
+save confirmation now uses plain `SAVED` without the checkmark that the owner's
+IPC did not render correctly. It stays visible for three seconds to allow
+normal UART delivery and the fragmented BH display update when a factory
+message briefly defers the menu. The transient one-line `Saved` submission was
+removed so the save event starts with the complete title/result screen. Explicit save, draft,
+discard and action semantics are unchanged. The two user guides and MENU_UX are
+updated. Physical visibility under continuous factory display traffic still
+needs vehicle acceptance; this is not an IPC delivery acknowledgement.
+Validation: `test-menu-fast` passes in legacy and MY23 profiles, including the
+new feedback-duration case; C1 builds with Arm GNU 15.2.Rel1 at
+96,096 bytes of text, 1,852 bytes of data and 13,568 bytes of BSS. No board
+was flashed. The user's existing untracked captures and checkouts were left
+untouched in the original worktree.
+
 ## v5-beta-31 release preparation, 2026-10-24
 
 PR [#84](https://github.com/eujot/BACCAble/pull/84) merged to `master` as

@@ -2,7 +2,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "platform/stm32/stm32f0xx_it.h"
 /* External variables --------------------------------------------------------*/
-extern DMA_HandleTypeDef hdma_tim1_ch4_trig_com;
 extern PCD_HandleTypeDef hpcd_USB_FS;
 extern UART_HandleTypeDef huart2;
 
@@ -71,9 +70,6 @@ void SysTick_Handler(void) { HAL_IncTick(); }
 /* For the available peripheral interrupt handler names,                      */
 /* please refer to the startup file (startup_stm32f0xx.s).                    */
 /******************************************************************************/
-
-/* Handle completion and errors for the LED-strip transfer. */
-void DMA1_Channel4_5_6_7_IRQHandler(void) { HAL_DMA_IRQHandler(&hdma_tim1_ch4_trig_com); }
 
 /* Service USB connection and transfer events. */
 void USB_IRQHandler(void) { HAL_PCD_IRQHandler(&hpcd_USB_FS); }

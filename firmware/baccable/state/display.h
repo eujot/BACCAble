@@ -7,9 +7,6 @@ typedef struct {
 #if defined(BACCABLE_C1) || defined(ACT_AS_SCHIZZAFORTE_SERIAL_CONTROLLER)
     CAN_TxHeaderTypeDef shift_msg_header;
     uint8_t shift_msg_data[8];
-    float scaled_volume;
-    uint8_t scaled_color_set;
-    uint8_t leds_strip_is_on;
 #endif
 #if defined(BACCABLE_BH)
     uint32_t last_sent_telematic_display_info_msg_time;

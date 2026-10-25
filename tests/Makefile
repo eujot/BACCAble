@@ -12,6 +12,7 @@ test: build/test_core build/test_transport build/test_catalog build/test_menu bu
 	./build/test_rain_lights_c2
 	./build/test_rain_test_c1
 	./build/test_rain_test_c2
+	./build/test_rain_test_bh
 	./build/test_dna_selector
 	./build/test_fatfs
 	./build/test_core
@@ -20,9 +21,7 @@ test: build/test_core build/test_transport build/test_catalog build/test_menu bu
 	./build/test_catalog_large
 	./build/test_menu
 	./build/test_menu_large
-	./build/test_menu_debug
 	./build/test_uart_menu
-	./build/test_menu_diagnostics
 	./build/test_input_repeat
 	./build/test_engine_status
 	./build/test_exhaust
@@ -105,7 +104,7 @@ build/test_drive_mode_bh: $(DRIVE_MODE_SOURCES) $(HEADERS) Makefile
 test: build/test_drive_mode build/test_drive_mode_c2 build/test_drive_mode_bh
 
 MENU_SOURCES := test_menu.c $(addprefix $(FIRMWARE)/, features/menu.c features/menu_model.c \
- features/menu_input.c features/my23_ui.c features/favorite_parameters.c features/ui_entry.c features/menu_diagnostics.c features/display_stream.c features/oil_bar_animation.c features/ibs_override.c features/board_sync.c features/drive_mode_check.c features/dashboard.c features/dashboard_format.c features/oil_level.c features/rain_test.c features/rain_lights.c \
+ features/menu_input.c features/menu_demo.c features/my23_ui.c features/favorite_parameters.c features/ui_entry.c features/display_stream.c features/oil_bar_animation.c features/ibs_override.c features/board_sync.c features/drive_mode_check.c features/dashboard.c features/dashboard_format.c features/oil_level.c features/rain_test.c features/rain_lights.c \
  diagnostics/parameter_cache.c diagnostics/parameter_request.c diagnostics/parameter_catalog.c \
  protocol/checksum.c vehicle/steering_controls.c diagnostics/uds_decode.c diagnostics/fault_reader.c settings/persistence.c settings/setup_menu.c settings/setup_entries.c \
  third_party/printf/printf.c)
@@ -144,19 +143,7 @@ build/test_catalog_large: test_catalog.c $(FIRMWARE)/diagnostics/parameter_catal
 
 test: build/test_catalog_large
 
-build/test_menu_diagnostics: test_menu_diagnostics.c $(FIRMWARE)/features/menu_diagnostics.c $(HEADERS) Makefile
-	@mkdir -p build
-	$(CC) $(CPPFLAGS) $(CFLAGS) -DMENU_DIAGNOSTICS test_menu_diagnostics.c $(FIRMWARE)/features/menu_diagnostics.c -o $@
-
-test: build/test_menu_diagnostics
-
-build/test_menu_debug: $(MENU_SOURCES) $(MENU_FIXTURES) $(HEADERS) Makefile
-	@mkdir -p build
-	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC1_FLAVOR=1 -DMENU_DIAGNOSTICS -DGIT_VERSION=\"test\" $(MENU_SOURCES) -lm -o $@
-
-test: build/test_menu_debug
-
-BODY_DISPLAY_SOURCES := test_body_display.c $(FIRMWARE)/features/body.c $(FIRMWARE)/features/display_stream.c $(FIRMWARE)/features/oil_bar_animation.c $(FIRMWARE)/features/my23_ui.c $(FIRMWARE)/features/ipc_display_test.c $(FIRMWARE)/state/display.c
+BODY_DISPLAY_SOURCES := test_body_display.c $(FIRMWARE)/features/body.c $(FIRMWARE)/features/display_stream.c $(FIRMWARE)/features/oil_bar_animation.c $(FIRMWARE)/features/my23_ui.c $(FIRMWARE)/state/display.c
 build/test_body_display: test_oil_animation.c $(BODY_DISPLAY_SOURCES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DBH_FLAVOR=1 $(BODY_DISPLAY_SOURCES) -o $@
@@ -219,7 +206,10 @@ build/test_rain_test_c1: $(RAIN_TEST_SOURCES) $(HEADERS) Makefile
 build/test_rain_test_c2: $(RAIN_TEST_SOURCES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC2_FLAVOR=1 $(RAIN_TEST_SOURCES) -o $@
-test: build/test_rain_test_c1 build/test_rain_test_c2
+build/test_rain_test_bh: $(RAIN_TEST_SOURCES) $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DBH_FLAVOR=1 $(RAIN_TEST_SOURCES) -o $@
+test: build/test_rain_test_c1 build/test_rain_test_c2 build/test_rain_test_bh
 
 RAIN_UART_SOURCES := test_rain_uart.c $(FIRMWARE)/features/rain_lights.c $(FIRMWARE)/transport/board_uart.c $(FIRMWARE)/features/usb_modes.c
 build/test_rain_uart: $(RAIN_UART_SOURCES) $(HEADERS) Makefile

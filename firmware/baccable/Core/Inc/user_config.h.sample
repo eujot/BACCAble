@@ -22,7 +22,6 @@
 	// #define DISABLE_THE_FUNCTION_SMART_DISABLE_START_STOP	//if uncommented it disables the start&stop functionality (active by default). It can disabled inside baccable SETUP menu.
 	// #define SHIFT_THRESHOLD 2500				//if uncommented it overwrites default shift rpm threshod, used in "shift"functionality. It can be changed runtime from baccable SETUP menu.
 	// #define SHIFT_INDICATOR_ENABLED 			// if uncommented it enables shift functionality. It can enabled inside baccable SETUP menu.
-	// #define LED_STRIP_CONTROLLER_ENABLED		// if uncommented it enables led strip controller functionality. It can enabled inside baccable SETUP menu.
 	// #define IPC_MY23_IS_INSTALLED			// if uncommented it considers the presence of a my23 IPC. It is used in "shift" functionality. It can enabled inside baccable SETUP menu.
 	// #define ROUTE_MSG 						// if uncommented it enables "route" functionality. It can enabled inside baccable SETUP menu.
 	// #define DYNO_MODE_MASTER 				// if uncommented it allows to request DYNO functionality in C1 baccable. It can enabled inside baccable SETUP menu.

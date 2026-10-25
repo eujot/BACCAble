@@ -1,6 +1,5 @@
 #include "features/body.h"
 #include "features/display_stream.h"
-#include "features/ipc_display_test.h"
 #include "features/my23_ui.h"
 #include "features/parking_mirrors.h"
 #include "storage/flash_records.h"
@@ -8,7 +7,7 @@
 _Static_assert(DISPLAY_OUTPUT_LENGTH == MY23_L1_VISIBLE + 1U + MY23_L2_VISIBLE,
                "MY23 lines must fill the complete CAN display stream");
 
-/* Factory restoration and diagnostic patterns retain their original pacing. */
+/* Factory restoration retains its original pacing. */
 #define DISPLAY_FRAGMENT_INTERVAL_MS 50U
 #define DISPLAY_KEEPALIVE_INTERVAL_MS 1000U
 #define DISPLAY_FACTORY_SETTLE_MS 250U
@@ -84,15 +83,6 @@ static void release_display(void) {
 void body_display_submit(const uint8_t *text) {
     if (chassis_state.stability_inverted)
         return;
-    if (text[0] == IPC_TEST_SENTINEL) {
-        if (ipc_display_test_select(text[1], text[2], currentTime)) {
-            menu_active = false;
-            factory_restore = false;
-            reset_screen();
-        }
-        return;
-    }
-    ipc_display_test_stop();
     bool my23 = text[0] == MY23_PACKET_MARKER;
     if (!nonblank(text + my23, my23 ? MY23_PACKET_SIZE - 1 : DASHBOARD_MESSAGE_MAX_LENGTH)) {
         release_display();
@@ -121,6 +111,9 @@ void body_display_submit(const uint8_t *text) {
     factory_restore = false;
     uint8_t count = screen_my23 ? DISPLAY_FRAGMENT_COUNT : DISPLAY_LEGACY_FRAGMENT_COUNT;
     display_state.telematic_display_info_field_total_frame_number = count - 1;
+    /* New content postpones the idle reassertion until navigation settles. */
+    if (!screen.valid || screen.count != count || memcmp(screen.target, output, sizeof(output)))
+        last_full_refresh = currentTime;
     display_stream_submit_parts(&screen, output, count);
     if (opening)
         display_stream_restart(&screen);
@@ -141,7 +134,7 @@ void body_display_factory_frame(const uint8_t data[8], uint8_t dlc) {
     uint8_t info_code = data[1] & 0x3F;
     factory_last_frame_time = currentTime;
     factory_open = frame_number < total_frame;
-    if ((menu_active || ipc_display_test_active()) && !factory_interrupted) {
+    if (menu_active && !factory_interrupted) {
         factory_interrupted = true;
         factory_defer_started = currentTime;
         factory_bounded_restart = false;
@@ -221,15 +214,10 @@ void body_process() {
         body_display_options(IPC_DEFAULT_PACE, IPC_DEFAULT_METHOD);
     if (chassis_state.stability_inverted) {
         reset_screen();
-        ipc_display_test_stop();
         menu_active = false;
         factory_interrupted = false;
         factory_restore = false;
     } else {
-        if (ipc_display_test_expired(currentTime)) {
-            ipc_display_test_stop();
-            release_display();
-        }
         if (factory_restore &&
             currentTime - display_state.last_sent_telematic_display_info_msg_time >= DISPLAY_FRAGMENT_INTERVAL_MS) {
             if (can_tx(&display_state.telematic_display_info_msg_header,
@@ -243,36 +231,20 @@ void body_process() {
             bool settled = (!factory_open && currentTime - factory_last_frame_time >= DISPLAY_FACTORY_GUARD_MS) ||
                            currentTime - factory_last_frame_time >= DISPLAY_FACTORY_SETTLE_MS;
             if (settled) {
-                if (ipc_display_test_active())
-                    ipc_display_test_restart(currentTime);
-                else
-                    display_stream_restart(&screen);
+                display_stream_restart(&screen);
                 last_full_refresh = currentTime;
                 factory_interrupted = false;
             } else if (currentTime - factory_defer_started >= DISPLAY_FACTORY_MAX_DEFER_MS &&
                        !factory_bounded_restart) {
                 /* Continuous factory traffic cannot suppress the menu forever. */
-                if (ipc_display_test_active())
-                    ipc_display_test_restart(currentTime);
-                else
-                    display_stream_restart(&screen);
+                display_stream_restart(&screen);
                 factory_bounded_restart = true;
             }
             if (!settled && !factory_bounded_restart)
                 goto done;
         }
         if (!factory_restore && currentTime - display_state.last_sent_telematic_display_info_msg_time >=
-            (ipc_display_test_active() ? DISPLAY_FRAGMENT_INTERVAL_MS : display_intervals[display_pace])) {
-            if (ipc_display_test_active()) {
-                uint8_t test_frame[8];
-                ipc_display_test_refresh(currentTime);
-                if (ipc_display_test_peek(test_frame) &&
-                    can_tx(&display_state.telematic_display_info_msg_header, test_frame) == HAL_OK) {
-                    ipc_display_test_accept();
-                    display_state.last_sent_telematic_display_info_msg_time = currentTime;
-                }
-                goto done;
-            }
+            display_intervals[display_pace]) {
             /* Reassert the menu even when neither C1 nor the radio changed it. */
             if (menu_active && currentTime - last_full_refresh >= DISPLAY_KEEPALIVE_INTERVAL_MS) {
                 display_stream_refresh(&screen);

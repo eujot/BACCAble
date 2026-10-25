@@ -21,7 +21,6 @@
 #include "transport/board_uart.h"
 #include "protocol/slcan.h"
 #include "diagnostics/parameter_catalog.h"
-#include "platform/led_strip.h"
 #include "platform/power.h"
 #if defined(ACT_AS_CANABLE) || defined(DEBUG_MODE) || defined(ENABLE_USB_MASS_STORAGE) ||                    \
     defined(ACT_AS_SCHIZZAFORTE_SERIAL_CONTROLLER)

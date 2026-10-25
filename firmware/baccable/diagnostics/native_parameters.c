@@ -67,24 +67,4 @@ uint32_t system_free_ram(void) {
     return 0;
 }
 
-/* Express the reported accelerator position as a percentage. */
-float accelerator_percent(uint8_t vol) {
-    // Scale this value to get a percentage between 0 and 100
-    // sniffed data on can bus: msg id=0x412 , fourth byte goes from 0x33(51) to 0xE6(230)
-    if (vol > 50) {
-        vol = vol - 51;
-    }
-    return (float)(((float)vol * 100.0f) / 180.0f);
-}
-
-/* Choose the LED color preset associated with the reported gear. */
-uint8_t gear_color(uint8_t col) {
-    // Gear byte: 0x70 reverse, 0x00 neutral, 0xF0 unavailable, 0x10 first gear.
-    // 0x20 denotes second gear.
-    col = col >> 4;
-
-    //  7 is reverse, F is unavailable, and 1 through 6 select the corresponding gear.
-
-    return col;
-}
 #endif

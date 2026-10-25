@@ -1,7 +1,6 @@
 #include "test_report.h"
 #include "features/body.h"
 #include "features/display_stream.h"
-#include "features/ipc_display_test.h"
 #include "features/my23_ui.h"
 #include "transport/can_bus.h"
 #include <assert.h>
@@ -52,10 +51,6 @@ static void submit(const char *value) {
     assert(length <= sizeof(text));
     memcpy(text, value, length);
     body_display_submit(text);
-}
-static void submit_test(uint8_t source, uint8_t pattern) {
-    uint8_t message[DASHBOARD_MESSAGE_MAX_LENGTH] = {IPC_TEST_SENTINEL, source, pattern};
-    body_display_submit(message);
 }
 static void factory_frame(uint8_t total, uint8_t index, uint8_t source, const uint8_t chars[3]) {
     uint8_t frame[8] = {(total << 3) | (index >> 2), ((index & 3U) << 6) | source,
@@ -161,96 +156,6 @@ static void test_bounded_radio_deferral_and_can_retry(void) {
     assert(transmitted_count == before);
     advance(50);
     assert(transmitted_count == before + 1);
-}
-
-static void test_utf_and_line_lengths_under_each_source(void) {
-    static const uint8_t sources[] = {0x06, 0x09, 0x21};
-    for (unsigned source = 0; source < sizeof(sources); ++source) {
-        for (uint8_t pattern = 0; pattern < IPC_TEST_PATTERN_COUNT; ++pattern) {
-            unsigned start = transmitted_count;
-            submit_test(sources[source], pattern);
-            advance(1500);
-            unsigned frames = (transmitted[start][0] >> 3) + 1U;
-            assert(frames > 0 && frames <= 32);
-            assert(transmitted_count == start + frames);
-            uint16_t chars[96] = {0};
-            for (unsigned i = 0; i < frames; ++i) {
-                const uint8_t *frame = transmitted[start + i];
-                assert(fragment(frame) == i && code(frame) == sources[source]);
-                assert(frame[0] >> 3 == frames - 1U);
-                for (unsigned j = 0; j < 3; ++j)
-                    chars[i * 3 + j] = (uint16_t)(frame[2 + j * 2] << 8) | frame[3 + j * 2];
-            }
-            unsigned split = 0;
-            while (split < frames * 3 && chars[split] != '\r') ++split;
-            assert(split < frames * 3);
-            unsigned second = split + 1;
-            while (second < frames * 3 && chars[second]) ++second;
-            if (pattern == 0) {
-                bool bullet = false, polish = false;
-                for (unsigned i = 0; i < frames * 3; ++i) {
-                    bullet |= chars[i] == 0x2022;
-                    polish |= chars[i] == 0x0104;
-                }
-                assert(bullet && polish);
-            } else if (pattern == 1) {
-                assert(split == 48 && second - split - 1 == 12);
-                assert(chars[9] == 'A' && chars[19] == 'B' && chars[29] == 'C' && chars[39] == 'D');
-            } else if (pattern == 2) {
-                assert(split == 12 && second - split - 1 == 48);
-                assert(chars[split + 10] == 'A' && chars[split + 20] == 'B');
-            } else if (pattern == 3) {
-                assert(split == 24 && second - split - 1 == 24);
-            } else {
-                bool horizontal = false, ticks = false, fill = false, point = false;
-                for (unsigned i = 0; i < frames * 3; ++i) {
-                    horizontal |= chars[i] == 0x2500;
-                    ticks |= chars[i] == 0x258F && i + 7 < frames * 3 && chars[i + 7] == 0x2588;
-                    fill |= chars[i] == 0x2591 && i + 3 < frames * 3 && chars[i + 3] == 0x2588;
-                    point |= chars[i] == 0x25CF;
-                }
-                assert(horizontal && ticks && fill && point);
-            }
-        }
-    }
-    unsigned before = transmitted_count;
-    advance(3500);
-    assert(transmitted_count > before && fragment(transmitted[before]) == 0);
-
-    submit_test(0x09, 0);
-    before = transmitted_count;
-    fail_next = true;
-    advance(50);
-    assert(transmitted_count == before);
-    advance(50);
-    assert(transmitted_count == before + 1 && fragment(transmitted[before]) == 0);
-    submit_test(0x09, 0); /* Repeated C1 commands do not restart a transfer. */
-    advance(50);
-    assert(fragment(transmitted[before + 1]) == 1);
-    static const uint8_t song[] = "Wolni w niewoli\rVarius Manx";
-    before = transmitted_count;
-    factory_text(0x06, 8, song);
-    assert(transmitted_count == before);
-    advance(100);
-    assert(transmitted_count == before + 1);
-    assert(fragment(transmitted[before]) == 0 && code(transmitted[before]) == 0x09);
-
-    submit("Information");
-    before = transmitted_count;
-    advance(700);
-    assert(transmitted_count > before);
-    assert(code(transmitted[before]) == 0x06); /* Normal menu follows observed radio again. */
-
-    submit_test(0x09, 0);
-    advance(4000);
-    submit_test(0x09, 0); /* A fresh command renews the temporary test lease. */
-    advance(2500);
-    assert(ipc_display_test_active());
-    before = transmitted_count;
-    advance(IPC_TEST_LEASE_MS - 2500);
-    assert(!ipc_display_test_active());
-    assert(transmitted_count > before);
-    assert(code(transmitted[transmitted_count - 1]) == 0x06);
 }
 
 static void test_my23_fixed_fields_and_unicode_under_each_source(void) {
@@ -415,7 +320,6 @@ int main(void) {
         HOST_TEST(test_source_tracking_guard_and_missing_final),
         HOST_TEST(test_carplay_and_close_restores_radio),
         HOST_TEST(test_bounded_radio_deferral_and_can_retry),
-        HOST_TEST(test_utf_and_line_lengths_under_each_source),
         HOST_TEST(test_full_snapshot_and_latest_pending),
         HOST_TEST(test_temporary_pace_and_lease),
         HOST_TEST(test_oil_animation_can_pacing),

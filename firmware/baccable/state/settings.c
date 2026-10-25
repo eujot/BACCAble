@@ -24,7 +24,7 @@ SettingsState settings_state = {
     #endif
 #endif
 #if defined(BACCABLE_C1) || defined(ACT_AS_SCHIZZAFORTE_SERIAL_CONTROLLER)
-    .led_strip_controller_enabled = 0,
+    .retired_led_strip = 0,
     .dyno_mode_master_enabled = 1,
     .front_brake_forcer_master = 1,
     #if defined(LAUNCH_ASSIST_THRESHOLD)

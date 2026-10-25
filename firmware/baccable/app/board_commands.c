@@ -42,6 +42,9 @@ void board_commands_dispatch(const uint8_t *message) {
         case C1_CMD_RAIN_TEST:
             rain_test_reply(message[2], message[3], message[4], message[5], message[6]);
             break;
+        case C1_CMD_RAIN_SENSOR:
+            rain_test_sensor_reply(message[2], message[3], message[4], message[5]);
+            break;
         case C1_CMD_DNA_RESULT:
             drive_mode_check_reply(message[2], message[3]);
             break;
@@ -161,6 +164,9 @@ void board_commands_dispatch(const uint8_t *message) {
             break;
         case BH_CMD_IPC_OPTIONS:
             body_display_options(message[2], message[3]);
+            break;
+        case BH_CMD_RAIN_SENSOR:
+            rain_test_sensor_debug_reply(message[2]);
             break;
         case BOARD_CMD_USB_STATE:
             usb_modes_request(message[2], message[3]);

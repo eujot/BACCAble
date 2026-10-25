@@ -91,7 +91,8 @@ RES w edytorze zapisuje bezpośrednio — wcześniejszy dwuklik nie jest wymagan
 Dwuklik cofa o jeden poziom. Bez zmian wraca od razu. Po zmianie szkicu pierwszy
 dwuklik pokazuje `HOLD SAVE•2X DISCARD` na MY23 albo `Hold save/2x drop` na
 starszym ekranie. Przytrzymanie zapisuje i stosuje zmianę; ustawienie zostaje
-na ekranie z potwierdzeniem zapisu. Osobny dwuklik wraca. Dwuklik zamiast
+na ekranie z komunikatem `SAVED` przez około trzy sekundy. Osobny dwuklik
+wraca. Dwuklik zamiast
 przytrzymania w ekranie potwierdzenia odrzuca szkic i wraca, zachowując oryginał.
 Błąd zapisu pozostawia szkic i możliwość kolejnej próby przytrzymaniem.
 Po restarcie wczytywane są tylko zapisane wartości. Tryb USB zmienia się dopiero
@@ -134,7 +135,7 @@ Menu główne
 │  ├─ Shown pages            Pokazywanie i ukrywanie stron w Readings
 │  ├─ Sort order             Sortowanie według grup albo alfabetycznie
 │  └─ BACCAble IPC           Tymczasowe próby odświeżania
-└─ Information               Wersje, przyciski i test wyświetlacza IPC
+└─ Information               Wersje, stan przycisków i Demo
 ```
 
 Ten układ Settings dotyczy MY23 oraz każdego profilu po zapisaniu zestawu
@@ -160,7 +161,7 @@ oraz szkic wartości z `HOLD SAVE`. Druga linia zawiera również pytanie o zapi
 lub jego wynik. Ulubione pokazują po jednej wybranej stronie odczytów w każdej
 linii. Readings pokazuje bieżącą stronę w pierwszej linii, a nazwę następnej
 strony w drugiej.
-`✓` oznacza udany zapis, `×` lokalny błąd.
+`SAVED` potwierdza zapis ustawienia, a `×` lokalny błąd.
 Starszy profil zachowuje pierwszą linię 18/24 znaki i podpis `BACCAble beta`.
 Obsługa przycisków i szkiców jest taka sama, a pytania mieszczą się w jednej linii.
 
@@ -170,6 +171,11 @@ co sekundę i zaczyna ponownie po ustaniu tekstu radia. Zamknięcie przywraca
 ostatni kompletny tekst radia. Oba pola MY23 są osobno czyszczone i dopełniane,
 więc skrócenie tytułu nie przesuwa drugiej linii ani nie zostawia starych znaków.
 Czytelność, wyrównanie i odzyskiwanie ekranu po radiu wymagają próby w samochodzie.
+
+Pierwsze naciśnięcie góra/dół odświeża menu od razu. Przy szybkim naciskaniu
+każde naciśnięcie zmienia wybór, lecz ekran może pominąć pośrednie pozycje i po
+krótkiej przerwie pokazać ostatnią. Opóźnienie zależy od wybranego tempa IPC
+(10, 20 lub 50 ms); komunikaty radia mogą je dodatkowo wydłużyć.
 
 | Symbol lub komunikat | Znaczenie i sposób obsługi |
 | --- | --- |
@@ -214,8 +220,7 @@ To IPC decyduje, kiedy pokaże otrzymane fragmenty. Full zapobiega mieszaniu
 różnych ekranów przez firmware, ale nie gwarantuje jednoczesnej podmiany
 wszystkich znaków. W obu trybach pozostaje ponowne wysyłanie całego menu co
 sekundę. Nadal działa rozpoznawanie źródła i oczekiwanie po transmisji radia
-z ograniczonym czasem odroczenia. Przywracanie tekstu radia i osobny test
-Information → IPC display test zachowują odstęp 50 ms.
+z ograniczonym czasem odroczenia. Przywracanie tekstu radia zachowuje odstęp 50 ms.
 
 Wgraj pasujące obrazy C1/C2/BH. Te opcje są tylko w RAM, również wtedy, gdy
 zapiszesz inne ustawienia Features. Pełny restart przywraca Quick + Full.
@@ -285,6 +290,13 @@ format. Na przykład
 `Oil/coolant temp` zawiera dwa odczyty w jednej linii i po dodaniu do ulubionych
 pozostaje jednym slotem. `--` oznacza brak aktualnej wartości. `Gear -` obejmuje surowy kod
 `0xF` („brak informacji”); nie jest to piętnasty bieg.
+
+Na MY23 `Oil/water/IC C` pokazuje cztery temperatury jako `O90 W85 I40 X35`:
+olej, płyn chłodzący, wlot i wylot intercoolera. Gdy wartości mają trzy cyfry,
+odstępy są ograniczane, np. `O101W102I103X104`, aby zachować wszystkie odczyty
+w 16 znakach. `Oil/coolant temp` pokazuje `Oil 101° W 88°`, gdzie `W` oznacza
+płyn chłodzący. `Misfires cyl 1-4` pokazuje liczniki w kolejności cylindrów,
+np. `12/ 23/ 34/ 45`.
 
 Wyświetlane i edytowane są tylko Slot 1 i Slot 2. Wcześniejsze rekordy pięciu
 slotów zachowują w pamięci miejsca 3–5 dla zgodności, ale nie są one pokazywane
@@ -402,7 +414,6 @@ Szkic nie steruje samochodem przed udanym zapisem.
 
 | Opcja | Wartości | Do czego służy |
 | --- | --- | --- |
-| `LED strip` | Wyłączona / włączona | Steruje zamontowaną, zgodną listwą LED WS281x na podstawie danych samochodu, np. położenia pedału przyspieszenia i biegu. Wymaga dodatkowego sprzętu. Sterowanie listwą jest wstrzymywane, gdy USB korzysta ze wspólnego wyprowadzenia. |
 | `Shift light` | Wyłączona / włączona | Wysyła polecenie pokazania sygnału zmiany biegu po przekroczeniu Shift RPM. Wymaga zgodnej obsługi wskazania w trybie Race. Nie zmienia biegu za kierowcę. |
 | `Shift RPM` | 1500–6000 obr./min, co 250 | Próg obrotów silnika dla sygnału zmiany biegu. |
 | `MY23 display` | Wyłączona / włączona | Włącza układ MY23: 16 znaków w pierwszej linii i 22 w drugiej. OFF zachowuje starszy układ jednej linii z szerokością 18/24 znaków wybraną przy kompilacji. |
@@ -674,7 +685,20 @@ urządzenie ponownie sprawdza wymagane warunki.
 | `Reset best times` | Nie wymaga osobnego ustawienia w Features | Kasuje zapisane najlepsze czasy przyspieszenia. Wymaga potwierdzenia; udany zapis kończy komunikat `Records cleared`. |
 | `Peak hold` | Nie wymaga osobnego ustawienia w Features | Od razu włącza/wyłącza pokazywanie najwyższych wartości liczbowych dla bieżącej strony. |
 | `IBS SOC override` | Pracujący silnik; potwierdzenie | Włącza/wyłącza tymczasowe, eksperymentalne podmienianie SOC w komunikatach. Ograniczenia opisano niżej. |
-| `Rain test` | Nie wymaga osobnego ustawienia; zgodny firmware C1/C2 | Otwiera ekran testu świateł deszczowych. `Wiper` liczy zaobserwowane zbocza ruchu wycieraczek także przy wyłączonym `Rain lights`; pierwsza próbka po przerwie ustala tylko stan początkowy. `A` pokazuje aktualny stan AUTO (`?` oznacza brak danych), `ARM` aktywne żądanie świateł, a `Q` liczbę ramek przyjętych do kolejki C2. `Q` wraca do zera po 255 i nie potwierdza zapalenia lamp. `F` pokazuje żądanie wymuszenia z C1. `C2: no reply` oznacza brak świeżych danych z C2. SELECT wymusza bity lamp w `0x73E` przez maksymalnie 30 s; C2 kończy wymuszenie także po 3 s bez komend. BACK kończy test. |
+| `Rain test` | Nie wymaga osobnego ustawienia; zgodny firmware C1/C2/BH | Otwiera dwie strony diagnostyki świateł deszczowych; góra/dół przełącza między wycieraczkami i światłami a odczytem sygnału światła z BH. SELECT na obu stronach wymusza bity lamp w `0x73E` przez maksymalnie 30 s; C2 kończy wymuszenie także po 3 s bez komend. BACK kończy test. |
+
+Pierwsza strona `Rain test` działa jak dotąd: `Wiper` liczy zbocza ruchu
+wycieraczek także przy wyłączonym `Rain lights`; pierwsza próbka po przerwie
+ustala tylko stan początkowy. `A` pokazuje aktualny stan AUTO (`?` oznacza brak
+danych), `ARM` aktywne żądanie świateł, `Q` liczbę ramek przyjętych do kolejki
+C2 modulo 256, a `F` żądanie wymuszenia z C1. `C2: no reply` oznacza brak
+świeżych danych z C2. `Q` nie potwierdza zapalenia lamp.
+Druga strona pokazuje na przykład `BH738 6/6`: dwie oddzielne, **surowe**
+wartości z bajtów 1 i 2 ramki BH `0x738`. Podczas zapisanych testów w świetle
+dziennym zwykle było `6/6`, a po zasłonięciu czujnika `0/0`; nie są to luksy ani
+skalibrowane progi jasności. `BH738 no reply` oznacza brak aktualnej odpowiedzi
+BH, a `BH738 no frame` — odpowiedź BH bez świeżej ramki `0x738`. Ten odczyt
+służy tylko do obserwacji i nie steruje żądaniem świateł w deszczu.
 
 Polecenia Dyno i hamowania czekają do dziesięciu sekund na odpowiedź kontrolera.
 Upływ tego czasu nie ponawia ani nie anuluje wysłanego polecenia. Odpowiedź może
@@ -740,8 +764,8 @@ razie menu pokaże `! Stop IBS first` — najpierw zatrzymaj podmienianie IBS.
 ## Informacje: Information
 
 Strony ze stanem służą tylko do odczytu. Lekkie naciśnięcia góra/dół przełączają
-między nimi; krótkie RES nie zmienia ich stanu. Ostatnia pozycja `IPC display test`
-otwiera podmenu testowe.
+między nimi; krótkie RES nie zmienia ich stanu. Ostatnia pozycja `Demo` uruchamia
+pokaz po naciśnięciu RES.
 
 | Strona, według kolejności | Znaczenie |
 | --- | --- |
@@ -754,36 +778,21 @@ otwiera podmenu testowe.
 | `Gaps:` | Liczba wykrytych przerw w docieraniu komunikatów o przyciskach. |
 | `Max gap:…ms` | Najdłuższy zaobserwowany odstęp między komunikatami o przyciskach, w milisekundach. |
 | `Input age:…ms` | Czas od ostatniego komunikatu o przyciskach. `--` oznacza, że nie ma takiego odczytu. |
-| `> IPC display test` | Test znaków i długości linii wyświetlacza dla wybranego kodu źródła. |
+| `> Demo` | Uruchamia pokaz menu i przykładowych wartości. |
 
 Odpowiedzi z wersją C2/BH starsze niż około pięć sekund są uznawane za nieaktualne.
 Liczniki dotyczą obsługi menu, **nie liczby ramek zapisanych podczas przechwytywania
-CAN**. Specjalne wersje z diagnostyką menu mogą dodatkowo zawierać stronę serwisową
-`IPC diag`.
+CAN**.
 
-Zatrzymaj samochód w bezpiecznym miejscu i otwórz `Information → IPC display test`.
-Krótkim RES wybierz `USB source`, `Bluetooth source` albo `CarPlay source`;
-zaznaczona pozycja ma zwykły symbol wyboru. Wybierasz w ten sposób tylko **kod
-komunikatu na ekranie** (`0x06`, `0x09` albo `0x21` zaobserwowany w sesji CarPlay),
-a nie rzeczywiste źródło dźwięku. Uruchom te same pięć prób dla każdego kodu:
+Wybierz `Information → Demo`, aby uruchomić pokaz. Urządzenie przejdzie kolejno
+przez Favorites, Readings, Actions i Features. Pokaże przykładowe odczyty oleju
+i temperatur oraz pozorną zmianę Rain lights, Default mode i Suspension. Są to
+tylko przykłady na ekranie: pokaz nie zmienia ustawień, nie zapisuje Flash ani
+nie wysyła poleceń do samochodu. Dwuklik RES kończy pokaz i wraca do Information;
+pozostałe naciśnięcia nie obsługują wyświetlanych pozycji. Po ostatnim ekranie
+powrót następuje automatycznie. Wartości takie jak `77 mm` i `2500 rpm` nie są
+bieżącymi pomiarami samochodu.
 
-| Pozycja testu | Tekst wysyłany przez BH | Co sprawdzić |
-| --- | --- | --- |
-| `UTF glyphs` | Pierwsza linia `UTF A: ° ± × Ą Ł`; druga `UTF B: • € Ω Ж 中` | Które znaki 16-bitowe wyświetlacz potrafi narysować przy tym źródle. Brak znaku nie dowodzi, że nie dotarła ramka CAN. |
-| `Oil bar glyphs` | Pierwsza linia `Bars: ─ ━ ═  Ticks: ▏▎▍▌▋▊▉█`; druga `Fill: ░▒▓█  Point: ·•●◉■` | Porównaj kreski, podziałkę, wypełnienie i znaczniki jako możliwe znaki paska oleju. Widoczność zależy od IPC i wybranego źródła; test nie zmienia wyglądu paska oleju. |
-| `Line 1 length` | Linijka 48 znaków zaczynająca się od `123456789A123456789B…` w pierwszej linii; `L1: 48 chars` w drugiej | W którym miejscu pierwsza linia jest ucinana, zawijana albo przewijana. `A`, `B`, `C`, `D` oznaczają pozycje 10, 20, 30, 40. |
-| `Line 2 length` | `L2: 48 chars` w pierwszej linii; ta sama linijka 48 znaków w drugiej | Gdzie kończy się widoczny tekst mniejszej linii. |
-| `Both lines` | `TOP:12345678901234567890` oraz `BOTTOM:12345678901234567` | Czy obie linie po 24 znaki są wyświetlane jednocześnie i jak wyglądają. |
-
-Gdy wzorzec jest na ekranie, krótkie RES lub lekkie góra/dół przełącza próbę.
-Dwuklik RES wraca do listy testów; kolejny dwuklik wraca do Information. Po około
-60 sekundach bez naciskania przycisków test kończy się automatycznie. BH ponawia
-cały wybrany wzorzec mniej więcej co trzy sekundy i wznawia go po tekście radia.
-Jeśli polecenia testowe z C1 przestaną docierać do BH, BH zakończy test po pięciu
-sekundach. Używa wybranego kodu, nawet gdy gra inne źródło dźwięku. Ikona, układ linii,
-ucięcie tekstu i zestaw dostępnych znaków wymagają sprawdzenia w samochodzie:
-zapisz, co rzeczywiście widać dla każdego źródła. Zwykły capture BACCAble Lab
-zapisuje odebrane ramki CAN, a nie ramki wyświetlacza nadawane przez BH.
 
 ## Jak rozumieć odczyty
 

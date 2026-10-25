@@ -41,20 +41,27 @@ static void test_idle_home_contexts(void) {
 /* A committed setting survives timeout, but a mirror capture never happens implicitly. */
 static void test_idle_commit_and_capture(void) {
     fresh_contract();
+    assert(setup_find_by_flash_index(3)->menu_text == NULL);
+    settings_state.retired_led_strip = 1;
+    setup_load_from_flash();
+    assert(!settings_state.retired_led_strip);
+    uint16_t slots[SETUP_FLASH_PARAM_BUFFER_SIZE] = {0};
+    setup_fill_flash_params(slots);
+    assert(slots[2] == 0); /* Old LED slot stays reserved and off. */
     to_settings(); menu_event(MENU_SELECT);
-    setup_dashboardPageIndex = setup_page_for(3); /* LED strip is a persisted boolean. */
-    assert(!settings_state.led_strip_controller_enabled);
+    setup_dashboardPageIndex = setup_page_for(31); /* PDC mute is a persisted boolean. */
+    assert(!settings_state.parking_sensor_mute);
     menu_event(MENU_SELECT); menu_event(MENU_NEXT);
-    assert(!settings_state.led_strip_controller_enabled);
+    assert(!settings_state.parking_sensor_mute);
     menu_event(MENU_BACK); /* Explicit confirmation. */
     menu_event(MENU_HOLD);
-    assert(settings_state.led_strip_controller_enabled);
+    assert(settings_state.parking_sensor_mute);
     unsigned blanks = blank_screens;
     now += 60000; menu_process();
     assert(menu_parameters_active() && blank_screens == blanks);
-    settings_state.led_strip_controller_enabled = 0;
+    settings_state.parking_sensor_mute = 0;
     setup_load_from_flash();
-    assert(settings_state.led_strip_controller_enabled);
+    assert(settings_state.parking_sensor_mute);
 
     fresh_contract();
     to_settings(); menu_event(MENU_SELECT);

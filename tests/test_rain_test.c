@@ -29,7 +29,9 @@ uint32_t can_forward(const CAN_RxHeaderTypeDef *h, uint8_t *data) {
     ++transmissions;
     return HAL_OK;
 }
+#if defined(BACCABLE_C1) || defined(BACCABLE_C2)
 static CAN_RxHeaderTypeDef light = {.StdId = 0x73e, .DLC = 4, .IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA};
+#endif
 #if defined(BACCABLE_C2)
 static CAN_RxHeaderTypeDef wiper = {.StdId = 0x2ec, .DLC = 8, .IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA};
 #endif
@@ -93,6 +95,42 @@ int main(void) {
     assert(!(dbg[2] & 4)); /* Old AUTO sample is unknown. */
     puts("Rain test C2 tests passed");
 }
+#elif defined(BACCABLE_BH)
+int main(void) {
+    now = 10000;
+    rain_test_sensor_debug_reply(1);
+    assert(uart_len == 6 && uart[0] == C1BusID && uart[1] == C1_CMD_RAIN_SENSOR);
+    assert(uart[4] == 0 && uart[5] == 1); /* No sample is not darkness. */
+
+    CAN_RxHeaderTypeDef sensor = {.StdId = 0x738, .DLC = 7, .IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA};
+    uint8_t frame[8] = {0, 6, 6};
+    rain_test_sensor_observe(&sensor, frame);
+    rain_test_sensor_debug_reply(2);
+    assert(uart[4] == 0); /* Reject an incomplete frame. */
+
+    sensor.DLC = 8;
+    rain_test_sensor_observe(&sensor, frame);
+    rain_test_sensor_debug_reply(3);
+    assert(uart[2] == 6 && uart[3] == 6 && uart[4] == 1 && uart[5] == 3);
+    now += 2501;
+    rain_test_sensor_debug_reply(4);
+    assert(uart[4] == 0); /* Old samples are not displayed as current. */
+
+    sensor.IDE = CAN_ID_EXT;
+    rain_test_sensor_observe(&sensor, frame);
+    sensor.IDE = CAN_ID_STD;
+    sensor.RTR = CAN_RTR_REMOTE;
+    rain_test_sensor_observe(&sensor, frame);
+    rain_test_sensor_debug_reply(5);
+    assert(uart[4] == 0);
+
+    sensor.RTR = CAN_RTR_DATA;
+    frame[1] = frame[2] = 0;
+    rain_test_sensor_observe(&sensor, frame);
+    rain_test_sensor_debug_reply(6);
+    assert(uart[2] == 0 && uart[3] == 0 && uart[4] == 1); /* Dark zero is valid. */
+    puts("Rain test BH sensor tests passed");
+}
 #else /* BACCABLE_C1 */
 int main(void) {
     now = 10000;
@@ -116,7 +154,27 @@ int main(void) {
     assert(strstr(first, "Wiper 4660") != NULL);
     assert(strstr(first, "A=1") != NULL);
     assert(strstr(second, "ARM=1") != NULL && strstr(second, "Q=7") != NULL);
+    rain_test_move_page();
+    rain_test_render(first, sizeof(first), second, sizeof(second));
+    assert(strstr(first, "no reply") != NULL);
+    rain_test_process();
+    assert(uart_len == 3 && uart[0] == BhBusID && uart[1] == BH_CMD_RAIN_SENSOR);
+    rain_test_sensor_reply(0, 0, 1, (uint8_t)(uart[2] - 1));
+    rain_test_render(first, sizeof(first), second, sizeof(second));
+    assert(strstr(first, "no reply") != NULL); /* Wrong token is ignored. */
+    rain_test_sensor_reply(6, 0, 1, uart[2]);
+    rain_test_render(first, sizeof(first), second, sizeof(second));
+    assert(strstr(first, "BH738 6/0") != NULL && strstr(second, "Raw") != NULL);
+    now += 1000;
+    rain_test_process();
+    assert(uart[0] == BhBusID && uart[1] == BH_CMD_RAIN_SENSOR);
+    rain_test_sensor_reply(0, 0, 0, uart[2]);
+    rain_test_render(first, sizeof(first), second, sizeof(second));
+    assert(strstr(first, "no frame") != NULL);
     now += 3000;
+    rain_test_render(first, sizeof(first), second, sizeof(second));
+    assert(strstr(first, "no reply") != NULL);
+    rain_test_move_page();
     rain_test_render(first, sizeof(first), second, sizeof(second));
     assert(strstr(first, "no reply") != NULL);
     assert(strstr(second, "C1 only") != NULL);

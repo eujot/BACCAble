@@ -52,7 +52,6 @@ void parameter_cache_reset(void) {}
 void parameter_request_cancel(void) {}
 void fault_reader_cancel(void) {}
 void ibs_override_enable(bool enabled) { (void)enabled; }
-void led_strip_set_usb(uint8_t enabled) { (void)enabled; }
 void power_wake(void) {}
 void board_sync_restart(void) {}
 void usb_device_status(uint8_t out[8]) { memset(out, 0, 8); out[2] = hUsbDeviceFS.dev_state; }

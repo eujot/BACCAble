@@ -107,17 +107,8 @@ void vehicle_handle_vehicle_speed(const CAN_RxHeaderTypeDef *rx_header, uint8_t 
 void vehicle_handle_gear(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
     if (rx_header->DLC < 1)
         return;
-    // Use the reported gear for the current LED color.
 #if defined(BACCABLE_C1)
     telemetry_state.current_gear = frame_data[0] & ~0xF;
-
-    if (settings_state.led_strip_controller_enabled == 1) {
-        display_state.scaled_color_set =
-            gear_color(telemetry_state.current_gear); // Select the color associated with the reported gear.
-
-        led_strip_update(display_state.scaled_volume, display_state.scaled_color_set);
-    }
-
 #endif
 
     // actual gear status is on byte 0 from bit 7 to 4 (0x0=neutral, 0x1 to 0x6=gear 1 to 6, 0x07=reverse
@@ -138,26 +129,6 @@ void vehicle_handle_body_gear(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fra
     // gearEngaged is on byte 3 bit 3 to 0
     // actualGearGSI is on byte 3 bit 7 to 4
     telemetry_state.current_gear = frame_data[3] & 0x0F;
-#endif
-}
-
-/* CAN ID 0x00000412. */
-/* Update accelerator activity and the optional LED display. */
-void vehicle_handle_accelerator(const CAN_RxHeaderTypeDef *rx_header, uint8_t *frame_data) {
-    if (rx_header->DLC < 4)
-        return;
-    // Convert accelerator position to the LED intensity level.
-
-#if defined(BACCABLE_C1)
-    if (settings_state.led_strip_controller_enabled == 1) {
-        if ((rx_header->DLC == 5) && (frame_data[3] >= 51)) {
-            comfort_state.time_since_last_received_accelerator_message = currentTime;
-            display_state.leds_strip_is_on = 1;
-            display_state.scaled_volume =
-                accelerator_percent(frame_data[3]); // Scale accelerator position for the LED display.
-            led_strip_update(display_state.scaled_volume, display_state.scaled_color_set);
-        }
-    }
 #endif
 }
 
