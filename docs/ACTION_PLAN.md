@@ -20,10 +20,10 @@ force lease are unchanged.
 A production-UART host integration regression passes across both diagnostic
 pages, Rain lights OFF/ON, forced output, status/USB polls and screen updates
 for 105 s, with fresh replies, no UART queue rejection and no force lease gap.
-All native host tests and C1/C2/BH/CAN lint and ARM builds pass. C1 uses
-92,344/98,304 Flash bytes. Vehicle verification remains open, including the
-reported `ARM=1` while the setting was believed OFF and physical lamp
-acceptance. No board has been flashed with this correction.
+All native host tests, 82 Lab unittest cases, and C1/C2/BH/CAN lint and ARM
+builds pass. C1 uses 92,344/98,304 Flash bytes. Vehicle verification remains
+open, including the reported `ARM=1` while the setting was believed OFF and
+physical lamp acceptance. No board has been flashed with this correction.
 
 ## Rain test replies expire under shared UART load, 2026-10-25
 
