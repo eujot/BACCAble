@@ -1211,10 +1211,30 @@
             21
           ],
           "report": "docs/research/20261024-111510-rain-lights-followup.md"
+        },
+        {
+          "session": "20261010-104325Z",
+          "event_ids": [
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78
+          ],
+          "report": "docs/research/20261025-manual-light-switch.md",
+          "observation": "AUTO precedes 2/3 manual ON edges by 203\u2013208 ms on C2 and remains after OFF for 345\u2013525 ms before clearing. The earlier AUTO-only controls do not switch dipped lamps on."
         }
       ],
       "contradictions": [
-        "September ON/OFF alone confounded switch selection and lit lamps. October daytime AUTO stays set with lamps off."
+        "September ON/OFF alone confounded switch selection and lit lamps. October daytime AUTO stays set with lamps off.",
+        "A brief AUTO indication during manual knob operation is not proof of an actuator command; one of three manual ON edges has no captured AUTO precursor."
       ],
       "alternatives": [
         "Reported automatic-lighting enabled state rather than exact physical rotary-switch position"

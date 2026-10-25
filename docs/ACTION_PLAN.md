@@ -4,6 +4,24 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Manual light-switch follow-up, 2026-10-25
+
+On the same `research/light-origin-timing` branch, the
+[focused manual audit](../baccable_lab/docs/research/20261025-manual-light-switch.md)
+rechecks 20261010-104325Z events 73–78, all three ON/OFF pairs and preceding
+AUTO-only controls. AUTO is a short intermediate indication in 2/3 ON trials
+and all three OFF trials, then clears. No additional repeatable quiet-baseline
+CAN precursor was demonstrated by the all-ID/bit scan, including slow frames.
+167 retained binary records match, capture fingerprints remain unchanged, and
+26 knowledge/catalog tests pass. Firmware behavior is unchanged.
+
+Owner reports beta-34 Rain lights enabled, Wiper 26 / A=1 / ARM=1 / Q109 /
+F=off, BH738 1/1 / TX125, but lamps remain OFF. This is a negative vehicle
+outcome, not a capture confirming delivery of injected frames. At 1/1 the >7
+guard is not the blocker. Establish actual TX delivery/receiver behavior and
+facelift-specific BCM/lamp wiring; do not ask to repeat the already available
+manual-switch scenario as though it had never been recorded.
+
 ## Light origin and timing audit, 2026-10-25
 
 Branch `research/light-origin-timing` (based on `origin/master` 71b7ded)

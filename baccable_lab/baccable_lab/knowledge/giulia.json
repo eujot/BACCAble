@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "dictionary_version": "2026-10-25.5",
+  "dictionary_version": "2026-10-25.6",
   "vehicle": {
     "model": "Alfa Romeo Giulia (owner-reported)",
     "model_year": null,
@@ -721,6 +721,9 @@
         },
         {
           "path": "baccable_lab/docs/research/20261024-rain-lights-correlation.md"
+        },
+        {
+          "path": "baccable_lab/docs/research/20261025-manual-light-switch.md"
         }
       ],
       "signals": [
@@ -1317,7 +1320,7 @@
           }
         }
       ],
-      "note": "Handler has no active decoding. Lamp/activation distinctions are historical comments; marker comparisons are candidates, not validation. The 2026-10-24 cross-session analysis separates AUTO selection (b3.6) from dipped-beam indication (b1.6); injection remains unverified.",
+      "note": "Handler has no active decoding. Lamp/activation distinctions are historical comments; marker comparisons are candidates, not validation. The 2026-10-24 cross-session analysis separates AUTO selection (b3.6) from dipped-beam indication (b1.6); injection remains unverified. Focused manual-pair audit: AUTO briefly precedes two of three ON edges and remains briefly after all three OFF edges before clearing. AUTO-only controls do not turn on dipped beams; do not interpret this transient as a confirmed actuator command.",
       "observations": [
         {
           "session": "20260926-181818Z",
@@ -8047,6 +8050,9 @@
         },
         {
           "path": "baccable_lab/docs/research/20261024-rain-lights-correlation.md"
+        },
+        {
+          "path": "baccable_lab/docs/research/20261025-manual-light-switch.md"
         }
       ],
       "signals": [
@@ -8335,7 +8341,7 @@
           ]
         }
       ],
-      "note": "Comments scope some fields differently on C1 and C2; entries below retain only bus-specific meanings, not a common network-wide ID definition. The 2026-10-24 cross-session analysis separates AUTO selection (b3.6) from dipped-beam indication (b1.6); injection remains unverified.",
+      "note": "Comments scope some fields differently on C1 and C2; entries below retain only bus-specific meanings, not a common network-wide ID definition. The 2026-10-24 cross-session analysis separates AUTO selection (b3.6) from dipped-beam indication (b1.6); injection remains unverified. Focused manual-pair audit: AUTO briefly precedes two of three ON edges and remains briefly after all three OFF edges before clearing. AUTO-only controls do not turn on dipped beams; do not interpret this transient as a confirmed actuator command.",
       "observations": [
         {
           "session": "20260926-181818Z",
