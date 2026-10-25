@@ -34,6 +34,18 @@ cppcheck lint and ARM GNU 15.2.Rel1 builds. C1 uses 91,624/98,304 Flash bytes
 and BH uses 35,844/131,072 bytes with this local toolchain. These are build
 results, not in-vehicle lighting confirmation.
 
+## v5-beta-34 publication, 2026-10-25
+
+PR [#93](https://github.com/eujot/BACCAble/pull/93) merged to `master` as
+`fd737c114891cdfe1ef79ee4bb5198685e161c6f`. Published prerelease
+[v5-beta-34](https://github.com/eujot/BACCAble/releases/tag/v5-beta-34) with
+[workflow 40200580085](https://github.com/eujot/BACCAble/actions/runs/40200580085).
+The release workflow passed tests, lint and all four firmware builds using the
+pinned Arm GNU 15.3.Rel1 toolchain. All 14 downloaded release assets passed
+`SHA256SUMS`; `BUILD_INFO.json` identifies the same merge commit. C1 uses
+91,368/98,304 Flash bytes and 12,596/16,384 static RAM bytes. No board was
+flashed; vehicle acceptance of the BH `0x738` darkness frame remains open.
+
 Follow-up `no reply` audit: C1 still queues at most one Rain lights option
 request per second; C2 sends its BH request in the former C1 reply slot. The
 Rain test debug reply is now visible to BH, and the BH sensor reply uses one
