@@ -4,6 +4,16 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## v5-beta-32 release preparation, 2026-10-25
+
+PR [#86](https://github.com/eujot/BACCAble/pull/86) is merged to `master` as
+`d152bc0d43f095d013025c2aa71ff226f8b6ac16`. Release notes are in
+[v5-beta-32](releases/v5-beta-32.md). They cover the menu tour and UX updates,
+external LED-strip removal, and the passive BH `0x738` light-sensor page in
+`Rain test`. The branch has not yet been tagged or published. No board was
+flashed; the new light-sensor view and Rain lights actuation still need vehicle
+acceptance.
+
 ## Rain test light-response page, 2026-10-25
 
 The two commits from `feat/rain-test-light-sensor` are included in PR #86
