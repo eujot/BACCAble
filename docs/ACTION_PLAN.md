@@ -34,6 +34,16 @@ cppcheck lint and ARM GNU 15.2.Rel1 builds. C1 uses 91,624/98,304 Flash bytes
 and BH uses 35,844/131,072 bytes with this local toolchain. These are build
 results, not in-vehicle lighting confirmation.
 
+Follow-up `no reply` audit: C1 still queues at most one Rain lights option
+request per second; C2 sends its BH request in the former C1 reply slot. The
+Rain test debug reply is now visible to BH, and the BH sensor reply uses one
+more payload byte, but UART frames remain fixed at 18 bytes. The 105-second
+production-C1-UART host regression passes with Rain lights ON, both Rain test
+pages, forced output, screen refreshes and status/USB polls: no `no reply`
+display, queue rejection or force renewal gap occurred. Its simulated peers
+reply immediately, so real-board UART errors and delivery still need a vehicle
+trial with matching C1/C2/BH images.
+
 ## v5-beta-33 release, 2026-10-25
 
 PR #90 (`38fea9e`) fixed Rain test starvation and PR #91 (`bf883b1`) added the
