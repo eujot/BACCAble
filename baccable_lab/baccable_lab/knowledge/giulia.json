@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "dictionary_version": "2026-10-25.3",
+  "dictionary_version": "2026-10-25.4",
   "vehicle": {
     "model": "Alfa Romeo Giulia (owner-reported)",
     "model_year": null,
@@ -8,7 +8,7 @@
     "vin": null,
     "scope": "This checkout and these sessions only; not a universal Alfa Romeo or cross-model DBC."
   },
-  "firmware_source_commit": "825b7ba",
+  "firmware_source_commit": "97ab257",
   "source_sha256": {
     "firmware/baccable/vehicle/display_frames.c": "0d9eca11b5892f835f5ad922e3a866ffbd596fbb6b2f81e3f57401481cf470bc",
     "firmware/baccable/vehicle/telemetry_frames.c": "8eefb5d8933db9318d2d6a26cfa2929961a8b4d88bd2dbc924c62e54ac39e2bc",
@@ -41,14 +41,14 @@
     "firmware/baccable/features/drive_mode_check.c": "19b8dbdc309906bea3ede2093e087d35f340535b51166f728853a73d754afcd2",
     "firmware/baccable/features/board_sync.c": "8f9cdadfca2196486c43f152ca5029e80586f7d6b3345396dbb28da3210b2435",
     "firmware/baccable/features/dna_selector.c": "483fc63c90689fd3152343639cfc54cf58c54026bc475f63ff174850f0b40386",
-    "firmware/baccable/app/board_commands.c": "ac83516ea474d83aaab15c76295a4aa6a373fdd95964910537fcd967dfbd97ae",
-    "firmware/baccable/transport/board_uart.h": "f6dcc03d66aa70d864ab3e78646d131f51f9d76bfde43147d1b7ddd6d26b35f5",
+    "firmware/baccable/app/board_commands.c": "29fe9a72645d430a7b6f47f33ceaa8f66172cb6fa23267e75d7d828b03b5baf3",
+    "firmware/baccable/transport/board_uart.h": "72e51e0ac8b48bb20e57be7fbc6980abb69511f7b84965220426b77dd3d5822f",
     "firmware/baccable/transport/can_bus.c": "a7eafb5395a8001064e1175eebe8c2ec089d09b7464170e982ae9c1bf9691afb",
     "firmware/baccable/transport/can_bus.h": "d468e9011bfe85258420a065fa5a8888d169c203c901d0f91ffd40bfc7f1105f",
-    "firmware/baccable/features/rain_lights.c": "711ccc471b7d3d4d0f0cf91064016cda57d946f2c85f819e7e27b6ac77dd4449",
-    "firmware/baccable/features/rain_lights.h": "557b962b90428fac47dc0674483162e4c7885c9801e83081acfad0a9a0ebbe78",
+    "firmware/baccable/features/rain_lights.c": "91564309e775ffdfeb2b5efbcfe691fe9cb5d7b715d0f5b6a8fd18ff9bc8eda4",
+    "firmware/baccable/features/rain_lights.h": "d64d87a12984799c933d2e6fad21a0c83c7312fca01960755fb67ac9aaee5945",
     "firmware/baccable/transport/board_uart.c": "49d2a1a15c1f52f4da51855d88523ca86eaaefcca94b13b4129d84938c4d9f1b",
-    "firmware/baccable/features/rain_test.c": "a32984bba6c24e869e664c98d20d70236e47e0153ea2bed148ca6cd35b42ccb8"
+    "firmware/baccable/features/rain_test.c": "42454e51ff38af23cfb2184f3ff72f26e42cd2596bee81b9c59734fa12da36bf"
   },
   "byte_convention": "Zero-based byte indexes; bit 0 is LSB. Parts are concatenated in listed most-significant-first order; physical = raw * scale + offset.",
   "capture_limits": [
@@ -9094,6 +9094,10 @@
           "symbol": "rain_test_sensor_observe"
         },
         {
+          "path": "firmware/baccable/features/rain_lights.c",
+          "symbol": "rain_lights_frame"
+        },
+        {
           "path": "baccable_lab/docs/research/20261024-rain-lights-correlation.md"
         },
         {
@@ -9133,7 +9137,7 @@
         }
       ],
       "exact_dlc": 8,
-      "note": "Covered/uncovered sensor trials in 20261024-105643Z and independent 20261024-111510Z distinguish these bytes from lamp status, including manual lamps OFF. Approximate one-second cadence. Physical source, scale, lux units and universal darkness thresholds are unverified; the recorder did not retain IDE/RTR. Current BH firmware observes standard data frames and forwards fresh raw samples only to Rain test. See LIGHT-SENSOR-CHANNELS-001.",
+      "note": "Covered/uncovered sensor trials in 20261024-105643Z and independent 20261024-111510Z distinguish these bytes from lamp status, including manual lamps OFF. Approximate one-second cadence. Physical source, scale, lux units and universal darkness thresholds are unverified; the recorder did not retain IDE/RTR. BH firmware observes standard data frames and forwards fresh raw samples to Rain test. When Rain lights requests darkness, it also copies a received factory frame after reception, sets only bytes 1 and 2 to zero and queues that frame on BH CAN. Across three 2026-10-24 sessions, 32 groups of frames had different light bytes but identical other bytes, including byte 5. This supports copying the remaining bytes but does not verify ECU acceptance or lamp operation. Simultaneous same-ID frames with differing data can produce CAN bit errors; the firmware does not rely on payload-bit dominance. See LIGHT-SENSOR-CHANNELS-001.",
       "observations": [
         {
           "session": "20260926-181818Z",
