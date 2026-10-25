@@ -491,6 +491,14 @@ only C1's local force request; none confirms physical lamps. Forced C2 additions
 expire after 3 s without a command and have an independent 30 s limit. A new
 force requires an explicit OFF after either expiry. C1 retries a queue-rejected
 STOP after leaving the screen; C2's own expiry bounds lost or undelivered STOP.
+Up/down switches to a second page with the two raw BH 0x738/DLC8 bytes 1 and 2.
+BH keeps only an exact standard data frame and reports whether its last sample
+is at most 2.5 s old. C1 polls BH only while this page is visible and accepts
+only the latest matching reply; missing BH replies and stale CAN samples have
+distinct messages. Zero is a valid sample. The displayed values have no lux
+scale or calibrated threshold, and this diagnostic path does not enter the
+automatic lamp-request logic. SELECT and BACK keep their original behavior on
+both pages; all three boards need matching firmware.
 
 `Settings` → `Features` → `Comfort` → `Rain lights` is an ordinary OFF/ON draft, default OFF,
 persisted in new slot 42. Record 0x101 now has 42 halfwords (84 bytes); loaders

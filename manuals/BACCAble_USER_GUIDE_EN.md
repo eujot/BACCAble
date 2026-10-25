@@ -646,7 +646,19 @@ action executes.
 | `Reset best times` | No feature permission required | Clear the saved best acceleration records. Confirmation is required; a completed save reports `Records cleared`. |
 | `Peak hold` | No feature permission required | Immediately toggle numerical maximum hold for the current reading page. |
 | `IBS SOC override` | Running engine; explicit confirmation | Toggle a temporary experimental SOC-message override. See the limitations below. |
-| `Rain test` | No permission required; matching C1/C2 firmware | Open the rain-lights debug screen. `Wiper` counts observed rising wiper phases even with `Rain lights` OFF; the first sample after a gap is only a baseline. `A` shows fresh AUTO state (`?` means unknown), `ARM` the active rain request, and `Q` the C2 queue-admission count, which wraps at 255 and does not confirm lamp operation. `F` shows the C1 force request. `C2: no reply` means the displayed C2 data expired. SELECT forces the `0x73E` lamp bits for at most 30 s; C2 also stops if commands cease for 3 s. BACK ends the test. |
+| `Rain test` | No permission required; matching C1/C2/BH firmware | Open two rain-lights diagnostic pages; up/down switches between wiper/lamp status and the BH light-responsive sample. SELECT forces the `0x73E` lamp bits for at most 30 s from either page; C2 also stops if commands cease for 3 s. BACK ends the test. |
+
+The first `Rain test` page is unchanged: `Wiper` counts rising wiper phases even
+with `Rain lights` OFF; the first sample after a gap is only a baseline. `A`
+shows fresh AUTO state (`?` means unknown), `ARM` the active rain request, `Q`
+the C2 queue-admission count modulo 256, and `F` the C1 force request.
+`C2: no reply` means the C2 data expired. `Q` does not confirm lamp operation.
+The second page shows `BH738 6/6` for example: the two **raw**, separate values
+from BH `0x738` bytes 1 and 2. Daylight was usually `6/6` and a covered light
+sensor `0/0` in recorded tests; these are not lux or calibrated dark/bright
+thresholds. `BH738 no reply` means no fresh reply from BH; `BH738 no frame`
+means BH replied but has no recent `0x738` frame. The sample is for observation
+only and does not control the Rain lights request.
 
 Dyno/brake requests wait up to ten seconds for their board confirmation. A timeout
 does not replay or cancel a sent command, and a later response may still arrive.

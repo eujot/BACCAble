@@ -54,6 +54,8 @@ uint8_t board_uart_diagnostic_send(const uint8_t *data, size_t length);
 #define C1_CMD_RAIN_LIGHTS 0x4D /* Active request and echoed token; not lamp confirmation. */
 #define C2_CMD_RAIN_TEST 0x4E /* C1->C2 force flag; reply carries detection counters. */
 #define C1_CMD_RAIN_TEST 0x4F /* C2->C1 cycles lo/hi, flags, tx, token. */
+#define BH_CMD_RAIN_SENSOR 0x51 /* C1->BH request for raw 0x738 light-responsive bytes. */
+#define C1_CMD_RAIN_SENSOR 0x52 /* BH->C1 byte 1, byte 2, valid flag and request token. */
 #define C1_CMD_DNA_RESULT 0x4B /* Request token and completed/failed outcome. */
 #define BH_CMD_IPC_OPTIONS 0x47 /* RAM-only pace/method, five-second lease. */
 #define BOARD_CMD_USB_STATE 0x45

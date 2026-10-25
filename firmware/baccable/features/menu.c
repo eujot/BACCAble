@@ -1342,6 +1342,7 @@ void menu_event(MenuEvent event) {
             fault_index = wrap(fault_index, fault_reader_count(), direction);
             break;
         case RAIN_TEST:
+            rain_test_move_page();
             break;
         case INFO:
             info = wrap(info, INFO_PAGES, direction);

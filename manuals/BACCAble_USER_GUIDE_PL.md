@@ -685,7 +685,20 @@ urządzenie ponownie sprawdza wymagane warunki.
 | `Reset best times` | Nie wymaga osobnego ustawienia w Features | Kasuje zapisane najlepsze czasy przyspieszenia. Wymaga potwierdzenia; udany zapis kończy komunikat `Records cleared`. |
 | `Peak hold` | Nie wymaga osobnego ustawienia w Features | Od razu włącza/wyłącza pokazywanie najwyższych wartości liczbowych dla bieżącej strony. |
 | `IBS SOC override` | Pracujący silnik; potwierdzenie | Włącza/wyłącza tymczasowe, eksperymentalne podmienianie SOC w komunikatach. Ograniczenia opisano niżej. |
-| `Rain test` | Nie wymaga osobnego ustawienia; zgodny firmware C1/C2 | Otwiera ekran testu świateł deszczowych. `Wiper` liczy zaobserwowane zbocza ruchu wycieraczek także przy wyłączonym `Rain lights`; pierwsza próbka po przerwie ustala tylko stan początkowy. `A` pokazuje aktualny stan AUTO (`?` oznacza brak danych), `ARM` aktywne żądanie świateł, a `Q` liczbę ramek przyjętych do kolejki C2. `Q` wraca do zera po 255 i nie potwierdza zapalenia lamp. `F` pokazuje żądanie wymuszenia z C1. `C2: no reply` oznacza brak świeżych danych z C2. SELECT wymusza bity lamp w `0x73E` przez maksymalnie 30 s; C2 kończy wymuszenie także po 3 s bez komend. BACK kończy test. |
+| `Rain test` | Nie wymaga osobnego ustawienia; zgodny firmware C1/C2/BH | Otwiera dwie strony diagnostyki świateł deszczowych; góra/dół przełącza między wycieraczkami i światłami a odczytem sygnału światła z BH. SELECT na obu stronach wymusza bity lamp w `0x73E` przez maksymalnie 30 s; C2 kończy wymuszenie także po 3 s bez komend. BACK kończy test. |
+
+Pierwsza strona `Rain test` działa jak dotąd: `Wiper` liczy zbocza ruchu
+wycieraczek także przy wyłączonym `Rain lights`; pierwsza próbka po przerwie
+ustala tylko stan początkowy. `A` pokazuje aktualny stan AUTO (`?` oznacza brak
+danych), `ARM` aktywne żądanie świateł, `Q` liczbę ramek przyjętych do kolejki
+C2 modulo 256, a `F` żądanie wymuszenia z C1. `C2: no reply` oznacza brak
+świeżych danych z C2. `Q` nie potwierdza zapalenia lamp.
+Druga strona pokazuje na przykład `BH738 6/6`: dwie oddzielne, **surowe**
+wartości z bajtów 1 i 2 ramki BH `0x738`. Podczas zapisanych testów w świetle
+dziennym zwykle było `6/6`, a po zasłonięciu czujnika `0/0`; nie są to luksy ani
+skalibrowane progi jasności. `BH738 no reply` oznacza brak aktualnej odpowiedzi
+BH, a `BH738 no frame` — odpowiedź BH bez świeżej ramki `0x738`. Ten odczyt
+służy tylko do obserwacji i nie steruje żądaniem świateł w deszczu.
 
 Polecenia Dyno i hamowania czekają do dziesięciu sekund na odpowiedź kontrolera.
 Upływ tego czasu nie ponawia ani nie anuluje wysłanego polecenia. Odpowiedź może

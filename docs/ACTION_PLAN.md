@@ -4,6 +4,23 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Rain test light-response page, 2026-10-25
+
+Branch `feat/rain-test-light-sensor` builds on PR #86, whose LED removal
+provides C1 Flash space. `Actions → Rain test` now has a second page selected
+with up/down. BH observes only standard data `0x738`/DLC 8, bytes 1 and 2,
+and answers a C1 poll only while that page is visible. C1 distinguishes a
+missing BH reply from a reply without a fresh CAN frame; raw zero remains valid.
+The original C2 wiper/AUTO/force page and rain-light request logic are unchanged.
+The two raw values are diagnostic observations, without a lux scale or a proven
+darkness threshold. All C1/C2/BH boards need matching firmware.
+
+Native host tests pass, including BH frame guards and C1 reply age/token checks.
+Arm GNU 15.2.Rel1 builds C1 standard (90,388 text + 1,836 data = 92,224/98,304
+Flash), C1 large (89,916 + 1,836 = 91,752/98,304), C2, BH and CAN. No board
+was flashed. Vehicle acceptance remains open for the live `0x738` display,
+BH link status and the separate rain-light actuation test.
+
 ## Display-only menu tour and LED-strip removal, 2026-10-25
 
 Branch `feat/menu-demo-no-led` continues `fix/menu-navigation-pacing`. The

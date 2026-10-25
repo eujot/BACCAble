@@ -12,6 +12,7 @@ test: build/test_core build/test_transport build/test_catalog build/test_menu bu
 	./build/test_rain_lights_c2
 	./build/test_rain_test_c1
 	./build/test_rain_test_c2
+	./build/test_rain_test_bh
 	./build/test_dna_selector
 	./build/test_fatfs
 	./build/test_core
@@ -205,7 +206,10 @@ build/test_rain_test_c1: $(RAIN_TEST_SOURCES) $(HEADERS) Makefile
 build/test_rain_test_c2: $(RAIN_TEST_SOURCES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC2_FLAVOR=1 $(RAIN_TEST_SOURCES) -o $@
-test: build/test_rain_test_c1 build/test_rain_test_c2
+build/test_rain_test_bh: $(RAIN_TEST_SOURCES) $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DBH_FLAVOR=1 $(RAIN_TEST_SOURCES) -o $@
+test: build/test_rain_test_c1 build/test_rain_test_c2 build/test_rain_test_bh
 
 RAIN_UART_SOURCES := test_rain_uart.c $(FIRMWARE)/features/rain_lights.c $(FIRMWARE)/transport/board_uart.c $(FIRMWARE)/features/usb_modes.c
 build/test_rain_uart: $(RAIN_UART_SOURCES) $(HEADERS) Makefile
