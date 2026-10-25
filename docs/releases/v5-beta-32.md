@@ -11,14 +11,9 @@ to recover C1 Flash, and adds raw light-sensor diagnostics to `Rain test`.
   example setting changes. It does not write settings or send vehicle actions;
   a RES double click exits the tour.
 - Menu navigation now coalesces quick repeated direction clicks and displays
-  the latest selection at a steadier pace. Save feedback and MY23 multi-value
-  reading spacing are improved.
+  the latest selection at a steadier pace. Save/discard feedback is visible,
+  and MY23 multi-value readings keep labels and values separated.
 - Removes the obsolete UTF-8, display-width and special-character test screens.
-
-The MY23 reading layout fix keeps values and labels separated on the IPC line.
-Save confirmation and discard feedback are now consistently visible, and rapid
-up/down input is coalesced so the menu follows the most recent selection at a
-steadier pace.
 
 ### LED-strip removal and Flash space
 

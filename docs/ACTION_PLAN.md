@@ -4,16 +4,19 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
-## v5-beta-33 release preparation, 2026-10-25
+## v5-beta-33 release, 2026-10-25
 
-PR #90 (`38fea9e`) is merged into `master`. Release notes are prepared in
-`docs/releases/v5-beta-33.md`; v5-beta-32 notes now include the MY23/menu UX
-items, the verified asset/size record, and the UART starvation issue discovered
-after publication with its v33 resolution. The v5-beta-32 GitHub release body
-was empty and needs to be populated from its notes file. Publish v5-beta-33 from
-the merged notes commit using the beta workflow, then record its workflow run,
-assets and checksum verification here. No board has been flashed; vehicle
-acceptance remains open.
+PR #90 (`38fea9e`) fixed Rain test starvation and PR #91 (`bf883b1`) added the
+release notes; both are merged. Published [v5-beta-33](https://github.com/eujot/BACCAble/releases/tag/v5-beta-33)
+from `bf883b1a7b7502c710c11156fa9273fc5988825e` using
+[workflow 40196710682](https://github.com/eujot/BACCAble/actions/runs/40196710682).
+Tests, lint, all four firmware builds, display profiles and size/identity gates
+passed with pinned Arm GNU 15.3.Rel1. All 14 release assets are present; each
+of the 13 payloads listed in `SHA256SUMS` passed an independent download and
+checksum check. C1 uses 92,100/98,304 Flash bytes and 12,620/16,384 static RAM
+bytes. The v5-beta-32 and v5-beta-33 GitHub release descriptions now contain
+their respective notes. No board was flashed; vehicle acceptance remains open,
+including the reported `ARM=1` while Rain lights was believed OFF.
 
 ## Rain test shared-UART pacing correction, 2026-10-25
 
