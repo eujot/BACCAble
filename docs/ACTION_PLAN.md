@@ -4,6 +4,18 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## AUTO light actuation: documentation deduction, 2026-10-25
+
+The [timing report addendum](../baccable_lab/docs/research/20261025-light-origin-timing.md)
+compares exact manual/AUTO payloads and records external OEM/manufacturer
+sources with model-year applicability. C2 0x73E b1.6 is common to both modes;
+CAN command consumption is neither confirmed nor ruled out. BCM may send a
+CAN request or operate another output while publishing its state. The LRSM
+input and final lamp output must be investigated separately. Older LIN/xenon
+pinouts do not establish facelift LED wiring. No exact-variant public schematic
+was verified; exact MY and factory/retrofit status remain requested/unknown.
+No firmware or dictionary layouts changed; no hardware test performed.
+
 ## Manual light-switch follow-up, 2026-10-25
 
 On the same `research/light-origin-timing` branch, the

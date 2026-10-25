@@ -225,3 +225,75 @@ hashes, original marker provenance, frame IDs/sequences, payloads, source hashes
 raw timestamps and stated limitations. Only passive research/catalog documents
 and their reproduction scripts change in this branch; both user guides and
 firmware behavior remain unchanged.
+
+## AUTO actuation deduction and external-document review
+
+Follow-up question: a physical command must reach the lamps when AUTO decides
+that it is dark. That premise is correct. It does not require the light sensor
+input or final lamp-control connection to be one of the three recorded CAN
+networks. Conversely, this audit has **not** ruled out CAN control of facelift
+LED lamps; calling every identified lamp field "only status" would also go
+beyond the passive evidence.
+
+Additional comparison of retained payloads:
+
+| Operation | C2 0x73E / DLC4 | BH 0x354 / DLC4 | C1 0x73E / DLC4 |
+| --- | --- | --- | --- |
+| Manual ON, three October 10 trials | `00400000` | `02408000` | `02008000` |
+| AUTO ON, three isolated October 24 cover trials | `00400040` | `02408040` | `02008000` |
+
+The common C2 b1.6 field is downstream of the choice between manual and AUTO.
+Its role can be a common lamp request, published logical state, or both for
+different receivers. The different b3.6 records the AUTO mode. C2 0x42D/E follow
+by 105–218 ms in the selected manual/AUTO edges. Their side-specific indicator
+fields make left/right lighting-controller reports worth investigating, but
+neither their source nor physical-feedback semantics are established. The
+same ordering is possible if BCM schedules several reports at different rates.
+
+The best supported functional model is sensor/switch input -> BCM lighting
+decision -> lamp actuation, with CAN publications of light measurement/mode/state.
+BCM as decision maker is supported by the service descriptions below; exact
+0x738 producer and facelift lamp transport remain hypotheses. There are two
+compatible output models:
+
+1. BCM sends a request over CAN (C2 0x73E b1.6 is the strongest identified
+   candidate common to manual and AUTO), followed by downstream reports.
+2. BCM operates a dedicated output or another link and publishes 0x73E/0x354
+   alongside it; changing their CAN copies does not change the original output.
+
+The negative beta-34 darkness test is consistent with BCM ignoring a relayed
+0x738 measurement, but does not discriminate these output models. It also does
+not exclude application filtering or non-delivery of queued transmissions.
+No retest/injection was performed by this documentation task.
+
+### External sources and applicability, checked 2026-10-25
+
+- [Stellantis, facelift announcement, 2022-10-27](https://www.media.stellantis.com/em-en/alfa-romeo/press/the-alfa-romeo-giulia-and-stelvio-timeless-design):
+  confirms Full-LED Adaptive Matrix introduction and adaptive dipped/high-beam
+  functions. It provides no electrical pinout or CAN identifier.
+- [2024 Giulia Competizione service description, reproduced OEM material](https://lemon-manuals.la/Alfa%20Romeo/2024/Giulia%20Competizione%2C%20RWD/Repair%20and%20Diagnosis%20%28Single%20Page%29/Accessories%20%26%20Equipment/Communication%20Devices/Body%20Control%20Module%20%28BCM%29%20-%20DTCS%20B1042-24%20To%20B1054-11/DTC%20Troubleshooting/B1049-14%20Head%20Lamp%20Washer-Circuit%20Short%20To%20Ground%20Or%20Open/Theory%20Of%20Operation/):
+  LRSM connected to BCM; does not specify the facelift lamp output bus. Its
+  explicit LIN2 reference concerns wipers, not headlights.
+- [2018 LRSM connector D2683A, reproduced OEM pinout](https://lemon-manuals.la/Alfa%20Romeo/2018/Giulia%20Quadrifoglio/Repair%20and%20Diagnosis/Electrical/Wiring%20Diagrams/Connector%20End%20Views%20%26%20Electrical%20Component%20Locations%20%286%20Of%2011%29/Module-Light%20Rain%20Sensor%20%28Standard%29%20Connector%20End%20View%20%28D2683A%29/):
+  power, ground and LIN1; historical support for the sensor-input alternative,
+  not a confirmed facelift pinout.
+- [2018 Giulia lighting operation, reproduced OEM material](https://lemon-manuals.la/Alfa%20Romeo/2018/Giulia%20Ti%2C%20RWD/Repair%20and%20Diagnosis%20%28Single%20Page%29/Accessories%20%26%20Equipment/Interior%2FIllumination%20Lights/Lamps%2FLighting%20-%20Interior%20%28Service%20Information%29/Description%20And%20Operation/):
+  exterior knob resistor-multiplex input to BCM and separate PWM/CAN illumination
+  outputs. Historical evidence that a physical switch need not be a CAN node;
+  not proof of the facelift switch wiring.
+- [2018 techCONNECT headlamp document, mirrored OEM material](https://giuliatech.com/uploads/short-url/2BHNuuQa75NknmcalseEgW0Dmkj.pdf):
+  search-indexed connector descriptions include direct positive low-beam control
+  and xenon/AFS topology. The full PDF exceeded the browser fetch size limit;
+  its diagrams were not independently inspected here. This is an older-system
+  counterexample, never evidence that facelift LEDs use the same pinout.
+- [ROHM, BCM design overview](https://www.rohm.com/solution/automotive/body/body-control-module):
+  distinguishes CAN/LIN networking and smart-switch outputs. This is a component
+  manufacturer's general design reference, not a Giulia wiring diagram.
+
+Searches for facelift-specific lamp CAN/LIN pinouts, OEM fault descriptions
+and public manufacturer bulletins did not yield a verified exact-variant
+schematic. Retail listings, retrofit compatibility, old xenon diagrams and a
+service index labelled "2024" are insufficient to fill that gap. Exact model
+year and factory-versus-retrofit status were requested; none is assumed here.
+The decisive missing evidence is the physical input/output topology and actual
+CAN TX delivery, not another repetition of the already recorded manual trial.
