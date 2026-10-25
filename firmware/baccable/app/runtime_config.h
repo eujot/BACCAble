@@ -25,6 +25,8 @@
     TIMING__C1____CAN_INACTIVITY_TIMEOUT_BEFORE_SLEEP_MS + 2                                        // msec
 #define TIMING__C1____C2_STATUS_REQUEST_TIMEOUT_MS 1010                                             // msec
 #define TIMING__C1____BH_STATUS_REQUEST_TIMEOUT_MS TIMING__C1____C2_STATUS_REQUEST_TIMEOUT_MS + 250 // msec
+#define TIMING__C1____RAIN_TEST_C2_STATUS_TIMEOUT_MS 2000                                          // msec
+#define TIMING__C1____RAIN_TEST_BH_STATUS_TIMEOUT_MS 2200                                          // msec
 #define TIMING__C1____SERIAL_TIMEOUT_REPLY_MS 250                                                   // msec
 #define TIMING__C2_BH_SERIAL_TIMEOUT_REPLY_MS TIMING__C1____SERIAL_TIMEOUT_REPLY_MS - 50            // msec
 #define TIMING__C1____SCHIZZAFORTE_SERIAL_TIMEOUT_REPLY_MS 100                                      // msec

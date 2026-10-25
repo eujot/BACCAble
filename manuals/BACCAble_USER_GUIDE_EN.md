@@ -425,6 +425,9 @@ or operating the physical switch; the corresponding CAN values are known.
 The remaining trial concerns activation by BACCAble itself, including manual
 priority and release in darkness. The polling correction keeps C2 status and
 USB capture responsive while Rain lights is enabled.
+When Rain lights is enabled, unchanged menu text is refreshed less often to
+reserve the shared board link for lighting and status commands; a changed menu
+selection still appears immediately.
 
 ### Assistance group
 
@@ -658,7 +661,11 @@ from BH `0x738` bytes 1 and 2. Daylight was usually `6/6` and a covered light
 sensor `0/0` in recorded tests; these are not lux or calibrated dark/bright
 thresholds. `BH738 no reply` means no fresh reply from BH; `BH738 no frame`
 means BH replied but has no recent `0x738` frame. The sample is for observation
-only and does not control the Rain lights request.
+only and does not control the Rain lights request. The visible page refreshes
+about every two seconds. During a forced test, C2 is contacted every second to
+keep the temporary request alive; the BH sample updates about every five
+seconds. `BH738 no reply` with `UART/BH timeout` means a fresh reply has not
+arrived, not that BH is necessarily disconnected.
 
 Dyno/brake requests wait up to ten seconds for their board confirmation. A timeout
 does not replay or cancel a sent command, and a later response may still arrive.

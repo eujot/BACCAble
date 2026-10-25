@@ -455,6 +455,9 @@ pokrętła; odpowiadające temu wartości CAN są znane. Pozostała próba dotyc
 włączenia przez samo BACCAble, także pierwszeństwa ręcznego przełączenia
 i zakończenia podtrzymania w ciemności. Poprawka odpytywania utrzymuje aktualny
 status C2 i działanie nagrywania USB przy włączonym Rain lights.
+Przy włączonym `Rain lights` niezmieniony tekst menu jest ponawiany rzadziej,
+aby zostawić miejsce na wspólnym łączu dla komend świateł i statusu. Zmiana
+pozycji menu nadal pojawia się od razu.
 
 ### Grupa wspomagania kierowcy
 
@@ -698,7 +701,11 @@ wartości z bajtów 1 i 2 ramki BH `0x738`. Podczas zapisanych testów w świetl
 dziennym zwykle było `6/6`, a po zasłonięciu czujnika `0/0`; nie są to luksy ani
 skalibrowane progi jasności. `BH738 no reply` oznacza brak aktualnej odpowiedzi
 BH, a `BH738 no frame` — odpowiedź BH bez świeżej ramki `0x738`. Ten odczyt
-służy tylko do obserwacji i nie steruje żądaniem świateł w deszczu.
+służy tylko do obserwacji i nie steruje żądaniem świateł w deszczu. Widoczna
+strona odświeża dane mniej więcej co dwie sekundy. Podczas wymuszenia C2 jest
+odpytywane co sekundę, aby podtrzymać żądanie, a odczyt BH aktualizuje się mniej
+więcej co pięć sekund. `BH738 no reply` z komunikatem `UART/BH timeout` oznacza
+brak świeżej odpowiedzi; nie dowodzi, że płytka BH jest odłączona.
 
 Polecenia Dyno i hamowania czekają do dziesięciu sekund na odpowiedź kontrolera.
 Upływ tego czasu nie ponawia ani nie anuluje wysłanego polecenia. Odpowiedź może

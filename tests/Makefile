@@ -211,7 +211,7 @@ build/test_rain_test_bh: $(RAIN_TEST_SOURCES) $(HEADERS) Makefile
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DBH_FLAVOR=1 $(RAIN_TEST_SOURCES) -o $@
 test: build/test_rain_test_c1 build/test_rain_test_c2 build/test_rain_test_bh
 
-RAIN_UART_SOURCES := test_rain_uart.c $(FIRMWARE)/features/rain_lights.c $(FIRMWARE)/transport/board_uart.c $(FIRMWARE)/features/usb_modes.c
+RAIN_UART_SOURCES := test_rain_uart.c $(FIRMWARE)/features/rain_lights.c $(FIRMWARE)/features/rain_test.c $(FIRMWARE)/transport/board_uart.c $(FIRMWARE)/features/usb_modes.c $(FIRMWARE)/third_party/printf/printf.c
 build/test_rain_uart: $(RAIN_UART_SOURCES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -I$(FIRMWARE)/USB_DEVICE/App -DC1_FLAVOR=1 $(RAIN_UART_SOURCES) -o $@

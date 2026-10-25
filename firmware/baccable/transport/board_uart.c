@@ -3,6 +3,7 @@
 #include "app/main.h"
 #include "diagnostics/parameter_cache.h"
 #include "features/usb_modes.h"
+#include "features/rain_test.h"
 
 // extern void Error_Handler(void);
 
@@ -500,7 +501,11 @@ void board_uart_process(void) {
         return;
     if (currentTime - runtime_state.all_processors_wakeup_time >
         TIMING__C1____DELAY_BEFORE_OTHER_CHIP_STATUS_REQUEST_MS) {
-        if (currentTime - last_c2_poll_time > TIMING__C1____C2_STATUS_REQUEST_TIMEOUT_MS) {
+        uint32_t c2_status_interval = rain_test_visible() ?
+            TIMING__C1____RAIN_TEST_C2_STATUS_TIMEOUT_MS : TIMING__C1____C2_STATUS_REQUEST_TIMEOUT_MS;
+        uint32_t bh_status_interval = rain_test_visible() ?
+            TIMING__C1____RAIN_TEST_BH_STATUS_TIMEOUT_MS : TIMING__C1____BH_STATUS_REQUEST_TIMEOUT_MS;
+        if (currentTime - last_c2_poll_time > c2_status_interval) {
             uint8_t command[4];
             uint8_t length = usb_modes_poll(0, command);
             if (board_uart_send(command, length)) {
@@ -508,7 +513,7 @@ void board_uart_process(void) {
                 last_c2_poll_time = currentTime;
             }
         }
-        if (currentTime - last_bh_poll_time > TIMING__C1____BH_STATUS_REQUEST_TIMEOUT_MS) {
+        if (currentTime - last_bh_poll_time > bh_status_interval) {
             uint8_t command[4];
             uint8_t length = usb_modes_poll(1, command);
             if (board_uart_send(command, length)) {

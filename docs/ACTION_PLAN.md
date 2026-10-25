@@ -4,6 +4,27 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Rain test shared-UART pacing correction, 2026-10-25
+
+Branch `fix/rain-test-uart-budget` addresses the reproduced v5-beta-32 reply
+starvation. C1 polls only the visible Rain test page every 2 s. During a
+forced test it renews C2 every 1 s, polls BH every 5 s and holds the BH reply
+for 7 s. While Rain test is open, regular C2/BH status polls use 2.0/2.2 s;
+outside the test they retain the old timing. Identical menu screens are
+resent after 1.5 s when Rain lights is enabled or Rain test is open, and after
+2 s during force; changed screens still send immediately. These rates keep
+the normal and forced traffic within C1's four-transmission-per-second UART
+budget. The existing Rain lights trigger, lamp masks and C2's three-second
+force lease are unchanged.
+
+A production-UART host integration regression passes across both diagnostic
+pages, Rain lights OFF/ON, forced output, status/USB polls and screen updates
+for 105 s, with fresh replies, no UART queue rejection and no force lease gap.
+All native host tests, 82 Lab unittest cases, and C1/C2/BH/CAN lint and ARM
+builds pass. C1 uses 92,344/98,304 Flash bytes. Vehicle verification remains
+open, including the reported `ARM=1` while the setting was believed OFF and
+physical lamp acceptance. No board has been flashed with this correction.
+
 ## Rain test replies expire under shared UART load, 2026-10-25
 
 Owner's v5-beta-32 vehicle trial: `Rain test` initially showed C2 wiper/AUTO

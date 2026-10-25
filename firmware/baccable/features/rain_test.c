@@ -8,7 +8,10 @@
  * reports two raw light-responsive bytes. Remove its call sites with this file. */
 
 #define RAIN_TEST_FORCE_MS 30000U
-#define RAIN_TEST_POLL_MS 1000U
+#define RAIN_TEST_POLL_MS 2000U
+#define RAIN_TEST_FORCE_POLL_MS 1000U
+#define RAIN_TEST_FORCE_SENSOR_POLL_MS 5000U
+#define RAIN_TEST_FORCE_SENSOR_AGE_MS 7000U
 
 #if defined(BACCABLE_C1)
 static uint8_t shown;
@@ -123,6 +126,22 @@ void rain_test_move_page(void) {
 #endif
 }
 
+uint8_t rain_test_forcing(void) {
+#if defined(BACCABLE_C1)
+    return shown && force_on;
+#else
+    return 0;
+#endif
+}
+
+uint8_t rain_test_visible(void) {
+#if defined(BACCABLE_C1)
+    return shown;
+#else
+    return 0;
+#endif
+}
+
 /* Record the two independent BH channels only from the observed frame shape. */
 void rain_test_sensor_observe(const CAN_RxHeaderTypeDef *header, const uint8_t data[8]) {
 #if defined(BACCABLE_BH)
@@ -160,9 +179,12 @@ void rain_test_process(void) {
     }
     if (!shown)
         return;
-    if (!poll_known || currentTime - poll_at >= RAIN_TEST_POLL_MS)
+    if ((!sensor_page || force_on) &&
+        (!poll_known || currentTime - poll_at >=
+         (force_on ? RAIN_TEST_FORCE_POLL_MS : RAIN_TEST_POLL_MS)))
         send_test_command();
-    if (sensor_page && (!sensor_poll_known || currentTime - sensor_poll_at >= RAIN_TEST_POLL_MS))
+    if (sensor_page && (!sensor_poll_known || currentTime - sensor_poll_at >=
+        (force_on ? RAIN_TEST_FORCE_SENSOR_POLL_MS : RAIN_TEST_POLL_MS)))
         request_sensor();
 #endif
 }
@@ -181,9 +203,10 @@ void rain_test_debug_reply(uint8_t token) {
 void rain_test_render(char *first, size_t first_size, char *second, size_t second_size) {
 #if defined(BACCABLE_C1)
     if (sensor_page) {
-        if (!sensor_reply_known || currentTime - sensor_reply_at >= 3000U) {
+        if (!sensor_reply_known || currentTime - sensor_reply_at >=
+            (force_on ? RAIN_TEST_FORCE_SENSOR_AGE_MS : 3000U)) {
             snprintf_(first, first_size, "BH738 no reply");
-            snprintf_(second, second_size, "Check BH link");
+            snprintf_(second, second_size, "UART/BH timeout");
         } else if (!sensor_valid) {
             snprintf_(first, first_size, "BH738 no frame");
             snprintf_(second, second_size, "Wait for 0x738");

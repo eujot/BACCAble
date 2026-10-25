@@ -1,6 +1,7 @@
 #include "test_report.h"
 #include "app/powertrain.h"
 #include "features/rain_lights.h"
+#include "features/rain_test.h"
 #include "features/usb_modes.h"
 #include "usbd_cdc_if.h"
 #include <assert.h>
@@ -18,6 +19,9 @@ static uint8_t outgoing[UART_SCREEN_BUFFER_SIZE], *rx_target;
 static uint8_t peer_mode[2], peer_token[2];
 static uint32_t seen[2][2], max_gap[2][2], rain_seen, max_rain_gap;
 static unsigned rain_polls, light_sends, screens;
+static unsigned test_c2_polls, test_bh_polls, queue_errors;
+static uint32_t last_force_poll, max_force_gap;
+void _putchar(char character) { (void)character; }
 extern void HAL_UART_RxCpltCallback(UART_HandleTypeDef *uart);
 
 uint32_t HAL_GetTick(void) { return now; }
@@ -44,7 +48,7 @@ uint32_t HAL_UART_Transmit(UART_HandleTypeDef *uart, uint8_t *data, uint16_t siz
     return HAL_UART_Transmit_IT(uart, data, size);
 }
 void status_led_activity(void) {}
-void status_led_error(void) {}
+void status_led_error(void) { ++queue_errors; }
 void Error_Handler(uint16_t value) { (void)value; assert(0); }
 void parameter_cache_put(uint8_t id, float value, uint32_t when) { (void)id; (void)value; (void)when; }
 float native_parameter_read(uint8_t id) { return id; }
@@ -76,6 +80,10 @@ void board_commands_dispatch(const uint8_t *message) {
     assert(message[0] == C1BusID);
     if (message[1] == C1_CMD_RAIN_LIGHTS)
         rain_lights_reply(message[2], message[3]);
+    if (message[1] == C1_CMD_RAIN_TEST)
+        rain_test_reply(message[2], message[3], message[4], message[5], message[6]);
+    if (message[1] == C1_CMD_RAIN_SENSOR)
+        rain_test_sensor_reply(message[2], message[3], message[4], message[5]);
     if (message[1] == C1_CMD_USB_STATE)
         usb_modes_ack(message[2], message + 3);
 }
@@ -95,6 +103,25 @@ static void finish_transfer(void) {
         reply[1] = C1_CMD_RAIN_LIGHTS;
         reply[2] = outgoing[2];
         reply[3] = outgoing[3];
+    } else if (outgoing[1] == C2_CMD_RAIN_TEST && peer == 0) {
+        ++test_c2_polls;
+        if (outgoing[2] == 1) {
+            if (last_force_poll && now - last_force_poll > max_force_gap)
+                max_force_gap = now - last_force_poll;
+            last_force_poll = now;
+        }
+        reply[1] = C1_CMD_RAIN_TEST;
+        reply[2] = 14;
+        reply[4] = settings_state.rain_lights_enabled ? 7 : 5;
+        reply[5] = 22;
+        reply[6] = outgoing[3];
+    } else if (outgoing[1] == BH_CMD_RAIN_SENSOR && peer == 1) {
+        ++test_bh_polls;
+        reply[1] = C1_CMD_RAIN_SENSOR;
+        reply[2] = 32;
+        reply[3] = 4;
+        reply[4] = 1;
+        reply[5] = outgoing[2];
     } else {
         unsigned usb = outgoing[1] == BOARD_CMD_USB_STATE;
         if (seen[peer][usb] && now - seen[peer][usb] > max_gap[peer][usb])
@@ -165,7 +192,64 @@ static void test_poll_retry_keeps_kind(void) {
     assert(!memcmp(first, retry, length));
 }
 
+/* Exercise both diagnostic pages with the real UART queue and immediate peers. */
+static void test_rain_test_with_shared_uart(void) {
+    settings_state.usb_sniffer = 0;
+    settings_state.rain_lights_enabled = 0;
+    rain_test_enter();
+    rain_test_move_page();
+    const uint32_t start = now;
+    queue_errors = 0;
+    memset(seen, 0, sizeof(seen));
+    memset(max_gap, 0, sizeof(max_gap));
+    unsigned c2_at_bh_page = 0;
+    for (; now - start < 105000; ++now) {
+        unsigned elapsed = now - start;
+        if (complete_at && now >= complete_at) finish_transfer();
+        board_uart_process();
+        usb_modes_process();
+        rain_lights_process();
+        rain_test_process();
+        if (elapsed == 25000) {
+            assert(test_c2_polls == 0 && test_bh_polls >= 10);
+            rain_test_move_page();
+        }
+        if (elapsed == 80000)
+            rain_test_move_page();
+        if (elapsed == 50000) {
+            assert(test_c2_polls >= 10);
+            c2_at_bh_page = test_c2_polls;
+            settings_state.rain_lights_enabled = 1;
+            rain_test_move_page(); /* Return to BH with Rain lights enabled. */
+        }
+        if (elapsed == 80000)
+            assert(test_c2_polls == c2_at_bh_page);
+        if (elapsed == 90000) {
+            rain_test_move_page(); /* Force while displaying BH. */
+            rain_test_toggle_force();
+        }
+        unsigned screen_period = elapsed >= 90000 ? 2000 : 1500;
+        if (elapsed % screen_period == 0) {
+            uint8_t screen[UART_SCREEN_BUFFER_SIZE] = {BhBusIDparamString};
+            assert(board_uart_send(screen, sizeof(screen)));
+        }
+        if (elapsed % 1000 == 0 && elapsed > 3000 &&
+            elapsed != 25000 && elapsed != 50000 && elapsed != 80000 && elapsed != 90000) {
+            char first[32], second[32];
+            rain_test_render(first, sizeof(first), second, sizeof(second));
+            assert(strstr(first, "no reply") == NULL);
+        }
+    }
+    assert(test_c2_polls > 20 && test_bh_polls > 15 && max_force_gap < 3000);
+    assert(queue_errors == 0);
+    for (unsigned peer = 0; peer < 2; ++peer)
+        for (unsigned usb = 0; usb < 2; ++usb)
+            assert(seen[peer][usb] && max_gap[peer][usb] < 5000);
+    rain_test_exit();
+}
+
 int main(void) {
-    const HostTest tests[] = {HOST_TEST(test_rain_with_usb_and_display), HOST_TEST(test_poll_retry_keeps_kind)};
+    const HostTest tests[] = {HOST_TEST(test_rain_with_usb_and_display), HOST_TEST(test_poll_retry_keeps_kind),
+                              HOST_TEST(test_rain_test_with_shared_uart)};
     host_tests_run("rain-uart", tests, sizeof(tests) / sizeof(tests[0]));
 }

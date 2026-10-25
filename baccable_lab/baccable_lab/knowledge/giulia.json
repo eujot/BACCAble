@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "dictionary_version": "2026-10-25.2",
+  "dictionary_version": "2026-10-25.3",
   "vehicle": {
     "model": "Alfa Romeo Giulia (owner-reported)",
     "model_year": null,
@@ -8,7 +8,7 @@
     "vin": null,
     "scope": "This checkout and these sessions only; not a universal Alfa Romeo or cross-model DBC."
   },
-  "firmware_source_commit": "664d387",
+  "firmware_source_commit": "825b7ba",
   "source_sha256": {
     "firmware/baccable/vehicle/display_frames.c": "0d9eca11b5892f835f5ad922e3a866ffbd596fbb6b2f81e3f57401481cf470bc",
     "firmware/baccable/vehicle/telemetry_frames.c": "8eefb5d8933db9318d2d6a26cfa2929961a8b4d88bd2dbc924c62e54ac39e2bc",
@@ -47,8 +47,8 @@
     "firmware/baccable/transport/can_bus.h": "d468e9011bfe85258420a065fa5a8888d169c203c901d0f91ffd40bfc7f1105f",
     "firmware/baccable/features/rain_lights.c": "711ccc471b7d3d4d0f0cf91064016cda57d946f2c85f819e7e27b6ac77dd4449",
     "firmware/baccable/features/rain_lights.h": "557b962b90428fac47dc0674483162e4c7885c9801e83081acfad0a9a0ebbe78",
-    "firmware/baccable/transport/board_uart.c": "9db5e6b1f2d833c6143acd868afdb4f0ed3a77a9286fa2aee075378f654a0c45",
-    "firmware/baccable/features/rain_test.c": "e79be3d94ab5e16dba5b8520bd4ee1c88513e481fc1bfeab63156ef3528ed854"
+    "firmware/baccable/transport/board_uart.c": "49d2a1a15c1f52f4da51855d88523ca86eaaefcca94b13b4129d84938c4d9f1b",
+    "firmware/baccable/features/rain_test.c": "a32984bba6c24e869e664c98d20d70236e47e0153ea2bed148ca6cd35b42ccb8"
   },
   "byte_convention": "Zero-based byte indexes; bit 0 is LSB. Parts are concatenated in listed most-significant-first order; physical = raw * scale + offset.",
   "capture_limits": [
