@@ -297,3 +297,62 @@ service index labelled "2024" are insufficient to fill that gap. Exact model
 year and factory-versus-retrofit status were requested; none is assumed here.
 The decisive missing evidence is the physical input/output topology and actual
 CAN TX delivery, not another repetition of the already recorded manual trial.
+
+## Halogen/xenon topology and competing publications
+
+The owner requested broader applicability research, including pre-facelift
+Giulia/Stelvio. The 17-page OEM techCONNECT document dated 2018-04-04 was now
+successfully downloaded from the mirror linked above, text-extracted with
+macOS PDFKit, and diagrams on pages 8–12 visually inspected. This supersedes
+the earlier browser-size limitation. SHA256 of the downloaded original:
+`c4fa1676d40f9ded73e0cf9febe149913eb5e225c8f90b6d707de68753ee853c`.
+The copyrighted document is not copied into the repository.
+
+Findings from that document: basic halogen lamps have dedicated BCM wires
+(pages 8–10); D5S 25 W control is directly from BCM (page 11). The D3S 35 W
+diagram separates BCM lamp/shutter wiring from the AFLM's CAN-C2 and LIN
+positioning path (page 12). CAN/LIN involvement in adaptation therefore does
+not establish CAN actuation of dipped beams. These are pre-facelift layouts,
+not a verified LED retrofit or factory facelift pinout.
+
+Independent manufacturer references:
+
+- [Stelvio owner manual, printed page 288](https://vehicleinfo.mopar.com/assets/publications/en-us/Alfa_Romeo/2024/Stelvio/5538902-24_GU_OM_EN_USC_DIGITAL_E1.pdf#page=290)
+  lists H7 dipped and H15 high-beam/DRL bulbs for basic halogen equipment, not
+  H4. Its introduction explicitly allows descriptions of equipment no longer
+  available; a 2024 cover date does not make every illustrated lamp a facelift
+  part. This source establishes bulb families, not wiring.
+- [Fiat-hosted Stelvio training document, page 61](https://lab-aftersales.fiat.com/elearn_testreda/949001497.pdf#page=61)
+  has a basic-headlamp BCM wiring diagram and positive-control connector
+  functions; page 13 identifies AFLS on CAN-C2. Retrieved as indexed excerpts;
+  the live PDF request returned HTTP 503, so the complete file was not inspected.
+
+### Why another 0x73E publisher is not a stable control strategy
+
+In the user's captures, factory C2 0x73E repeats approximately every 250 ms.
+Appending a modified frame does not remove the factory frame. If a receiver
+uses the indicated bit as a command, it can see alternating OFF/ON values;
+its filtering or state machine determines whether it ignores, retains or
+changes output. A last-value-wins implementation would be reversed by the next
+factory publication. If the bit is merely published state, injection may change
+only another ECU's interpretation without affecting BCM's physical output.
+Neither behavior is established for these lamps.
+
+This is an application-level conflict even when every frame is delivered
+correctly in sequence. It differs from simultaneous same-ID/different-payload
+transmission, which can cause CAN errors. Dominant/recessive bit levels do not
+grant a modified frame higher semantic priority. Sending faster does not prove
+control and is not the recommended feature design. The same conflict concern
+applies to interleaved factory and injected 0x738 values.
+
+A dependable design would need either a verified request input that changes
+BCM's own decision, or an appropriate physical input interface with factory
+behavior preserved. A documented, latched request could coexist with ordinary
+state publications; none has been identified for this function. An inline
+filter/gateway could replace publications only after hardware/network redesign;
+a parallel CAN node cannot retract factory messages. No suppression, gateway
+modification, diagnostic actuation or new transmission was attempted here.
+
+This strengthens the decision to stop treating status-copy injection as a
+validated Rain lights solution. It does not prove every older layout applies
+to the owner's LEDs or that all possible CAN request mechanisms are absent.

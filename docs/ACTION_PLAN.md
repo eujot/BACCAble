@@ -4,6 +4,18 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Halogen/xenon and competing-message review, 2026-10-25
+
+The [lighting report](../baccable_lab/docs/research/20261025-light-origin-timing.md)
+now records visual inspection of OEM 2018 techCONNECT diagrams (download hash
+retained) and official Stelvio references. Basic halogen uses H7/H15 rather than
+H4. Older BCM lamp-output wiring is distinct from adaptive-light CAN/LIN links;
+this does not establish facelift LED pinout. Appending 0x73E ON while BCM keeps
+publishing OFF every ~250 ms leaves an unresolved application-level conflict.
+Do not treat higher-rate status injection as dependable actuation. A verified
+BCM request/input is needed; none has been identified. No firmware changes,
+flashing or new hardware tests in this documentation follow-up.
+
 ## AUTO light actuation: documentation deduction, 2026-10-25
 
 The [timing report addendum](../baccable_lab/docs/research/20261025-light-origin-timing.md)
