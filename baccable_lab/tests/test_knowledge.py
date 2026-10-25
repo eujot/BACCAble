@@ -30,6 +30,17 @@ class KnowledgeTests(unittest.TestCase):
         self.assertEqual(crank['raw'], 10)
         self.assertIsNone(crank['enum'])
 
+    def test_bh_light_channels_are_raw_and_bus_specific(self):
+        bright = self.values('BH', 0x738, '0006060000000000')
+        dark = self.values('BH', 0x738, '0000000000000000')
+        self.assertEqual([bright[name]['raw'] for name in
+                          ('light_channel_1_raw', 'light_channel_2_raw')], [6, 6])
+        self.assertEqual([dark[name]['raw'] for name in
+                          ('light_channel_1_raw', 'light_channel_2_raw')], [0, 0])
+        self.assertEqual(bright['light_channel_1_raw']['origin'], 'capture')
+        self.assertFalse(self.values('BH', 0x738, '0006060000'))
+        self.assertFalse(self.values('C1', 0x738, '0006060000000000'))
+
     def test_captured_dna_selector_direction_is_bh_only(self):
         # Recorded neutral, opposite deflections and independent byte-1 activity.
         for payload, value, label in [('00000000', 0, 'Released'),
@@ -53,7 +64,7 @@ class KnowledgeTests(unittest.TestCase):
             self.assertEqual(hashlib.sha256((root / path).read_bytes()).hexdigest(), expected, path)
         dispatcher = (root / 'firmware/baccable/vehicle/standard_frames.c').read_text()
         ids = {int(value, 16) for value in re.findall(r'case\s+(0x[0-9a-fA-F]+)', dispatcher)}
-        self.assertEqual(len(ids), 33)
+        self.assertEqual(len(ids), 34)
         self.assertLessEqual(ids, {int(m['can_id'], 16) for m in self.catalog['messages']})
 
     def test_duplicate_bus_identity_and_bad_bit_layout_rejected(self):

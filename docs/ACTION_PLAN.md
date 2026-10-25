@@ -13,7 +13,9 @@ and answers a C1 poll only while that page is visible. C1 distinguishes a
 missing BH reply from a reply without a fresh CAN frame; raw zero remains valid.
 The original C2 wiper/AUTO/force page and rain-light request logic are unchanged.
 The two raw values are diagnostic observations, without a lux scale or a proven
-darkness threshold. All C1/C2/BH boards need matching firmware.
+darkness threshold. The machine and readable CAN catalogs now map both channels
+using the existing 5,106 captured frames from 16 recordings and retain the
+2026-10-24 isolation evidence. All C1/C2/BH boards need matching firmware.
 
 Native host tests pass, including BH frame guards and C1 reply age/token checks.
 Arm GNU 15.2.Rel1 builds C1 standard (90,388 text + 1,836 data = 92,224/98,304

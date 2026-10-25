@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "dictionary_version": "2026-10-25.1",
+  "dictionary_version": "2026-10-25.2",
   "vehicle": {
     "model": "Alfa Romeo Giulia (owner-reported)",
     "model_year": null,
@@ -8,7 +8,7 @@
     "vin": null,
     "scope": "This checkout and these sessions only; not a universal Alfa Romeo or cross-model DBC."
   },
-  "firmware_source_commit": "6d23db4",
+  "firmware_source_commit": "664d387",
   "source_sha256": {
     "firmware/baccable/vehicle/display_frames.c": "0d9eca11b5892f835f5ad922e3a866ffbd596fbb6b2f81e3f57401481cf470bc",
     "firmware/baccable/vehicle/telemetry_frames.c": "8eefb5d8933db9318d2d6a26cfa2929961a8b4d88bd2dbc924c62e54ac39e2bc",
@@ -30,7 +30,7 @@
     "firmware/baccable/diagnostics/uds_decode.c": "25ab4028b943ba1e6bb825019be4208fb4a4739742a314aa8942e9b2708efae4",
     "firmware/baccable/diagnostics/parameter_request.c": "09dcd9c40c48d9b816d70cacc549532b19345ff471998b42c2ea11b4bc8e4832",
     "firmware/baccable/app/main.c": "e15824cfda2ce00d12c53d81d3e3978211efb89d731b5f65c154e61c8e782b74",
-    "firmware/baccable/vehicle/standard_frames.c": "973a31b64743298bf3316da3427a3ba706af38d346582a28c4c81a0d573efd42",
+    "firmware/baccable/vehicle/standard_frames.c": "f17205fde78407ed1c79bb19907aa9d3bf14887f95c98ef3709d9b2eebc255ab",
     "firmware/baccable/diagnostics/parameter_catalog.c": "14a710feaf2440ef6dc15a750c6fa957edf9172f224a512d8fe1a355a64f8417",
     "firmware/baccable/diagnostics/parameter_cache.c": "f8a4418ddb715498c04dad012d480bc53d2aab79300f8d471c6bb6380b4477fe",
     "docs/architecture/REFERENCE_SIGNALS.md": "fb8188e6938df5e74e23682b02e065f79db95c059e0999d2b325d07a9c94e6cf",
@@ -41,13 +41,14 @@
     "firmware/baccable/features/drive_mode_check.c": "19b8dbdc309906bea3ede2093e087d35f340535b51166f728853a73d754afcd2",
     "firmware/baccable/features/board_sync.c": "8f9cdadfca2196486c43f152ca5029e80586f7d6b3345396dbb28da3210b2435",
     "firmware/baccable/features/dna_selector.c": "483fc63c90689fd3152343639cfc54cf58c54026bc475f63ff174850f0b40386",
-    "firmware/baccable/app/board_commands.c": "1fcf578569504b0845a3b5187f3ed0434851e44de285e53d5fca4d70058886df",
-    "firmware/baccable/transport/board_uart.h": "703700a320a2eab04bb46c087e77324089dbfd1b6adb067488532bcc12f376fc",
+    "firmware/baccable/app/board_commands.c": "ac83516ea474d83aaab15c76295a4aa6a373fdd95964910537fcd967dfbd97ae",
+    "firmware/baccable/transport/board_uart.h": "f6dcc03d66aa70d864ab3e78646d131f51f9d76bfde43147d1b7ddd6d26b35f5",
     "firmware/baccable/transport/can_bus.c": "a7eafb5395a8001064e1175eebe8c2ec089d09b7464170e982ae9c1bf9691afb",
     "firmware/baccable/transport/can_bus.h": "d468e9011bfe85258420a065fa5a8888d169c203c901d0f91ffd40bfc7f1105f",
     "firmware/baccable/features/rain_lights.c": "711ccc471b7d3d4d0f0cf91064016cda57d946f2c85f819e7e27b6ac77dd4449",
     "firmware/baccable/features/rain_lights.h": "557b962b90428fac47dc0674483162e4c7885c9801e83081acfad0a9a0ebbe78",
-    "firmware/baccable/transport/board_uart.c": "9db5e6b1f2d833c6143acd868afdb4f0ed3a77a9286fa2aee075378f654a0c45"
+    "firmware/baccable/transport/board_uart.c": "9db5e6b1f2d833c6143acd868afdb4f0ed3a77a9286fa2aee075378f654a0c45",
+    "firmware/baccable/features/rain_test.c": "e79be3d94ab5e16dba5b8520bd4ee1c88513e481fc1bfeab63156ef3528ed854"
   },
   "byte_convention": "Zero-based byte indexes; bit 0 is LSB. Parts are concatenated in listed most-significant-first order; physical = raw * scale + offset.",
   "capture_limits": [
@@ -9082,6 +9083,123 @@
           "frames": 6875
         }
       ]
+    },
+    {
+      "role": "BH",
+      "can_id": "0x738",
+      "title": "Light-responsive raw channels",
+      "sources": [
+        {
+          "path": "firmware/baccable/features/rain_test.c",
+          "symbol": "rain_test_sensor_observe"
+        },
+        {
+          "path": "baccable_lab/docs/research/20261024-rain-lights-correlation.md"
+        },
+        {
+          "path": "baccable_lab/docs/research/20261024-111510-rain-lights-followup.md"
+        }
+      ],
+      "signals": [
+        {
+          "name": "light_channel_1_raw",
+          "parts": [
+            [
+              1,
+              0,
+              8
+            ]
+          ],
+          "unit": "raw",
+          "scale": 1,
+          "offset": 0,
+          "origin": "capture",
+          "note": "First of two separate light-responsive channels; usually 6 in daylight and 0 while covered in the labelled 2026-10-24 tests. Zero is a valid sample, not an unavailable marker."
+        },
+        {
+          "name": "light_channel_2_raw",
+          "parts": [
+            [
+              2,
+              0,
+              8
+            ]
+          ],
+          "unit": "raw",
+          "scale": 1,
+          "offset": 0,
+          "origin": "capture",
+          "note": "Second light-responsive channel. It can show intermediate values or a short dip independently of channel 1."
+        }
+      ],
+      "exact_dlc": 8,
+      "note": "Covered/uncovered sensor trials in 20261024-105643Z and independent 20261024-111510Z distinguish these bytes from lamp status, including manual lamps OFF. Approximate one-second cadence. Physical source, scale, lux units and universal darkness thresholds are unverified; the recorder did not retain IDE/RTR. Current BH firmware observes standard data frames and forwards fresh raw samples only to Rain test. See LIGHT-SENSOR-CHANNELS-001.",
+      "observations": [
+        {
+          "session": "20260926-181818Z",
+          "frames": 232
+        },
+        {
+          "session": "20260926-182645Z",
+          "frames": 252
+        },
+        {
+          "session": "20260927-185147Z",
+          "frames": 182
+        },
+        {
+          "session": "20260928-203436Z",
+          "frames": 284
+        },
+        {
+          "session": "20260928-204100Z",
+          "frames": 304
+        },
+        {
+          "session": "20260928-204607Z",
+          "frames": 332
+        },
+        {
+          "session": "20261010-104325Z",
+          "frames": 933
+        },
+        {
+          "session": "20261010-110504Z",
+          "frames": 6
+        },
+        {
+          "session": "20261010-110821Z",
+          "frames": 122
+        },
+        {
+          "session": "20261010-111025Z",
+          "frames": 1293
+        },
+        {
+          "session": "20261011-190746Z",
+          "frames": 181
+        },
+        {
+          "session": "20261011-191050Z",
+          "frames": 70
+        },
+        {
+          "session": "20261011-191202Z",
+          "frames": 56
+        },
+        {
+          "session": "20261024-105643Z",
+          "frames": 409
+        },
+        {
+          "session": "20261024-111510Z",
+          "frames": 312
+        },
+        {
+          "session": "20261024-113104Z",
+          "frames": 138
+        }
+      ]
     }
   ],
   "standard_dispatch_inventory": [
@@ -9200,6 +9318,10 @@
     {
       "can_id": "0x5B0",
       "handler": "vehicle_handle_park_assist"
+    },
+    {
+      "can_id": "0x738",
+      "handler": "rain_test_sensor_observe"
     },
     {
       "can_id": "0x73C",
@@ -24384,7 +24506,7 @@
       "role": "BH",
       "can_id": "0x738",
       "dlc": 8,
-      "title": null,
+      "title": "Two light-responsive raw channels (unscaled)",
       "coverage": "unmapped",
       "frames": 5106,
       "sessions": [
