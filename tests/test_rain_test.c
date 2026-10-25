@@ -21,10 +21,11 @@ uint8_t board_uart_send(const uint8_t *data, size_t length) {
     uart_len = length;
     return 1;
 }
-static uint8_t sent[4];
+static uint8_t sent[8];
 static unsigned transmissions;
+uint8_t can_tx_idle(void) { return 1; }
 uint32_t can_forward(const CAN_RxHeaderTypeDef *h, uint8_t *data) {
-    (void)h;
+    assert(h->StdId == 0x738 && h->DLC == 8);
     memcpy(sent, data, sizeof(sent));
     ++transmissions;
     return HAL_OK;
@@ -40,18 +41,22 @@ static CAN_RxHeaderTypeDef wiper = {.StdId = 0x2ec, .DLC = 8, .IDE = CAN_ID_STD,
 int main(void) {
     now = 10000;
     uint8_t lamp[4] = {0, 0, 0, 0x40}; /* AUTO set. */
-    /* Forced injection must add the dipped bit regardless of the wiper trigger. */
+    /* C2 renews a BH force request without injecting dipped-beam bits locally. */
     rain_lights_force(1);
     rain_lights_frame(&light, lamp);
-    assert(transmissions == 1 && sent[0] == 0 && sent[1] == 0x40 && sent[3] == 0x40);
+    assert(transmissions == 0);
+    uint8_t dbg[4];
+    rain_lights_debug(dbg);
+    assert(dbg[2] & 8U);
     now += 1000;
     rain_lights_force(1);
     now += 3000;
-    rain_lights_frame(&light, lamp);
-    assert(transmissions == 1); /* C2 expires after lost C1 polls. */
+    rain_lights_process();
+    rain_lights_debug(dbg);
+    assert(!(dbg[2] & 8U)); /* C2 expires after lost C1 polls. */
     rain_lights_force(1);
-    rain_lights_frame(&light, lamp);
-    assert(transmissions == 1); /* A stale ON cannot rearm without OFF. */
+    rain_lights_debug(dbg);
+    assert(!(dbg[2] & 8U)); /* A stale ON cannot rearm without OFF. */
     rain_lights_force(0);
     rain_lights_force(1);
     for (unsigned i = 0; i < 29; ++i) {
@@ -59,8 +64,8 @@ int main(void) {
         rain_lights_force(1);
     }
     now += 1000;
-    rain_lights_frame(&light, lamp);
-    assert(transmissions == 1); /* C2 also enforces the absolute limit. */
+    rain_lights_debug(dbg);
+    assert(!(dbg[2] & 8U)); /* C2 also enforces the absolute limit. */
     rain_lights_force(0);
 
     /* Detection counters: enable + AUTO, then one low->high wiper edge. */
@@ -73,16 +78,15 @@ int main(void) {
     rain_lights_observe(&wiper, low);
     now += 50;
     rain_lights_observe(&wiper, high);
-    uint8_t dbg[4];
     rain_lights_debug(dbg);
     assert(dbg[0] == 1 && dbg[1] == 0);       /* one wiper cycle */
     assert(dbg[2] == 5);                       /* fresh auto_mode flag */
-    assert(dbg[3] == 1);                       /* one forced injection */
+    assert(dbg[3] == 0);                       /* no active BH request yet */
 
     rain_test_debug_reply(5);
     assert(uart_len == 7);
-    assert(uart[0] == C1BusID && uart[1] == C1_CMD_RAIN_TEST);
-    assert(uart[2] == 1 && uart[3] == 0 && uart[4] == 5 && uart[5] == 1 && uart[6] == 5);
+    assert(uart[0] == C1_Bh_BusID && uart[1] == C1_CMD_RAIN_TEST);
+    assert(uart[2] == 1 && uart[3] == 0 && uart[4] == 5 && uart[5] == 0 && uart[6] == 5);
     rain_lights_options(0, 8);
     now += 50;
     rain_lights_observe(&wiper, low);
@@ -99,7 +103,7 @@ int main(void) {
 int main(void) {
     now = 10000;
     rain_test_sensor_debug_reply(1);
-    assert(uart_len == 6 && uart[0] == C1BusID && uart[1] == C1_CMD_RAIN_SENSOR);
+    assert(uart_len == 7 && uart[0] == C1BusID && uart[1] == C1_CMD_RAIN_SENSOR);
     assert(uart[4] == 0 && uart[5] == 1); /* No sample is not darkness. */
 
     CAN_RxHeaderTypeDef sensor = {.StdId = 0x738, .DLC = 7, .IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA};
@@ -140,12 +144,12 @@ int main(void) {
     rain_test_render(first, sizeof(first), second, sizeof(second));
     assert(strstr(first, "no reply") != NULL);
 
-    /* Force ON: command to C2 and local C1 position-lamp injection. */
+    /* Force ON: C2 forwards the request to BH; C1 does not inject lamp bits. */
     rain_test_toggle_force();
     assert(uart_len == 4 && uart[0] == C2BusID && uart[1] == C2_CMD_RAIN_TEST && uart[2] == 1);
     transmissions = 0;
     rain_lights_frame(&light, lamp);
-    assert(transmissions == 1 && sent[0] == 0x02 && sent[2] == 0x80);
+    assert(transmissions == 0);
 
     /* Counter reply and two-line render. */
     rain_test_reply(0x34, 0x12, 7, 7, uart[3]); /* Fresh AUTO|ARM, tx=7. */
@@ -159,19 +163,19 @@ int main(void) {
     assert(strstr(first, "no reply") != NULL);
     rain_test_process();
     assert(uart_len == 3 && uart[0] == BhBusID && uart[1] == BH_CMD_RAIN_SENSOR);
-    rain_test_sensor_reply(0, 0, 1, (uint8_t)(uart[2] - 1));
+    rain_test_sensor_reply(0, 0, 1, (uint8_t)(uart[2] - 1), 0);
     rain_test_render(first, sizeof(first), second, sizeof(second));
     assert(strstr(first, "no reply") != NULL); /* Wrong token is ignored. */
-    rain_test_sensor_reply(6, 0, 1, uart[2]);
+    rain_test_sensor_reply(6, 0, 1, uart[2], 9);
     rain_test_render(first, sizeof(first), second, sizeof(second));
-    assert(strstr(first, "BH738 6/0") != NULL && strstr(second, "Raw") != NULL);
+    assert(strstr(first, "BH738 6/0") != NULL && strstr(second, "TX=9") != NULL);
     now += 1000;
     rain_test_process();
     assert(uart[0] == C2BusID && uart[1] == C2_CMD_RAIN_TEST);
     now += 4000;
     rain_test_process();
     assert(uart[0] == BhBusID && uart[1] == BH_CMD_RAIN_SENSOR);
-    rain_test_sensor_reply(0, 0, 0, uart[2]);
+    rain_test_sensor_reply(0, 0, 0, uart[2], 9);
     rain_test_render(first, sizeof(first), second, sizeof(second));
     assert(strstr(first, "no frame") != NULL);
     now += 7000;

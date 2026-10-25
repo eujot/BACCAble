@@ -431,7 +431,7 @@ Szkic nie steruje samochodem przed udanym zapisem.
 | `Close windows` | OFF / 1 lock / 2 locks | Wybiera zamykanie szyb po jednym lub dwóch naciśnięciach zamykania na pilocie. OFF wyłącza funkcję. Krótsza nazwa na wyświetlaczu to `Close win`. |
 | `Open windows` | OFF / 1 unlock / 2 unlocks | Wybiera otwieranie szyb po jednym lub dwóch naciśnięciach otwierania na pilocie. OFF wyłącza funkcję. Krótsza nazwa to `Open win`. |
 | `QV exhaust` | Wyłączona / włączona | Udostępnia sterowanie klapami wydechu przez akcję w menu i podwójne naciśnięcie przycisku odblokowania dźwigni zmiany biegów. Wymaga zgodnego sprzętu. |
-| `Rain lights` | OFF / ON; domyślnie OFF | W AUTO wysyła żądanie świateł mijania i pozycyjnych po trzech wykrytych cyklach wycieraczek w ciągu 15 sekund. Podtrzymuje żądanie przez 60 sekund od ostatniego cyklu. Wymaga zgodnego firmware C1/C2. Działanie lamp wymaga jeszcze potwierdzenia w samochodzie. |
+| `Rain lights` | OFF / ON; domyślnie OFF | W AUTO prosi płytkę BH o zgłoszenie ciemności po trzech wykrytych cyklach wycieraczek w ciągu 15 sekund. Podtrzymuje żądanie przez 60 sekund od ostatniego cyklu. Wymaga zgodnego firmware C1/C2/BH. Działanie lamp wymaga jeszcze potwierdzenia w samochodzie. |
 | `Auto PDC mute` | Wyłączona / włączona | Chwilowo wycisza aktywny sygnał czujników parkowania podczas hamowania poza biegiem wstecznym. Przywraca działanie zmienione przez BACCAble po odpuszczeniu hamulca lub wybraniu wstecznego. Wymaga aktualnych danych o hamulcu, biegu i czujnikach PDC. |
 | `Mute audio in R` | Wyłączona / włączona | Wycisza dźwięk systemu audio na wstecznym i przywraca go po zakończeniu cofania, jeśli to BACCAble go wyciszyło. Uwzględnia wcześniejsze wyciszenie oraz ręczne przywrócenie dźwięku. Działa niezależnie od wyciszania PDC. |
 
@@ -443,18 +443,15 @@ spryskiwacza może ją uruchomić. Funkcja reaguje na pracę wycieraczek, nie mi
 intensywności deszczu. Bardzo rzadkie ruchy mogą nie osiągnąć progu.
 
 Opuszczenie AUTO, wyłączenie opcji lub brak aktualnych danych albo łączności
-kończy żądanie. C2 przestaje dodawać żądanie świateł mijania po odebraniu
-informacji o opuszczeniu AUTO; C1 kończy żądanie pozycyjnych po kolejnej odpowiedzi
-(zwykle w ciągu sekundy, a bez nowej odpowiedzi po trzech sekundach).
-Zakończenie żądania oznacza zaprzestanie dodawania bitów lamp, bez wysyłania
-polecenia ich zgaszenia. Fabryczne sterowanie po zmroku zachowuje więc kontrolę.
-Podczas pierwszej próby na postoju obserwuj rzeczywiste przednie i tylne lampy:
-wysłanie ramki CAN nie potwierdza przyjęcia żądania przez sterowniki.
-Wcześniejsze próby potwierdziły zapalenie lamp po zasłonięciu czujnika lub użyciu
-pokrętła; odpowiadające temu wartości CAN są znane. Pozostała próba dotyczy
-włączenia przez samo BACCAble, także pierwszeństwa ręcznego przełączenia
-i zakończenia podtrzymania w ciemności. Poprawka odpytywania utrzymuje aktualny
-status C2 i działanie nagrywania USB przy włączonym Rain lights.
+kończy żądanie. C2 przesyła je bezpośrednio do BH; BH sprawdza też własny,
+aktualny sygnał AUTO i wygasza żądanie po trzech sekundach bez ponowienia.
+Po każdej świeżej ramce czujnika BH `0x738` BH kopiuje ją i nadaje dwa surowe
+bajty światła jako zero, dopóki żądanie jest aktywne. Potem przestaje nadawać
+ciemne kopie; nie wysyła polecenia gaszenia lamp. W zapisanych próbach fabryczne
+AUTO gasiło lampy około 14–20 sekund po powrocie światła. Nie potwierdzono
+jeszcze, czy samochód przyjmie dodatkową ramkę i włączy przednie oraz tylne
+lampy. Sprawdź rzeczywiste lampy w dziennej próbie na postoju. Harmonogram
+łączności nadal pozwala na odczyt statusu C2 i nagrywanie USB.
 Przy włączonym `Rain lights` niezmieniony tekst menu jest ponawiany rzadziej,
 aby zostawić miejsce na wspólnym łączu dla komend świateł i statusu. Zmiana
 pozycji menu nadal pojawia się od razu.
@@ -688,20 +685,22 @@ urządzenie ponownie sprawdza wymagane warunki.
 | `Reset best times` | Nie wymaga osobnego ustawienia w Features | Kasuje zapisane najlepsze czasy przyspieszenia. Wymaga potwierdzenia; udany zapis kończy komunikat `Records cleared`. |
 | `Peak hold` | Nie wymaga osobnego ustawienia w Features | Od razu włącza/wyłącza pokazywanie najwyższych wartości liczbowych dla bieżącej strony. |
 | `IBS SOC override` | Pracujący silnik; potwierdzenie | Włącza/wyłącza tymczasowe, eksperymentalne podmienianie SOC w komunikatach. Ograniczenia opisano niżej. |
-| `Rain test` | Nie wymaga osobnego ustawienia; zgodny firmware C1/C2/BH | Otwiera dwie strony diagnostyki świateł deszczowych; góra/dół przełącza między wycieraczkami i światłami a odczytem sygnału światła z BH. SELECT na obu stronach wymusza bity lamp w `0x73E` przez maksymalnie 30 s; C2 kończy wymuszenie także po 3 s bez komend. BACK kończy test. |
+| `Rain test` | Nie wymaga osobnego ustawienia; zgodny firmware C1/C2/BH | Otwiera dwie strony diagnostyki świateł deszczowych; góra/dół przełącza między wycieraczkami a odczytem sygnału światła z BH. W AUTO przycisk SELECT żąda ciemnych kopii BH `0x738` przez maksymalnie 30 s; BH kończy wymuszenie po 3 s bez ponowienia. BACK kończy test. |
 
 Pierwsza strona `Rain test` działa jak dotąd: `Wiper` liczy zbocza ruchu
 wycieraczek także przy wyłączonym `Rain lights`; pierwsza próbka po przerwie
 ustala tylko stan początkowy. `A` pokazuje aktualny stan AUTO (`?` oznacza brak
-danych), `ARM` aktywne żądanie świateł, `Q` liczbę ramek przyjętych do kolejki
-C2 modulo 256, a `F` żądanie wymuszenia z C1. `C2: no reply` oznacza brak
-świeżych danych z C2. `Q` nie potwierdza zapalenia lamp.
+danych), `ARM` aktywne żądanie świateł, `Q` liczbę aktywnych żądań C2→BH
+przyjętych do kolejki UART modulo 256, a `F` żądanie wymuszenia z C1.
+`C2: no reply` oznacza brak świeżych danych z C2. `Q` nie potwierdza nadania
+ramki CAN przez BH ani zapalenia lamp.
 Druga strona pokazuje na przykład `BH738 6/6`: dwie oddzielne, **surowe**
 wartości z bajtów 1 i 2 ramki BH `0x738`. Podczas zapisanych testów w świetle
 dziennym zwykle było `6/6`, a po zasłonięciu czujnika `0/0`; nie są to luksy ani
-skalibrowane progi jasności. `BH738 no reply` oznacza brak aktualnej odpowiedzi
-BH, a `BH738 no frame` — odpowiedź BH bez świeżej ramki `0x738`. Ten odczyt
-służy tylko do obserwacji i nie steruje żądaniem świateł w deszczu. Widoczna
+skalibrowane progi jasności. `TX` w drugim wierszu liczy ciemne ramki `0x738`
+przyjęte do kolejki CAN płytki BH modulo 256; nie potwierdza przyjęcia ich przez
+samochód. `BH738 no reply` oznacza brak aktualnej odpowiedzi BH, a `BH738 no
+frame` — odpowiedź BH bez świeżej ramki `0x738`. Widoczna
 strona odświeża dane mniej więcej co dwie sekundy. Podczas wymuszenia C2 jest
 odpytywane co sekundę, aby podtrzymać żądanie, a odczyt BH aktualizuje się mniej
 więcej co pięć sekund. `BH738 no reply` z komunikatem `UART/BH timeout` oznacza

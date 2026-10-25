@@ -4,6 +4,46 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## BH twilight output for Rain lights, 2026-10-25
+
+Branch `feat/rain-lights-bh-darkness` moves the Rain lights output from C1/C2
+lamp-bit copies to BH `0x738` darkness reports. C2 keeps the existing three
+wiper phases in 15 s, AUTO prerequisite and 60 s hold; its former C1 UART reply
+slot now carries an active request directly to BH. BH also requires its own
+fresh `0x354` AUTO indication and expires requests after 3 s. It copies each
+fresh BH `0x738`/DLC8 factory frame, sets only light-responsive bytes 1 and 2
+to zero, and queues it only when CAN output is idle. The forced `Rain test`
+request reaches BH in the existing C2 debug reply and retains 3 s and 30 s
+limits. C1/C2 no longer inject `0x73E` lamp bits. BH diagnostic `TX` counts
+dark frames accepted into its CAN queue; it is not lamp confirmation.
+
+Read-only comparison of the three October 24 sessions found 32 groups of
+factory `0x738` frames with different light bytes but otherwise identical
+payloads, including byte 5. This supports copying the other bytes as captured;
+it does not prove whether a receiving ECU consumes the added frame or whether
+its internal validity checks accept it. The earlier research claim that a
+dominant zero in the payload wins over a simultaneous factory frame is false:
+same-ID conflicting data can cause a CAN bit error. The implementation sends
+after a complete factory frame, not during it. Vehicle acceptance remains open
+for lamps on/off, front/rear behavior, manual override, CAN error counters and
+factory bright-frame interaction. No board has been flashed.
+
+Validation: full Apple Clang host suite and focused C1/C2/BH Rain lights,
+Rain test and shared-UART regressions pass. All four firmware flavors pass
+cppcheck lint and ARM GNU 15.2.Rel1 builds. C1 uses 91,624/98,304 Flash bytes
+and BH uses 35,844/131,072 bytes with this local toolchain. These are build
+results, not in-vehicle lighting confirmation.
+
+Follow-up `no reply` audit: C1 still queues at most one Rain lights option
+request per second; C2 sends its BH request in the former C1 reply slot. The
+Rain test debug reply is now visible to BH, and the BH sensor reply uses one
+more payload byte, but UART frames remain fixed at 18 bytes. The 105-second
+production-C1-UART host regression passes with Rain lights ON, both Rain test
+pages, forced output, screen refreshes and status/USB polls: no `no reply`
+display, queue rejection or force renewal gap occurred. Its simulated peers
+reply immediately, so real-board UART errors and delivery still need a vehicle
+trial with matching C1/C2/BH images.
+
 ## v5-beta-33 release, 2026-10-25
 
 PR #90 (`38fea9e`) fixed Rain test starvation and PR #91 (`bf883b1`) added the

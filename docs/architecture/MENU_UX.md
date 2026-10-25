@@ -487,9 +487,9 @@ phases independently of the saved `Rain lights` setting. The first sample after
 a gap longer than 500 ms is a baseline, not a cycle. C2 replies carry a poll
 token; C1 shows `C2: no reply` until a matching reply arrives and again when it
 is older than 3 s. A stale C2 light-selector sample shows `A=?`. `ARM` reports
-the live rain request, `Q` counts C2 queue admissions modulo 256, and `F` is
-only C1's local force request; none confirms physical lamps. Forced C2 additions
-expire after 3 s without a command and have an independent 30 s limit. A new
+the live rain request, `Q` counts active C2-to-BH UART queue admissions modulo
+256, and `F` is C1's local force request; none confirms physical lamps. Forced
+BH darkness requests expire after 3 s without renewal and have a 30 s limit. A new
 force requires an explicit OFF after either expiry. C1 retries a queue-rejected
 STOP after leaving the screen; C2's own expiry bounds lost or undelivered STOP.
 Up/down switches to a second page with the two raw BH 0x738/DLC8 bytes 1 and 2.
@@ -501,12 +501,12 @@ shared UART budget and keeping alternating USB/version reports within 5 s.
 `BH738 no reply` with `UART/BH timeout` means there is no current accepted
 reply; it does not by itself prove a failed BH board.
 BH keeps only an exact standard data frame and reports whether its last sample
-is at most 2.5 s old. C1 polls BH only while this page is visible and accepts
+is at most 2.5 s old. The second line's `TX` counts dark frames accepted into
+BH's CAN queue modulo 256. C1 polls BH only while this page is visible and accepts
 only the latest matching reply; missing BH replies and stale CAN samples have
 distinct messages. Zero is a valid sample. The displayed values have no lux
-scale or calibrated threshold, and this diagnostic path does not enter the
-automatic lamp-request logic. SELECT and BACK keep their original behavior on
-both pages; all three boards need matching firmware.
+scale or calibrated threshold. SELECT requests BH darkness while AUTO is active;
+BACK stops the test. All three boards need matching firmware.
 
 `Settings` → `Features` → `Comfort` → `Rain lights` is an ordinary OFF/ON draft, default OFF,
 persisted in new slot 42. Record 0x101 now has 42 halfwords (84 bytes); loaders
@@ -515,7 +515,7 @@ Existing slot numbers are unchanged. Older firmware may not load the extended
 record when downgrading; record settings before a rollback.
 
 C2 observes only standard data 0x2EC/DLC8 byte 2 bit 5. Three rising phases in
-an inclusive 15,000 ms sliding window request light additions. The initial sample,
+an inclusive 15,000 ms sliding window request BH darkness reports. The initial sample,
 repeated high samples and gaps over 500 ms do not count as a cycle. Further
 rises renew the hold, which ends at 60,000 ms after the last rise. Live C2
 0x73E/DLC4 byte 3 bit 6 must indicate AUTO; reports older than 1,000 ms or a
@@ -525,22 +525,21 @@ Washer sweeps are not excluded. No rain intensity or BH 0x738 threshold is used.
 
 C1 sends addressed C2 command 0x4C (enabled, token) once per second while ON;
 OFF is sent on a change and once after boot. C2 configuration expires after
-3 s and replies 0x4D (active, echoed token) in its addressed response window.
-C1 accepts the latest token only within 1 s of its poll, then leases position
-lamp additions for 3 s. Replies represent a rain request, not lamp acceptance.
-Busy UART queues retain the next poll; lost replies expire rather than latch ON.
-C1 sleep prevents polling and additions; gaps/reset expire C2 ownership.
+3 s and sends its active request directly to BH as command 0x4D, replacing the
+former C2-to-C1 response without adding a UART frame. BH expires an unrenewed
+request after 3 s. C1 sleep prevents polling, and lost updates expire rather
+than latch ON. C2 broadcasts its existing Rain test debug reply to C1 and BH;
+flag bit 3 renews the short BH force lease.
 
-On fresh factory 0x73E/DLC4 templates, C2 ORs only b1 mask 0x40 (dipped beams),
-and C1 ORs only b0 mask 0x02 / b2 mask 0x80 (position lamps). All other bits
-are preserved. Already-set bits cause no extra transmission. No timer replays
-an old template, no explicit OFF is sent, and factory frames are not intercepted.
-Queue rejection is retried naturally on the next factory report. C2 stops on
-manual non-AUTO immediately; C1 follows the next C2 reply/lease expiration.
-This additional-transmission output follows the existing animation's bus-specific
-lamp mapping, but sustained front/rear lamp acceptance, factory darkness handover
-and manual priority still require a stationary vehicle trial. No physical-success
-claim is made by the menu. Use matching C1/C2 images.
+BH requires a fresh AUTO indication from BH 0x354/DLC4 byte 3 bit 6 and a
+fresh 0x738/DLC8 factory report. On each report it copies the eight bytes,
+replaces only bytes 1 and 2 with zero, and queues the copy on BH CAN when the
+output is idle. C1 and C2 no longer inject lamp frames. Observed factory frames
+with different light bytes share all other bytes, including byte 5, but receiver
+acceptance remains untested. Manual non-AUTO, stale reports, a lost UART lease
+and low-consumption mode prevent injection. The factory's own bright reports
+continue; whether the added dark report affects AUTO lighting, front/rear lamps
+and release timing requires a stationary vehicle trial. Use matching C1/C2/BH images.
 
 ### Rain-light polling correction
 
@@ -550,14 +549,14 @@ retain the same USB/version poll choice. This prevents the 1-second rain
 requests from repeatedly deferring C2's 1,010 ms status timer. A combined host
 regression uses the production UART, rain controller and USB manager with
 continuous display updates, C2-only USB capture and one missing rain reply.
-C2/BH status remains fresh and the rain request remains active.
+C2/BH status remains fresh and the rain request remains active. The current
+direct C2-to-BH request uses the former reply slot, preserving this UART budget.
 
 The owner clarified on 2026-10-24 that earlier lamp confirmations came from
 covering the light sensor or operating the physical switch. These confirmations
 are valid evidence for the captured ON/OFF values; C2 AUTO/daylight
 `00 00 00 40` becomes `00 40 00 40` with dipped beams, and the associated C1
-position-lamp pattern is `02 00 80 00`. Rain lights generates these patterns
-on their respective buses while preserving unrelated fields. The remaining
-check is the receiver's reaction to BACCAble's additional transmission while
-factory frames continue. The earlier physical observations are not discarded
+position-lamp pattern is `02 00 80 00`. Older Rain lights firmware generated
+these patterns on its respective buses. The current BH darkness path still
+needs receiver acceptance in the vehicle. The earlier physical observations are not discarded
 or reclassified as missing evidence. See the [focused correction report](../research/20261024-rain-light-polling-correction.md).

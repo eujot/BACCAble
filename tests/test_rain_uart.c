@@ -18,7 +18,7 @@ static uint32_t now = 10000, complete_at;
 static uint8_t outgoing[UART_SCREEN_BUFFER_SIZE], *rx_target;
 static uint8_t peer_mode[2], peer_token[2];
 static uint32_t seen[2][2], max_gap[2][2], rain_seen, max_rain_gap;
-static unsigned rain_polls, light_sends, screens;
+static unsigned rain_polls, screens;
 static unsigned test_c2_polls, test_bh_polls, queue_errors;
 static uint32_t last_force_poll, max_force_gap;
 void _putchar(char character) { (void)character; }
@@ -69,21 +69,18 @@ void elm327_set_enabled(uint8_t enabled) { (void)enabled; }
 uint8_t CDC_Transmit_FS(uint8_t *data, uint16_t size) { (void)data; (void)size; return USBD_OK; }
 
 uint32_t can_forward(const CAN_RxHeaderTypeDef *h, uint8_t *data) {
-    assert(h->StdId == 0x73e && h->DLC == 4);
-    assert(data[0] == 2 && data[1] == 0 && data[2] == 0x80 && data[3] == 0);
-    ++light_sends;
+    (void)h; (void)data;
+    assert(0); /* The C1 board no longer transmits rain-light CAN frames. */
     return HAL_OK;
 }
 
 /* Deliver actual UART parser output to the feature consumers exercised here. */
 void board_commands_dispatch(const uint8_t *message) {
-    assert(message[0] == C1BusID);
-    if (message[1] == C1_CMD_RAIN_LIGHTS)
-        rain_lights_reply(message[2], message[3]);
+    assert(message[0] == C1BusID || message[0] == C1_Bh_BusID);
     if (message[1] == C1_CMD_RAIN_TEST)
         rain_test_reply(message[2], message[3], message[4], message[5], message[6]);
     if (message[1] == C1_CMD_RAIN_SENSOR)
-        rain_test_sensor_reply(message[2], message[3], message[4], message[5]);
+        rain_test_sensor_reply(message[2], message[3], message[4], message[5], message[6]);
     if (message[1] == C1_CMD_USB_STATE)
         usb_modes_ack(message[2], message + 3);
 }
@@ -99,10 +96,7 @@ static void finish_transfer(void) {
         ++rain_polls;
         if (rain_seen && now - rain_seen > max_rain_gap) max_rain_gap = now - rain_seen;
         rain_seen = now;
-        if (rain_polls == 20) return; /* A single missed reply must not extinguish the request. */
-        reply[1] = C1_CMD_RAIN_LIGHTS;
-        reply[2] = outgoing[2];
-        reply[3] = outgoing[3];
+        return; /* C2 replaces the former C1 reply with a direct BH request. */
     } else if (outgoing[1] == C2_CMD_RAIN_TEST && peer == 0) {
         ++test_c2_polls;
         if (outgoing[2] == 1) {
@@ -111,8 +105,9 @@ static void finish_transfer(void) {
             last_force_poll = now;
         }
         reply[1] = C1_CMD_RAIN_TEST;
+        reply[0] = C1_Bh_BusID;
         reply[2] = 14;
-        reply[4] = settings_state.rain_lights_enabled ? 7 : 5;
+        reply[4] = (settings_state.rain_lights_enabled ? 7 : 5) | (outgoing[2] ? 8 : 0);
         reply[5] = 22;
         reply[6] = outgoing[3];
     } else if (outgoing[1] == BH_CMD_RAIN_SENSOR && peer == 1) {
@@ -122,6 +117,7 @@ static void finish_transfer(void) {
         reply[3] = 4;
         reply[4] = 1;
         reply[5] = outgoing[2];
+        reply[6] = 4;
     } else {
         unsigned usb = outgoing[1] == BOARD_CMD_USB_STATE;
         if (seen[peer][usb] && now - seen[peer][usb] > max_gap[peer][usb])
@@ -161,9 +157,7 @@ static void test_rain_with_usb_and_display(void) {
         if ((now - start) % 250 == 0 && now - start > 5000) {
             CAN_RxHeaderTypeDef h = {.StdId = 0x73e, .DLC = 4, .IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA};
             const uint8_t data[4] = {0};
-            unsigned before = light_sends;
             rain_lights_frame(&h, data);
-            assert(light_sends == before + 1);
             assert(usb_modes_active());
         }
     }
@@ -179,9 +173,7 @@ static void test_rain_with_usb_and_display(void) {
     rain_lights_process();
     CAN_RxHeaderTypeDef h = {.StdId = 0x73e, .DLC = 4};
     const uint8_t data[4] = {0};
-    unsigned before = light_sends;
     rain_lights_frame(&h, data);
-    assert(light_sends == before);
 }
 
 /* Queue rejection must leave the next USB/version choice unchanged. */
