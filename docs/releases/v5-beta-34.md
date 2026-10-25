@@ -39,11 +39,14 @@ light-sensor sample on CAN while the automatic rain-light request is active.
 
 ## Build and verification
 
-The host test suite and 82 Lab tests passed. Focused Rain lights, Rain test and
-shared-UART regressions passed, including a 105-second run across both
-diagnostic pages with Rain lights enabled and no `no reply` display or UART
-queue rejection. C1, C2, BH and CAN passed local lint and ARM GNU 15.2.Rel1
-builds. CI and release packaging results will be recorded after publication.
+The host test suite, 82 Lab tests, lint and C1/C2/BH/CAN firmware builds passed
+in [release workflow 40200580085](https://github.com/eujot/BACCAble/actions/runs/40200580085)
+with the pinned Arm GNU 15.3.Rel1 toolchain. The production C1 UART regression
+also passed for 105 seconds across both diagnostic pages with Rain lights
+enabled and no `no reply` display or UART queue rejection. All 14 assets
+downloaded from the [v5-beta-34 release](https://github.com/eujot/BACCAble/releases/tag/v5-beta-34)
+passed the included `SHA256SUMS` check. C1 uses 91,368/98,304 Flash bytes and
+12,596/16,384 static RAM bytes.
 
 No board was flashed for this change. Bench and in-vehicle acceptance of the
 injected BH `0x738` frame and physical lamp behavior remain open.
