@@ -4,15 +4,19 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
-## v5-beta-32 release preparation, 2026-10-25
+## v5-beta-32 release, 2026-10-25
 
-PR [#86](https://github.com/eujot/BACCAble/pull/86) is merged to `master` as
-`d152bc0d43f095d013025c2aa71ff226f8b6ac16`. Release notes are in
-[v5-beta-32](releases/v5-beta-32.md). They cover the menu tour and UX updates,
-external LED-strip removal, and the passive BH `0x738` light-sensor page in
-`Rain test`. The branch has not yet been tagged or published. No board was
-flashed; the new light-sensor view and Rain lights actuation still need vehicle
-acceptance.
+PR [#86](https://github.com/eujot/BACCAble/pull/86) merged as
+`d152bc0d43f095d013025c2aa71ff226f8b6ac16`; PR [#87](https://github.com/eujot/BACCAble/pull/87)
+added the [release notes](releases/v5-beta-32.md). Published prerelease
+[v5-beta-32](https://github.com/eujot/BACCAble/releases/tag/v5-beta-32) from
+`14e29ed329316e170112743d96ec4c09a61cb37e`. Workflow
+[40179656403](https://github.com/eujot/BACCAble/actions/runs/40179656403)
+passed validation, tests, lint, all four firmware builds and publication using
+the pinned Arm GNU 15.3.Rel1. All 14 assets passed `SHA256SUMS`; C1 uses
+91,984/98,304 Flash bytes and 12,628/16,384 static RAM bytes. No board was
+flashed. In-vehicle acceptance of the demo, live `0x738` view and Rain lights
+actuation remains open.
 
 ## Rain test light-response page, 2026-10-25
 
