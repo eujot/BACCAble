@@ -22,6 +22,7 @@ static uint8_t flags, tx;
 static uint32_t force_started, poll_at, reply_at;
 static uint8_t sensor_page, sensor_poll_known, sensor_reply_known, sensor_token;
 static uint8_t sensor_first, sensor_second, sensor_valid;
+static uint8_t sensor_tx;
 static uint32_t sensor_poll_at, sensor_reply_at;
 
 /* Queue one C2 command and remember which reply belongs to it. */
@@ -58,7 +59,7 @@ void rain_test_enter(void) {
     flags = 0;
     tx = 0;
     poll_known = reply_known = 0;
-    sensor_page = sensor_poll_known = sensor_reply_known = sensor_valid = 0;
+    sensor_page = sensor_poll_known = sensor_reply_known = sensor_valid = sensor_tx = 0;
     force_started = 0;
 #endif
 }
@@ -104,7 +105,8 @@ void rain_test_reply(uint8_t cycles_lo, uint8_t cycles_hi, uint8_t value_flags, 
 }
 
 /* Ignore delayed and mismatched BH replies from an earlier request or screen. */
-void rain_test_sensor_reply(uint8_t first, uint8_t second, uint8_t valid, uint8_t reply_token) {
+void rain_test_sensor_reply(uint8_t first, uint8_t second, uint8_t valid, uint8_t reply_token,
+                            uint8_t tx_count) {
 #if defined(BACCABLE_C1)
     if (!shown || !sensor_poll_known || reply_token != sensor_token ||
         currentTime - sensor_poll_at >= RAIN_TEST_POLL_MS)
@@ -112,10 +114,11 @@ void rain_test_sensor_reply(uint8_t first, uint8_t second, uint8_t valid, uint8_
     sensor_first = first;
     sensor_second = second;
     sensor_valid = valid == 1;
+    sensor_tx = tx_count;
     sensor_reply_known = 1;
     sensor_reply_at = currentTime;
 #else
-    (void)first; (void)second; (void)valid; (void)reply_token;
+    (void)first; (void)second; (void)valid; (void)reply_token; (void)tx_count;
 #endif
 }
 
@@ -162,7 +165,7 @@ void rain_test_sensor_debug_reply(uint8_t request_token) {
 #if defined(BACCABLE_BH)
     uint8_t fresh = sensor_seen && currentTime - sensor_seen_at <= 2500U;
     uint8_t reply[] = {C1BusID, C1_CMD_RAIN_SENSOR, sensor_first, sensor_second,
-                       fresh, request_token};
+                       fresh, request_token, rain_lights_transmissions()};
     board_uart_send(reply, sizeof(reply));
 #else
     (void)request_token;
@@ -193,7 +196,7 @@ void rain_test_debug_reply(uint8_t token) {
 #if defined(BACCABLE_C2)
     uint8_t dbg[4];
     rain_lights_debug(dbg);
-    uint8_t reply[] = {C1BusID, C1_CMD_RAIN_TEST, dbg[0], dbg[1], dbg[2], dbg[3], token};
+    uint8_t reply[] = {C1_Bh_BusID, C1_CMD_RAIN_TEST, dbg[0], dbg[1], dbg[2], dbg[3], token};
     board_uart_send(reply, sizeof(reply));
 #else
     (void)token;
@@ -212,7 +215,7 @@ void rain_test_render(char *first, size_t first_size, char *second, size_t secon
             snprintf_(second, second_size, "Wait for 0x738");
         } else {
             snprintf_(first, first_size, "BH738 %u/%u", sensor_first, sensor_second);
-            snprintf_(second, second_size, "Raw b1/b2 (no lux)");
+            snprintf_(second, second_size, "TX=%u raw b1/b2", sensor_tx);
         }
         return;
     }

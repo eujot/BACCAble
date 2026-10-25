@@ -197,7 +197,10 @@ build/test_rain_lights_c1: $(RAIN_LIGHT_SOURCES) $(HEADERS) Makefile
 build/test_rain_lights_c2: $(RAIN_LIGHT_SOURCES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC2_FLAVOR=1 $(RAIN_LIGHT_SOURCES) -o $@
-test: build/test_rain_lights_c1 build/test_rain_lights_c2
+build/test_rain_lights_bh: $(RAIN_LIGHT_SOURCES) $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DBH_FLAVOR=1 $(RAIN_LIGHT_SOURCES) -o $@
+test: build/test_rain_lights_c1 build/test_rain_lights_c2 build/test_rain_lights_bh
 
 RAIN_TEST_SOURCES := test_rain_test.c $(FIRMWARE)/features/rain_test.c $(FIRMWARE)/features/rain_lights.c $(FIRMWARE)/third_party/printf/printf.c
 build/test_rain_test_c1: $(RAIN_TEST_SOURCES) $(HEADERS) Makefile

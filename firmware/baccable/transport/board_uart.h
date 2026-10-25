@@ -51,11 +51,11 @@ uint8_t board_uart_diagnostic_send(const uint8_t *data, size_t length);
 #define BH_DNA_MODE_MASK 0x7F
 #define BH_DNA_SOFT_SUSPENSION 0x80
 #define C2_CMD_RAIN_LIGHTS 0x4C /* Enabled flag and poll token; three-second lease. */
-#define C1_CMD_RAIN_LIGHTS 0x4D /* Active request and echoed token; not lamp confirmation. */
+#define BH_CMD_RAIN_LIGHTS 0x4D /* C2->BH active request; expires after three seconds. */
 #define C2_CMD_RAIN_TEST 0x4E /* C1->C2 force flag; reply carries detection counters. */
-#define C1_CMD_RAIN_TEST 0x4F /* C2->C1 cycles lo/hi, flags, tx, token. */
+#define C1_CMD_RAIN_TEST 0x4F /* C2->C1/BH cycles lo/hi, flags, tx, token. */
 #define BH_CMD_RAIN_SENSOR 0x51 /* C1->BH request for raw 0x738 light-responsive bytes. */
-#define C1_CMD_RAIN_SENSOR 0x52 /* BH->C1 byte 1, byte 2, valid flag and request token. */
+#define C1_CMD_RAIN_SENSOR 0x52 /* BH->C1 light bytes, valid, token and CAN TX count. */
 #define C1_CMD_DNA_RESULT 0x4B /* Request token and completed/failed outcome. */
 #define BH_CMD_IPC_OPTIONS 0x47 /* RAM-only pace/method, five-second lease. */
 #define BOARD_CMD_USB_STATE 0x45

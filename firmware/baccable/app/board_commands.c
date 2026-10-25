@@ -36,14 +36,11 @@ void board_commands_dispatch(const uint8_t *message) {
 #if defined(BACCABLE_C1)
         menu_action_reply(message[1]);
         switch (message[1]) {
-        case C1_CMD_RAIN_LIGHTS:
-            rain_lights_reply(message[2], message[3]);
-            break;
         case C1_CMD_RAIN_TEST:
             rain_test_reply(message[2], message[3], message[4], message[5], message[6]);
             break;
         case C1_CMD_RAIN_SENSOR:
-            rain_test_sensor_reply(message[2], message[3], message[4], message[5]);
+            rain_test_sensor_reply(message[2], message[3], message[4], message[5], message[6]);
             break;
         case C1_CMD_DNA_RESULT:
             drive_mode_check_reply(message[2], message[3]);
@@ -168,6 +165,9 @@ void board_commands_dispatch(const uint8_t *message) {
         case BH_CMD_RAIN_SENSOR:
             rain_test_sensor_debug_reply(message[2]);
             break;
+        case BH_CMD_RAIN_LIGHTS:
+            rain_lights_request(message[2]);
+            break;
         case BOARD_CMD_USB_STATE:
             usb_modes_request(message[2], message[3]);
             break;
@@ -257,6 +257,14 @@ void board_commands_dispatch(const uint8_t *message) {
 
     case C1_Bh_BusID: // message received by C1 and BH baccable.
 #if (defined(BACCABLE_C1) || defined(BACCABLE_BH))
+
+        if (message[1] == C1_CMD_RAIN_TEST) {
+    #if defined(BACCABLE_C1)
+            rain_test_reply(message[2], message[3], message[4], message[5], message[6]);
+    #else
+            rain_lights_force((message[4] & 8U) != 0);
+    #endif
+        }
 
         if (message[1] == C1BHcmdShowRaceScreen) {
             if (settings_state.esc_tc_customizator_enabled)

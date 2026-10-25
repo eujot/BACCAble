@@ -24,7 +24,8 @@ void rain_test_debug_reply(uint8_t token);
 void rain_test_sensor_observe(const CAN_RxHeaderTypeDef *header, const uint8_t data[8]);
 void rain_test_sensor_debug_reply(uint8_t token);
 /* C1: accept a matching BH reply and switch between diagnostic pages. */
-void rain_test_sensor_reply(uint8_t first, uint8_t second, uint8_t valid, uint8_t token);
+void rain_test_sensor_reply(uint8_t first, uint8_t second, uint8_t valid, uint8_t token,
+                            uint8_t tx_count);
 void rain_test_move_page(void);
 /* C1: report whether the temporary lamp force needs the faster UART lease. */
 uint8_t rain_test_forcing(void);

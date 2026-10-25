@@ -403,7 +403,7 @@ workflow; their draft does not control the car before successful persistence.
 | `Close windows` | OFF / 1 lock / 2 locks | Choose the key-fob lock gesture that starts window closing. Narrow screens use `Close win`. |
 | `Open windows` | OFF / 1 unlock / 2 unlocks | Choose the key-fob unlock gesture that starts window opening. Narrow screens use `Open win`. |
 | `QV exhaust` | Off / on | Permit the exhaust-valve request action and the gear-lever release-button gesture on compatible hardware. |
-| `Rain lights` | OFF / ON; default OFF | In AUTO, request dipped beams and position lamps after three detected wiper cycles within 15 seconds. Keep the request until 60 seconds after the last cycle. Requires matching C1/C2 firmware. Vehicle lamp operation remains unverified. |
+| `Rain lights` | OFF / ON; default OFF | In AUTO, ask BH to report darkness after three detected wiper cycles within 15 seconds. Keep the request until 60 seconds after the last cycle. Requires matching C1/C2/BH firmware. Vehicle lamp operation remains unverified. |
 | `Auto PDC mute` | Off / on | Temporarily mute active parking-sensor beeps while braking outside Reverse, then restore the change BACCAble made when braking is released or Reverse is selected. Requires current brake, gear and PDC reports. |
 | `Mute audio in R` | Off / on | Mute audio in Reverse and restore audio afterwards if BACCAble muted it. Previously muted audio and a manual unmute are respected. This is independent of PDC mute. |
 
@@ -414,17 +414,15 @@ trigger the function; several washer sweeps can trigger it. This uses wiper
 activity, not a measured rain intensity. Very sparse wiping may not reach the threshold.
 
 Leaving AUTO, disabling the option, or stale input/link data ends the request.
-C2 stops its dipped-beam additions immediately on a received non-AUTO report;
-C1's position-lamp request follows the next reply (normally within one second,
-expiring after three seconds without a fresh reply). Ending a request stops adding
-lamp bits; it never sends an explicit lights-off command. Factory darkness
-control therefore retains control of the lights. Observe actual front and rear
-lamps during the first stationary trial: CAN transmission is not confirmation
-that the lamp controllers accepted it. Earlier vehicle trials confirmed lamps turning on after covering the sensor
-or operating the physical switch; the corresponding CAN values are known.
-The remaining trial concerns activation by BACCAble itself, including manual
-priority and release in darkness. The polling correction keeps C2 status and
-USB capture responsive while Rain lights is enabled.
+C2 sends the request directly to BH; BH also checks its own fresh AUTO report
+and expires the request after three seconds without renewal. For each fresh
+BH `0x738` light-sensor report, BH copies the frame and sends its two raw light
+bytes as zero while the request is active. It stops sending dark copies when
+the request ends; it does not send a lights-off command. Factory AUTO can take
+about 14–20 seconds to turn the lamps off after light returns in the recorded
+trials. Whether the vehicle accepts the added dark report and turns on front
+and rear lamps is still unverified. Check the actual lamps in a stationary
+daylight trial. The board-link timing keeps C2 status and USB capture responsive.
 When Rain lights is enabled, unchanged menu text is refreshed less often to
 reserve the shared board link for lighting and status commands; a changed menu
 selection still appears immediately.
@@ -649,19 +647,21 @@ action executes.
 | `Reset best times` | No feature permission required | Clear the saved best acceleration records. Confirmation is required; a completed save reports `Records cleared`. |
 | `Peak hold` | No feature permission required | Immediately toggle numerical maximum hold for the current reading page. |
 | `IBS SOC override` | Running engine; explicit confirmation | Toggle a temporary experimental SOC-message override. See the limitations below. |
-| `Rain test` | No permission required; matching C1/C2/BH firmware | Open two rain-lights diagnostic pages; up/down switches between wiper/lamp status and the BH light-responsive sample. SELECT forces the `0x73E` lamp bits for at most 30 s from either page; C2 also stops if commands cease for 3 s. BACK ends the test. |
+| `Rain test` | No permission required; matching C1/C2/BH firmware | Open two rain-lights diagnostic pages; up/down switches between wiper status and the BH light-responsive sample. In AUTO, SELECT requests dark BH `0x738` copies for at most 30 s from either page; BH stops within 3 s if renewals cease. BACK ends the test. |
 
 The first `Rain test` page is unchanged: `Wiper` counts rising wiper phases even
 with `Rain lights` OFF; the first sample after a gap is only a baseline. `A`
 shows fresh AUTO state (`?` means unknown), `ARM` the active rain request, `Q`
-the C2 queue-admission count modulo 256, and `F` the C1 force request.
-`C2: no reply` means the C2 data expired. `Q` does not confirm lamp operation.
+the count of active C2-to-BH requests admitted to UART modulo 256, and `F` the
+C1 force request. `C2: no reply` means the C2 data expired. `Q` does not
+confirm that BH transmitted a CAN frame or that lamps came on.
 The second page shows `BH738 6/6` for example: the two **raw**, separate values
 from BH `0x738` bytes 1 and 2. Daylight was usually `6/6` and a covered light
 sensor `0/0` in recorded tests; these are not lux or calibrated dark/bright
-thresholds. `BH738 no reply` means no fresh reply from BH; `BH738 no frame`
-means BH replied but has no recent `0x738` frame. The sample is for observation
-only and does not control the Rain lights request. The visible page refreshes
+thresholds. The second line's `TX` counts dark `0x738` frames accepted into
+BH's CAN queue modulo 256; it does not confirm vehicle acceptance. `BH738 no
+reply` means no fresh reply from BH; `BH738 no frame` means BH replied but has
+no recent `0x738` frame. The visible page refreshes
 about every two seconds. During a forced test, C2 is contacted every second to
 keep the temporary request alive; the BH sample updates about every five
 seconds. `BH738 no reply` with `UART/BH timeout` means a fresh reply has not
