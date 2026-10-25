@@ -15,6 +15,11 @@ to recover C1 Flash, and adds raw light-sensor diagnostics to `Rain test`.
   reading spacing are improved.
 - Removes the obsolete UTF-8, display-width and special-character test screens.
 
+The MY23 reading layout fix keeps values and labels separated on the IPC line.
+Save confirmation and discard feedback are now consistently visible, and rapid
+up/down input is coalesced so the menu follows the most recent selection at a
+steadier pace.
+
 ### LED-strip removal and Flash space
 
 - Removes external WS281x LED-strip support and its timer/DMA setup. The
@@ -35,8 +40,21 @@ to recover C1 Flash, and adds raw light-sensor diagnostics to `Rain test`.
 
 ## Build and verification
 
-The merged PR #86 passed the full host test suite, CAN knowledge tests, lint,
-and firmware builds for C1, C2, BH and CAN in CI. This release workflow rebuilds
-and packages the firmware with the repository-pinned toolchain. No board was
-flashed; in-vehicle acceptance of the demo, live sensor display and Rain lights
-behavior is not claimed.
+PR #86 passed the full host test suite, CAN knowledge tests, lint and firmware
+builds for C1, C2, BH and CAN in CI. Release workflow
+[40179656403](https://github.com/eujot/BACCAble/actions/runs/40179656403)
+rebuilt and packaged the release with the repository-pinned toolchain. All 14
+assets passed the included `SHA256SUMS` check. C1 uses 91,984/98,304 Flash
+bytes and 12,628/16,384 static RAM bytes. No board was flashed; in-vehicle
+acceptance of the demo, live sensor display and Rain lights behavior is not
+claimed.
+
+### Issue found after publication
+
+In vehicle use, `Rain test` could show C2 and BH readings briefly and then report
+`no reply`, although menu navigation continued. The shared board UART was
+overloaded by diagnostic polls, status requests and repeated screen packets;
+queued replies arrived after their acceptance deadline. This was a reporting
+and link-budget defect, not evidence that either board had disconnected. The
+correction is included in [v5-beta-33](v5-beta-33.md). Rain lights actuation
+still requires separate vehicle confirmation.
