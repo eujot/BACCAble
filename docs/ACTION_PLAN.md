@@ -4,6 +4,36 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Light origin and timing audit, 2026-10-25
+
+Branch `research/light-origin-timing` (based on `origin/master` 71b7ded)
+adds a reproducible passive analysis of all 27 captures through
+`20261024-113644Z`, with an all-ID scan of 20 lamp edges and binary verification
+of retained changes. See [the report](../baccable_lab/docs/research/20261025-light-origin-timing.md)
+and its evidence ledgers. Owner confirms facelift LED headlights; exact MY/VIN
+and lamp wiring remain unknown. BH 0x738 is a periodic light-responsive report,
+not an established actuator command. Source ECU and BCM consumption remain
+unverified. Cross-bus USB batching and independent clock drift prevent source
+attribution from raw timestamps; same-C2 lamp reports follow 0x73E by 105–218 ms
+(0x42D/E) and 45–247 ms (0x384) in the selected trials.
+
+**Concrete firmware follow-up:** beta-34 `rain_lights.c` rejects light bytes >7,
+but real inputs reach 9. The guard rejects 65/136 post-startup samples in
+`113104Z` and 271/305 in `113644Z`. Fix this separately before an actuator
+acceptance trial; removing the guard does not prove ECU acceptance. This task
+changes no firmware and performs no flashing. No beta-34 capture is available.
+Counter/checksum interpretations of 0x738 b4/b5 remain unverified. Dictionary,
+hypotheses and readable catalog retain those limits and the new observed range.
+
+Validation: 26 knowledge/catalog tests pass; all 832 retained change records
+match the original binary captures, and input fingerprints remain unchanged.
+Clock fits reduce USB batching effects but leave BH endpoint scatter of about
+-12 to +14 ms; residual 8–12 ms cross-bus leads do not establish a sender.
+
+The user's original dirty checkout and its uncommitted light-command research
+note were preserved. This handoff and analysis belong only to the isolated
+research branch. User guides need no changes because operation is unchanged.
+
 ## BH twilight output for Rain lights, 2026-10-25
 
 Branch `feat/rain-lights-bh-darkness` moves the Rain lights output from C1/C2
