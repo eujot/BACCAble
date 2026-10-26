@@ -152,6 +152,120 @@ wiring and verified TX/receiver behavior, not another search for a “stronger�
 physical-input interface is a hardware project, with exact electrical data and
 factory/manual behavior preserved. It is not yet a recommended wiring change.
 
+## BCM physical connections: verified topology, 2026-10-26
+
+These are vehicle-scoped service-document findings, not a VIN-matched universal
+pinout. Connector names C6/F and C8/H are connector designations, not CAN buses.
+The sources below are OEM service material reproduced on a third-party host;
+search-index text was accessible where direct page retrieval failed.
+
+### Discrete signals: examples with connector evidence
+
+2019 Giulia Sport RWD, LHD [BCM C8 D2762H][T1]:
+
+| Connection | C8 cavity | Direction/function |
+| --- | --- | --- |
+| Exterior-light selector | 42 | Input |
+| Panel dimmer | 13 | Multiplexed input |
+| High-beam stalk | 22 | Input |
+| Horn switch | 11 | Input; not horn power |
+| DNA selector | 21 | Input |
+| ESS disable/enable button | 28 | Input; not engine START button |
+| Washer / front wiper controls | 55 / 58 | Input / multiplexed input |
+| Hazard switch | 59 | Input |
+| Fuel level | 5 | Sensor input |
+| Boot/liftgate switch / release | 39 / 29 | Input / driver output |
+| Interior lighting | 4 / 47 | Dome / ambient outputs |
+| Front fog relay | 10 | Relay control |
+
+2018 Giulia Ti Lusso RWD, LHD [BCM C6 D2762F][T2] additionally identifies door
+ajar inputs (7, 20, 24), washer-fluid level (22), second fuel level (25), ambient
+air temperature (45), and discrete rear lamp outputs including reverse (31/33)
+and number plate (56). These examples establish physical endpoints, not output
+ratings or installation instructions. LIN and discrete inputs coexist even
+inside a single switch assembly; do not classify the entire assembly from one pin.
+
+### LIN slaves and their master
+
+The [2019 Giulia Ti AWD network description][T3] explicitly separates:
+
+| Master / network | Connected equipment |
+| --- | --- |
+| BCM LIN1 | IBS, rain/light sensor, alarm equipment, optional child detection |
+| BCM LIN2 | Front wiper smart motor, steering switch bank, rear camera control |
+| BCM LIN3 | Four window smart motors and driver/passenger mirror modules |
+| BCM LIN4 | Cruise-control steering-wheel commands |
+| PCM LIN | Intelligent alternator and auxiliary water pump |
+| AFLS LIN | Left/right headlamp modules |
+| HVAC LIN | Humidity sensor and climate-control panel |
+| EMCM LIN | Volume knob |
+
+This lists control communication, not every power or video connection. Equipment
+and nomenclature differ by variant; it is not a universal facelift connector map.
+
+IBS is independently corroborated by the [2017 Giulia diagnostic procedure][T4],
+which traces D401 LIN1 to BCM C6/F cavity 2, and a [2024 Giulia procedure][T5]
+which again checks a LIN circuit between IBS and BCM. Neither describes IBS as
+a native CAN node. The [2018 ESS description][T6] says IBS measures voltage,
+current and temperature and that BCM communicates an Autostop inhibition on
+CAN-C; PCM primarily manages ESS. Thus local sensor information and subsequent
+CAN decisions/reports are distinct. BACCAble's 0x41A override does not replace
+the physical LIN sample or establish a commanded alternator target.
+
+The [2018 Giulia LRSM connector D2683A][T7] has pin 1 RUN supply, 2 ground,
+3 D401 LIN1. The [2024 wiper/washer operating description][T8] explicitly gives
+BCM -> LIN2 -> wiper motor; the washer pump instead receives a switched voltage
+through a relay inside BCM. Headlamp washers use a separate relay-control path.
+Do not call all these devices CAN actuators or all of them simple wired loads.
+
+### Confirmed CAN participants, not guaranteed command APIs
+
+Older Stelvio OEM training separates these networks (optional nodes depend on
+engine/equipment). Lists below are representative, not exhaustive:
+
+| Network | Rate / diagnostic connector pins | Explicitly listed participants |
+| --- | --- | --- |
+| C1 | 500 kbit/s; 6/14 | BCM, ECM, TCM, AGSM, ABS, ORC, RFH, IPC, ACC, CDCM, AWD DTCM |
+| C2 | 500 kbit/s; 12/13 | BCM, ABS, ORC, EPS, ESL, PAM, HALF, AFLS, CDCM, TVM |
+| BH | 125 kbit/s; 3/11 | BCM, IPC, HVAC, ETM, EMCM, amplifier, seat/steering comfort module, blind-spot modules, trailer modules, powered liftgate |
+
+Sources: [Italian OEM training page 11][T9] for C1; [English pages 13–14][S2]
+for C2/BH. Indexed excerpts only; live PDFs still return HTTP 503. The English
+BH paragraph accidentally says “CAN-C2” before 125 kbit/s; its heading, diagram
+and connector pins identify BH. Some ECUs legitimately connect to multiple
+networks. Physical access also depends on SGW/installation. This is not a claim
+that all their actuator requests are exposed or accepted from an added node.
+
+### What this changes in the research strategy
+
+- For documented variants, sensor -> LIN -> BCM is the physical rain/light
+  input. BH 0x738 cannot be a direct native CAN transmission from that LIN-only
+  sensor. Its exact publisher remains unidentified. An outgoing BCM report is
+  not automatically an input to the same BCM.
+- Rain-sensor input and wiper control can form a BCM-local LIN chain; no CAN
+  start-wiping command is required by that topology. CAN activity may only
+  report the resulting state.
+- DNA is a useful counterexample: a wired BCM input can be represented on CAN
+  and consumed by other controllers. Replay success does not prove the knob
+  itself is a CAN node or that BCM accepted the replay as its physical input.
+- For IBS, identify which controller consumes the republished measurement and
+  verify its physical response. Do not infer success/failure solely from LIN
+  topology or a changed reading. Alternator control belongs to the PCM branch.
+- A real CAN member is a stronger target for protocol research, but still needs
+  an identified request, prerequisites and feedback. A relay/LIN endpoint needs
+  an upstream request to its owner or different interface hardware.
+
+[T1]: https://lemon-manuals.la/Alfa%20Romeo/2019/Giulia%20Sport%2C%20RWD/Repair%20and%20Diagnosis%20%28Single%20Page%29/Quick%20Lookups/Electrical%20Component%20Locations/Connector%20End%20Views%20%26%20Electrical%20Component%20Locations%20%285%20Of%2011%29/Module-Body%20Control%20C8%20%28Standard%29%20Connector%20End%20View%20%28D2762H%29/
+[T2]: https://lemon-manuals.la/Alfa%20Romeo/2018/Giulia%20Ti%20Lusso%2C%20RWD/Repair%20and%20Diagnosis%20%28Single%20Page%29/Electrical/Body%20Electrical/Connector%20End%20Views%20%26%20Electrical%20Component%20Locations%20%285%20Of%2011%29/Module-Body%20Control%20C6%20%28Standard%29%20Connector%20End%20View%20%28D2762F%29/
+[T3]: https://lemon-manuals.la/Alfa%20Romeo/2019/Giulia%20Ti%2C%20AWD/Repair%20and%20Diagnosis%20%28Single%20Page%29/Accessories%20%26%20Equipment/Communication%20Devices/Electronic%20Control%20Modules%20%28Service%20Information%29/Communication/Description%20And%20Operation/Communication%20And%20Networks/Communication/
+[T4]: https://lemon-manuals.la/Alfa%20Romeo/2017/Giulia%20Base%2C%20RWD/Repair%20and%20Diagnosis%20%28Single%20Page%29/Accessories%20%26%20Equipment/Communication%20Devices/Body%20Control%20Module%20%28BCM%29%20-%20DTCS%20B12AE-15%20To%20U1702-87/DTC%20Troubleshooting/U1411-29-IBS%20%28Battery%20Sensor%20Node%29-Signal%20Invalid/Diagnostic%20Test/
+[T5]: https://lemon-manuals.la/Alfa%20Romeo/2024/Giulia%20Competizione%2C%20RWD/Repair%20and%20Diagnosis%20%28Single%20Page%29/Engine%20Performance/System/2.0L%20-%20DTCS%20U04B1-00%20To%20U3041-00/DTC%20Troubleshooting/U04B1-00%20Invalid%20Data%20Received%20From%20Battery%20Monitor%20Module/Diagnostic%20Test/
+[T6]: https://lemon-manuals.la/Alfa%20Romeo/2018/Giulia%20Ti%20Lusso%2C%20RWD/Repair%20and%20Diagnosis%20%28Single%20Page%29/Engine%20Mechanical/Starter/Starting%20System%20%28Service%20Information%29/Description%20And%20Operation/Engine%20Stop%20Start/
+[T7]: https://lemon-manuals.la/Alfa%20Romeo/2018/Giulia%20Quadrifoglio/Repair%20and%20Diagnosis/Electrical/Wiring%20Diagrams/Connector%20End%20Views%20%26%20Electrical%20Component%20Locations%20%286%20Of%2011%29/Module-Light%20Rain%20Sensor%20%28Standard%29%20Connector%20End%20View%20%28D2683A%29/
+[T8]: https://lemon-manuals.la/Alfa%20Romeo/2024/Giulia%20Competizione%2C%20RWD/Repair%20and%20Diagnosis%20%28Single%20Page%29/Accessories%20%26%20Equipment/Communication%20Devices/Body%20Control%20Module%20%28BCM%29%20-%20DTCS%20B1042-24%20To%20B1054-11/DTC%20Troubleshooting/B1049-14%20Head%20Lamp%20Washer-Circuit%20Short%20To%20Ground%20Or%20Open/Theory%20Of%20Operation/
+[T9]: https://lab-aftersales.fiat.com/elearn_testreda/949001496.pdf
+[S2]: https://lab-aftersales.fiat.com/elearn_testreda/949001497.pdf
+
 ## Source ledger and limitations
 
 - **S1 — OEM Giulia exterior-lighting techCONNECT, 2018-04-04:**

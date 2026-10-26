@@ -4,6 +4,18 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## BCM physical topology follow-up, 2026-10-26
+
+Expanded the [capability guide](architecture/CAN_CAPABILITIES.md) with explicit
+BCM C6/C8 discrete connections, LIN master/slave groups and documented C1/C2/BH
+participants. IBS-to-BCM LIN is independently supported by 2017 and 2024
+procedures; the 2018 LRSM pinout confirms LIN1. PCM-to-alternator LIN is separate.
+These paths explain why sensor CAN reports need not be BCM command inputs;
+physical publisher of BH 0x738 remains unproven. Sources retain exact model
+scope and retrieval limitations; no universal facelift pinout is asserted.
+Documentation only; no firmware, dictionary or captures changed. Diff and local
+links checked. User checkout edits remain untouched on their existing branch.
+
 ## Vehicle feature capability review, 2026-10-26
 
 The [capability guide](architecture/CAN_CAPABILITIES.md) separates implemented
