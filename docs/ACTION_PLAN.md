@@ -4,6 +4,19 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Monostable DNA topology correction, 2026-10-26
+
+Owner identifies the tested selector as monostable. Corrected the
+[capability guide](architecture/CAN_CAPABILITIES.md#dna-variant-correction-and-reusable-evidence-chain)
+to withdraw the unsupported application of older BCM wired-input topology to
+this car. BH 0x256/DLC 4 gesture replay remains an accepted actuation mechanism;
+physical transmitter identity remains separate and unproven. Added direct links
+to pulse evidence, later owner acceptance, the session audit and implementation.
+The original discovery report now points to later acceptance without rewriting
+historical evidence. Session workflow requires explicit variant matching.
+Documentation-only change; reference links and diff checked. No firmware,
+raw captures or dictionary meanings changed; user checkout edits preserved.
+
 ## BCM physical topology follow-up, 2026-10-26
 
 Expanded the [capability guide](architecture/CAN_CAPABILITIES.md) with explicit

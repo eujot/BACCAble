@@ -18,9 +18,9 @@ For every proposed feature distinguish:
 5. Published state: information for the cluster and other consumers.
 
 The older Stelvio training identifies BCM as the acquisition point for DNA,
-suspension and Start/Stop buttons, as well as a CAN/LIN gateway [S2]. This
-explains why a wired input may also have an actionable CAN representation.
-It does not identify the physical transmitter of a recorded frame. In our car,
+suspension and Start/Stop buttons, as well as a CAN/LIN gateway [S2]. This is evidence for that documented architecture, not a wiring identification
+for the owner's monostable selector. It does not identify the physical
+transmitter of a recorded frame. In our car,
 BH selector replay works; light-sensor-report replay has not lit the lamps.
 
 ## Capability matrix
@@ -169,7 +169,7 @@ search-index text was accessible where direct page retrieval failed.
 | Panel dimmer | 13 | Multiplexed input |
 | High-beam stalk | 22 | Input |
 | Horn switch | 11 | Input; not horn power |
-| DNA selector | 21 | Input |
+| DNA selector in this documented variant | 21 | Input; applicability to the owner's monostable selector is unverified |
 | ESS disable/enable button | 28 | Input; not engine START button |
 | Washer / front wiper controls | 55 / 58 | Input / multiplexed input |
 | Hazard switch | 59 | Input |
@@ -245,9 +245,9 @@ that all their actuator requests are exposed or accepted from an added node.
 - Rain-sensor input and wiper control can form a BCM-local LIN chain; no CAN
   start-wiping command is required by that topology. CAN activity may only
   report the resulting state.
-- DNA is a useful counterexample: a wired BCM input can be represented on CAN
-  and consumed by other controllers. Replay success does not prove the knob
-  itself is a CAN node or that BCM accepted the replay as its physical input.
+- DNA in the owner's car has an empirically accepted CAN input mechanism.
+  The older wired-selector pinout must not be used to assign its physical
+  wiring. See the variant correction and evidence chain below.
 - For IBS, identify which controller consumes the republished measurement and
   verify its physical response. Do not infer success/failure solely from LIN
   topology or a changed reading. Alternator control belongs to the PCM branch.
@@ -265,6 +265,40 @@ that all their actuator requests are exposed or accepted from an added node.
 [T8]: https://lemon-manuals.la/Alfa%20Romeo/2024/Giulia%20Competizione%2C%20RWD/Repair%20and%20Diagnosis%20%28Single%20Page%29/Accessories%20%26%20Equipment/Communication%20Devices/Body%20Control%20Module%20%28BCM%29%20-%20DTCS%20B1042-24%20To%20B1054-11/DTC%20Troubleshooting/B1049-14%20Head%20Lamp%20Washer-Circuit%20Short%20To%20Ground%20Or%20Open/Theory%20Of%20Operation/
 [T9]: https://lab-aftersales.fiat.com/elearn_testreda/949001496.pdf
 [S2]: https://lab-aftersales.fiat.com/elearn_testreda/949001497.pdf
+
+## DNA variant correction and reusable evidence chain
+
+Owner clarification, 2026-10-26: the tested vehicle has a **monostable DNA
+selector**. The earlier explanation assigning its input directly to BCM from
+an older wiring diagram was unsupported and is withdrawn for this vehicle.
+Retain the older C8/21 entry only with its documented model/variant scope.
+Neither model year alone nor the label "DNA" identifies the selector topology.
+
+| Claim | Evidence | Development consequence |
+| --- | --- | --- |
+| The owner's selector is monostable | Owner clarification on 2026-10-26; recorded momentary direction pulses are consistent with it | Treat input as press/hold/release, not a latched target-mode value |
+| BH 0x256/DLC 4 carries selector-associated directional input | [All-session discovery](../../baccable_lab/docs/research/20261023-dna-all-sessions.md) and [pulse evidence](../../baccable_lab/docs/research/20261023-dna-selector-evidence.json) | Use bus and DLC as well as ID; C1 0x256/DLC 8 is unrelated |
+| Short direction pulses and sustained holds have different outcomes | Discovery report records 36 direction pulses; five long holds precede Race by about 1.2 seconds | Preserve gesture timing and prerequisites; do not substitute a single target-mode report |
+| Replaying the gestures can actually select the mode | [Maintained hypotheses](../../baccable_lab/baccable_lab/knowledge/hypotheses.json), entry for BH 0x256, records owner acceptance on 2026-10-24 with beta-30 source: Race and softer suspension applied | This is an accepted CAN actuation mechanism on the tested car, not merely passive correlation. Acceptance is owner feedback without an accompanying TX trace; retry behavior is not independently verified |
+| Physical source of 0x256 | RX recordings do not distinguish selector electronics from another publisher; no matching selector connector schematic established | Keep source ECU unresolved. Do not assert either direct selector CAN wiring or BCM-wired input as a proven fact for this vehicle |
+
+Implementation reference: [BH selector state machine](../../firmware/baccable/features/dna_selector.c).
+It distinguishes direction, hold and release, waits for engine state, monitors
+mode feedback and yields to physical input. The
+[three-session audit](../../baccable_lab/docs/research/20261024-three-session-audit.md)
+provides the later mode/suspension observations. Check current code before
+reusing timing constants; historical measured delays are not firmware settings.
+
+For future feature research, keep three independent questions:
+
+1. **Physical connection:** which device and bus/wire, on which exact variant?
+2. **Protocol role:** input request, sensor report, selected state or diagnostic?
+3. **Acceptance:** does replay cause the physical outcome, and under which conditions?
+
+An unknown answer to (1) must not erase positive evidence for (3). Conversely,
+success with DNA does not establish that light-sensor or lamp-state reports
+are accepted commands. An older schematic cannot override the tested newer
+variant without checking connector, part number and topology compatibility.
 
 ## Source ledger and limitations
 

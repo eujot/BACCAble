@@ -70,6 +70,13 @@ networks. Matching IDs on two buses do not prove matching payload meanings or
 ECU identity. The current binary recording lacks IDE/RTR and TX/RX flags, and
 RX observations do not record BACCAble's own transmissions.
 
+Before transferring a wiring diagram to a captured vehicle, match the equipment
+variant and record unknown applicability. Keep physical transmitter identity,
+protocol role and replay acceptance separate. The
+[monostable DNA correction](../../docs/architecture/CAN_CAPABILITIES.md#dna-variant-correction-and-reusable-evidence-chain)
+is the reference example: accepted BH selector replay must not be dismissed
+because another variant documents a wired BCM input.
+
 Compare new shapes, periods, field ranges and positive diagnostic DIDs against
 older sessions. Separate a new identifier from a newly active bit in an old
 identifier. Apply existing layouts first. Retain an unknown enum value as raw;
