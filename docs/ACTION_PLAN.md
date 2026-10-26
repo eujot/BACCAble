@@ -4,6 +4,17 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## CAN-to-LIN request correlation, 2026-10-26
+
+Added the [mirror correlation](architecture/CAN_CAPABILITIES.md#can-requests-to-lin-equipment-mirror-correlation):
+BH 0x5A8 targets / 0x5A6 feedback in code, OEM LIN mirror modules, and C1 0x1EF
+window comfort as the closest implemented analogue. No generic CAN-to-LIN
+pass-through or universal actuation capability is inferred. Physical mirror
+request receiver remains unproven; Rain lights and wiper CAN requests remain
+unknown. Request, report, sensor spoofing and diagnostics are separated, with
+factory remote actions proposed as evidence contexts rather than new commands.
+Documentation only; links/diff checked, no transmissions or hardware acceptance.
+
 ## Monostable DNA topology correction, 2026-10-26
 
 Owner identifies the tested selector as monostable. Corrected the

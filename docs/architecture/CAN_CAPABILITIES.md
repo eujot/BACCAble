@@ -300,6 +300,59 @@ success with DNA does not establish that light-sensor or lamp-state reports
 are accepted commands. An older schematic cannot override the tested newer
 variant without checking connector, part number and topology compatibility.
 
+## CAN requests to LIN equipment: mirror correlation
+
+Review 2026-10-26. LIN topology does **not** exclude upstream CAN actuation.
+There is also no generic CAN-to-LIN command tunnel implied by BCM gateway status.
+A controller must implement the particular request and translate its meaning
+into local action; this is not a byte-for-byte forwarding assumption.
+
+For mirrors, distinguish three evidence layers:
+
+- [BACCAble request definition](../../firmware/baccable/state/mirrors.c):
+  BH 0x5A8/DLC 8, four target-position bytes followed by `80 00 00 00`.
+- [Parking controller](../../firmware/baccable/features/parking_mirrors.c) and
+  [feedback handler](../../firmware/baccable/vehicle/mirrors_frames.c): send
+  position targets and consume BH 0x5A6 position/movement reports. C1 0x5A8 is
+  unrelated. These are code-proven roles, not independently identified factory
+  transmitters/receivers or a new vehicle acceptance test.
+- [2018 Giulia mirror service description][S3M]: DMCM/PMCM communicate with BCM
+  over LIN and locally drive mirror motors. Thus "mirrors on LIN" more precisely
+  means their control modules are LIN participants; motors have local wiring.
+
+Combining them supports the architecture **CAN request -> factory controller(s)
+-> LIN mirror module -> motor**, with feedback returned to CAN. The exact
+receiver of the BACCAble 0x5A8 packet is not identified by source code alone.
+Do not label BCM as experimentally proven receiver or CSWM as proven original
+sender. Factory seat/mirror memory recall is a useful *candidate context* for
+finding the original request, not a proven attribution of this ID.
+
+| LIN subsystem | Upstream CAN evidence | Research conclusion |
+| --- | --- | --- |
+| Mirror positioning | Existing BH target/feedback implementation | Reuse the request/feedback pattern; verify equipped position sensors and actual behavior per variant |
+| Window comfort | [body_commands.c](../../firmware/baccable/vehicle/body_commands.c) edits C1 0x1EF comfort fields and checksum; OEM window topology is LIN | Closest implemented analogue. This is a comfort request, not arbitrary motor or individual-position control; source code is not a completed hardware acceptance record |
+| Front wipers | Documented BCM LIN2 motor control; stalk/sensor inputs exist locally | CAN request remains unknown. Do not confuse the observed cycle/status report with a motor request |
+| Rain/dusk sensor | LIN1 measurement input to BCM; light-responsive BH report; beta-34 negative outcome | Sensor emulation over CAN is unproven. Search for a BCM-consumed request separately from its outgoing report |
+| IBS / alternator | IBS on BCM LIN1; alternator on PCM LIN; BACCAble changes C1 0x41A SOC report | Potential influence on a downstream consumer differs from commanding IBS or an alternator target. Measure response; do not infer charging control from displayed SOC |
+| Alarm, rear camera, HVAC panel, AFLS submodules | Network membership documented, no accepted request established here | Candidate only after a factory action shows the relevant request. Camera LIN control is not its video path; AFLS positioning is not dipped ON |
+| Steering/cruise buttons | LIN input devices in documented variants | They report user input; finding their CAN representation does not mean the physical button module can be commanded or every consumer accepts replay |
+
+A better next capture, if these mechanisms need investigation, is a *factory
+remote action*: mirror memory recall versus manual joystick movement, or factory
+window comfort versus a local window switch. A remote action creates a reason
+for an upstream request to exist. Identify transient requests separately from
+continuous state reports, then establish feedback and release. Use already
+recorded scenarios first. This review does not assert that new captures were
+analysed or that additional actuator commands were discovered.
+
+For Rain lights the useful question is now: **does BCM accept a normal operating
+CAN request for illumination, and which ECU would normally send it?** A local
+sensor/stalk-to-BCM-to-output path need not use one. Diagnostic actuator testing
+is a separate interface with sessions, access restrictions and return-of-control
+requirements; its availability would not establish a normal driving request.
+
+[S3M]: https://lemon-manuals.la/Alfa%20Romeo/2018/Giulia%20Ti%2C%20RWD/Repair%20and%20Diagnosis%20%28Single%20Page%29/Body%20%26%20Frame/Power%20Mirrors%20%28Service%20Information%29/Description%20And%20Operation/Exterior/
+
 ## Source ledger and limitations
 
 - **S1 — OEM Giulia exterior-lighting techCONNECT, 2018-04-04:**
