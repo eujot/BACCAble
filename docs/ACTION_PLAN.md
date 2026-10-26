@@ -4,6 +4,20 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Vehicle feature capability review, 2026-10-26
+
+The [capability guide](architecture/CAN_CAPABILITIES.md) separates implemented
+features, owner-confirmed outcomes, state injection and unknown request paths.
+It connects older BCM/window/mirror topology with firmware mechanisms and sets
+variant acceptance and experiment gates. Wired/LIN outputs do not rule out an
+upstream CAN request; no dependable dipped-light request is established.
+Older hardware and facelift LED applicability remain separate. Existing
+beta-30 Race/suspension owner acceptance and beta-34 negative Rain lights result
+are preserved. Official training PDF was available only as indexed excerpts
+(HTTP 503 live); source limitations are explicit. Documentation only, no raw
+capture/dictionary or firmware changes. Work remains on the committed research
+branch; unrelated user checkout changes are untouched.
+
 ## Headlamp switch input documentation, 2026-10-26
 
 The [lighting report follow-up](../baccable_lab/docs/research/20261025-light-origin-timing.md)

@@ -8,6 +8,10 @@ annotations for the next capture. A collection of plausible names is not enough.
 For the ordered, test-minimising checklist to run on a `baccable bundle`, see the
 [bundle-first research playbook](RESEARCH_PLAYBOOK.md).
 
+Before interpreting a state report as a control command, read the
+[CAN capabilities and limits](../../docs/architecture/CAN_CAPABILITIES.md).
+It records physical topology, variant boundaries and the actuation evidence gate.
+
 ## Inputs and persistent outputs
 
 | Artifact | Purpose |

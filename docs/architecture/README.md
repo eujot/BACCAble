@@ -10,6 +10,9 @@ The [integration report](UPSTREAM_SYNC.md) records source revisions and validati
 For gaucho/netzmark updates, follow the [upstream porting guide](UPSTREAM_PORTING.md).
 For installing images, use the [flashing guide](../FLASHING.md).
 
+Before designing vehicle actuation, read the [CAN capabilities and limits](CAN_CAPABILITIES.md)
+for evidence levels, older-car compatibility and the experiment decision gate.
+
 ## Responsibilities
 
 Application code lives in `firmware/baccable`. Each variant is a single C program
