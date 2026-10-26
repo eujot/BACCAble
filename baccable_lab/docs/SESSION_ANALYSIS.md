@@ -8,6 +8,10 @@ annotations for the next capture. A collection of plausible names is not enough.
 For the ordered, test-minimising checklist to run on a `baccable bundle`, see the
 [bundle-first research playbook](RESEARCH_PLAYBOOK.md).
 
+Before interpreting a state report as a control command, read the
+[CAN capabilities and limits](../../docs/architecture/CAN_CAPABILITIES.md).
+It records physical topology, variant boundaries and the actuation evidence gate.
+
 ## Inputs and persistent outputs
 
 | Artifact | Purpose |
@@ -65,6 +69,13 @@ to role and ID, with explicit layout/length guards. C1, C2 and BH are distinct
 networks. Matching IDs on two buses do not prove matching payload meanings or
 ECU identity. The current binary recording lacks IDE/RTR and TX/RX flags, and
 RX observations do not record BACCAble's own transmissions.
+
+Before transferring a wiring diagram to a captured vehicle, match the equipment
+variant and record unknown applicability. Keep physical transmitter identity,
+protocol role and replay acceptance separate. The
+[monostable DNA correction](../../docs/architecture/CAN_CAPABILITIES.md#dna-variant-correction-and-reusable-evidence-chain)
+is the reference example: accepted BH selector replay must not be dismissed
+because another variant documents a wired BCM input.
 
 Compare new shapes, periods, field ranges and positive diagnostic DIDs against
 older sessions. Separate a new identifier from a newly active bit in an old

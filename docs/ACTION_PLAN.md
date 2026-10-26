@@ -4,6 +4,144 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## CAN-to-LIN request correlation, 2026-10-26
+
+Added the [mirror correlation](architecture/CAN_CAPABILITIES.md#can-requests-to-lin-equipment-mirror-correlation):
+BH 0x5A8 targets / 0x5A6 feedback in code, OEM LIN mirror modules, and C1 0x1EF
+window comfort as the closest implemented analogue. No generic CAN-to-LIN
+pass-through or universal actuation capability is inferred. Physical mirror
+request receiver remains unproven; Rain lights and wiper CAN requests remain
+unknown. Request, report, sensor spoofing and diagnostics are separated, with
+factory remote actions proposed as evidence contexts rather than new commands.
+Documentation only; links/diff checked, no transmissions or hardware acceptance.
+
+## Monostable DNA topology correction, 2026-10-26
+
+Owner identifies the tested selector as monostable. Corrected the
+[capability guide](architecture/CAN_CAPABILITIES.md#dna-variant-correction-and-reusable-evidence-chain)
+to withdraw the unsupported application of older BCM wired-input topology to
+this car. BH 0x256/DLC 4 gesture replay remains an accepted actuation mechanism;
+physical transmitter identity remains separate and unproven. Added direct links
+to pulse evidence, later owner acceptance, the session audit and implementation.
+The original discovery report now points to later acceptance without rewriting
+historical evidence. Session workflow requires explicit variant matching.
+Documentation-only change; reference links and diff checked. No firmware,
+raw captures or dictionary meanings changed; user checkout edits preserved.
+
+## BCM physical topology follow-up, 2026-10-26
+
+Expanded the [capability guide](architecture/CAN_CAPABILITIES.md) with explicit
+BCM C6/C8 discrete connections, LIN master/slave groups and documented C1/C2/BH
+participants. IBS-to-BCM LIN is independently supported by 2017 and 2024
+procedures; the 2018 LRSM pinout confirms LIN1. PCM-to-alternator LIN is separate.
+These paths explain why sensor CAN reports need not be BCM command inputs;
+physical publisher of BH 0x738 remains unproven. Sources retain exact model
+scope and retrieval limitations; no universal facelift pinout is asserted.
+Documentation only; no firmware, dictionary or captures changed. Diff and local
+links checked. User checkout edits remain untouched on their existing branch.
+
+## Vehicle feature capability review, 2026-10-26
+
+The [capability guide](architecture/CAN_CAPABILITIES.md) separates implemented
+features, owner-confirmed outcomes, state injection and unknown request paths.
+It connects older BCM/window/mirror topology with firmware mechanisms and sets
+variant acceptance and experiment gates. Wired/LIN outputs do not rule out an
+upstream CAN request; no dependable dipped-light request is established.
+Older hardware and facelift LED applicability remain separate. Existing
+beta-30 Race/suspension owner acceptance and beta-34 negative Rain lights result
+are preserved. Official training PDF was available only as indexed excerpts
+(HTTP 503 live); source limitations are explicit. Documentation only, no raw
+capture/dictionary or firmware changes. Work remains on the committed research
+branch; unrelated user checkout changes are untouched.
+
+## Headlamp switch input documentation, 2026-10-26
+
+The [lighting report follow-up](../baccable_lab/docs/research/20261025-light-origin-timing.md)
+records a wired, resistor-multiplexed exterior rotary-switch input to BCM in
+older documentation. The 2018 panel pinout assigns exterior-light signal to
+pin 4; the 2019 Giulia Sport LHD BCM C8 pinout assigns M9 to cavity 42
+(white/yellow, 0.35 mm2). These are variant-scoped endpoints, not a confirmed
+facelift harness mapping. Exact resistance/voltage values and the owner's
+factory/retrofit LED topology remain unknown. No firmware or hardware change;
+documentation diff checked. User checkout changes remain untouched.
+
+## Halogen/xenon and competing-message review, 2026-10-25
+
+Follow-up diagram inspection records the basic headlamp connector: pin 1 dipped,
+pin 5 high-beam positive controls. This pinout is not assigned to xenon/LED.
+D3S HDU/lamp/shutter wiring and AFLM CAN/LIN adjustment paths are distinct;
+no waveform, output-driver implementation or facelift wiring is inferred.
+
+The [lighting report](../baccable_lab/docs/research/20261025-light-origin-timing.md)
+now records visual inspection of OEM 2018 techCONNECT diagrams (download hash
+retained) and official Stelvio references. Basic halogen uses H7/H15 rather than
+H4. Older BCM lamp-output wiring is distinct from adaptive-light CAN/LIN links;
+this does not establish facelift LED pinout. Appending 0x73E ON while BCM keeps
+publishing OFF every ~250 ms leaves an unresolved application-level conflict.
+Do not treat higher-rate status injection as dependable actuation. A verified
+BCM request/input is needed; none has been identified. No firmware changes,
+flashing or new hardware tests in this documentation follow-up.
+
+## AUTO light actuation: documentation deduction, 2026-10-25
+
+The [timing report addendum](../baccable_lab/docs/research/20261025-light-origin-timing.md)
+compares exact manual/AUTO payloads and records external OEM/manufacturer
+sources with model-year applicability. C2 0x73E b1.6 is common to both modes;
+CAN command consumption is neither confirmed nor ruled out. BCM may send a
+CAN request or operate another output while publishing its state. The LRSM
+input and final lamp output must be investigated separately. Older LIN/xenon
+pinouts do not establish facelift LED wiring. No exact-variant public schematic
+was verified; exact MY and factory/retrofit status remain requested/unknown.
+No firmware or dictionary layouts changed; no hardware test performed.
+
+## Manual light-switch follow-up, 2026-10-25
+
+On the same `research/light-origin-timing` branch, the
+[focused manual audit](../baccable_lab/docs/research/20261025-manual-light-switch.md)
+rechecks 20261010-104325Z events 73–78, all three ON/OFF pairs and preceding
+AUTO-only controls. AUTO is a short intermediate indication in 2/3 ON trials
+and all three OFF trials, then clears. No additional repeatable quiet-baseline
+CAN precursor was demonstrated by the all-ID/bit scan, including slow frames.
+167 retained binary records match, capture fingerprints remain unchanged, and
+26 knowledge/catalog tests pass. Firmware behavior is unchanged.
+
+Owner reports beta-34 Rain lights enabled, Wiper 26 / A=1 / ARM=1 / Q109 /
+F=off, BH738 1/1 / TX125, but lamps remain OFF. This is a negative vehicle
+outcome, not a capture confirming delivery of injected frames. At 1/1 the >7
+guard is not the blocker. Establish actual TX delivery/receiver behavior and
+facelift-specific BCM/lamp wiring; do not ask to repeat the already available
+manual-switch scenario as though it had never been recorded.
+
+## Light origin and timing audit, 2026-10-25
+
+Branch `research/light-origin-timing` (based on `origin/master` 71b7ded)
+adds a reproducible passive analysis of all 27 captures through
+`20261024-113644Z`, with an all-ID scan of 20 lamp edges and binary verification
+of retained changes. See [the report](../baccable_lab/docs/research/20261025-light-origin-timing.md)
+and its evidence ledgers. Owner confirms facelift LED headlights; exact MY/VIN
+and lamp wiring remain unknown. BH 0x738 is a periodic light-responsive report,
+not an established actuator command. Source ECU and BCM consumption remain
+unverified. Cross-bus USB batching and independent clock drift prevent source
+attribution from raw timestamps; same-C2 lamp reports follow 0x73E by 105–218 ms
+(0x42D/E) and 45–247 ms (0x384) in the selected trials.
+
+**Concrete firmware follow-up:** beta-34 `rain_lights.c` rejects light bytes >7,
+but real inputs reach 9. The guard rejects 65/136 post-startup samples in
+`113104Z` and 271/305 in `113644Z`. Fix this separately before an actuator
+acceptance trial; removing the guard does not prove ECU acceptance. This task
+changes no firmware and performs no flashing. No beta-34 capture is available.
+Counter/checksum interpretations of 0x738 b4/b5 remain unverified. Dictionary,
+hypotheses and readable catalog retain those limits and the new observed range.
+
+Validation: 26 knowledge/catalog tests pass; all 832 retained change records
+match the original binary captures, and input fingerprints remain unchanged.
+Clock fits reduce USB batching effects but leave BH endpoint scatter of about
+-12 to +14 ms; residual 8–12 ms cross-bus leads do not establish a sender.
+
+The user's original dirty checkout and its uncommitted light-command research
+note were preserved. This handoff and analysis belong only to the isolated
+research branch. User guides need no changes because operation is unchanged.
+
 ## BH twilight output for Rain lights, 2026-10-25
 
 Branch `feat/rain-lights-bh-darkness` moves the Rain lights output from C1/C2

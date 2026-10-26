@@ -268,6 +268,8 @@ class KnowledgeTests(unittest.TestCase):
         hypotheses = json.loads((root/'baccable_lab/knowledge/hypotheses.json').read_text())['hypotheses']
         self.assertEqual(len({h['id'] for h in hypotheses}),len(hypotheses))
         sessions = {s['session']:{e['id'] for e in s['events']} for s in evidence['sessions']}
+        timing = json.loads((root/'docs/research/20261025-light-origin-timing.json').read_text())
+        sessions.update({s['session']:{e['id'] for e in s['events']} for s in timing['sessions']})
         for hypothesis in hypotheses:
             for item in hypothesis['evidence']:
                 self.assertLessEqual(set(item['event_ids']),sessions[item['session']])

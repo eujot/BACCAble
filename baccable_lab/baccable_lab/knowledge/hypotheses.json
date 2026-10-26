@@ -1211,10 +1211,30 @@
             21
           ],
           "report": "docs/research/20261024-111510-rain-lights-followup.md"
+        },
+        {
+          "session": "20261010-104325Z",
+          "event_ids": [
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            73,
+            74,
+            75,
+            76,
+            77,
+            78
+          ],
+          "report": "docs/research/20261025-manual-light-switch.md",
+          "observation": "AUTO precedes 2/3 manual ON edges by 203\u2013208 ms on C2 and remains after OFF for 345\u2013525 ms before clearing. The earlier AUTO-only controls do not switch dipped lamps on."
         }
       ],
       "contradictions": [
-        "September ON/OFF alone confounded switch selection and lit lamps. October daytime AUTO stays set with lamps off."
+        "September ON/OFF alone confounded switch selection and lit lamps. October daytime AUTO stays set with lamps off.",
+        "A brief AUTO indication during manual knob operation is not proof of an actuator command; one of three manual ON edges has no captured AUTO precursor."
       ],
       "alternatives": [
         "Reported automatic-lighting enabled state rather than exact physical rotary-switch position"
@@ -1239,7 +1259,7 @@
           8
         ]
       ],
-      "description": "Two separate raw channels react to covering/uncovering the light sensor: usually 6/6 in daylight and 0/0 while covered in the new session. They return before lamp OFF by about 14\u201320 seconds on the BH clock. The parts describe two channels, not a combined physical value. Independent 20261024-111510Z shows both raw channels falling while lamps remain manually OFF, then AUTO lamp release 14.411/14.474 s after both channels recover. Units and physical source stay unverified.",
+      "description": "Two separate raw channels react to covering/uncovering the light sensor: usually 6/6 in daylight and 0/0 while covered in the new session. They return before lamp OFF by about 14\u201320 seconds on the BH clock. The parts describe two channels, not a combined physical value. Independent 20261024-111510Z shows both raw channels falling while lamps remain manually OFF, then AUTO lamp release 14.411/14.474 s after both channels recover. Units and physical source stay unverified. Extended October 25 audit observes 0..9, including bright 8/9 in later control sessions. Measurement semantics do not identify the producer or prove a CAN input to BCM.",
       "evidence": [
         {
           "session": "20261024-105643Z",
@@ -1300,18 +1320,27 @@
             21
           ],
           "report": "docs/research/20261024-111510-rain-lights-followup.md"
+        },
+        {
+          "session": "20261024-113644Z",
+          "report": "docs/research/20261025-light-origin-timing.md",
+          "observation": "271 of 305 post-startup samples fail the beta-34 >7 guard; no beta-34 transmission trial is present.",
+          "event_ids": []
         }
       ],
       "contradictions": [
         "The entire BH 0x738 frame is not a monotonic counter. Other bytes vary for other reasons.",
         "A short channel-2 dip also appears during a spray phase; it does not repeat in all rain trials.",
-        "Independent prior sessions contain other baseline values (3/3, 4/5, 0/0), so no universal binary threshold or lux scale is established."
+        "Independent prior sessions contain other baseline values (3/3, 4/5, 0/0), so no universal binary threshold or lux scale is established.",
+        "Byte 4 high three bits plateau for 508.471 seconds in 20261010-104325Z; a per-frame rolling counter interpretation is unsupported.",
+        "Byte 5 checksum semantics are unverified.",
+        "Cross-bus host ordering is confounded by USB batching and independent drifting device clocks; earliest host receipt cannot identify a producer or command."
       ],
       "alternatives": [
         "two optical/illumination channels",
         "ambient or solar-related values relayed by another module"
       ],
-      "next_test": "A raw light-response association is supported. Establish units/source only if a photometric reading is needed; the next feature acceptance gap is lamp actuation, not another complete input scenario."
+      "next_test": "Correct the observed-range output guard separately, verify actual BH transmission and lamp response in a bounded stationary AUTO test, and obtain facelift LED-specific sensor/BCM wiring. Confirm whether BCM consumes CAN or relays a LIN/direct sensor input; TX queue acceptance alone is insufficient."
     },
     {
       "id": "WIPER-41A-CONFOUNDER-001",

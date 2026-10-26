@@ -14,6 +14,22 @@ selector module or another node reporting its input. The BCM attribution for
 independent source identification. There is no verified electrical wiring or
 ECU address evidence for the physical selector in these inputs.
 
+## Later acceptance and variant clarification
+
+The "not hardware-tested" statement above describes the 2026-10-23 discovery
+stage, not the current project outcome. The maintained
+[hypotheses](../../baccable_lab/knowledge/hypotheses.json) record subsequent
+owner acceptance on 2026-10-24 for beta-30 source: Race startup selection and
+the configured softer suspension worked. No corresponding TX trace was supplied;
+the feedback retry path was not independently tested.
+
+On 2026-10-26 the owner explicitly identified the selector as monostable.
+An older BCM wired-selector pinout does not establish this car's connection.
+See the [variant correction and evidence chain](../../../docs/architecture/CAN_CAPABILITIES.md#dna-variant-correction-and-reusable-evidence-chain).
+The CAN actuation result is established for the tested car; physical transmitter
+identification remains a separate question. Historical capture evidence below
+is preserved unchanged.
+
 ## Scope and reproducibility
 
 Baseline: `66b77fe` (including the CRC correction and result checking).
