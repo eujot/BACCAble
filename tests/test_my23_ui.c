@@ -105,7 +105,7 @@ static void test_my23_readings_preview_and_unavailable_gear(void) {
     int gear = menu_page_index(0, 0x1a);
     assert(gear >= 0);
     parameter_cache_put(6, 15, now); /* 0xF from CAN means unavailable. */
-    menu_show_parameter((uint8_t)gear); menu_render();
+    menu_show_reading((uint8_t)gear); menu_render();
     assert(!memcmp(screen_packet + 2, "Gear -", 6));
     const uint8_t gear_id[] = {6};
     const float fractional_enum[] = {1.5f};
@@ -129,18 +129,18 @@ static void test_my23_readings_preview_and_unavailable_gear(void) {
     int coolant = menu_page_index(0, 0x20);
     assert(coolant >= 0);
     parameter_cache_put(42, 88, now);
-    menu_show_parameter((uint8_t)coolant); menu_render();
+    menu_show_reading((uint8_t)coolant); menu_render();
     assert(!memcmp(screen_packet + 2, "Coolant 88", 10));
     int pair = menu_page_index(0, 0x04); /* Oil and coolant must both be visible. */
     assert(pair >= 0);
     parameter_cache_put(5, 101, now);
-    menu_show_parameter((uint8_t)pair); menu_render();
+    menu_show_reading((uint8_t)pair); menu_render();
     assert(!memcmp(screen_packet + 2, "Oil", 3));
     assert(screen_packet[2 + MY23_L1_VISIBLE] != ' '); /* The next page, never a split value. */
     int four = menu_page_index(0, 0x37);
     assert(four >= 0);
     for (unsigned i = 0; i < 4; ++i) parameter_cache_put(91 + i, i + 1, now);
-    menu_show_parameter((uint8_t)four); menu_render();
+    menu_show_reading((uint8_t)four); menu_render();
     char expected[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
     const float counts[] = {1, 2, 3, 4};
     dashboard_format_my23_page(&parameter_pages[0][four], counts, expected);
@@ -615,7 +615,7 @@ static void test_render_interval_after_event(void) {
         settings_state.ipc_my23_is_installed = profile;
         int reading = menu_page_index(0, 0x2c); /* Live native run statistic. */
         assert(reading >= 0);
-        menu_show_parameter((uint8_t)reading);
+        menu_show_reading((uint8_t)reading);
         now += 101;
         unsigned before = native_reads;
         menu_event(MENU_SELECT); /* Status SELECT renders without moving the page. */

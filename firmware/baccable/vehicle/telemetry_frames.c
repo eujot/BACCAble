@@ -1,5 +1,6 @@
 #include "vehicle/standard_frames.h"
 #include "features/menu.h"
+#include "features/reading_catalog.h"
 #include "app/powertrain.h"
 /* CAN ID 0x000000FB. */
 /* Update engine torque and the driving features that depend on it. */
@@ -24,7 +25,7 @@ void vehicle_handle_engine_torque(const CAN_RxHeaderTypeDef *rx_header, uint8_t 
             board_uart_send(tmpArr3, 2);
             chassis_state.launch_assist_enabled = 0; // ensure we do not return here
             // jump to statistics
-            menu_show_parameter(parameter_page_find(0x1A));
+            menu_show_reading(READING_TIME_0_100);
         }
     }
 #endif

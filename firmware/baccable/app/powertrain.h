@@ -21,5 +21,4 @@ uint8_t statistics_reset();
 uint8_t statistics_save_best(void);
 uint16_t settings_read(uint8_t paramId);
 float statistics_read_best(uint8_t paramId);
-uint8_t parameter_page_find(uint32_t searchedReqId);
 #endif /* BACCABLE_APP_POWERTRAIN_H */

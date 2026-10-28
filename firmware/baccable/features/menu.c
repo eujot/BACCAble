@@ -168,6 +168,7 @@ static unsigned wrap(unsigned value, unsigned count, int delta) {
 
 static uint8_t setting_move(uint8_t current, int direction) { return wrap(current, 4, direction); }
 static ReadingSample favorite_sample_cache[READING_COUNT];
+static uint8_t auto_reading = READING_COUNT; /* READING_COUNT = none. */
 
 /* Resolve a FavoriteSet's item samples for the currently selected profile. */
 static void favorite_fill_samples(const FavoriteSet *set) {
@@ -222,6 +223,27 @@ static void present_favorite_layout(unsigned cell) {
     } else {
         favorite_row_render(favorites_layout.sets[set].rows[row], favorite_sample_cache, DASHBOARD_MESSAGE_MAX_LENGTH, first, sizeof(first));
         menu_present(first);
+    }
+}
+
+/* Present one reading (automatic result / single-reading view). */
+static void present_reading(uint8_t id) {
+    const ReadingMeta *meta = reading_lookup((ReadingId)id);
+    if (!meta)
+        return;
+    uint8_t source = reading_source(meta, vehicle_profile_current());
+    float value = source == READING_NO_SOURCE ? NAN
+                                              : parameter_cache_get_max_age(source, currentTime, 3000U);
+    ReadingSample sample = isfinite(value) ? (ReadingSample){READING_STATE_VALID, value}
+                                           : (ReadingSample){READING_STATE_STALE, 0.0f};
+    if (settings_state.ipc_my23_is_installed) {
+        char value_buf[MY23_L2_VISIBLE + 1];
+        reading_format_value((ReadingId)id, &sample, MY23_L2_VISIBLE, value_buf, sizeof(value_buf));
+        menu_present_lines(reading_label_for((ReadingId)id, READING_FORMAT_FULL), value_buf);
+    } else {
+        char line[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
+        reading_format_line((ReadingId)id, &sample, READING_FORMAT_AUTO, DASHBOARD_MESSAGE_MAX_LENGTH, line, sizeof(line));
+        menu_present(line);
     }
 }
 
@@ -670,23 +692,17 @@ static void open_pages(bool favorite) {
     build_pages(favorite ? selected_favorite[engine] : preferences.last[engine][group]);
 }
 
-/* Show an automatic result without changing the user's visibility preferences. */
-void menu_show_parameter(uint8_t index) {
-    if (!menu_page_supported(engine, index, gasoline_v6))
+/* Show an automatic result as a single reading without changing the user's list. */
+void menu_show_reading(uint8_t reading_id) {
+    if (reading_id >= READING_COUNT)
         return;
     demo_active = false;
-    group = parameter_pages[engine][index].group;
+    auto_reading = reading_id;
     view = VALUES;
-    build_pages(parameter_pages[engine][index].id);
-    /* Automatic result screens must not change the user's visibility preference. */
-    bool listed = false;
-    for (unsigned i = 0; i < list_count; ++i)
-        listed |= list[i] == index;
-    if (!listed && list_count < sizeof(list)) {
-        selection = list_count;
-        list[list_count++] = index;
-        select_page();
-    }
+    parameter_request_cancel();
+    parameter_peak_reset();
+    selected_parameter_element = 0;
+    page_changed = currentTime;
 }
 
 /* Confirm and request the selected vehicle action when its conditions are met. */
@@ -898,6 +914,7 @@ void menu_render(void) {
         present_favorite_layout(list[selection]);
         return;
     case VALUES:
+        if (auto_reading < READING_COUNT) { present_reading(auto_reading); return; }
         if (!list_count) { menu_present("No pages"); return; }
         menu_parameters_refresh();
         if (settings_state.ipc_my23_is_installed) {
@@ -1138,6 +1155,7 @@ static void back(void) {
     }
     if (view == FAV_ROWS) { view = FAV_SETS; return; }
     if (view == FAV_SETS || view == IPC_OPTIONS) { view = SETTINGS; return; }
+    if (view == VALUES && auto_reading < READING_COUNT) { auto_reading = READING_COUNT; view = GROUPS; return; }
     if (view == FAULTS) {
         fault_reader_cancel();
         view = FUNCTIONS;
@@ -1302,7 +1320,10 @@ void menu_event(MenuEvent event) {
             break;
         case FAVORITES:
         case VALUES:
-            if (jump && view != FAVORITES) {
+            if (view == VALUES && auto_reading < READING_COUNT) {
+                auto_reading = READING_COUNT;
+                build_pages(preferences.last[engine][group]);
+            } else if (jump && view != FAVORITES) {
                 group = wrap(group, MENU_GROUPS, direction);
                 build_pages(preferences.last[engine][group]);
             } else {
@@ -1514,11 +1535,20 @@ void menu_process(void) {
         if (!save_failed)
             return;
     }
-    if (menu_parameters_active() && settings_state.rotate_readings && currentTime - page_changed >= 5000) {
+    if (auto_reading >= READING_COUNT && menu_parameters_active() && settings_state.rotate_readings &&
+        currentTime - page_changed >= 5000) {
         selection = wrap(selection, list_count, 1);
         select_page();
     }
-    if (menu_parameters_active() && view == FAVORITES &&
+    if (view == VALUES && auto_reading < READING_COUNT &&
+        !diagnostics_state.clear_faults_request && currentTime - page_changed >= 150 && currentTime - last_query >= 500) {
+        const ReadingMeta *meta = reading_lookup((ReadingId)auto_reading);
+        uint8_t source = meta ? reading_source(meta, vehicle_profile_current()) : READING_NO_SOURCE;
+        if (source < PARAMETER_DEFINITION_COUNT && parameter_definitions[source].request_id > 0xff) {
+            parameter_request_begin_id(source, 255);
+            last_query = currentTime;
+        }
+    } else if (menu_parameters_active() && view == FAVORITES &&
         !diagnostics_state.clear_faults_request && currentTime - page_changed >= 150 && currentTime - last_query >= 500) {
         unsigned set = settings_state.ipc_my23_is_installed ? list[selection] : list[selection] / 2;
         uint8_t ids[8];

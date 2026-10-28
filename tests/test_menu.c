@@ -463,7 +463,7 @@ static void preview_pair(uint16_t first, uint16_t second, bool my23) {
     settings_state.advanced_pages = 1;
     menu_init();
     menu_event(MENU_BACK);
-    menu_show_parameter(menu_page_index(0, first));
+    menu_show_reading(menu_page_index(0, first));
     menu_render();
 }
 static void reply_parameter(uint8_t id) {
@@ -687,7 +687,7 @@ static void test_controller(void) {
     assert(menu_preferences_decode(&decoded, saved));
     assert(!menu_page_visible(&decoded, 0, 1) && !menu_page_visible(&decoded, 1, 1));
     fresh_menu();
-    menu_show_parameter(23); /* Gasoline battery voltage UDS. */
+    menu_show_reading(23); /* Gasoline battery voltage UDS. */
     now = 2000;
     menu_process();
     assert(queries);
@@ -790,7 +790,7 @@ static void test_navigation_regressions(void) {
     assert(parameter_page_count == gasoline_page_count && menu_parameters_active());
 
     fresh_menu();
-    menu_show_parameter(23);
+    menu_show_reading(23);
     now += 1000;
     menu_process();
     const ParameterDefinition *p = &parameter_definitions[35];
@@ -813,7 +813,7 @@ static void test_navigation_regressions(void) {
     assert(strstr(screen, "No favorites"));
     menu_event(MENU_NEXT);
     assert(!menu_parameters_active());
-    menu_show_parameter(23);
+    menu_show_reading(23);
     assert(menu_parameters_active() && dashboard_state.dashboard_page_index == 23);
     assert(menu_preferences_save() == 0);
     assert(menu_preferences_decode(&prefs, saved));

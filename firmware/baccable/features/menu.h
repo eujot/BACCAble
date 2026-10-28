@@ -18,7 +18,7 @@ void menu_present_view(UiMode mode, const char *first, const char *second);
 void menu_present_lines(const char *first, const char *second);
 void menu_present_reading(const char *text);
 bool menu_parameters_active(void);
-void menu_show_parameter(uint8_t index);
+void menu_show_reading(uint8_t reading_id);
 uint8_t menu_preferences_save(void);
 void menu_engine_changed(void);
 void menu_parameters_refresh(void);
