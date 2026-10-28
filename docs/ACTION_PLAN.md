@@ -4,49 +4,45 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
-## HANDOFF — current state and next steps, 2026-10-28 (start here)
+## HANDOFF — current state and next steps, 2026-10-29 (start here)
 
-Branch `docs/vehicle-profile-audit`, HEAD `1e125bd`, working tree clean (8 commits).
-All four board flavors build and link: C1 92340/1836/10912, C2 30244/952/11384,
-BH 34996/860/12168, CAN 24332/656/6272 (text/data/bss). Scoped host tests: 40/40
-pass via the scoped runner.
+Branch `docs/vehicle-profile-audit`, HEAD `cc2d95c` (16 commits ahead of
+`origin/master`), working tree clean before this documentation update. Scoped
+host tests: 40/40 pass via the scoped runner.
 
-Working and testable now:
-- Vehicle editor (complete): Model, Model year, Engine, Drivetrain, Display,
-  Equipment (8 tri-state). Profile is canonical (0x107 load/save + 0x101 legacy
-  import + legacy-flag sync in settings/persistence.c and vehicle_editor.c).
-- Everything else unchanged (old compound Readings/Favorites, actions,
-  diagnostics, settings). No regressions.
+Completed this session (each committed separately, scoped tests green):
+1. `4bd5b6f` Favorites cutover to `FavoriteLayout`: render via
+   `favorite_row_render` (both rows on MY23, single-row subpages on legacy),
+   row/item/format editor (Auto/Full/Medium/Short) with HOLD-save + double-BACK
+   discard, and persistence through the new 0x106 UI-layout record. Old
+   0x103/0x104/0x105 compound layouts are intentionally ignored (one-time reset).
+2. `a312194` Removed EDIT_FAVORITES / EDIT_VISIBLE / ORDER_FAVORITES and their
+   draft/confirm state; Settings now Features / Sort order / Favorites /
+   BACCAble IPC. C1 linked again at text/data/bss = 96240/1836/11512.
+3. `cc2d95c` Automatic-result view cut to `menu_show_reading(READING_TIME_0_100)`
+   (single ReadingId render + single-source poll); removed the `parameter_page_find`
+   declaration and the page-index `menu_show_parameter`. Renamed the not-yet-
+   replaced menu tests to the new entry point so the scoped build still compiles.
 
-New but NOT wired into the UI yet (compiled but `--gc-sections`-dead):
-- features/reading_catalog.c/.h (stable ReadingId -> source map).
-- features/reading_format.c/.h (width-aware scalar/line renderer; now uses
-  project printf via third_party/printf).
-- features/favorite_layout.c/.h (row/item/style model + defaults) — only
-  `favorite_layout_default()` is called in menu.c (initializes `favorites_layout`,
-  not yet rendered).
-- storage/ui_layout_store.c/.h (0x106 UI record codec).
-
-Blocker (measured): wiring the new Readings/Favorites render pulls in
-reading_catalog (`reading_meta` ~2.2 KB struct array + ~1.7 KB strings) and the
-C1 `.rodata` overflows FLASH by ~2556 bytes. It cannot coexist with the old
-compound-page tables. Resolution = remove the retired `parameter_pages` tables and
-their consumers; no string-trimming shortcut (struct array alone exceeds the gap).
+Live C1 status: after step 3 the image compiles but links 60 bytes over FLASH
+(`reading_format_line` was newly pulled for the single-reading legacy path). This
+is the pre-step-4 gate; removing `parameter_pages` below reclaims it.
 
 Next steps, in order (each with a C1 build + scoped test run before committing):
-1. Favorites cutover: render + edit + persist the `FavoriteLayout` (2 rows x 4
-   items, ReadingId + Auto/Full/Medium/Short) instead of the page-pair model in
-   menu.c and favorite_parameters.c.
-2. Remove the three legacy editors EDIT_FAVORITES / EDIT_VISIBLE / ORDER_FAVORITES
-   and their settings entries.
-3. Cut over the automatic-result view (menu_show_parameter + parameter_page_find)
-   to a ReadingId/visible-source path.
-4. Delete `parameter_pages` (gasoline_pages/diesel_pages), menu_page_* helpers,
-   favorite_parameters.c and parameter_navigation.c page lookup. Keep
-   `parameter_definitions` (the 98 UDS sources).
-5. Re-apply the Readings cutover (GROUPS -> reading_group_name/reading_list,
-   VALUES -> reading_format_line/value, single-source polling). The exact edits
-   were applied and measured this session; re-read the live menu.c first.
+4. Remove `parameter_pages` (gasoline_pages/diesel_pages), `ParameterPage` and
+   `menu_page_*` helpers, plus `favorite_parameters.c` and `parameter_navigation.c`.
+   Keep `parameter_definitions` (the 98 UDS sources). This also means retiring
+   `MenuPreferences`/`menu_model.c` (visibility, page favorites, last-page and
+   alphabetical sort are page-shaped), `dashboard_send_values`,
+   `dashboard_format_values`/`dashboard_format_my23_page`, and the page-based
+   `oil_level_format`. Rewrite `parameter_request.c` to the single-source
+   `parameter_request_begin_id` path (drop `parameter_request_begin` and
+   `parameter_request_follow_page`). Update the firmware Makefile and tests/Makefile
+   source lists.
+5. Wire Readings: ROOT Readings -> GROUPS (reading group names, skip empty
+   groups) -> VALUES (`reading_list` + `reading_format_line`/`reading_format_value`,
+   single-source polling, `ui_layout.last_reading` cursor). Persist exits via
+   `settings_save` + `ui_layout_save` (drop the 0x105 record and SORT_EDIT).
 6. Replace obsolete host expectations per VEHICLE_UI_IMPLEMENTATION_PLAN.md
    Section 6 (test replacement map); keep vehicle/feature preservation tests.
 7. Update both EN/PL user guides + menu_demo.c + architecture docs.
@@ -60,7 +56,9 @@ Gotchas: read files in /private/tmp/baccable-vehicle-profile-audit via terminal
 (not read_file, which points at the stale /Users/eujot/git/BACCAble checkout).
 Float formatting must use the project printf (snprintf_), not libc snprintf
 (newlib-nano lacks %f). Preserve unrelated local edits and keep both user guides
-in sync per AGENTS.md.
+in sync per AGENTS.md. The oil-level BAR presentation is not yet routed through
+reading_format (READING_OIL_LEVEL_BAR still renders a status label); confirm the
+desired bar rendering before the documentation/matrix steps.
 
 ## P8 Readings cutover attempt: C1 FLASH overflow, 2026-10-28
 
