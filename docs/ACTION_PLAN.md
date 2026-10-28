@@ -4,6 +4,22 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## P8 Readings cutover attempt: C1 FLASH overflow, 2026-10-28
+
+Attempted the Readings cutover (GROUPS -> individual `ReadingId` via
+`reading_list`/`reading_format`, single-source polling). The code is correct but
+the C1 image no longer links: `region 'FLASH' overflowed by 2324 bytes`
+(`.rodata`). Root cause is that the new reading-catalog strings/format code now
+coexist with the still-live old compound-page tables, which Favorites and the
+automatic-result view have not yet been cut over. This is the P10 resource gate.
+
+Reverted `features/menu.c` to keep the build green; the tree builds again.
+Resolving this requires, in order: (1) finish the Favorites and automatic-result
+cutover, then remove the retired `parameter_pages` compound tables (frees FLASH),
+and (2) route `reading_format.c` float formatting through `third_party/printf`
+(`snprintf_`) instead of libc `snprintf` (newlib-nano has no `%f`). Both are P8/P9
+follow-ups, not blockers for the already-committed Vehicle editor work.
+
 ## P8 step 1: canonical profile persistence, 2026-10-28
 
 Started the P8 cutover with the safest, testable slice: the `VehicleProfile` is
