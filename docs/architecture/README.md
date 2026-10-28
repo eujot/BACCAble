@@ -36,6 +36,8 @@ with one event loop and statically allocated state.
 
 The [vehicle profile audit](VEHICLE_PROFILE_AUDIT.md) records current vehicle
 configuration consumers and a proposed centralization plan awaiting review.
+The [reading layout proposal](READING_LAYOUT_PROPOSAL.md) covers per-line widths,
+composable Favorites, format choices and older-screen compatibility.
 
 ## Execution and ownership
 

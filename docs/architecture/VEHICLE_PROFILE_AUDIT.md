@@ -148,6 +148,10 @@ lists but retain their saved Favorite slots/preferences. Unknown passive reading
 remain available with unknown applicability; unknown actuation-specific equipment
 needs configuration before a newly confirmed profile can authorize it.
 
+Follow-up: the [reading layout proposal](READING_LAYOUT_PROPOSAL.md) refines
+Display into Auto / Legacy 18 / Legacy 24 / MY23 and describes the runtime
+buffer/transport work needed to support both legacy widths in one firmware.
+
 ## Proposed menu, for review only
 
 ```text

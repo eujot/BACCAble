@@ -4,6 +4,22 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Width-aware reading/Favorites concept, 2026-10-28
+
+Extended `docs/vehicle-profile-audit` with the
+[reading layout proposal](architecture/READING_LAYOUT_PROPOSAL.md). Audited actual
+page-Favorites rendering and original gaucho1978 code at `96a9f1f`: upstream has
+18/default and 24/LARGE_DISPLAY text budgets, with the latter marked unfinished;
+no physical small-screen diagonal/capacity mapping was established by the inspected
+headers and EN/IT/PL manuals. Our MY23 path has 16/22 fields, but ordinary page
+formatting does not consume the second-line width (oil already does).
+Proposed shared individual-value presentations, width-aware rendering, compound
+presets, per-item Auto/Full/Medium/Short, versioned row editing and legacy subpages.
+Refines the profile proposal to explicit Legacy18/Legacy24/MY23 modes and records
+required C1/BH runtime transport work, migration, polling and memory limits.
+Documentation only; awaits owner review. Firmware/user guides unchanged; no
+build or hardware verification claimed. Source links and examples checked.
+
 ## Vehicle profile audit for review, 2026-10-28
 
 Documentation-only branch `docs/vehicle-profile-audit`, based on master
