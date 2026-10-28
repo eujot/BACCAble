@@ -5,6 +5,7 @@
 #include "features/my23_ui.h"
 #include "features/menu_demo.h"
 #include "vehicle/vehicle_profile.h"
+#include "vehicle/vehicle_editor.h"
 #include "features/favorite_parameters.h"
 #include "vehicle/steering_controls.h"
 #include "features/ibs_override.h"
@@ -1403,6 +1404,41 @@ static void test_board_sync_retry(void) {
 
 static void fresh_contract(void);
 
+static void test_vehicle_editor(void) {
+    VehicleProfile p;
+    vehicle_profile_default(&p);
+    p.model = VEHICLE_MODEL_GIULIA;
+    p.engine = VEHICLE_ENGINE_PETROL20;
+    p.drivetrain = VEHICLE_DRIVETRAIN_RWD;
+    p.display_selection = VEHICLE_DISPLAY_MY23;
+    vehicle_profile_commit(&p);
+
+    vehicle_editor_begin();
+    assert(vehicle_editor_state() == VEHICLE_EDITOR_BROWSE);
+    assert(!strcmp(vehicle_editor_field_label(), "Model"));
+
+    char buf[24];
+    assert(!strcmp(vehicle_editor_value_label(buf, sizeof(buf)), "Giulia"));
+
+    vehicle_editor_navigate(1);
+    vehicle_editor_navigate(1);
+    assert(!strcmp(vehicle_editor_field_label(), "Engine"));
+    assert(!strcmp(vehicle_editor_value_label(buf, sizeof(buf)), "2.0 Petrol"));
+
+    vehicle_editor_select();
+    assert(vehicle_editor_state() == VEHICLE_EDITOR_EDIT);
+    vehicle_editor_navigate(1);
+    assert(!strcmp(vehicle_editor_value_label(buf, sizeof(buf)), "2.9 Petrol"));
+    vehicle_editor_navigate(1);
+    assert(!strcmp(vehicle_editor_value_label(buf, sizeof(buf)), "2.2 Diesel"));
+
+    assert(vehicle_editor_back() && vehicle_editor_state() == VEHICLE_EDITOR_BROWSE);
+    assert(vehicle_editor_back() && vehicle_editor_state() == VEHICLE_EDITOR_CONFIRM);
+    assert(!vehicle_editor_back());
+    puts("PASS: vehicle editor browses, edits and discards a profile draft");
+}
+
+
 #include "test_setup_ui.c"
 #include "test_unified_ui.c"
 #include "test_menu_contract.c"
@@ -1420,6 +1456,7 @@ int main(void) {
 #endif
     const HostTest tests[] = {
         HOST_TEST(test_settings_migration),
+        HOST_TEST(test_vehicle_editor),
         HOST_TEST(test_default_mode_engine_gate),
         HOST_TEST(test_oil_level),
         HOST_TEST(test_oil_favorites),

@@ -13,6 +13,7 @@
 #include "diagnostics/parameter_cache.h"
 #include "diagnostics/parameter_request.h"
 #include "storage/flash_records.h"
+#include "vehicle/vehicle_editor.h"
 #if defined(BACCABLE_C1)
 
 typedef enum {
@@ -29,7 +30,7 @@ typedef enum {
     INFO,
     IPC_OPTIONS,
     FAV_SETS, FAV_SLOTS, FAV_PICK, SORT_EDIT,
-    FAULTS, RAIN_TEST
+    FAULTS, RAIN_TEST, VEHICLE
 } MenuView;
 typedef enum {
     ACTION_READ,
@@ -77,7 +78,7 @@ typedef struct {
 static ActionRequest requests[ACTION_COUNT];
 #define ACTION_TIMEOUT_MS 10000U
 #define INFO_PAGES 10U
-static const char *const roots[] = {"Favorites", "Readings", "Actions", "Settings", "Information"};
+static const char *const roots[] = {"Favorites", "Readings", "Actions", "Settings", "Information", "Vehicle"};
 static const char *const settings[] = {"Features",   "Page favorites", "Shown pages",
                                        "Favorite order", "Sort order", "Favorites", "BACCAble IPC"};
 static char peer_versions[2][DASHBOARD_MESSAGE_MAX_LENGTH - 2];
@@ -986,6 +987,24 @@ void menu_render(void) {
         else
             snprintf_(text, sizeof(text), "%s%s", setting != 4 ? UI_SYMBOL_ENTER " " : "", settings[setting]);
         break;
+    case VEHICLE: {
+        char value[24];
+        const char *v = vehicle_editor_value_label(value, sizeof(value));
+        VehicleEditorState st = vehicle_editor_state();
+        if (settings_state.ipc_my23_is_installed) {
+            if (st == VEHICLE_EDITOR_CONFIRM)
+                menu_present_view(UI_MODE_CONFIRM, vehicle_editor_field_label(), "HOLD SAVE" MY23_BULLET "2X DISCARD");
+            else
+                menu_present_view(st == VEHICLE_EDITOR_EDIT ? UI_MODE_EDIT : UI_MODE_LIST,
+                                  vehicle_editor_field_label(), v);
+            return;
+        }
+        if (st == VEHICLE_EDITOR_CONFIRM)
+            snprintf_(text, sizeof(text), "Hold save/2x drop");
+        else
+            snprintf_(text, sizeof(text), "%s %s", vehicle_editor_field_label(), v);
+        break;
+    }
     case IPC_OPTIONS: {
         char next[24];
         ipc_option_text(text, sizeof(text), ipc_option);
@@ -1200,6 +1219,10 @@ static void back(void) {
         view = FUNCTIONS;
         return;
     }
+    if (view == VEHICLE) {
+        if (!vehicle_editor_back()) { vehicle_editor_cancel(); view = ROOT; }
+        return;
+    }
     if (view == ROOT) {
         request_exit(ROOT, true);
         return;
@@ -1226,6 +1249,11 @@ static void back(void) {
 /* Apply one navigation gesture to the currently visible menu. */
 /* Keep editor save handling outside the navigation switch on the small C1 target. */
 static __attribute__((noinline)) void menu_hold(void) {
+    if (view == VEHICLE) {
+        vehicle_editor_save();
+        menu_notice_saved("Vehicle");
+        return;
+    }
     if (page_editor()) {
         MenuPreferences original = preferences;
         preferences = editor_draft;
@@ -1347,6 +1375,9 @@ void menu_event(MenuEvent event) {
         case RAIN_TEST:
             rain_test_move_page();
             break;
+        case VEHICLE:
+            vehicle_editor_navigate(direction);
+            break;
         case INFO:
             info = wrap(info, INFO_PAGES, direction);
             break;
@@ -1402,6 +1433,10 @@ void menu_event(MenuEvent event) {
                 break;
             case 4:
                 view = INFO;
+                break;
+            case 5:
+                view = VEHICLE;
+                vehicle_editor_begin();
                 break;
             }
             break;
@@ -1483,6 +1518,9 @@ void menu_event(MenuEvent event) {
         case RAIN_TEST:
             rain_test_toggle_force();
             break;
+        case VEHICLE:
+            vehicle_editor_select();
+            break;
         case INFO:
             if (info == 9) {
                 demo_active = true;
@@ -1514,7 +1552,7 @@ void menu_button(uint8_t button, bool allowed) {
     bool repeat_allowed = allowed && !save_failed && dashboard_state.baccable_dashboard_menu_visible &&
                           (view == FAVORITES || view == VALUES || view == GROUPS ||
                            view == SETTINGS || view == SETUP || view == IPC_OPTIONS ||
-                           view == SORT_EDIT || view == FAV_SETS || view == FAV_SLOTS || view == FAV_PICK || is_editor() ||
+                           view == SORT_EDIT || view == FAV_SETS || view == FAV_SLOTS || view == FAV_PICK || view == VEHICLE || is_editor() ||
                            (view == ORDER_FAVORITES && !order_selected));
     if (event == MENU_NONE)
         event = menu_input_repeat(&input, repeat_allowed, currentTime);

@@ -106,7 +106,7 @@ test: build/test_drive_mode build/test_drive_mode_c2 build/test_drive_mode_bh
 MENU_SOURCES := test_menu.c $(addprefix $(FIRMWARE)/, features/menu.c features/menu_model.c \
  features/menu_input.c features/menu_demo.c features/my23_ui.c features/favorite_parameters.c features/ui_entry.c features/display_stream.c features/oil_bar_animation.c features/ibs_override.c features/board_sync.c features/drive_mode_check.c features/dashboard.c features/dashboard_format.c features/oil_level.c features/rain_test.c features/rain_lights.c \
  diagnostics/parameter_cache.c diagnostics/parameter_request.c diagnostics/parameter_catalog.c \
- protocol/checksum.c vehicle/steering_controls.c diagnostics/uds_decode.c diagnostics/fault_reader.c settings/persistence.c settings/setup_menu.c settings/setup_entries.c vehicle/vehicle_profile.c \
+ protocol/checksum.c vehicle/steering_controls.c diagnostics/uds_decode.c diagnostics/fault_reader.c settings/persistence.c settings/setup_menu.c settings/setup_entries.c vehicle/vehicle_profile.c vehicle/vehicle_editor.c \
  third_party/printf/printf.c)
 MENU_FIXTURES := test_oil_level.c test_my23_ui.c test_idle_latin1.c test_menu_contract.c test_setup_ui.c test_unified_ui.c
 build/test_menu: $(MENU_SOURCES) $(MENU_FIXTURES) $(HEADERS) Makefile

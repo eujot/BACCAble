@@ -11,6 +11,11 @@
           "name": "test_settings_migration",
           "change": "updated",
           "evidence": "test-impact.md#p8-settings-profile"
+        },
+        {
+          "name": "test_vehicle_editor",
+          "change": "new",
+          "evidence": "test-impact.md#p8-vehicle-editor"
         }
       ]
     },
