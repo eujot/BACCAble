@@ -6,9 +6,8 @@
 
 ## HANDOFF — current state and next steps, 2026-10-29 (start here)
 
-Branch `docs/vehicle-profile-audit`, HEAD `e8c5c59` (20 commits ahead of
-`origin/master`). Scoped host tests: 40/40 pass via the scoped runner. All four
-board flavors build and link.
+Branch `docs/vehicle-profile-audit`, HEAD `78e42f3`. Scoped host tests: 41/41 pass
+via the scoped runner. All four board flavors build and link.
 
 Completed (each committed separately, scoped tests green):
 1. `4bd5b6f` Favorites cutover to `FavoriteLayout` (render/edit/persist via 0x106).
@@ -24,27 +23,30 @@ Completed (each committed separately, scoped tests green):
 6. `e8c5c59` Rewrote `tests/test_menu.c` to keep the scoped settings-migration and
    vehicle-editor cases plus new-record flash stubs, dropping the obsolete
    compound-page menu fixtures.
+7. `b6e23ed` Updated the EN/PL user-guide menu-structure and Favorites/Readings
+   sections, replaced `test_catalog.c` with a parameter-definition layout test,
+   and recorded the retired expectations in `test-impact.md`.
+8. `78e42f3` Routed `READING_OIL_LEVEL_BAR` through a dedicated full-width bar
+   renderer (bracket/scale + marker + off-scale arrows) instead of the oil-status
+   label; `favorite_row_render` renders it full-width without a label. Added
+   `test_reading_oil_bar` (41/41).
 
-Flash/RAM now (text/data/bss): C1 85764/1836/11328, C2 30236/952/11384,
+Flash/RAM now (text/data/bss): C1 86312/1836/11328, C2 30236/952/11384,
 BH 34984/860/12168, CAN 24328/656/6272.
 
-Remaining (step 7 documentation, in this order):
-- Update both EN/PL user guides (`manuals/BACCAble_USER_GUIDE_EN.md`,
-  `manuals/BACCAble_USER_GUIDE_PL.md`) to the new menu: Readings individual
-  readings + groups (Oil/Temperatures/Engine/Fuel/Battery/Diesel-DPF/Driving/
-  Performance/Diagnostics), Favorites 6x2x4 row/item/format editor, Settings
-  Features/Favorites/BACCAble IPC (no Page favorites/Shown pages/Favorite order/
-  Sort order), automatic result, 0x106 reset. Remove compound-page and page-list
-  descriptions; do not copy the old PDF/DOCX behavior.
-- Refresh `tests/test-impact.md` (and re-integrate the still-valid fixture tests
-  in `tests/test_my23_ui.c`, `test_setup_ui.c`, `test_unified_ui.c`,
-  `test_idle_latin1.c`, `test_menu_contract.c` and replace `test_catalog.c`
-  per VEHICLE_UI_IMPLEMENTATION_PLAN.md Section 6; they are currently orphaned
-  and not compiled by the scoped runner).
-- Update architecture docs (`VEHICLE_UI_IMPLEMENTATION_PLAN.md` status,
-  `VEHICLE_UI_SOURCE_READING_MAP.md`) to record the cutover; keep
-  `docs/ACTION_PLAN.md` as the single backlog.
-- `menu_demo.c` label already updated to `BACCAble IPC`.
+Remaining (documentation polish, non-blocking):
+- Finish the detailed reading-catalog sections of both user guides
+  (`manuals/BACCAble_USER_GUIDE_EN.md` `Gasoline/Diesel reading catalog` and the
+  Polish equivalents) which still list the retired page IDs; the menu-structure,
+  Favorites/Readings and old-manual-comparison sections are already updated.
+- Re-integrate the still-valid renderer/packet fixtures in `tests/test_my23_ui.c`
+  (`test_my23_glyph_budget`), `test_unified_ui.c` (`test_shared_renderers`, etc.)
+  and `test_idle_latin1.c` (`test_latin1_vocabulary`), and drop the remaining
+  obsolete menu-navigation fixtures. They are currently orphaned and not compiled
+  by the scoped runner; the new-model invariants are already covered by the
+  41 scoped cases.
+- Update architecture-doc status notes (`VEHICLE_UI_IMPLEMENTATION_PLAN.md`,
+  `VEHICLE_UI_SOURCE_READING_MAP.md`); `docs/ACTION_PLAN.md` remains the backlog.
 
 Build/test commands (worktree root, full ARM toolchain):
 - scoped tests: python3 tests/run_vehicle_ui_tests.py --manifest tests/vehicle_ui_tests.json --run
@@ -54,10 +56,7 @@ Gotchas: read files in /private/tmp/baccable-vehicle-profile-audit via terminal
 (not read_file, which points at the stale /Users/eujot/git/BACCAble checkout).
 Float formatting must use the project printf (snprintf_), not libc snprintf
 (newlib-nano lacks %f). Preserve unrelated local edits and keep both user guides
-in sync per AGENTS.md. The oil-level BAR presentation is not yet routed through
-reading_format (READING_OIL_LEVEL_BAR still renders a status label); confirm the
-desired bar rendering before finalizing the guides. Hardware acceptance remains
-open; no board has been flashed.
+in sync per AGENTS.md. Hardware acceptance remains open; no board has been flashed.
 
 ## P8 Readings cutover attempt: C1 FLASH overflow, 2026-10-28
 

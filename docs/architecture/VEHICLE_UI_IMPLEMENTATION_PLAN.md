@@ -1,13 +1,12 @@
 # Joint implementation specification: vehicle profile, Readings and Favorites
 
 Planning baseline: `origin/master` at `ba9176e`, inspected 2026-10-28.
-Status: implementation instructions for later execution; this task changes only
-this documentation. Task status remains in [ACTION_PLAN.md](../ACTION_PLAN.md).
-This is the single authoritative execution specification. Earlier profile/layout
-audits are historical evidence only where they differ from this plan.
-The owner requests one integrated delivery with small ordered implementation
-steps, and only new or meaningfully modified test cases may be executed.
-No implementation or test execution has been performed in this planning task.
+Status: implemented 2026-10-29 on `docs/vehicle-profile-audit`; the code,
+scoped tests and the 4-flavor build are recorded in [ACTION_PLAN.md](../ACTION_PLAN.md).
+This file remains the authoritative execution specification. Earlier
+profile/layout audits are historical evidence only where they differ from this
+plan. The owner required one integrated delivery with small ordered
+implementation steps, and only new or meaningfully modified test cases executed.
 
 ## 1. Binding owner decisions and scope
 
