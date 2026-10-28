@@ -6,47 +6,45 @@
 
 ## HANDOFF — current state and next steps, 2026-10-29 (start here)
 
-Branch `docs/vehicle-profile-audit`, HEAD `cc2d95c` (16 commits ahead of
-`origin/master`), working tree clean before this documentation update. Scoped
-host tests: 40/40 pass via the scoped runner.
+Branch `docs/vehicle-profile-audit`, HEAD `e8c5c59` (20 commits ahead of
+`origin/master`). Scoped host tests: 40/40 pass via the scoped runner. All four
+board flavors build and link.
 
-Completed this session (each committed separately, scoped tests green):
-1. `4bd5b6f` Favorites cutover to `FavoriteLayout`: render via
-   `favorite_row_render` (both rows on MY23, single-row subpages on legacy),
-   row/item/format editor (Auto/Full/Medium/Short) with HOLD-save + double-BACK
-   discard, and persistence through the new 0x106 UI-layout record. Old
-   0x103/0x104/0x105 compound layouts are intentionally ignored (one-time reset).
-2. `a312194` Removed EDIT_FAVORITES / EDIT_VISIBLE / ORDER_FAVORITES and their
-   draft/confirm state; Settings now Features / Sort order / Favorites /
-   BACCAble IPC. C1 linked again at text/data/bss = 96240/1836/11512.
-3. `cc2d95c` Automatic-result view cut to `menu_show_reading(READING_TIME_0_100)`
-   (single ReadingId render + single-source poll); removed the `parameter_page_find`
-   declaration and the page-index `menu_show_parameter`. Renamed the not-yet-
-   replaced menu tests to the new entry point so the scoped build still compiles.
+Completed (each committed separately, scoped tests green):
+1. `4bd5b6f` Favorites cutover to `FavoriteLayout` (render/edit/persist via 0x106).
+2. `a312194` Removed EDIT_FAVORITES / EDIT_VISIBLE / ORDER_FAVORITES.
+3. `cc2d95c` Automatic-result view cut to `menu_show_reading(READING_TIME_0_100)`.
+4-5. `20b0e00` Removed the compound-page model and wired the ReadingId Readings
+   path: deleted `parameter_pages`/`ParameterPage`, `menu_model.c`/`MenuPreferences`,
+   `dashboard_format.c`, page-based `oil_level.c`, `favorite_parameters.c` and
+   `parameter_navigation.c`; kept `parameter_definitions` (98 UDS sources).
+   Readings now uses `reading_group_name`/`reading_list` + `reading_format_line/value`
+   with single-source polling and `ui_layout.last_reading`. `parameter_request.c`
+   is single-source; `dashboard_send_values` and the page formatters are gone.
+6. `e8c5c59` Rewrote `tests/test_menu.c` to keep the scoped settings-migration and
+   vehicle-editor cases plus new-record flash stubs, dropping the obsolete
+   compound-page menu fixtures.
 
-Live C1 status: after step 3 the image compiles but links 60 bytes over FLASH
-(`reading_format_line` was newly pulled for the single-reading legacy path). This
-is the pre-step-4 gate; removing `parameter_pages` below reclaims it.
+Flash/RAM now (text/data/bss): C1 85764/1836/11328, C2 30236/952/11384,
+BH 34984/860/12168, CAN 24328/656/6272.
 
-Next steps, in order (each with a C1 build + scoped test run before committing):
-4. Remove `parameter_pages` (gasoline_pages/diesel_pages), `ParameterPage` and
-   `menu_page_*` helpers, plus `favorite_parameters.c` and `parameter_navigation.c`.
-   Keep `parameter_definitions` (the 98 UDS sources). This also means retiring
-   `MenuPreferences`/`menu_model.c` (visibility, page favorites, last-page and
-   alphabetical sort are page-shaped), `dashboard_send_values`,
-   `dashboard_format_values`/`dashboard_format_my23_page`, and the page-based
-   `oil_level_format`. Rewrite `parameter_request.c` to the single-source
-   `parameter_request_begin_id` path (drop `parameter_request_begin` and
-   `parameter_request_follow_page`). Update the firmware Makefile and tests/Makefile
-   source lists.
-5. Wire Readings: ROOT Readings -> GROUPS (reading group names, skip empty
-   groups) -> VALUES (`reading_list` + `reading_format_line`/`reading_format_value`,
-   single-source polling, `ui_layout.last_reading` cursor). Persist exits via
-   `settings_save` + `ui_layout_save` (drop the 0x105 record and SORT_EDIT).
-6. Replace obsolete host expectations per VEHICLE_UI_IMPLEMENTATION_PLAN.md
-   Section 6 (test replacement map); keep vehicle/feature preservation tests.
-7. Update both EN/PL user guides + menu_demo.c + architecture docs.
-8. Run the 4-flavor UI matrix and record Flash/RAM; leave hardware acceptance open.
+Remaining (step 7 documentation, in this order):
+- Update both EN/PL user guides (`manuals/BACCAble_USER_GUIDE_EN.md`,
+  `manuals/BACCAble_USER_GUIDE_PL.md`) to the new menu: Readings individual
+  readings + groups (Oil/Temperatures/Engine/Fuel/Battery/Diesel-DPF/Driving/
+  Performance/Diagnostics), Favorites 6x2x4 row/item/format editor, Settings
+  Features/Favorites/BACCAble IPC (no Page favorites/Shown pages/Favorite order/
+  Sort order), automatic result, 0x106 reset. Remove compound-page and page-list
+  descriptions; do not copy the old PDF/DOCX behavior.
+- Refresh `tests/test-impact.md` (and re-integrate the still-valid fixture tests
+  in `tests/test_my23_ui.c`, `test_setup_ui.c`, `test_unified_ui.c`,
+  `test_idle_latin1.c`, `test_menu_contract.c` and replace `test_catalog.c`
+  per VEHICLE_UI_IMPLEMENTATION_PLAN.md Section 6; they are currently orphaned
+  and not compiled by the scoped runner).
+- Update architecture docs (`VEHICLE_UI_IMPLEMENTATION_PLAN.md` status,
+  `VEHICLE_UI_SOURCE_READING_MAP.md`) to record the cutover; keep
+  `docs/ACTION_PLAN.md` as the single backlog.
+- `menu_demo.c` label already updated to `BACCAble IPC`.
 
 Build/test commands (worktree root, full ARM toolchain):
 - scoped tests: python3 tests/run_vehicle_ui_tests.py --manifest tests/vehicle_ui_tests.json --run
@@ -58,7 +56,8 @@ Float formatting must use the project printf (snprintf_), not libc snprintf
 (newlib-nano lacks %f). Preserve unrelated local edits and keep both user guides
 in sync per AGENTS.md. The oil-level BAR presentation is not yet routed through
 reading_format (READING_OIL_LEVEL_BAR still renders a status label); confirm the
-desired bar rendering before the documentation/matrix steps.
+desired bar rendering before finalizing the guides. Hardware acceptance remains
+open; no board has been flashed.
 
 ## P8 Readings cutover attempt: C1 FLASH overflow, 2026-10-28
 

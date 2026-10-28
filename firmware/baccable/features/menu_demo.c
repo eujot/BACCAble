@@ -38,7 +38,7 @@ static const DemoScreen screens[] = {
     {UI_MODE_EDIT, "Display", "MY23" MY23_BULLET "HOLD SAVE", "Display: MY23", 1700},
     {UI_MODE_LIST, "Equipment", "Review / Save", "> Equipment", 1500},
     {UI_MODE_LIST, "Features", "Favorites", "> Features", 1500},
-    {UI_MODE_LIST, "Favorites", "Shown readings", "> Favorites", 1500},
+    {UI_MODE_LIST, "Favorites", "BACCAble IPC", "> Favorites", 1500},
     {UI_MODE_EDIT, "Favorite 1 - A", "Oil  120 C" MY23_BULLET "HOLD SAVE", "Oil 120 C", 1700},
     {UI_MODE_LIST, "Restore defaults", "Favorite 1", "> Restore defaults", 1800},
     {UI_MODE_LIST, "Information", "Favorites", "> Information", 1600},
