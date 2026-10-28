@@ -57,3 +57,33 @@ to generate the expected strings.
 builds each manifest target with `/usr/bin/clang` (ASan/UBSan) and runs exactly
 the selected cases. Result: **40 selected cases passed, 0 failed**. Untouched
 regression suites and vehicle hardware were not run and are not claimed here.
+
+## Retired compound-page expectations (P8/P9 cutover)
+
+The compound-page menu model was removed with the Readings cutover. The following
+obsolete host expectations were dropped from the scoped menu executable rather
+than re-written against a model that no longer exists; their replacement coverage
+lives in the new pure-model executables above (`test_reading_catalog`,
+`test_reading_layout`, `test_favorite_layout`, `test_ui_layout_store`,
+`test_vehicle_profile`):
+
+- `test_preferences`, `test_shipped_favorite_pairs`, `test_readings_preview_prefetch`,
+  `test_engine_filters`, `test_readable_screens`, `test_cache_flags`,
+  `test_atomic_favorite_packing`, `test_whole_page_favorites_and_beta19_migration`,
+  `test_favorite_poll_cycle`, `test_favorite_slot_draft_flow`,
+  `test_my23_list_and_old_favorite_migration`, `test_fifth_favorite_uds_reply`,
+  `test_v6_parameter_label_identity`, `test_page_editor_transactions`,
+  `test_my23_visibility_transaction`, `test_my23_reading_formats_fit`,
+  `test_my23_readings_preview_and_unavailable_gear` — page IDs, `$...` templates,
+  visibility/order bitmaps and FavoriteParameters slot semantics.
+- `test_catalog.c` (page count/width) — replaced by `test_parameter_definition_layout`
+  in the same file: the 98 UDS `parameter_definitions` keep their 28-byte layout,
+  request schema and signed scaling invariants.
+- `test_oil_level.c` — page-ID oil rendering removed with the page model; oil
+  ranges/status remain covered by `test_reading_oil_status` and the vehicle
+  profile oil-range case.
+
+The remaining menu/gesture fixtures (`test_my23_ui.c`, `test_setup_ui.c`,
+`test_unified_ui.c`, `test_idle_latin1.c`, `test_menu_contract.c`) still contain
+obsolete page-model cases and are therefore not compiled by the scoped runner;
+re-integrating their still-valid cases is tracked as follow-up documentation work.

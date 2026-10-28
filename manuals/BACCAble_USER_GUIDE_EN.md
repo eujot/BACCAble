@@ -106,15 +106,17 @@ current view. Waiting does not automatically retry.
 
 ```text
 Main menu
-├─ Favorites                 Your selected live pages
+├─ Favorites                 6 sets, 2 rows × up to 4 items
 ├─ Readings
-│  ├─ All readings
-│  ├─ Engine
+│  ├─ Oil
 │  ├─ Temperatures
+│  ├─ Engine
+│  ├─ Fuel
 │  ├─ Battery
-│  ├─ DPF / AdBlue
+│  ├─ Diesel / DPF
+│  ├─ Driving
 │  ├─ Performance
-│  └─ Other
+│  └─ Diagnostics
 ├─ Actions                   Run a function or diagnostic operation
 ├─ Settings
 │  ├─ Features               Device and vehicle-function settings
@@ -122,20 +124,17 @@ Main menu
 │  │     ├─ Enabled
 │  │     ├─ Store position
 │  │     └─ < Back
-│  ├─ Favorites              Favorite 1–6 → Slot 1–2 → reading page
-│  ├─ Shown pages            Show/hide pages in Readings
-│  ├─ Sort order             Grouped or alphabetical reading lists
+│  ├─ Favorites              Favorite 1–6 → Row A/B → item → reading + format
 │  └─ BACCAble IPC           Temporary refresh experiments
 └─ Information               Versions, input status and Demo
 ```
 
-This Settings layout applies to MY23 and to any profile after an atomic Favorite set
-has been saved. Before that first save, legacy Settings retains Features,
-Page favorites, Shown pages, Favorite order, Sort order, Favorites, BACCAble IPC.
-
-The main menu order is fixed. Page availability follows the selected engine,
-`Advanced pages` and `Shown pages`. A group without eligible pages may show
-`No pages`. The complete catalogs below include pages that are hidden by default.
+The main menu order is fixed. Readings shows individual measurements organized
+into the groups above; groups with no reading eligible for the configured vehicle
+profile are omitted. Reading availability follows the vehicle profile (engine
+class and installed equipment), not the old `Advanced pages`/`Shown pages` toggles.
+Favorites compose individual readings into two logical rows. On first start the
+engine-aware defaults are loaded and saved once (the 0x106 UI record).
 
 ## Display symbols and messages
 
@@ -222,152 +221,42 @@ If behavior worsens, select Reset default or completely power down the device.
 
 ## Favorites and reading layout
 
-Favorites poll each diagnostic value once per cycle, even if it appears on both lines. Dense pairs of pages can take up to four seconds to refresh all eight values; they remain visible for that cycle and show `--` if replies stop. Native CAN readings retain their usual freshness limit.
+Favorites are six sets, each with two rows (**A** and **B**) of up to four items.
+Each item stores one individual reading and a display format: **Auto**, **Full**,
+**Medium** or **Short**. **Auto** chooses the most readable fitting label once
+when the layout is resolved. A Favorite row joins its items with at least one
+space and never clips digits; `--` means missing or stale. MY23 shows both rows;
+legacy navigates the non-empty rows (1/A, 1/B, 2/A, …). The same reading may
+appear in several rows and is polled only once.
 
-### Shipped default favorites
+### Default favorites
 
-A fresh install (gasoline) starts with six themed sets, each pairing a first-line
-page with a second-line page. A 1-line IPC shows only the first column; a 2-line
-IPC shows both lines. The set selected on start-up is **S1 Elektryka**.
+A first start loads engine-aware defaults and saves them once. A later vehicle
+profile change never overwrites a saved layout; an unsupported saved item simply
+shows `--` until it applies again.
 
-| Set | Line 1 | Line 2 |
+| Set | Row A | Row B |
 | --- | --- | --- |
-| S1 Elektryka | `Oil L / mm / %` | `Batt charge BCM` |
-| S2 Osiągi | `Power / torque` | `Boost pressure` |
-| S3 Temperatury | `Oil/water/gear C` | `Intercooler out` |
-| S4 Jazda | `Speed` | `Gear` |
-| S5 Timery | `0-100 km/h` | `Best 0-100` |
-| S6 Olej / Multiair | `Oil/water/IC C` | `Misfires/MA temp` |
+| Warm-up | Oil temp + coolant | Gearbox temp |
+| Oil | Oil level mm + LOW/OK/HIGH | Oil level bar |
+| Engine | Power + boost | Power + torque |
+| Cooling | Coolant | Intercooler inlet + outlet |
+| Battery | Voltage + current | IBS state of charge |
+| Diesel DPF / Gasoline Performance | DPF load + temp (diesel) / 0–100 (gasoline) | Regen progress (diesel) / Best 0–100 (gasoline) |
 
-Diesel keeps its four existing defaults and has no second-line pages. New
-installations use the Favorite slot layout on both IPC profiles. Pairs are seeded
-only when no saved page or slot preferences exist. Existing saved favorites are
-preserved, even when their primary page matches a shipped default. Editing
-these sets follows the same steps below.
-
-### Configure two reading pages per favorite
+### Edit a favorite
 
 1. Open `Settings → Favorites` and choose `Favorite 1` through `Favorite 6`.
-2. Click to edit. Choose `Slot 1` or `Slot 2`, click, then browse the
-   same catalog pages as in Readings with up/down and click to use one. `Empty` clears that slot.
-3. **Slot 1 is the primary reading page**. MY23 puts it in line 1. Slot 2
-   appears in line 2. An empty primary hides that favorite.
-   To change order, replace the slots; assigning a page already in another
-   slot clears its old position. Editing is available only in Settings.
-4. Hold to save directly, also while choosing a slot value. Alternatively,
-   double-click for the save prompt, then hold to save or double-click to discard. A successful save stays at the selected slot; double-click to leave.
-5. Open main-menu `Favorites` to view live values. On legacy, a configured set
-   shows its primary page on the single line.
-
-Returning from other lists keeps the selected Favorite, as does engine filtering
-if that set remains available. Otherwise the first available set is selected.
-This selection is remembered separately for gasoline and diesel until restart.
-
-Each slot uses the selected page's measurements. MY23 removes numeric padding
-and uses a shorter caption where necessary; legacy keeps the catalog format. A page such as
-`Oil/coolant temp` contains two values in one line; it remains one slot when
-added to Favorites. `--` means unavailable or stale. `Gear -` includes the raw
-`0xF` unavailable code; it is not gear 15.
-
-On MY23, `Oil/water/IC C` shows all four temperatures as `O90 W85 I40 X35`:
-oil, coolant, intercooler inlet and outlet. Spaces shrink when three-digit
-values need the 16-character line, for example `O101W102I103X104`.
-`Oil/coolant temp` uses `Oil 101° W 88°`; `W` is coolant. `Misfires cyl 1-4`
-shows counts in cylinder order, for example `12/ 23/ 34/ 45`.
-
-Only the first two saved slots are shown and editable in this revision. Earlier
-five-slot records retain slots 3–5 in storage for compatibility, but those slots
-are not displayed or polled. Saving Slots 1–2 does not erase those old IDs.
-Every MY23 Readings page keeps all of its measurements on line 1, whether it
-contains one, two, three or four values. Its compact format removes extra spaces
-and shortens long captions to fit 16 glyphs; the same format is used in MY23
-Favorites. Line 2 previews the next page. While that preview is visible, BACCAble
-also reads its diagnostic values in the background. Moving forward uses the
-cached values immediately when replies have arrived. Current and preview pages
-share one query every 500 ms, with shared values read only once per cycle; dense
-pairs can take up to four seconds. Diagnostic values remain usable for 4.5 seconds
-in this view, while native CAN values keep their normal three-second freshness
-limit. Fast scrolling or a missing ECU reply can still show `--`.
-Information status pages likewise
-preview the next page; multiple fault codes show the following code on line 2.
-For example, `Oil 35.0mm Q 80%` fits exactly. `B 100-200 8.54s` means the
-best 100–200 km/h run. The four-temperature page uses `O` for oil, `W` for
-coolant, `I` for intercooler inlet and `X` for intercooler outlet. A number too
-wide for its field appears as `--` rather than a partial number.
-
-Gasoline and diesel retain separate sets. Engine-incompatible saved pages
-remain stored and are omitted until that profile is selected again. A hidden
-incompatible primary hides the whole favorite. Both engine page catalogs and old
-page IDs remain unchanged. Existing page favorites import as whole pages in
-Slot 1. Beta-19 atomic measurement IDs convert to catalog page IDs in memory:
-a dedicated page is preferred, otherwise the first page containing that value.
-Check the converted choices before saving; the old extra RPM value is retained
-as a compatibility page, while new choices browse the Readings catalog. Saving upgrades the menu preference
-record. Downgrading to old firmware does not convert it back.
-
-`Page favorites` and `Favorite order` are offered only on legacy before the
-first atomic Favorite save. Their committed edits update both the old page list and
-its imported sets; failed saves and discarded drafts update neither. MY23 and
-profiles using saved atomic sets offer only `Favorites`, so there is no second
-editor changing a different list. Slot contents determine page order.
-Empty Slot 1 hides that Favorite;
-Slot 2 does not move automatically into the primary position.
-Slot browsing and page selection show current/next on MY23, including
-wraparound; IPC display-test lists and Shown pages do the same.
-`Shown pages` and `Advanced pages` affect ordinary Readings, not explicit set
-selection. `Sort order` changes catalog ordering through its own draft/save
-prompt. `Auto rotate` advances the live list every five seconds.
+2. Choose `Row A` or `Row B`, then an item slot.
+3. Choose a reading (or `Empty`) and a format (Auto/Full/Medium/Short).
+4. Hold to save. A first BACK confirms a dirty draft; a second BACK discards it.
 
 ### Oil level and bar
 
-Under `Settings > Features`, save `Engine` and `Drivetrain`. Both oil readings
-are in `Readings > Engine`, with no `Advanced pages` requirement. The former
-gasoline `Oil height` keeps its saved identity and is now called `Oil level`.
-
-- `Oil level`: for example `Oil 77.0mm OK`; `LOW` is below the minimum,
-  `HIGH` above the maximum, and both boundary values are `OK`.
-- `Oil level bar`: fills the available line width. `[` and `]` mark the minimum
-  and maximum; `=` marks the interval. The point `•` marks the current reading
-  on MY23; legacy displays use `*`. `<` or `>` indicates a value off the scale.
-
-In `Settings > Favorites`, select these as two separate readings in line 1 and
-line 2, in either order. MY23 uses 16 characters on line 1 and 22 on line 2;
-legacy uses its configured 18/24-character line. Example for 2.0 I4 RWD:
-
-```text
-Oil 77.0mm OK
-----[=====•======]----
-```
-
-| Engine | Drivetrain | OK interval (mm, inclusive) |
-| --- | --- | --- |
-| 2.0 I4 | RWD | 72–82 |
-| 2.0 I4 | Q4 | 67–77 |
-| 2.2 D | RWD | 61–65 |
-| 2.2 D | Q4 | 79–84 |
-
-These reference limits were supplied by the owner; they have not been independently
-verified in this change. The display reuses the existing ECU oil-height measurement
-and does not establish whether the vehicle's measurement conditions are satisfied.
-`Not set` shows `?` beside the numeric value and `Set drivetrain` in the bar.
-For `2.9 V6`, no range is defined: `?` / `No oil range`.
-Missing, expired or invalid samples show `Oil -- mm`; no last-known point is retained.
-Existing favorites remain saved. The bar and numeric page can be hidden independently.
-
-The point moves one character at a time in either direction. BH finishes sending
-each step before starting the next; a new measurement changes the destination,
-without skipping intermediate positions. First appearance and return after an
-unavailable reading show the current position directly. The numeric value and
-LOW/OK/HIGH remain the latest ECU reading; intermediate points are animation,
-not additional measurements. Both Favorite lines animate independently.
-
-`Quick 20ms` is the interval between CAN fragments, not complete screens.
-With default `Write Full`, a MY23 step uses 13 fragments: about 260 ms with no
-bus/radio delay. `Write Delta` sends only changed fragments and also finishes
-each step before advancing. CAN retries and radio interruptions retain the
-pending step. Refresh speed still follows `BACCAble IPC`; animation does not
-change that setting. Actual IPC appearance requires a vehicle check.
-
+`Oil level` (mm + LOW/OK/HIGH) and `Oil level bar` are two separate Readings;
+the bar occupies its row alone. The owner-supplied OK ranges are unchanged:
+2.0 RWD 72–82 mm, 2.0 Q4 67–77 mm, 2.2 RWD 61–65 mm, 2.2 Q4 79–84 mm. They are
+not newly verified here. Unknown drivetrain shows `?` and `Set drivetrain`.
 
 ## Settings: Features
 
@@ -1098,6 +987,12 @@ commands and bus behavior. Use explicitly save USB mode OFF for ordinary operati
 | Capture has frames but unknown signals | Raw capture does not automatically name signals. Correlate logged actions and repeated tests with frame changes; preserve the original session. |
 
 ## Changes from the old manual
+
+Readings and Favorites are now individual measurements. The old compound pages,
+`Page favorites`, `Shown pages`, `Favorite order` and `Sort order` are gone;
+Favorites are six two-row layouts and Readings are grouped individual readings
+(see [Menu structure](#menu-structure)). Old page IDs are intentionally not
+retained; a first start loads and saves the new engine-aware defaults once.
 
 | Older wording or behavior | Current equivalent |
 | --- | --- |

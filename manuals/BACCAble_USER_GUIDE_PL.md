@@ -115,38 +115,36 @@ Samo czekanie nie ponawia zapisu.
 
 ```text
 Menu główne
-├─ Favorites                 Wybrane przez Ciebie bieżące odczyty
-├─ Readings                  Wszystkie dostępne odczyty, według grup
-│  ├─ All readings           Wszystkie odczyty
-│  ├─ Engine                 Silnik
-│  ├─ Temperatures           Temperatury
-│  ├─ Battery                Akumulator
-│  ├─ DPF / AdBlue           Filtr DPF i AdBlue
-│  ├─ Performance            Osiągi
-│  └─ Other                  Pozostałe
-├─ Actions                   Uruchamianie funkcji i operacji diagnostycznych
-├─ Settings                  Ustawienia
-│  ├─ Features               Ustawienia urządzenia i funkcji samochodu
-│  │  └─ Park mirror         Lusterka podczas cofania
-│  │     ├─ Enabled          Włączenie funkcji
-│  │     ├─ Store position   Zapis pozycji
-│  │     └─ < Back           Powrót
-│  ├─ Favorites              Favorite 1–6 → Slot 1–2 → strona odczytów
-│  ├─ Shown pages            Pokazywanie i ukrywanie stron w Readings
-│  ├─ Sort order             Sortowanie według grup albo alfabetycznie
-│  └─ BACCAble IPC           Tymczasowe próby odświeżania
-└─ Information               Wersje, stan przycisków i Demo
+├─ Favorites                6 zestawów, 2 wiersze × maks. 4 pozycje
+├─ Readings
+│  ├─ Oil
+│  ├─ Temperatures
+│  ├─ Engine
+│  ├─ Fuel
+│  ├─ Battery
+│  ├─ Diesel / DPF
+│  ├─ Driving
+│  ├─ Performance
+│  └─ Diagnostics
+├─ Actions                  Uruchom funkcję lub operację diagnostyczną
+├─ Settings
+│  ├─ Features               Ustawienia urządzenia i funkcji pojazdu
+│  │  └─ Park mirror
+│  │     ├─ Enabled
+│  │     ├─ Store position
+│  │     └─ < Back
+│  ├─ Favorites              Favorite 1–6 → Row A/B → pozycja → odczyt + format
+│  └─ BACCAble IPC           Tymczasowe eksperymenty z odświeżaniem
+└─ Information               Wersje, stan wejścia i Demo
 ```
 
-Ten układ Settings dotyczy MY23 oraz każdego profilu po zapisaniu zestawu
-dwu slotów ulubionych. Przed pierwszym takim zapisem starszy profil zachowuje
-kolejność: Features, Page favorites, Shown pages, Favorite order, Sort order,
-Favorites, BACCAble IPC.
-
-Kolejność menu głównego jest stała. Dostępność stron zależy od wybranego silnika
-oraz ustawień `Advanced pages` i `Shown pages`. Grupa bez dostępnych stron może
-pokazać `No pages`. Pełne wykazy w dalszej części obejmują również strony
-domyślnie ukryte.
+Kolejność menu głównego jest stała. Readings pokazuje pojedyncze pomiary
+pogrupowane jak wyżej; grupy bez odczytu dostępnego dla skonfigurowanego profilu
+pojazdu są pomijane. Dostępność odczytów zależy od profilu pojazdu (klasa silnika
+i wyposażenie), a nie od starych przełączników `Advanced pages`/`Shown pages`.
+Favorites składają pojedyncze odczyty w dwa logiczne wiersze. Przy pierwszym
+uruchomieniu ładowane są domyślne zestawy zależne od silnika i zapisywane raz
+(rekord UI 0x106).
 
 ## Symbole i komunikaty
 
@@ -239,162 +237,43 @@ Delta. Jeśli działanie się pogorszy, wybierz Reset default lub odłącz całe
 
 ## Ulubione i układ odczytów
 
-Ulubione odpytują każdy parametr diagnostyczny raz na cykl, nawet jeśli występuje w obu liniach. Przy ośmiu pomiarach odświeżenie całego zestawu może trwać cztery sekundy. Wartości pozostają widoczne przez ten czas, a po utracie odpowiedzi pojawia się `--`. Odczyty przychodzące bezpośrednio z CAN zachowują dotychczasowy czas ważności.
+Favorites to sześć zestawów, każdy z dwoma wierszami (**A** i **B**) po maksymalnie
+cztery pozycje. Każda pozycja przechowuje jeden pojedynczy odczyt i format
+wyświetlania: **Auto**, **Full**, **Medium** lub **Short**. **Auto** wybiera raz
+najczytelniejszą mieszczącą się etykietę. Wiersz ulubionych łączy pozycje co
+najmniej jedną spacją i nigdy nie obcina cyfr; `--` oznacza brak lub nieaktualność.
+MY23 pokazuje oba wiersze; legacy przechodzi po niepustych wierszach (1/A, 1/B,
+2/A, …). Ten sam odczyt może wystąpić w kilku wierszach i jest odpytywany tylko raz.
 
 ### Domyślne zestawy ulubionych
 
-Świeża instalacja (benzyna) startuje z sześcioma tematycznymi zestawami, z których
-każdy łączy stronę pierwszej linii ze stroną drugiej linii. Wyświetlacz 1-liniowy
-pokazuje tylko pierwszą kolumnę, a 2-liniowy obie linie. Po starcie wybrany jest
-zestaw **S1 Elektryka**.
+Pierwsze uruchomienie ładuje domyślne zestawy zależne od silnika i zapisuje je raz.
+Późniejsza zmiana profilu pojazdu nigdy nie nadpisuje zapisanego układu;
+nieobsługiwana zapisana pozycja pokazuje po prostu `--`, dopóki znów nie zacznie
+obowiązywać.
 
-| Zestaw | Linia 1 | Linia 2 |
+| Zestaw | Wiersz A | Wiersz B |
 | --- | --- | --- |
-| S1 Elektryka | `Oil L / mm / %` | `Batt charge BCM` |
-| S2 Osiągi | `Power / torque` | `Boost pressure` |
-| S3 Temperatury | `Oil/water/gear C` | `Intercooler out` |
-| S4 Jazda | `Speed` | `Gear` |
-| S5 Timery | `0-100 km/h` | `Best 0-100` |
-| S6 Olej / Multiair | `Oil/water/IC C` | `Misfires/MA temp` |
+| Warm-up | Oil temp + coolant | Gearbox temp |
+| Oil | Oil level mm + LOW/OK/HIGH | Oil level bar |
+| Engine | Power + boost | Power + torque |
+| Cooling | Coolant | Intercooler inlet + outlet |
+| Battery | Voltage + current | IBS state of charge |
+| Diesel DPF / Gasoline Performance | DPF load + temp (diesel) / 0–100 (benzyna) | Regen progress (diesel) / Best 0–100 (benzyna) |
 
-Diesel zachowuje cztery dotychczasowe domyślne strony i nie ma stron drugiej
-linii. Nowe instalacje używają układu ze slotami Favorites na obu profilach IPC.
-Pary są ustawiane tylko wtedy, gdy nie ma zapisanych ustawień stron ani slotów.
-Zapisane ulubione pozostają zachowane, nawet jeśli pierwsza strona ma taki sam
-numer jak strona domyślna. Edycja tych zestawów przebiega według poniższych kroków.
+### Edycja ulubionych
 
-### Dwie strony odczytów w jednym ulubionym widoku
-
-1. Otwórz `Settings → Favorites` i wybierz `Favorite 1` do `Favorite 6`.
-2. Wejdź krótkim RES. Wybierz `Slot 1` lub `Slot 2`, naciśnij RES, znajdź stronę
-   z katalogu Readings przyciskami góra/dół i zatwierdź krótkim RES. `Empty` czyści slot.
-3. **Slot 1 jest główną stroną odczytów**. MY23 pokazuje ją w pierwszej linii,
-   a Slot 2 w drugiej. Pusty slot główny ukrywa cały widok.
-   Kolejność zmieniasz przez zastępowanie slotów. Strona już obecna w innym
-   slocie jest z niego usuwany. Edycja jest dostępna wyłącznie w Settings.
-4. Przytrzymanie zapisuje bezpośrednio, również podczas wybierania wartości slotu.
-   Możesz też wykonać dwuklik, aby zobaczyć pytanie, a następnie przytrzymać,
-   aby zapisać, lub wykonać kolejny dwuklik, aby odrzucić. Udany zapis pozostawia wybrany slot na ekranie;
-   osobny dwuklik wraca.
-5. Bieżące wartości zobaczysz w `Favorites` menu głównego. Starszy ekran
-   pokazuje główną stronę zapisanego zestawu w jednej linii.
-
-Po powrocie z innych list pozostaje wybrany ten sam zestaw ulubionych. Tak samo
-działa zmiana filtra silnika, jeśli zestaw nadal jest dostępny. W przeciwnym
-razie wyświetla się pierwszy dostępny zestaw. Wybór jest pamiętany osobno dla
-benzyny i diesla do ponownego uruchomienia urządzenia.
-
-Każdy slot pokazuje pomiary z wybranej strony katalogu. MY23 usuwa zbędne
-odstępy i w razie potrzeby skraca podpis; starszy ekran zachowuje dotychczasowy
-format. Na przykład
-`Oil/coolant temp` zawiera dwa odczyty w jednej linii i po dodaniu do ulubionych
-pozostaje jednym slotem. `--` oznacza brak aktualnej wartości. `Gear -` obejmuje surowy kod
-`0xF` („brak informacji”); nie jest to piętnasty bieg.
-
-Na MY23 `Oil/water/IC C` pokazuje cztery temperatury jako `O90 W85 I40 X35`:
-olej, płyn chłodzący, wlot i wylot intercoolera. Gdy wartości mają trzy cyfry,
-odstępy są ograniczane, np. `O101W102I103X104`, aby zachować wszystkie odczyty
-w 16 znakach. `Oil/coolant temp` pokazuje `Oil 101° W 88°`, gdzie `W` oznacza
-płyn chłodzący. `Misfires cyl 1-4` pokazuje liczniki w kolejności cylindrów,
-np. `12/ 23/ 34/ 45`.
-
-Wyświetlane i edytowane są tylko Slot 1 i Slot 2. Wcześniejsze rekordy pięciu
-slotów zachowują w pamięci miejsca 3–5 dla zgodności, ale nie są one pokazywane
-ani odpytywane. Zapis dwóch widocznych slotów nie usuwa pozostałych ID.
-W MY23 każda strona Readings pokazuje wszystkie swoje pomiary w pierwszej
-linii, także gdy zawiera dwa, trzy albo cztery pomiary. Krótszy format usuwa
-zbędne spacje i upraszcza długie podpisy, aby zmieścić się w 16 znakach. Ten sam
-format jest używany w ulubionych. Druga linia zapowiada następną stronę.
-Gdy widać ten podgląd, BACCAble odczytuje także jej wartości diagnostyczne w tle.
-Po przejściu do następnej strony od razu wykorzystuje zapamiętane wartości,
-jeśli odpowiedzi już nadeszły. Obie strony wspólnie korzystają z jednego zapytania
-co 500 ms; wspólny pomiar jest odczytywany tylko raz na cykl. Pełny cykl rozbudowanej
-pary może trwać do czterech sekund. W tym widoku wartości diagnostyczne zachowują
-ważność przez 4,5 sekundy, a odczyty z cyklicznych ramek CAN przez zwykłe trzy
-sekundy. Przy szybkim przewijaniu lub braku odpowiedzi sterownika nadal może
-pojawić się `--`.
-Na przykład `Oil 35.0mm Q 80%` mieści się dokładnie. `B 100-200 8.54s` oznacza
-najlepszy czas od 100 do 200 km/h. Na stronie czterech temperatur `O` oznacza
-olej, `W` płyn chłodzący, `I` temperaturę na wejściu intercoolera, a `X` na
-wyjściu. Liczba, która nie mieści się w swoim polu, jest pokazana jako `--`,
-a nie ucięta w połowie.
-Strony statusu Information też
-zapowiadają kolejną pozycję; przy wielu kodach usterek druga linia pokazuje
-następny kod.
-
-Benzyna i diesel mają osobne zestawy. Strona niepasująca do silnika pozostaje
-zapisany i jest pomijany do czasu ponownego wyboru jego profilu. Niepasujący
-główna strona ukrywa cały widok. Stare katalogi i identyfikatory stron pozostają
-bez zmian. Stare ulubione strony są importowane jako całe strony do Slotu 1.
-Atomowe identyfikatory pomiarów z beta 19 są w pamięci zamieniane na strony:
-najpierw wybierana jest strona z tym jednym pomiarem, a gdy jej nie ma, pierwsza
-strona, która go zawiera. Przed zapisem sprawdź wynik konwersji; dawny dodatkowy
-RPM pozostaje jako strona zgodności, lecz nowe wybory pochodzą z katalogu Readings. Zapis aktualizuje
-format preferencji. Starsze firmware nie odtworzy tego układu automatycznie.
-
-`Page favorites` i `Favorite order` są dostępne tylko w starszym profilu przed
-pierwszym zapisem zestawu ulubionych. Zatwierdzone zmiany aktualizują starszą listę
-stron i zestawy importowane z tej listy. Błąd zapisu lub odrzucenie nie zmieniają
-żadnej z nich. MY23 i profile z zapisanymi zestawami mają tylko edytor
-`Favorites`, aby nie było drugiej opcji zmieniającej inną listę. Kolejność
-stron ustalasz przez zawartość slotów. Pusty Slot 1 ukrywa cały zestaw;
-Slot 2 nie przesuwa się automatycznie na pozycję główną. Na MY23 listy slotów, wyboru strony,
-testów IPC i Shown pages pokazują bieżącą oraz następną pozycję, także po
-przejściu z końca listy na początek.
-`Shown pages` i `Advanced pages` dotyczą zwykłych Readings, a nie jawnego wyboru
-strony do zestawu. `Sort order` ma własny szkic i potwierdzenie zapisu.
-`Auto rotate` zmienia bieżący widok co pięć sekund.
+1. Otwórz `Settings → Favorites` i wybierz `Favorite 1`–`Favorite 6`.
+2. Wybierz `Row A` lub `Row B`, a następnie pozycję.
+3. Wybierz odczyt (albo `Empty`) i format (Auto/Full/Medium/Short).
+4. Przytrzymaj, aby zapisać. Pierwszy BACK zatwierdza szkic, drugi BACK go odrzuca.
 
 ### Poziom oleju i pasek
 
-W `Settings > Features` zapisz `Engine` i `Drivetrain`. Oba odczyty oleju są
-w `Readings > Engine`, bez konieczności włączania `Advanced pages`. Dotychczasowy
-benzynowy `Oil height` zachowuje zapisany identyfikator i nazywa się teraz `Oil level`.
-
-- `Oil level`: np. `Oil 77.0mm OK`; `LOW` oznacza poziom poniżej minimum,
-  `HIGH` powyżej maksimum. Obie wartości graniczne należą do `OK`.
-- `Oil level bar`: zajmuje całą dostępną szerokość linii. `[` i `]` oznaczają
-  minimum i maksimum, a `=` przedział między nimi. Punkt `•` wskazuje bieżący
-  odczyt na MY23; starsze wyświetlacze używają `*`. `<` lub `>` oznacza wynik poza skalą.
-
-W `Settings > Favorites` wybierz je jako dwa osobne odczyty w linii 1 i 2,
-w dowolnej kolejności. MY23 wykorzystuje 16 znaków w linii 1 i 22 w linii 2;
-starszy wyświetlacz ma skonfigurowaną linię 18/24 znaków. Przykład dla 2.0 I4 RWD:
-
-```text
-Oil 77.0mm OK
-----[=====•======]----
-```
-
-| Engine | Drivetrain | Zakres OK (mm, wraz z granicami) |
-| --- | --- | --- |
-| 2.0 I4 | RWD | 72–82 |
-| 2.0 I4 | Q4 | 67–77 |
-| 2.2 D | RWD | 61–65 |
-| 2.2 D | Q4 | 79–84 |
-
-Zakresy referencyjne podał właściciel; nie zostały niezależnie potwierdzone w tej
-zmianie. Ekran korzysta z istniejącego pomiaru wysokości oleju z ECU i nie potwierdza,
-że samochód spełnia warunki poprawnego pomiaru.
-`Not set` wyświetla `?` obok wartości liczbowej i `Set drivetrain` zamiast paska.
-Dla `2.9 V6` nie określono zakresu: pojawia się `?` / `No oil range`.
-Brak, przeterminowanie lub nieprawidłowa próbka daje `Oil -- mm`; stary punkt nie pozostaje.
-Dotychczasowe ulubione pozostają zapisane. Pasek i odczyt liczbowy można ukrywać osobno.
-
-Punkt przesuwa się po jednym znaku w obie strony. BH kończy wysyłanie każdego
-kroku przed rozpoczęciem następnego. Nowy pomiar zmienia cel ruchu, bez pomijania
-pośrednich pozycji. Przy pierwszym wyświetleniu oraz po powrocie z braku danych
-punkt pojawia się od razu w bieżącym miejscu. Liczba i LOW/OK/HIGH nadal pokazują
-najnowszy odczyt ECU; pośrednie pozycje są animacją, a nie dodatkowymi pomiarami.
-Obie linie Favorites animują się niezależnie.
-
-`Quick 20ms` oznacza odstęp między fragmentami CAN, a nie pełnymi ekranami.
-Przy domyślnym `Write Full` krok MY23 wymaga 13 fragmentów, czyli około 260 ms
-bez opóźnień magistrali lub radia. `Write Delta` wysyła tylko zmienione fragmenty
-i również kończy krok przed przejściem dalej. Ponowienie wysyłki CAN i przerwanie
-przez radio zachowują bieżący krok. Szybkość nadal wynika z `BACCAble IPC`;
-animacja nie zmienia tego ustawienia. Wygląd na liczniku wymaga próby w samochodzie.
-
+`Oil level` (mm + LOW/OK/HIGH) i `Oil level bar` to dwa osobne odczyty; pasek
+zajmuje cały wiersz sam. Zakresy OK podane przez właściciela są bez zmian: 2.0 RWD
+72–82 mm, 2.0 Q4 67–77 mm, 2.2 RWD 61–65 mm, 2.2 Q4 79–84 mm. Nie są one tutaj
+na nowo weryfikowane. Nieznany napęd pokazuje `?` i `Set drivetrain`.
 
 ## Ustawienia: Features
 
@@ -1170,6 +1049,12 @@ Po zakończeniu używaj USB mode OFF do zwykłej pracy.
 | Ramki się zapisują, ale sygnały są nieznane | Przechwytywanie nie nazywa automatycznie sygnałów. Porównuj zmiany ramek z zapisanymi czynnościami i powtarzanymi próbami. Zachowaj oryginalną sesję. |
 
 ## Różnice względem starej instrukcji
+
+Readings i Favorites to teraz pojedyncze pomiary. Stare strony łączone,
+`Page favorites`, `Shown pages`, `Favorite order` i `Sort order` zniknęły;
+Favorites to sześć dwuwierszowych układów, a Readings to pogrupowane pojedyncze
+odczyty (patrz [Układ menu](#układ-menu)). Stare identyfikatory stron celowo nie
+są zachowywane; pierwsze uruchomienie ładuje i zapisuje raz nowe domyślne zestawy.
 
 | Starsza nazwa lub sposób działania | Obecny odpowiednik |
 | --- | --- |
