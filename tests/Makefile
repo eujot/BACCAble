@@ -108,7 +108,7 @@ MENU_SOURCES := test_menu.c $(addprefix $(FIRMWARE)/, features/menu.c \
  diagnostics/parameter_cache.c diagnostics/parameter_request.c diagnostics/parameter_catalog.c \
  protocol/checksum.c vehicle/steering_controls.c diagnostics/uds_decode.c diagnostics/fault_reader.c settings/persistence.c settings/setup_menu.c settings/setup_entries.c vehicle/vehicle_profile.c vehicle/vehicle_editor.c \
  third_party/printf/printf.c)
-MENU_FIXTURES := test_my23_ui.c test_idle_latin1.c test_menu_contract.c test_setup_ui.c test_unified_ui.c
+MENU_FIXTURES :=
 build/test_menu: $(MENU_SOURCES) $(MENU_FIXTURES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -DC1_FLAVOR=1 -DGIT_VERSION=\"test\" $(MENU_SOURCES) -lm -o $@
