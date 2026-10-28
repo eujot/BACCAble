@@ -16,6 +16,11 @@
           "name": "test_vehicle_editor",
           "change": "new",
           "evidence": "test-impact.md#p8-vehicle-editor"
+        },
+        {
+          "name": "test_vehicle_editor_equipment",
+          "change": "new",
+          "evidence": "test-impact.md#p8-vehicle-editor-equipment"
         }
       ]
     },

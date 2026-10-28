@@ -48,10 +48,12 @@ to generate the expected strings.
 | [test_ui_layout_restart_persistence](#p7-layout-restart) | successful write persists custom edits across restart | P7 | new | legacy18 |
 | [test_vehicle_profile_apply_legacy_flags](#p2-legacy-flags) | legacy flags apply without overwriting model/year/equipment | P8 | new | legacy18 |
 | [test_settings_migration](#p8-settings-profile) | 0x101 import + 0x107 profile load/save keep feature values | P8 | updated | legacy18 |
+| [test_vehicle_editor](#p8-vehicle-editor) | Vehicle editor browses/edits/discards core facts | P8 | new | legacy18 |
+| [test_vehicle_editor_equipment](#p8-vehicle-editor-equipment) | tri-state equipment editing | P8 | new | legacy18 |
 
 ## Observed result
 
 `python3 tests/run_vehicle_ui_tests.py --manifest tests/vehicle_ui_tests.json --run`
 builds each manifest target with `/usr/bin/clang` (ASan/UBSan) and runs exactly
-the selected cases. Result: **37 selected cases passed, 0 failed**. Untouched
+the selected cases. Result: **40 selected cases passed, 0 failed**. Untouched
 regression suites and vehicle hardware were not run and are not claimed here.

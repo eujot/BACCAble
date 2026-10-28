@@ -1404,6 +1404,32 @@ static void test_board_sync_retry(void) {
 
 static void fresh_contract(void);
 
+static void test_vehicle_editor_equipment(void) {
+    VehicleProfile p;
+    vehicle_profile_default(&p);
+    vehicle_profile_commit(&p);
+
+    vehicle_editor_begin();
+    for (unsigned i = 0; i < 5; ++i)
+        vehicle_editor_navigate(1);
+    assert(!strcmp(vehicle_editor_field_label(), "Suspension"));
+
+    char buf[24];
+    assert(!strcmp(vehicle_editor_value_label(buf, sizeof(buf)), "Unknown"));
+
+    vehicle_editor_select();
+    vehicle_editor_navigate(1);
+    assert(!strcmp(vehicle_editor_value_label(buf, sizeof(buf)), "Absent"));
+    vehicle_editor_navigate(1);
+    assert(!strcmp(vehicle_editor_value_label(buf, sizeof(buf)), "Present"));
+    vehicle_editor_navigate(1);
+    assert(!strcmp(vehicle_editor_value_label(buf, sizeof(buf)), "Unknown"));
+
+    vehicle_editor_back();
+    puts("PASS: vehicle editor edits tri-state equipment");
+}
+
+
 static void test_vehicle_editor(void) {
     VehicleProfile p;
     vehicle_profile_default(&p);
@@ -1457,6 +1483,7 @@ int main(void) {
     const HostTest tests[] = {
         HOST_TEST(test_settings_migration),
         HOST_TEST(test_vehicle_editor),
+        HOST_TEST(test_vehicle_editor_equipment),
         HOST_TEST(test_default_mode_engine_gate),
         HOST_TEST(test_oil_level),
         HOST_TEST(test_oil_favorites),

@@ -12,8 +12,21 @@ typedef enum {
     VEHICLE_FIELD_ENGINE,
     VEHICLE_FIELD_DRIVETRAIN,
     VEHICLE_FIELD_DISPLAY,
+    VEHICLE_FIELD_EQUIPMENT_SUSPENSION,
+    VEHICLE_FIELD_EQUIPMENT_RACE,
+    VEHICLE_FIELD_EQUIPMENT_EXHAUST,
+    VEHICLE_FIELD_EQUIPMENT_ACC,
+    VEHICLE_FIELD_EQUIPMENT_HAS,
+    VEHICLE_FIELD_EQUIPMENT_LANE_ASSIST,
+    VEHICLE_FIELD_EQUIPMENT_PARK_MIRROR,
+    VEHICLE_FIELD_EQUIPMENT_SCR,
     VEHICLE_FIELD_COUNT,
 } VehicleField;
+
+/* Map an equipment editor field to its VehicleProfile equipment slot, or -1. */
+static int equipment_slot(VehicleField f) {
+    return f >= VEHICLE_FIELD_EQUIPMENT_SUSPENSION ? (int)(f - VEHICLE_FIELD_EQUIPMENT_SUSPENSION) : -1;
+}
 
 static VehicleProfile draft;
 static VehicleField field;
@@ -62,8 +75,12 @@ static void cycle(int direction) {
     case VEHICLE_FIELD_DISPLAY:
         draft.display_selection = (VehicleDisplaySelection)wrap((unsigned)draft.display_selection, 4, direction);
         break;
-    default:
+    default: {
+        int slot = equipment_slot(field);
+        if (slot >= 0)
+            draft.equipment[slot] = (VehicleEquipment)wrap((unsigned)draft.equipment[slot], 3, direction);
         break;
+    }
     }
 }
 
@@ -119,7 +136,9 @@ VehicleEditorState vehicle_editor_state(void) {
 }
 
 const char *vehicle_editor_field_label(void) {
-    static const char *const labels[] = {"Model", "Model year", "Engine", "Drivetrain", "Display"};
+    static const char *const labels[] = {"Model", "Model year", "Engine", "Drivetrain", "Display",
+                                         "Suspension", "Race", "Exhaust valves", "ACC", "HAS",
+                                         "Lane assist", "Park mirrors", "SCR"};
     return labels[field];
 }
 
@@ -144,8 +163,13 @@ const char *vehicle_editor_value_label(char *buf, size_t size) {
         static const char *const v[] = {"Auto", "18", "24", "MY23"};
         return v[draft.display_selection <= 3 ? draft.display_selection : 0];
     }
-    default:
+    default: {
+        static const char *const v[] = {"Unknown", "Absent", "Present"};
+        int slot = equipment_slot(field);
+        if (slot >= 0)
+            return v[draft.equipment[slot] <= 2 ? draft.equipment[slot] : 0];
         return "";
+    }
     }
 }
 
