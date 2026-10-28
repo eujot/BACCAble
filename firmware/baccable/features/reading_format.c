@@ -1,4 +1,5 @@
 #include "features/reading_format.h"
+#include <math.h>
 #include "third_party/printf/printf.h"
 
 unsigned reading_glyph_count(const char *text) {
@@ -78,6 +79,66 @@ static bool render_value(const ReadingMeta *meta, const ReadingSample *sample, c
     return true;
 }
 
+/* Render the full-width oil bar for READING_OIL_LEVEL_BAR. */
+static ReadingFit reading_format_bar(const ReadingSample *sample, unsigned width, char *out, size_t size) {
+    if (!out || !size)
+        return READING_FIT_EMPTY;
+    if (width + 1 > size)
+        return READING_FIT_OVERFLOW;
+
+    const VehicleProfile *profile = vehicle_profile_current();
+    OilRange range;
+    vehicle_oil_range(&range);
+
+    if (!sample || sample->state != READING_STATE_VALID || !isfinite(sample->value)) {
+        snprintf(out, size, "Oil -- mm");
+        return READING_FIT_OK;
+    }
+    if (!range.known) {
+        const char *message = profile && profile->engine == VEHICLE_ENGINE_PETROL29
+                                  ? "No oil range"
+                              : profile && profile->drivetrain == VEHICLE_DRIVETRAIN_UNKNOWN
+                                  ? "Set drivetrain"
+                                  : "No oil range";
+        snprintf(out, size, "%s", message);
+        return READING_FIT_OK;
+    }
+
+    float level = sample->value;
+    int status = level < range.minimum_mm ? -1 : level > range.maximum_mm ? 1 : 0;
+    unsigned left = width / 5, right = width - left - 1;
+    unsigned i = 0;
+    for (; i < width; ++i)
+        out[i] = '-';
+    out[i] = '\0';
+    for (unsigned k = left + 1; k < right; ++k)
+        out[k] = '=';
+    out[left] = '[';
+    out[right] = ']';
+
+    int tenths = (int)(level * 10.0f);
+    int span = (int)(range.maximum_mm - range.minimum_mm) * 10;
+    int position = (int)left + (tenths - (int)range.minimum_mm * 10) * (int)(right - left) / span;
+    if (position < 0)
+        out[0] = '<';
+    else if (position >= (int)width)
+        out[width - 1] = '>';
+    else {
+        int marker = position;
+        if (status < 0 && marker >= (int)left)
+            marker = (int)left - 1;
+        if (status > 0 && marker <= (int)right)
+            marker = (int)right + 1;
+        if (marker < 0)
+            out[0] = '<';
+        else if (marker >= (int)width)
+            out[width - 1] = '>';
+        else
+            out[marker] = width == 16 || width == 22 ? '\x81' : '*';
+    }
+    return READING_FIT_OK;
+}
+
 /* Copy `width` glyphs of a scratch string into out; emit overflow indicator if needed. */
 static ReadingFit copy_fitted(const char *scratch, unsigned width, char *out, size_t size) {
     unsigned glyphs = reading_glyph_count(scratch);
@@ -98,6 +159,8 @@ static ReadingFit copy_fitted(const char *scratch, unsigned width, char *out, si
 }
 
 ReadingFit reading_format_value(ReadingId id, const ReadingSample *sample, unsigned width, char *out, size_t size) {
+    if (id == READING_OIL_LEVEL_BAR)
+        return reading_format_bar(sample, width, out, size);
     const ReadingMeta *meta = reading_lookup(id);
     if (!meta)
         return READING_FIT_EMPTY;
@@ -109,6 +172,8 @@ ReadingFit reading_format_value(ReadingId id, const ReadingSample *sample, unsig
 
 ReadingFit reading_format_line(ReadingId id, const ReadingSample *sample, ReadingFormat format, unsigned width,
                                char *out, size_t size) {
+    if (id == READING_OIL_LEVEL_BAR)
+        return reading_format_bar(sample, width, out, size);
     const ReadingMeta *meta = reading_lookup(id);
     if (!meta)
         return READING_FIT_EMPTY;

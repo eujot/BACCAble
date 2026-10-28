@@ -179,6 +179,11 @@
           "name": "test_reading_oil_status",
           "change": "new",
           "evidence": "test-impact.md#p4-oil-status"
+        },
+        {
+          "name": "test_reading_oil_bar",
+          "change": "new",
+          "evidence": "test-impact.md#p4-oil-bar"
         }
       ]
     },

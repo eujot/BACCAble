@@ -139,6 +139,18 @@ FavoriteRowFit favorite_row_render(const FavoriteItem row[FAVORITE_ROW_ITEMS], c
     if (!count)
         return FAVORITE_ROW_EMPTY;
 
+    /* The oil bar is exclusive and full-width; never prefix it with a label. */
+    if (count == 1 && row[0].id == READING_OIL_LEVEL_BAR) {
+        const ReadingSample *sample = samples ? &samples[READING_OIL_LEVEL_BAR] : NULL;
+        ReadingSample missing = {.state = READING_STATE_MISSING, .value = 0.0f};
+        if (!sample)
+            sample = &missing;
+        ReadingFit fit = reading_format_value(READING_OIL_LEVEL_BAR, sample, width, out, size);
+        if (fit == READING_FIT_EMPTY)
+            return FAVORITE_ROW_EMPTY;
+        return fit == READING_FIT_OVERFLOW ? FAVORITE_ROW_OVERFLOW : FAVORITE_ROW_FIT;
+    }
+
     unsigned used = 0;
     for (unsigned i = 0; i < FAVORITE_ROW_ITEMS; ++i) {
         if (favorite_item_empty(row[i]))

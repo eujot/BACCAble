@@ -35,6 +35,7 @@ to generate the expected strings.
 | [test_reading_auto_format](#p4-auto) | Auto resolves to a stable concrete label | P4 | new | legacy18 |
 | [test_reading_line_fit](#p4-line) | legacy line composes label+value and reports fit | P4 | new | legacy18 |
 | [test_reading_oil_status](#p4-oil-status) | LOW/OK/HIGH from resolved owner range | P4 | new | legacy18 |
+| [test_reading_oil_bar](#p4-oil-bar) | full-width bar with marker and off-scale arrows | P4 | new | legacy18 |
 | [test_favorite_item_and_clear](#p6-item-clear) | explicit empty items, cleared sets valid | P6 | new | legacy18 |
 | [test_favorite_duplicate_and_bar](#p6-duplicate-bar) | duplicate-in-row and bar exclusivity rejected | P6 | new | legacy18 |
 | [test_favorite_defaults_valid](#p6-defaults-valid) | every default set valid, <= 8 unique sources | P6 | new | legacy18 |

@@ -92,6 +92,45 @@ static void test_reading_oil_status(void) {
     puts("PASS: oil status derives LOW/OK/HIGH from the resolved owner range");
 }
 
+static void test_reading_oil_bar(void) {
+    VehicleProfile p;
+    vehicle_profile_default(&p);
+    p.model = VEHICLE_MODEL_GIULIA;
+    p.engine = VEHICLE_ENGINE_PETROL20;
+    p.drivetrain = VEHICLE_DRIVETRAIN_RWD;
+    assert(vehicle_profile_commit(&p));
+
+    char out[32];
+    ReadingSample ok = {.state = READING_STATE_VALID, .value = 75.0f};
+    assert(reading_format_value(READING_OIL_LEVEL_BAR, &ok, 18, out, sizeof(out)) == READING_FIT_OK);
+    assert(strlen(out) == 18);
+    assert(out[0] == '-' && strchr(out, '[') && strchr(out, ']') && strchr(out, '=') && strchr(out, '*'));
+
+    ReadingSample low = {.state = READING_STATE_VALID, .value = 50.0f};
+    assert(reading_format_value(READING_OIL_LEVEL_BAR, &low, 18, out, sizeof(out)) == READING_FIT_OK);
+    assert(out[0] == '<');
+
+    ReadingSample high = {.state = READING_STATE_VALID, .value = 120.0f};
+    assert(reading_format_value(READING_OIL_LEVEL_BAR, &high, 18, out, sizeof(out)) == READING_FIT_OK);
+    assert(out[17] == '>');
+
+    ReadingSample missing = {.state = READING_STATE_MISSING, .value = 0.0f};
+    assert(reading_format_value(READING_OIL_LEVEL_BAR, &missing, 18, out, sizeof(out)) == READING_FIT_OK);
+    assert(!strcmp(out, "Oil -- mm"));
+
+    /* Unknown drivetrain keeps mm valid but shows the configuration hint. */
+    VehicleProfile unknown;
+    vehicle_profile_default(&unknown);
+    unknown.model = VEHICLE_MODEL_GIULIA;
+    unknown.engine = VEHICLE_ENGINE_PETROL20;
+    unknown.drivetrain = VEHICLE_DRIVETRAIN_UNKNOWN;
+    assert(vehicle_profile_commit(&unknown));
+    assert(reading_format_value(READING_OIL_LEVEL_BAR, &ok, 18, out, sizeof(out)) == READING_FIT_OK);
+    assert(!strcmp(out, "Set drivetrain"));
+
+    puts("PASS: oil bar renders a full-width bracket with marker and off-scale arrows");
+}
+
 int main(void) {
     const char *suite = "reading-layout";
     const HostTest tests[] = {
@@ -102,6 +141,7 @@ int main(void) {
         HOST_TEST(test_reading_auto_format),
         HOST_TEST(test_reading_line_fit),
         HOST_TEST(test_reading_oil_status),
+        HOST_TEST(test_reading_oil_bar),
     };
     host_tests_run(suite, tests, sizeof(tests) / sizeof(tests[0]));
 }
