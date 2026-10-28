@@ -6,6 +6,7 @@
 #include "features/display_stream.h"
 #include "features/menu_demo.h"
 #include "features/favorite_parameters.h"
+#include "features/favorite_layout.h"
 #include "features/rain_test.h"
 #include "diagnostics/fault_reader.h"
 #include "features/ibs_override.h"
@@ -97,6 +98,7 @@ void menu_peer_status(uint8_t peer, const uint8_t *version) {
 static MenuPreferences preferences, editor_draft;
 static bool editor_confirm;
 static FavoriteParameters favorites[2][FAVORITE_SET_COUNT];
+static FavoriteLayout favorites_layout;
 static FavoriteParameters favorite_draft;
 /* Stable set identities; reading/editor lists share a separate cursor. */
 static uint8_t selected_favorite[2];
@@ -445,6 +447,7 @@ void menu_engine_changed(void) {
     engine = !!settings_state.is_diesel_enabled;
     gasoline_v6 = !!settings_state.gasoline_v6;
     advanced_pages = !!settings_state.advanced_pages;
+    favorite_layout_default(&favorites_layout, vehicle_profile_current());
     parameter_page_count = menu_page_count(engine);
     list_count = 0;
     parameter_request_cancel();
@@ -599,6 +602,7 @@ void menu_init(void) {
     editor_confirm = false;
     editor_draft = preferences;
     favorite_confirm = false;
+    favorite_layout_default(&favorites_layout, vehicle_profile_current());
     menu_engine_changed();
 }
 
