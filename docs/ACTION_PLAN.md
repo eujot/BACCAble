@@ -6,7 +6,7 @@
 
 ## HANDOFF — current state and next steps, 2026-10-29 (start here)
 
-Branch `docs/vehicle-profile-audit`, HEAD `78e42f3`. Scoped host tests: 41/41 pass
+Branch `docs/vehicle-profile-audit`, HEAD `7c80b11`. Scoped host tests: 43/43 pass
 via the scoped runner. All four board flavors build and link.
 
 Completed (each committed separately, scoped tests green):
@@ -35,18 +35,14 @@ Flash/RAM now (text/data/bss): C1 86312/1836/11328, C2 30236/952/11384,
 BH 34984/860/12168, CAN 24328/656/6272.
 
 Remaining (documentation polish, non-blocking):
-- Finish the detailed reading-catalog sections of both user guides
-  (`manuals/BACCAble_USER_GUIDE_EN.md` `Gasoline/Diesel reading catalog` and the
-  Polish equivalents) which still list the retired page IDs; the menu-structure,
-  Favorites/Readings and old-manual-comparison sections are already updated.
-- Re-integrate the still-valid renderer/packet fixtures in `tests/test_my23_ui.c`
-  (`test_my23_glyph_budget`), `test_unified_ui.c` (`test_shared_renderers`, etc.)
-  and `test_idle_latin1.c` (`test_latin1_vocabulary`), and drop the remaining
-  obsolete menu-navigation fixtures. They are currently orphaned and not compiled
-  by the scoped runner; the new-model invariants are already covered by the
-  41 scoped cases.
-- Update architecture-doc status notes (`VEHICLE_UI_IMPLEMENTATION_PLAN.md`,
-  `VEHICLE_UI_SOURCE_READING_MAP.md`); `docs/ACTION_PLAN.md` remains the backlog.
+- Re-integrate the last orphaned menu/setup/action fixtures that need the removed
+  shared navigation helpers (`test_latin1_vocabulary` in `test_idle_latin1.c`,
+  `test_setup_ui.c`, `test_unified_ui.c` action/setup cases, and the obsolete
+  `test_menu_contract.c`/`test_oil_level.c`). The still-valid `test_my23_glyph_budget`
+  and `test_shared_renderers` are already re-integrated; the new-model invariants
+  are covered by the 43 scoped cases.
+- `docs/ACTION_PLAN.md` remains the backlog; architecture-doc status notes are
+  updated. Hardware acceptance remains open.
 
 Build/test commands (worktree root, full ARM toolchain):
 - scoped tests: python3 tests/run_vehicle_ui_tests.py --manifest tests/vehicle_ui_tests.json --run
