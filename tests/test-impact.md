@@ -51,6 +51,8 @@ to generate the expected strings.
 | [test_settings_migration](#p8-settings-profile) | 0x101 import + 0x107 profile load/save keep feature values | P8 | updated | legacy18 |
 | [test_vehicle_editor](#p8-vehicle-editor) | Vehicle editor browses/edits/discards core facts | P8 | new | legacy18 |
 | [test_vehicle_editor_equipment](#p8-vehicle-editor-equipment) | tri-state equipment editing | P8 | new | legacy18 |
+| [test_my23_glyph_budget](#p8-my23-glyphs) | MY23 packet glyph encoding/budget (re-integrated fixture) | P8 | updated | legacy18 |
+| [test_shared_renderers](#p8-shared-renderers) | shared ui_entry renderer bounds (re-integrated fixture) | P8 | updated | legacy18 |
 
 ## Observed result
 

@@ -21,6 +21,16 @@
           "name": "test_vehicle_editor_equipment",
           "change": "new",
           "evidence": "test-impact.md#p8-vehicle-editor-equipment"
+        },
+        {
+          "name": "test_my23_glyph_budget",
+          "change": "updated",
+          "evidence": "test-impact.md#p8-my23-glyphs"
+        },
+        {
+          "name": "test_shared_renderers",
+          "change": "updated",
+          "evidence": "test-impact.md#p8-shared-renderers"
         }
       ]
     },

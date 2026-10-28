@@ -246,6 +246,63 @@ static void test_vehicle_editor(void) {
     puts("PASS: vehicle editor browses, edits and discards a profile draft");
 }
 
+static void test_my23_glyph_budget(void) {
+    const char *symbols = "\xe2\x80\xba\xe2\x80\xa2\xe2\x96\xb2\xe2\x96\xbc\xe2\x9c\x93\xc3\x97\xc2\xb0\xc2\xb1\xe2\x86\x92\xe2\x80\xa6";
+    const uint16_t expected[] = {0x203a, 0x2022, 0x25b2, 0x25bc, 0x2713, 0xd7, 0xb0, 0xb1, 0x2192, 0x2026};
+    uint8_t encoded[16];
+    memset(encoded, 'X', sizeof(encoded));
+    assert(my23_text_encode(encoded, 10, symbols) == 10);
+    for (unsigned i = 0; i < 10; ++i) assert(my23_codepoint(encoded[i]) == expected[i]);
+    assert(encoded[10] == 'X');
+    for (unsigned limit = 0; limit <= 10; ++limit) {
+        memset(encoded, 'X', sizeof(encoded));
+        assert(my23_text_encode(encoded, limit, symbols) == limit);
+        assert(encoded[limit] == 'X');
+    }
+    uint8_t packet[MY23_PACKET_SIZE];
+    my23_packet_mode(packet, UI_MODE_LIST, "123456789012345", "");
+    assert(packet[1] == 0x80 && packet[MY23_L1_VISIBLE] == 0x87 &&
+           packet[1 + MY23_L1_VISIBLE] == ' ');
+    my23_packet_mode(packet, UI_MODE_LIST, "12345678901234", "next");
+    assert(!memcmp(packet + 3, "12345678901234", 14) &&
+           !memcmp(packet + 1 + MY23_L1_VISIBLE, "next", 4));
+    my23_packet(packet, "1234567890123456EXTRA", "1234567890123456789012EXTRA");
+    assert(!memcmp(packet + 1, "1234567890123456", MY23_L1_VISIBLE));
+    assert(!memcmp(packet + 1 + MY23_L1_VISIBLE, "1234567890123456789012", 22));
+    my23_packet(packet, "Gear", "RPM 3500");
+    assert(packet[5] == ' ' && !memcmp(packet + 1 + MY23_L1_VISIBLE, "RPM 3500", 8));
+    for (unsigned i = 5; i < 1 + MY23_L1_VISIBLE; ++i) assert(packet[i] == ' ');
+}
+
+static void test_shared_renderers(void) {
+    char text[25];
+    for (size_t size = 19; size <= 25; size += 6) {
+        ui_render_toggle(text, size, "Auto rotate", false);
+        assert(!strcmp(text, "Auto rotate: OFF"));
+        ui_render_toggle(text, size, "Auto rotate", true);
+        assert(!strcmp(text, "Auto rotate: ON"));
+        ui_render_value(text, size, "ACC resume", "RES");
+        assert(!strcmp(text, "ACC resume: RES"));
+        ui_render_signed_number(text, size, "Pedal trim", 4, false);
+        assert(!strcmp(text, "Pedal trim: +4"));
+        ui_render_number(text, size, "Shift RPM", 3500, true);
+        assert(!strcmp(text, size == 19 ? "* Shift RPM: 3500" : "* Shift RPM: " "\xAB" " 3500 " "\xBB"));
+        ui_render_action(text, size, "Read faults");
+        assert(!strcmp(text, "> Read faults"));
+        ui_render_pending(text, size, "AWD req", "OFF");
+        assert(!strcmp(text, "AWD req: OFF WAIT"));
+        ui_render_unavailable(text, size, "Start engine");
+        assert(!strcmp(text, "! Start engine"));
+    }
+    for (size_t size = 0; size < sizeof(text); ++size) {
+        memset(text, 'X', sizeof(text));
+        ui_render_toggle(text, size, "A very long label", false);
+        for (size_t i = size; i < sizeof(text); ++i)
+            assert(text[i] == 'X');
+        if (size) assert(memchr(text, 0, size));
+    }
+}
+
 int main(void) {
 #if defined(IPC_MY23_IS_INSTALLED)
     const char *suite = DASHBOARD_MESSAGE_MAX_LENGTH == 24 ? "menu-my23-24" : "menu-my23-18";
@@ -258,6 +315,8 @@ int main(void) {
         HOST_TEST(test_settings_migration),
         HOST_TEST(test_vehicle_editor),
         HOST_TEST(test_vehicle_editor_equipment),
+        HOST_TEST(test_my23_glyph_budget),
+        HOST_TEST(test_shared_renderers),
     };
     host_tests_run(suite, tests, sizeof(tests) / sizeof(tests[0]));
     puts("PASS: settings migration, vehicle editor");
