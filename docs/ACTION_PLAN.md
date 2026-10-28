@@ -4,6 +4,23 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Individual Readings/Favorites execution plan, 2026-10-28
+
+Owner explicitly rejected preservation of old compound Readings and old Favorite
+layouts. [Detailed implementation plan](architecture/READINGS_FAVORITES_IMPLEMENTATION_PLAN.md)
+is now the authoritative next-step procedure: new grouped individual readings,
+useful engine-aware defaults, composed rows/formats, runtime display profiles,
+one-time UI-only reset and preserved source/vehicle/statistics data. It orders
+baseline/inventory, profile boundary, catalog, rendering, display transport,
+layouts/defaults, reset storage, UI/polling cutover, cleanup and verification.
+Each step names files, test changes and completion gates; a dedicated matrix
+replaces obsolete migration/page tests while retaining decoder/storage/gesture/
+transport coverage. Earlier layout proposal was rewritten and profile audit
+annotated to prevent conflicting instructions. Documentation only: no firmware
+or tests edited/run, no hardware acceptance or release claimed. Next agent must
+inspect live Git baseline and update tests with implementation, not skip failures.
+Current work is committed on `docs/vehicle-profile-audit`; user edits preserved.
+
 ## Width-aware reading/Favorites concept, 2026-10-28
 
 Extended `docs/vehicle-profile-audit` with the

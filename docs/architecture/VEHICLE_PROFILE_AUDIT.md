@@ -7,6 +7,15 @@ Rain test implementation `3f4f1fe` is a separate branch and does not centralize
 vehicle settings. Existing engine-aware filtering is already present in the
 reviewed master; this proposal extends it rather than recreating it.
 
+## Later owner decision affecting UI compatibility
+
+The owner subsequently authorized discarding old Readings/Favorite layouts.
+The [implementation plan](READINGS_FAVORITES_IMPLEMENTATION_PLAN.md) supersedes
+this audit's recommendations to retain old UI page IDs/order and migrate old
+Favorite layouts. Vehicle/feature settings and measurement source definitions
+remain protected. The audit below describes the inspected old implementation;
+its historical facts are not new UI requirements.
+
 ## Conclusion
 
 There is a shared settings object, but no shared vehicle profile or capability
