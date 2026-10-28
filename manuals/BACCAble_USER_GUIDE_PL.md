@@ -33,8 +33,7 @@ jego sterowników. Sama obecność opcji w menu nie oznacza, że samochód ją o
 - [Akcje: Actions](#akcje-actions)
 - [Informacje: Information](#informacje-information)
 - [Jak rozumieć odczyty](#jak-rozumieć-odczyty)
-- [Odczyty dla silników benzynowych](#odczyty-dla-silników-benzynowych)
-- [Odczyty dla silnika Diesla](#odczyty-dla-silnika-diesla)
+- [Katalog odczytów](#katalog-odczytów)
 - [Przechwytywanie CAN i diagnostyka przez USB](#przechwytywanie-can-i-diagnostyka-przez-usb)
 - [Rozwiązywanie problemów](#rozwiązywanie-problemów)
 - [Różnice względem starej instrukcji](#różnice-względem-starej-instrukcji)
@@ -104,10 +103,10 @@ Nie ma Save & Exit. Bieżące odczyty pozostają widoczne. Pozostałe widoki wra
 do Favorites po 30 s bezczynności, a edytory po 60 s. Niedokończone szkice są
 odrzucane. Aktywny odczyt lub kasowanie błędów opóźnia automatyczny powrót.
 
-Edytory `Page favorites`, `Favorite order` i `Shown pages` mają takie same
-szkice, potwierdzenie, zapis przytrzymaniem i odrzucanie. Zapis zostawia Cię
-w edytorze; osobny dwuklik wraca do Settings. Bezczynność odrzuca niezapisane
-zmiany. Zapamiętane strony odczytów są zapisywane przy wyjściu ze zwykłych widoków. Przy `× Save failed: RES` krótkie RES lub przytrzymanie ponawia
+Edytor Favorites ma takie same szkice, potwierdzenie, zapis przytrzymaniem
+i odrzucanie. Zapis zostawia Cię w edytorze; osobny dwuklik wraca do Settings.
+Bezczynność odrzuca niezapisane zmiany. Wybrany odczyt i ulubione są zapisywane
+przy wyjściu ze zwykłych widoków. Przy `× Save failed: RES` krótkie RES lub przytrzymanie ponawia
 zapis i wyjście, a dwuklik anuluje próbę wyjścia i zostawia bieżący widok.
 Samo czekanie nie ponawia zapisu.
 
@@ -298,7 +297,6 @@ Szkic nie steruje samochodem przed udanym zapisem.
 | `MY23 display` | Wyłączona / włączona | Włącza układ MY23: 16 znaków w pierwszej linii i 22 w drugiej. OFF zachowuje starszy układ jednej linii z szerokością 18/24 znaków wybraną przy kompilacji. |
 | `DPF regen alert` | Wyłączona / włączona | Włącza powiadomienia o regeneracji DPF w dieslu. Zobacz [obserwowanie DPF](#obserwowanie-dpf). |
 | `Auto rotate` | Wyłączona / włączona | Automatycznie zmienia stronę bieżących odczytów co pięć sekund. |
-| `Advanced pages` | Wyłączona / włączona | Dodaje techniczne i dodatkowe strony do Readings, z uwzględnieniem profilu silnika i ustawionej widoczności. |
 
 ### Grupa komfortu
 
@@ -681,9 +679,9 @@ bieżącymi pomiarami samochodu.
 
 ## Jak rozumieć odczyty
 
-Wybierz `Readings`, grupę i stronę. Podpis przy bieżącej wartości może być krótszy
-niż nazwa na liście Favorites/Shown pages. Wszystkie odczyty opisane poniżej są
-w katalogu, ale nieobsługiwane zapytania do sterownika ECU mogą stale dawać `--`.
+Wybierz `Readings`, grupę i odczyt. Podpis przy bieżącej wartości może być krótszy
+niż jego etykieta. Wszystkie odczyty opisane poniżej są w katalogu, ale
+nieobsługiwane zapytania do sterownika ECU mogą stale dawać `--`.
 
 - **Power** to moc obliczona z podawanego momentu i obrotów silnika. Jednostka
   `PS` to metryczne konie mechaniczne, czyli polskie KM; w starej instrukcji
@@ -692,19 +690,15 @@ w katalogu, ale nieobsługiwane zapytania do sterownika ECU mogą stale dawać `
   Jakość jest oceną sterownika, a nie wynikiem badania laboratoryjnego.
   Poziom oleju oceniaj w warunkach pomiaru zalecanych przez producenta pojazdu.
 - **Ignition cyl 1–6** pokazuje korektę zapłonu dla danego cylindra w stopniach.
-  Nie jest licznikiem wypadania zapłonów. Strony wypadania zapłonów dla V6
-  obejmują tylko cylindry 1–4, ponieważ katalog nie zawiera potwierdzonych
-  definicji indywidualnych liczników dla cylindrów 5 i 6.
+  Nie jest licznikiem wypadania zapłonów. Dla V6 wypadanie zapłonów obejmuje
+  tylko cylindry 1–4, ponieważ katalog nie zawiera potwierdzonych definicji
+  indywidualnych liczników dla cylindrów 5 i 6.
 - **Distance (ECU)** to odczyt diagnostyczny opisany w starej instrukcji jako
   dystans od wyzerowania licznika ECU. Bez sprawdzenia interpretacji danego
   sterownika nie utożsamiaj go z całkowitym przebiegiem na zestawie wskaźników.
 - **Gear** pokazuje N, R lub numer biegu; DNA pokazuje A, N, D lub R.
   Brak rozpoznanego stanu może dawać `--`/`?`. `Pedal map` korzysta z odpowiedzi
   zewnętrznego kontrolera pedału.
-- W tabelach wartości na stronach łączonych opisano **od lewej do prawej**.
-  Na zwartej stronie temperatur `O` oznacza olej, `W` — płyn chłodzący,
-  `I`/`In` — wlot intercoolera, a `X`/`Out` — jego wylot. Wszystkie temperatury
-  na tej stronie są w stopniach Celsjusza.
 
 ### Naładowanie akumulatora: z którego źródła pochodzi SOC?
 
@@ -731,162 +725,129 @@ rozładowywanie. Samo napięcie nie dowodzi ładowania. Strony z surowymi bajtam
 służą do diagnostyki źródła danych. Nie odczytuj całego bajtu jako SOC bez
 uwzględnienia jego znaczników i sposobu dekodowania.
 
-### Oznaczenia w wykazach
+## Katalog odczytów
 
-**A** w ostatniej kolumnie oznacza stronę zaawansowaną: zwykle jest ukryta,
-dopóki nie włączysz `Advanced pages`. **—** oznacza zwykłą stronę, nadal zależną
-od ustawionej widoczności i zgodności z silnikiem.
-Skróty grup: **Eng** = Engine, silnik; **Temp** = Temperatures, temperatury;
-**Batt** = Battery, akumulator; **DPF** = DPF / AdBlue; **Perf** = Performance,
-osiągi; **Other** = pozostałe. Oba zestawy są też dostępne przez All readings.
+Readings to pojedyncze pomiary pogrupowane jak poniżej; grupy bez odczytu
+dostępnego dla skonfigurowanego profilu pojazdu są pomijane. Ekran może używać krótszej etykiety.
+Wartość, na którą ECU nie odpowiada, pokazuje `--`.
 
-## Odczyty dla silników benzynowych
+### Oil
 
-Poniżej znajdują się wszystkie **64 strony benzynowe**. Jeśli nie zaznaczono
-inaczej, dotyczą zarówno 2.0 I4, jak i 2.9 V6. Tabela zachowuje kolejność katalogu.
-Przy przeglądaniu według grup lub A–Z kolejność może być inna.
+| Odczyt | Jednostka / znaczenie | Dostępność |
+| --- | --- | --- |
+| Oil temp | C | wszystkie |
+| Oil pressure | bar | wszystkie |
+| Oil level | mm | wszystkie |
+| Oil status | LOW / OK / HIGH | wszystkie |
+| Oil bar | pasek na całą szerokość | wszystkie |
+| Oil volume | L | wszystkie |
+| Oil quality | % | wszystkie |
 
-W opisach „z komunikatów CAN” oznacza wartość pobieraną ze zwykłych komunikatów
-samochodu. „Odczyt diagnostyczny” oznacza wartość uzyskaną przez zapytanie
-do sterownika. Ten sam parametr z dwóch takich źródeł może mieć różną dostępność.
+### Temperatures
 
-| Nazwa strony | Grupa | Jednostki i znaczenie | A |
-| --- | --- | --- | --- |
-| Power / torque | Perf | PS / Nm; obliczona moc i moment obrotowy zgłaszany przez silnik. | — |
-| Oil bar/coolant | Temp | bar / °C; ciśnienie oleju z komunikatów CAN i temperatura płynu chłodzącego z ECU. | A |
-| Oil bar / temp | Temp | bar / °C; ciśnienie i temperatura oleju z komunikatów CAN. | A |
-| Oil/coolant temp | Temp | °C / °C; temperatura oleju z komunikatów CAN i temperatura płynu chłodzącego z ECU. | — |
-| Oil level/qual. | Eng | L / %; objętość oleju i ocena jego jakości ze sterownika silnika. | A |
-| Batt charge / A | Batt | % / A; SOC ze sterownika silnika i prąd akumulatora ze znakiem. | A |
-| Battery V / A | Batt | V / A; napięcie z BCM i prąd akumulatora ze znakiem. | — |
-| Power | Perf | PS; moc obliczona z momentu obrotowego i obrotów silnika. | — |
-| Torque | Perf | Nm; moment obrotowy zgłaszany przez silnik. | — |
-| Intercooler out | Temp | °C; temperatura powietrza na wylocie intercoolera, czyli chłodnicy powietrza doładowującego. | — |
-| Intercooler in | Temp | °C; temperatura powietrza na wlocie intercoolera. | — |
-| Intake abs press | Eng | bar; ciśnienie bezwzględne w dolocie, obejmujące ciśnienie atmosferyczne. | A |
-| Boost pressure | Eng | bar; ciśnienie bezwzględne w dolocie pomniejszone o stały poziom odniesienia 1 bar. Wynik może być ujemny. | — |
-| Turbo sensor V | Eng | V; napięcie sygnału czujnika ciśnienia turbo/dolotu. To nie jest ciśnienie doładowania. | A |
-| Distance (ECU) | Perf | km; diagnostyczny licznik dystansu z ECU. | A |
-| Oil volume | Eng | L; objętość oleju zgłaszana przez ECU. | — |
-| Oil pressure | Eng | bar; diagnostyczny odczyt ciśnienia oleju z ECU. Źródło inne niż na stronach łączonych z ciśnieniem z komunikatów CAN. | — |
-| Oil temp (ECU) | Temp | °C; diagnostyczny odczyt temperatury oleju z ECU. | — |
-| Oil quality | Eng | %; ocena jakości oleju według ECU. | A |
-| MultiAir temp | Temp | °C; temperatura oleju w module MultiAir. **Tylko I4.** | — |
-| Gearbox temp | Temp | °C; temperatura skrzyni biegów. | — |
-| Batt charge BCM | Batt | %; SOC akumulatora z BCM. Podpis bieżącego odczytu: `Batt BCM SOC`. | — |
-| Battery current | Batt | A; prąd akumulatora z komunikatów CAN, ze znakiem. | — |
-| Battery voltage | Batt | V; diagnostyczny odczyt napięcia akumulatora z BCM. | — |
-| A/C pressure | Other | bar; ciśnienie czynnika w układzie klimatyzacji. | A |
-| Gear | Eng | N / R / numer; zgłoszony aktualny bieg. | — |
-| Engine run time | Eng | min; zgłoszony czas od uruchomienia silnika. | A |
-| Over-rev time | Eng | s; czas pracy przy nadmiernych obrotach, zgłoszony przez ECU. | A |
-| Over-rev count | Eng | Liczba zgłoszonych przez ECU przypadków nadmiernych obrotów. | A |
-| Exhaust temp | Temp | °C; temperatura spalin według ECU. | — |
-| Catalyst temp | Temp | °C; temperatura katalizatora. | — |
-| Coolant temp | Temp | °C; temperatura płynu chłodzącego silnik. | — |
-| Knock sensor | Eng | mV; sygnał czujnika spalania stukowego. To nie jest licznik zdarzeń spalania stukowego. | A |
-| Key ID | Other | Liczbowy identyfikator klucza z diagnostyki. Nie jest pełnym identyfikatorem klucza w zapisie szesnastkowym. | A |
-| Ignition cyl 1 | Eng | °; korekta zapłonu cylindra 1. | — |
-| Ignition cyl 2 | Eng | °; korekta zapłonu cylindra 2. | — |
-| Ignition cyl 3 | Eng | °; korekta zapłonu cylindra 3. | — |
-| Ignition cyl 4 | Eng | °; korekta zapłonu cylindra 4. | — |
-| DNA mode | Other | A / N / D / R; zgłoszony tryb jazdy. | — |
-| Speed | Perf | km/h; prędkość zgłaszana przez samochód. | — |
-| Seatbelt alarm | Other | ON / OFF; zgłoszone ustawienie dźwiękowego ostrzegania o pasach. | A |
-| 0-100 km/h | Perf | s, RUN albo MISS; bieżąca lub ostatnia próba 0–100. | — |
-| 100-200 km/h | Perf | s, RUN albo MISS; bieżąca lub ostatnia próba 100–200. | — |
-| Best 0-100 | Perf | s; zapisany najlepszy czas 0–100. | — |
-| Best 100-200 | Perf | s; zapisany najlepszy czas 100–200. | — |
-| Pedal map | Other | B / A / N / D / R; mapa zgłoszona przez kontroler pedału albo znacznik braku odczytu. | — |
-| Ignition cyl 5 | Eng | °; korekta zapłonu cylindra 5. **Tylko V6.** | — |
-| Ignition cyl 6 | Eng | °; korekta zapłonu cylindra 6. **Tylko V6.** | — |
-| Oil level | Eng | mm; wysokość oleju z ECU i LOW / OK / HIGH dla wybranego silnika i napędu. | — |
-| Oil level bar | Eng | Pasek wysokości oleju na całą linię z granicami zakresu. | — |
-| Misfires total | Eng | Całkowita liczba wypadnięć zapłonu zgłoszona przez ECU. | — |
-| Misfires cyl 1 | Eng | Liczba wypadnięć zapłonu w cylindrze 1. | A |
-| Misfires cyl 2 | Eng | Liczba wypadnięć zapłonu w cylindrze 2. | A |
-| Misfires cyl 3 | Eng | Liczba wypadnięć zapłonu w cylindrze 3. | A |
-| Misfires cyl 4 | Eng | Liczba wypadnięć zapłonu w cylindrze 4. | A |
-| Misfires cyl 1-4 | Eng | Cztery liczniki, kolejno dla cylindrów 1, 2, 3 i 4. W V6 obejmują tylko część cylindrów. | — |
-| Oil L / mm / % | Eng | L / mm / %; objętość oleju, wysokość jego poziomu i ocena jakości. | A |
-| Oil/water/IC C | Temp | °C × 4; temperatury: oleju z ECU, płynu chłodzącego, wlotu i wylotu intercoolera. | A |
-| Oil/water/gear C | Temp | °C × 3; temperatury: oleju z ECU, płynu chłodzącego i skrzyni biegów. | A |
-| Battery sources | Batt | % / %; SOC z komunikatu IBS i SOC ze sterownika silnika. | A |
-| Battery IBS raw | Batt | Dwa surowe bajty IBS w zapisie dziesiętnym: najpierw bajt 0, potem bajt 1. Bez jednostki fizycznej. | A |
-| IBS raw0/SOC/V | Batt | Surowy bajt 0 / % / V; dane IBS, SOC z BCM i napięcie z BCM. | A |
-| IBS raw1/SOC/V | Batt | Surowy bajt 1 / % / V; dane IBS, SOC z BCM i napięcie z BCM. | A |
-| Oil volume/mm | Eng | L / mm; objętość oleju i wysokość jego poziomu. | A |
-| Misfires/MA temp | Eng | Liczba / °C; całkowita liczba wypadnięć zapłonu i temperatura oleju MultiAir. **Tylko I4.** | A |
+| Odczyt | Jednostka / znaczenie | Dostępność |
+| --- | --- | --- |
+| Coolant | C | wszystkie |
+| Gearbox | C | wszystkie |
+| IC inlet | C | benzyna |
+| IC outlet | C | benzyna |
+| Intake air | C | diesel |
+| Exhaust | C | wszystkie |
+| Fuel temp | C | diesel |
+| Catalyst | C | benzyna |
 
-## Odczyty dla silnika Diesla
+### Engine
 
-Poniżej znajdują się wszystkie **60 stron dla diesla**, dostępne w profilu 2.2 D.
-Odczyty AdBlue wymagają dodatkowo wyposażenia w SCR. Niektóre techniczne zapytania
-diagnostyczne mogą nie być obsługiwane przez daną wersję sterownika.
+| Odczyt | Jednostka / znaczenie | Dostępność |
+| --- | --- | --- |
+| Power | PS | wszystkie |
+| Torque | Nm | wszystkie |
+| Boost | bar | wszystkie |
+| Intake | bar | benzyna |
+| Ign cyl 1 | deg | wszystkie |
+| Ign cyl 2 | deg | wszystkie |
+| Ign cyl 3 | deg | wszystkie |
+| Ign cyl 4 | deg | wszystkie |
+| Ign cyl 5 | deg | benzyna 2.9 |
+| Ign cyl 6 | deg | benzyna 2.9 |
+| Misfires | liczba | wszystkie |
+| EGR target | % | diesel |
+| EGR actual | % | diesel |
+| Turbo temp | C | diesel |
 
-| Nazwa strony | Grupa | Jednostki i znaczenie | A |
-| --- | --- | --- | --- |
-| Power / torque | Perf | PS / Nm; obliczona moc i moment obrotowy zgłaszany przez silnik. | — |
-| Oil bar/coolant | Temp | bar / °C; ciśnienie oleju z komunikatów CAN i temperatura płynu chłodzącego z ECU. | A |
-| Oil bar / temp | Temp | bar / °C; ciśnienie i temperatura oleju z komunikatów CAN. | A |
-| Oil/coolant temp | Temp | °C / °C; temperatura oleju z komunikatów CAN i temperatura płynu chłodzącego z ECU. | — |
-| Oil level/qual. | Eng | mm / %; wysokość poziomu oleju i ocena jakości. W przeciwieństwie do benzyny pierwsza wartość nie jest w litrach. | A |
-| Batt charge / A | Batt | % / A; SOC ze sterownika silnika i prąd akumulatora ze znakiem. | A |
-| Battery V / A | Batt | V / A; diagnostyczny odczyt napięcia i prąd akumulatora ze znakiem. | — |
-| DPF load / temp | DPF | % / °C; szacowane zapełnienie filtra i temperatura DPF. | — |
-| DPF regen / temp | DPF | % / °C; postęp regeneracji i temperatura DPF. | A |
-| Power | Perf | PS; moc obliczona z momentu obrotowego i obrotów silnika. | — |
-| Torque | Perf | Nm; moment obrotowy zgłaszany przez silnik. | — |
-| DPF load | DPF | %; szacowane zapełnienie filtra cząstek stałych. | — |
-| DPF temp | DPF | °C; temperatura filtra cząstek stałych. | — |
-| DPF regen % | DPF | %; postęp regeneracji, a nie zapełnienie filtra. | — |
-| DPF regen mode | DPF | Rozpoznana faza regeneracji lub pracy układu oczyszczania spalin. Zobacz rozdział o DPF. | — |
-| Since DPF regen | DPF | km; dystans od ostatniej regeneracji. | — |
-| DPF regen count | DPF | Liczba regeneracji zgłoszona przez ECU. | A |
-| DPF avg interval | DPF | km; średni dystans między regeneracjami według ECU. | A |
-| DPF avg duration | DPF | min; średni czas regeneracji według ECU. | A |
-| Battery voltage | Batt | V; diagnostyczny odczyt napięcia akumulatora dla diesla. | — |
-| Battery charge | Batt | %; SOC akumulatora z komunikatu IBS. | — |
-| Battery current | Batt | A; prąd akumulatora z komunikatów CAN, ze znakiem. | — |
-| Oil quality | Eng | %; ocena jakości oleju według ECU. | A |
-| Oil temp | Temp | °C; temperatura oleju silnikowego z komunikatów CAN. | — |
-| Oil pressure | Eng | bar; ciśnienie oleju silnikowego z komunikatów CAN. | — |
-| Oil level | Eng | mm; wysokość oleju z ECU i LOW / OK / HIGH dla wybranego silnika i napędu. | — |
-| Oil level bar | Eng | Pasek wysokości oleju na całą linię z granicami zakresu. | — |
-| AdBlue volume | DPF | L; ilość AdBlue. **Wymagany układ SCR.** | — |
-| AdBlue level | DPF | %; poziom AdBlue w zbiorniku. **Wymagany układ SCR.** | — |
-| Gearbox temp | Temp | °C; temperatura skrzyni biegów. | — |
-| Exhaust temp | Temp | °C; temperatura spalin. | — |
-| Gear | Eng | N / R / numer; zgłoszony aktualny bieg. | — |
-| Coolant temp | Temp | °C; temperatura płynu chłodzącego silnik. | — |
-| EGR target | Eng | %; zadana wartość sterowania recyrkulacją spalin EGR. | A |
-| EGR actual | Eng | %; zgłoszona rzeczywista wartość EGR. | A |
-| Turbo target bar | Eng | bar; docelowe ciśnienie turbo według ECU. | A |
-| Turbo target % | Eng | %; docelowa wartość sterowania turbo według ECU. | A |
-| Turbo temp | Temp | °C; temperatura z odczytu diagnostycznego związanego z turbo. | — |
-| Turbo actual bar | Eng | bar; rzeczywiste ciśnienie turbo według ECU. | — |
-| Turbo actual % | Eng | %; rzeczywista wartość sterowania turbo według ECU. | A |
-| Boost target | Eng | bar; osobny odczyt docelowego ciśnienia doładowania z ECU. | — |
-| Intake sensor V | Eng | V; napięcie sygnału czujnika dolotu. | A |
-| Fuel pressure | Eng | bar; ciśnienie paliwa. | — |
-| Fuel temp | Temp | °C; temperatura paliwa. | — |
-| Distance (ECU) | Perf | km; diagnostyczny licznik dystansu z ECU. | A |
-| A/C pressure | Other | bar; ciśnienie czynnika w układzie klimatyzacji. | A |
-| Fuel rate | Eng | L/h; chwilowe zużycie paliwa w litrach na godzinę, nie w L/100 km. | — |
-| Intake air temp | Temp | °C; temperatura powietrza dolotowego. | — |
-| Speed | Perf | km/h; prędkość zgłaszana przez samochód. | — |
-| Seatbelt alarm | Other | ON / OFF; zgłoszone ustawienie dźwiękowego ostrzegania o pasach. | A |
-| 0-100 km/h | Perf | s, RUN albo MISS; bieżąca lub ostatnia próba 0–100. | — |
-| 100-200 km/h | Perf | s, RUN albo MISS; bieżąca lub ostatnia próba 100–200. | — |
-| Best 0-100 | Perf | s; zapisany najlepszy czas 0–100. | — |
-| Best 100-200 | Perf | s; zapisany najlepszy czas 100–200. | — |
-| DNA mode | Other | A / N / D / R; zgłoszony tryb jazdy. | — |
-| Pedal map | Other | B / A / N / D / R; mapa zgłoszona przez kontroler pedału albo znacznik braku odczytu. | — |
-| Battery sources | Batt | % / %; SOC z komunikatu IBS i SOC ze sterownika silnika. | A |
-| Battery IBS raw | Batt | Dwa surowe bajty IBS w zapisie dziesiętnym: najpierw bajt 0, potem bajt 1. Bez jednostki fizycznej. | A |
-| IBS raw0/SOC/V | Batt | Surowy bajt 0 / % / V; dane IBS oraz definicje SOC i napięcia BCM, które mogą być nieobsługiwane w dieslu. | A |
-| IBS raw1/SOC/V | Batt | Surowy bajt 1 / % / V; dane IBS oraz definicje SOC i napięcia BCM, które mogą być nieobsługiwane w dieslu. | A |
-| Oil/water/gear C | Temp | °C × 3; temperatura oleju z komunikatów CAN, płynu chłodzącego z ECU i skrzyni biegów. | A |
+### Fuel
+
+| Odczyt | Jednostka / znaczenie | Dostępność |
+| --- | --- | --- |
+| Fuel rate | L/h | diesel |
+| Fuel rail | bar | diesel |
+
+### Battery
+
+| Odczyt | Jednostka / znaczenie | Dostępność |
+| --- | --- | --- |
+| Battery | V | wszystkie |
+| Battery A | A | wszystkie |
+| Batt IBS | % | wszystkie |
+| Batt ECU | % | wszystkie |
+| Batt BCM | % | wszystkie |
+| IBS raw 0 | surowy bajt | wszystkie |
+| IBS raw 1 | surowy bajt | wszystkie |
+
+### Diesel / DPF
+
+| Odczyt | Jednostka / znaczenie | Dostępność |
+| --- | --- | --- |
+| DPF load | % | diesel |
+| DPF temp | C | diesel |
+| Regen | % | diesel |
+| Regen mode | faza | diesel |
+| Regen ago | km | diesel |
+| Regen count | liczba | diesel |
+| Regen avg km | km | diesel |
+| Regen avg min | min | diesel |
+| AdBlue | L | diesel + SCR |
+| AdBlue % | % | diesel + SCR |
+
+### Driving
+
+| Odczyt | Jednostka / znaczenie | Dostępność |
+| --- | --- | --- |
+| Speed | km/h | wszystkie |
+| Gear | N / R / bieg | wszystkie |
+| DNA mode | A / N / D / R | wszystkie |
+| Pedal map | litera mapy | wszystkie |
+| Seatbelt | ON / OFF | wszystkie |
+| Distance | km | wszystkie |
+
+### Performance
+
+| Odczyt | Jednostka / znaczenie | Dostępność |
+| --- | --- | --- |
+| 0-100 | s | wszystkie |
+| 100-200 | s | wszystkie |
+| Best 0-100 | s | wszystkie |
+| Best100-200 | s | wszystkie |
+
+### Diagnostics
+
+| Odczyt | Jednostka / znaczenie | Dostępność |
+| --- | --- | --- |
+| Oil ECU temp | C | wszystkie |
+| Oil ECU press | bar | wszystkie |
+| MultiAir | C | benzyna 2.0 |
+| Knock | mV | benzyna |
+| Key ID | liczba | benzyna |
+| Run time | min | wszystkie |
+| Over-rev s | s | wszystkie |
+| Over-rev n | liczba | wszystkie |
+| A/C pressure | bar | wszystkie |
+| Turbo V | V | benzyna |
+| Intake V | V | diesel |
+| Turbo req bar | bar | diesel |
+| Turbo req % | % | diesel |
+| Turbo % | % | diesel |
+| Boost req | bar | diesel |
 
 ## Przechwytywanie CAN i diagnostyka przez USB
 
@@ -1033,7 +994,7 @@ Po zakończeniu używaj USB mode OFF do zwykłej pracy.
 | RES nie otwiera menu | Włączony zapłon i aktywny zestaw wskaźników; CC i ACC wyłączone. Puść przyciski, a potem przytrzymaj RES przez 0,9 s. Sprawdź połączenie i oprogramowanie C1. Diagnostyka ELM może chwilowo wstrzymywać obsługę menu. |
 | Menu przeskakuje albo przestaje reagować | Rozróżniaj lekkie i mocne naciśnięcia. Po przerwie w komunikacji puść przycisk. W Information sprawdź Reports/Gaps/Input age oraz stan C2/BH. |
 | Na wyświetlaczu zostaje tekst radia | BH powinien ponawiać cały dwuliniowy komunikat BACCAble mniej więcej raz na sekundę i zaczynać go od początku po wiadomości radia. Używa źródła ostatniego odebranego tekstu multimediów. Jeśli menu nadal nie widać, sprawdź łącze BH, zgodność firmware i ramki nadawane przez BH; capture na komputerze zapisuje ramki odebrane, nie własną transmisję BH. |
-| Brakuje strony lub akcji | Sprawdź profil silnika, Shown pages, Advanced pages oraz ustawienie udostępniające akcję w Features. Ukryta strona z innego profilu może nadal zajmować miejsce w ulubionych. |
+| Brakuje odczytu lub akcji | Sprawdź profil pojazdu oraz ustawienie udostępniające akcję w Features. Nieobsługiwane zapisane ulubione pokazuje `--`, dopóki jego profil znów nie zacznie obowiązywać. |
 | `No favorites` / `No pages` | Dodaj zgodne ulubione lub przywróć widoczność stron. Dwuklik RES nadal pozwala wrócić. |
 | Odczyt pokazuje `--` | Poczekaj na aktualne dane, sprawdź stan zapłonu/silnika i obsługę przez ECU. Diagnostyka USB może wstrzymywać zwykłe zapytania. Obecność strony nie gwarantuje, że sterownik obsługuje jej parametr. |
 | `Batt BCM SOC --` lub `Batt charge --%` | Porównaj niezależne źródła na Battery sources. Nie traktuj braku SOC jak 0% i nie używaj IBS override jako naprawy odczytu. |

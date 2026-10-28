@@ -334,7 +334,6 @@ const SetupParam setup_params[] = {
      "USB mode", NULL, UI_ENTRY_EXCLUSIVE_MODE, 0, 0, 0},
     SETUP_HIDDEN_TOGGLE(35, 0, settings_state.usb_elm327),
 
-    SETUP_TOGGLE(37, "Advanced pages", 0, settings_state.advanced_pages),
     SETUP_HIDDEN_TOGGLE(36, 0, settings_state.gasoline_v6),
 
     // Hidden persisted values
