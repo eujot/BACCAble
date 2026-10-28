@@ -4,6 +4,26 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Unified vehicle profile + UI specification, 2026-10-28
+
+The owner requests one coordinated project and explicitly prohibits executing
+unmodified tests. [VEHICLE_UI_IMPLEMENTATION_PLAN](architecture/VEHICLE_UI_IMPLEMENTATION_PLAN.md)
+is the single authoritative execution specification, superseding the earlier
+separate plans. It includes complete profile fields/equipment/confirmation,
+settings migration versus UI reset, shared capabilities and oil ranges, runtime
+18/24/MY23 display contract, individual Readings, composed/default Favorites,
+request/cache generations, peer option suppression and release-path preservation.
+P0–P10 fix the dependency order and gates. Test-impact ledger + exact-case
+allowlist precede any execution; only new or meaningfully changed cases run.
+Broad baseline/full-suite commands were withdrawn, not just left in an old plan.
+The specification explains existing runner limitations, required scoped tooling,
+CI-policy conflicts and reporting of unexecuted coverage. Earlier execution plan
+is now a redirect; profile audit is marked historical. Documentation only: no
+firmware/tests/CI changes or test execution. Local references/diff checked.
+Next action: implement this joint specification when requested, on a fresh task
+branch after inspecting live Git; retain unrelated user edits. Current planning
+branch is `docs/vehicle-profile-audit`.
+
 ## Individual Readings/Favorites execution plan, 2026-10-28
 
 Owner explicitly rejected preservation of old compound Readings and old Favorite

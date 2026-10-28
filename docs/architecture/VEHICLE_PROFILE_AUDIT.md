@@ -1,6 +1,11 @@
 # Vehicle profile audit and implementation proposal
 
-Status: proposal for owner review, 2026-10-28. No firmware changes.
+Status: historical audit, 2026-10-28. No firmware changes.
+
+**Execution instructions are superseded by the unified
+[vehicle/UI implementation plan](VEHICLE_UI_IMPLEMENTATION_PLAN.md).**
+Use its complete profile scope, migration/confirmation rules and scoped testing
+contract. This audit retains source evidence, not a separate delivery sequence.
 Baseline: fetched `origin/master` at `ba9176e` (PR #95). The user's main checkout
 is the older, dirty `feat/rain-lights-debug`; its edits were preserved. The local
 Rain test implementation `3f4f1fe` is a separate branch and does not centralize
@@ -10,7 +15,7 @@ reviewed master; this proposal extends it rather than recreating it.
 ## Later owner decision affecting UI compatibility
 
 The owner subsequently authorized discarding old Readings/Favorite layouts.
-The [implementation plan](READINGS_FAVORITES_IMPLEMENTATION_PLAN.md) supersedes
+The [joint implementation plan](VEHICLE_UI_IMPLEMENTATION_PLAN.md) supersedes
 this audit's recommendations to retain old UI page IDs/order and migrate old
 Favorite layouts. Vehicle/feature settings and measurement source definitions
 remain protected. The audit below describes the inspected old implementation;

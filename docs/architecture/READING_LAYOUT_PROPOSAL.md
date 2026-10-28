@@ -6,7 +6,7 @@ Favorite layouts preserved. Earlier proposals to retain those pages as presets
 or migrate their saved compositions are superseded.
 
 The authoritative next-step document is the
-[detailed implementation plan](READINGS_FAVORITES_IMPLEMENTATION_PLAN.md).
+[joint technical specification](VEHICLE_UI_IMPLEMENTATION_PLAN.md).
 It includes product rules, dependency order, concrete files, default layouts,
 one-time UI reset, exact test replacement obligations and acceptance commands.
 No firmware has been changed by these planning commits.

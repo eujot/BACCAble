@@ -38,9 +38,10 @@ The [vehicle profile audit](VEHICLE_PROFILE_AUDIT.md) records current vehicle
 configuration consumers and a proposed centralization plan awaiting review.
 The [reading layout proposal](READING_LAYOUT_PROPOSAL.md) covers per-line widths,
 composable Favorites, format choices and older-screen compatibility.
-The [implementation plan](READINGS_FAVORITES_IMPLEMENTATION_PLAN.md) supersedes
+The [joint implementation plan](VEHICLE_UI_IMPLEMENTATION_PLAN.md) supersedes
 old-layout preservation after owner approval of a fresh UI layout reset; it
-provides ordered work steps and mandatory test replacements.
+provides the complete vehicle-profile/UI specification, ordered dependencies
+and mandatory test updates with execution restricted to new or changed cases.
 
 ## Execution and ownership
 
