@@ -4,6 +4,64 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## HANDOFF — current state and next steps, 2026-10-28 (start here)
+
+Branch `docs/vehicle-profile-audit`, HEAD `1e125bd`, working tree clean (8 commits).
+All four board flavors build and link: C1 92340/1836/10912, C2 30244/952/11384,
+BH 34996/860/12168, CAN 24332/656/6272 (text/data/bss). Scoped host tests: 40/40
+pass via the scoped runner.
+
+Working and testable now:
+- Vehicle editor (complete): Model, Model year, Engine, Drivetrain, Display,
+  Equipment (8 tri-state). Profile is canonical (0x107 load/save + 0x101 legacy
+  import + legacy-flag sync in settings/persistence.c and vehicle_editor.c).
+- Everything else unchanged (old compound Readings/Favorites, actions,
+  diagnostics, settings). No regressions.
+
+New but NOT wired into the UI yet (compiled but `--gc-sections`-dead):
+- features/reading_catalog.c/.h (stable ReadingId -> source map).
+- features/reading_format.c/.h (width-aware scalar/line renderer; now uses
+  project printf via third_party/printf).
+- features/favorite_layout.c/.h (row/item/style model + defaults) — only
+  `favorite_layout_default()` is called in menu.c (initializes `favorites_layout`,
+  not yet rendered).
+- storage/ui_layout_store.c/.h (0x106 UI record codec).
+
+Blocker (measured): wiring the new Readings/Favorites render pulls in
+reading_catalog (`reading_meta` ~2.2 KB struct array + ~1.7 KB strings) and the
+C1 `.rodata` overflows FLASH by ~2556 bytes. It cannot coexist with the old
+compound-page tables. Resolution = remove the retired `parameter_pages` tables and
+their consumers; no string-trimming shortcut (struct array alone exceeds the gap).
+
+Next steps, in order (each with a C1 build + scoped test run before committing):
+1. Favorites cutover: render + edit + persist the `FavoriteLayout` (2 rows x 4
+   items, ReadingId + Auto/Full/Medium/Short) instead of the page-pair model in
+   menu.c and favorite_parameters.c.
+2. Remove the three legacy editors EDIT_FAVORITES / EDIT_VISIBLE / ORDER_FAVORITES
+   and their settings entries.
+3. Cut over the automatic-result view (menu_show_parameter + parameter_page_find)
+   to a ReadingId/visible-source path.
+4. Delete `parameter_pages` (gasoline_pages/diesel_pages), menu_page_* helpers,
+   favorite_parameters.c and parameter_navigation.c page lookup. Keep
+   `parameter_definitions` (the 98 UDS sources).
+5. Re-apply the Readings cutover (GROUPS -> reading_group_name/reading_list,
+   VALUES -> reading_format_line/value, single-source polling). The exact edits
+   were applied and measured this session; re-read the live menu.c first.
+6. Replace obsolete host expectations per VEHICLE_UI_IMPLEMENTATION_PLAN.md
+   Section 6 (test replacement map); keep vehicle/feature preservation tests.
+7. Update both EN/PL user guides + menu_demo.c + architecture docs.
+8. Run the 4-flavor UI matrix and record Flash/RAM; leave hardware acceptance open.
+
+Build/test commands (worktree root, full ARM toolchain):
+- scoped tests: python3 tests/run_vehicle_ui_tests.py --manifest tests/vehicle_ui_tests.json --run
+- firmware: make -C firmware/baccable FLAVOR=C1 TOOLCHAIN=/Applications/ArmGNUToolchain/15.2.rel1/arm-none-eabi/bin/arm-none-eabi- VERSION=local-test all
+
+Gotchas: read files in /private/tmp/baccable-vehicle-profile-audit via terminal
+(not read_file, which points at the stale /Users/eujot/git/BACCAble checkout).
+Float formatting must use the project printf (snprintf_), not libc snprintf
+(newlib-nano lacks %f). Preserve unrelated local edits and keep both user guides
+in sync per AGENTS.md.
+
 ## P8 Readings cutover attempt: C1 FLASH overflow, 2026-10-28
 
 Attempted the Readings cutover (GROUPS -> individual `ReadingId` via
