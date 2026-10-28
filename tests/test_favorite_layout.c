@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+void _putchar(char c) { (void)c; }
 
 static void test_favorite_item_and_clear(void) {
     assert(favorite_item_empty(FAVORITE_EMPTY_ITEM));

@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+void _putchar(char c) { (void)c; }
 
 static void test_reading_glyph_count(void) {
     assert(reading_glyph_count("abc") == 3);

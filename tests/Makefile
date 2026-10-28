@@ -224,7 +224,7 @@ test: build/test_rain_uart
 # Scoped vehicle-profile/UI foundation (P0-P7). Built and run only via the
 # test-vehicle-ui target and its manifest; these are not part of the broad "test".
 READING_CATALOG_SOURCES := $(FIRMWARE)/features/reading_catalog.c $(FIRMWARE)/vehicle/vehicle_profile.c
-READING_FORMAT_SOURCES := $(FIRMWARE)/features/reading_format.c $(READING_CATALOG_SOURCES)
+READING_FORMAT_SOURCES := $(FIRMWARE)/features/reading_format.c $(READING_CATALOG_SOURCES) $(FIRMWARE)/third_party/printf/printf.c
 FAVORITE_LAYOUT_SOURCES := $(FIRMWARE)/features/favorite_layout.c $(READING_FORMAT_SOURCES)
 UI_LAYOUT_SOURCES := $(FIRMWARE)/storage/ui_layout_store.c $(FAVORITE_LAYOUT_SOURCES)
 

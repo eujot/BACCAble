@@ -1,6 +1,5 @@
 #include "features/reading_format.h"
-#include <stdio.h>
-#include <string.h>
+#include "third_party/printf/printf.h"
 
 unsigned reading_glyph_count(const char *text) {
     unsigned count = 0;
