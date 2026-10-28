@@ -3,10 +3,39 @@
 #include "storage/flash_records.h"
 #include "features/menu.h"
 #include "features/usb_modes.h"
+#include "vehicle/vehicle_profile.h"
 #if defined(BACCABLE_C1)
 static uint16_t saved_settings[SETUP_FLASH_PARAM_BUFFER_SIZE];
 static uint16_t best_times[2];
 static uint8_t settings_loaded, times_loaded;
+
+/* Populate the canonical vehicle profile once: prefer the new 0x107 record,
+ * otherwise import the legacy engine/drivetrain/display slots (unconfirmed). */
+static void vehicle_profile_load(void) {
+    uint8_t wire[VEHICLE_PROFILE_WIRE_SIZE];
+    VehicleProfile profile;
+    if (flash_record_load(SETTINGS_RECORD, 0x107, wire, sizeof(wire)) && vehicle_profile_decode(wire, &profile)) {
+        vehicle_profile_commit(&profile);
+        return;
+    }
+    vehicle_profile_import_legacy(saved_settings, SETUP_FLASH_PARAM_BUFFER_SIZE, &profile);
+    if (profile.display_selection != VEHICLE_DISPLAY_MY23)
+        profile.display_selection = DASHBOARD_MESSAGE_MAX_LENGTH >= 24 ? VEHICLE_DISPLAY_LEGACY24
+                                                                       : VEHICLE_DISPLAY_LEGACY18;
+    vehicle_profile_commit(&profile);
+}
+
+/* Derive the profile from the current legacy feature flags and persist 0x107. */
+static void vehicle_profile_save(void) {
+    VehicleProfile profile = *vehicle_profile_current();
+    vehicle_profile_apply_legacy_flags(&profile, settings_state.is_diesel_enabled, settings_state.gasoline_v6,
+                                       settings_state.drivetrain, settings_state.ipc_my23_is_installed,
+                                       DASHBOARD_MESSAGE_MAX_LENGTH);
+    uint8_t wire[VEHICLE_PROFILE_WIRE_SIZE];
+    if (!vehicle_profile_encode(&profile, wire) || !vehicle_profile_commit(&profile))
+        return;
+    flash_record_save(SETTINGS_RECORD, 0x107, wire, sizeof(wire));
+}
 
 /* Load saved feature preferences once for subsequent lookups. */
 static void load_settings(void) {
@@ -18,6 +47,7 @@ static void load_settings(void) {
         !flash_record_load(SETTINGS_RECORD, 0x101, saved_settings, 41U * sizeof(uint16_t)))
         flash_record_load(SETTINGS_RECORD, 0x101, saved_settings, 40U * sizeof(uint16_t));
     settings_loaded = 1;
+    vehicle_profile_load();
 }
 
 /* Load saved performance records once for subsequent lookups. */
@@ -58,6 +88,7 @@ uint8_t settings_save(void) {
         return 255;
     memcpy(saved_settings, values, sizeof(values));
     settings_loaded = 1;
+    vehicle_profile_save();
     board_sync_saved();
     usb_modes_apply();
     return 0;

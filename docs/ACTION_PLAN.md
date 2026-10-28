@@ -4,6 +4,93 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## P8 step 1: canonical profile persistence, 2026-10-28
+
+Started the P8 cutover with the safest, testable slice: the `VehicleProfile` is
+now the canonical source for the legacy engine/drivetrain/display facts at the
+settings load/save boundary.
+
+- `vehicle/vehicle_profile.c/.h`: added `vehicle_profile_apply_legacy_flags`
+  (legacy flags -> profile, preserving model/year/equipment/confirmed).
+- `settings/persistence.c`: on first settings load, decode the new 0x107 profile
+  record or import the legacy 0x101 engine/drivetrain/display slots (unconfirmed);
+  on settings save, derive the profile from the legacy flags and persist 0x107.
+- `tests/test_menu.c`: extended the flash stubs and `test_settings_migration` to
+  assert the profile import (V6/Q4/unconfirmed), the 0x107 write, and the
+  engine re-derivation after a flag change.
+- `tests/vehicle_ui_tests.json` now also runs the updated `test_settings_migration`
+  through the scoped runner.
+
+Verification: 37 selected cases pass (ASan/UBSan); C1 firmware builds and links
+(text/data/bss = 90608/1836/10784). The legacy setup menu still edits the old
+booleans; the profile is derived from them on save. Next P8 step: add the Vehicle
+editor (model/year/equipment) and replace the Readings/Favorites UI + polling.
+
+## Vehicle profile / Readings / Favorites foundation (P0–P7) implemented, 2026-10-28
+
+Implemented the model/storage/renderer/policy foundation of
+[VEHICLE_UI_IMPLEMENTATION_PLAN](architecture/VEHICLE_UI_IMPLEMENTATION_PLAN.md)
+and the required scoped test runner. This is a reviewable, tested base for the
+P8 UI/polling cutover; the old compound Readings/Favorites UI is still active
+until that cutover, so no released legacy-compound mode is removed yet.
+
+Delivered (new files):
+
+- `firmware/baccable/vehicle/vehicle_profile.h/.c` — canonical `VehicleProfile`
+  (model/engine/year/drivetrain/display/equipment/confirmed), validation,
+  feature/parameter policy, display-profile resolution, owner oil ranges,
+  generation counter, explicit 0x107 codec and legacy 0x101 import.
+- `firmware/baccable/features/reading_catalog.h/.c` — stable `ReadingId` catalog
+  mapping every reading to one UDS source per engine class, groups, labels,
+  units, precision and eligibility. See
+  [VEHICLE_UI_SOURCE_READING_MAP](architecture/VEHICLE_UI_SOURCE_READING_MAP.md).
+- `firmware/baccable/features/reading_format.h/.c` — width-aware scalar/line
+  renderer with UTF-8 glyph counting, `--` for stale/missing, bounded overflow
+  indicator and Auto label resolution.
+- `firmware/baccable/features/favorite_layout.h/.c` — 6x2x4 layout model,
+  deterministic engine-aware defaults, validation (duplicate-in-row, bar
+  exclusivity), source dedup and row rendering.
+- `firmware/baccable/storage/ui_layout_store.h/.c` — new `0x106` UI-layout
+  record codec (default/reset, encode/decode, corrupt-schema rejection). Not yet
+  attached to the boot path (per Step 7).
+- `tests/test_report.h` — exact-case `BACCABLE_TEST_CASES` allowlist (backward
+  compatible; unset runs all). Missing names fail the process.
+- `tests/run_vehicle_ui_tests.py` + `tests/vehicle_ui_tests.json` — scoped
+  runner/manifest with `--list` dry-run and `--run`, exact accounting, duplicate
+  and unknown-target rejection. New `tests/Makefile` `test-vehicle-ui` target.
+- `tests/test_vehicle_profile.c`, `test_runner_selection.c`,
+  `test_reading_catalog.c`, `test_reading_layout.c`, `test_favorite_layout.c`,
+  `test_ui_layout_store.c` — 35 new cases, all registered and executed through
+  the scoped runner.
+- `tests/test-impact.md` — the execution allowlist ledger.
+
+Verification on this Mac (Apple Clang + ASan/UBSan):
+
+- `python3 tests/run_vehicle_ui_tests.py --manifest tests/vehicle_ui_tests.json --run`
+  — 35/35 selected cases pass.
+- C1 firmware `lint` (102/102 files) and `all` build pass with the full
+  15.2.Rel1 ARM toolchain; the five new modules compile and link (`--gc-sections`
+  drops them until the P8 cutover wires them in).
+
+P10 build/resource matrix completed 2026-10-28: all four board flavors (C1, C2,
+BH, CAN) pass `lint` + `all`, and the 16-combination UI display matrix
+(legacy/legacy-large/my23/my23-large per flavor) builds and links with the new
+modules present. C1 text/data/bss = 90096/1836/10760 (legacy-large
+90336/1836/10968); C2 30244/952/11384; BH 34996/860/12168; CAN 24332/656/6272.
+The five new modules remain `--gc-sections`-dead until the cutover wires them in,
+so these sizes are the pre-cutover baseline, not the final delta. P9 Demo updated
+to preview the new Vehicle/Favorites/Readings structure (display-only).
+
+Remaining (critical path): P8 the real UI/polling cutover — connect the Vehicle
+editor/confirmation, replace Readings group/list + Favorite row/item editing,
+replace page-based polling with visible-source polling and request
+invalidation, then remove retired compound-page paths. The EN/PL user guides
+(P9) and vehicle hardware acceptance (P10) are gated on P8 because they document
+and certify behavior the menu does not expose yet. Native RPM has no UDS source
+(Engine default uses Power as the documented substitute); exact enum label
+strings and float formatting through the project printf are finalized at the P8
+cutover. No hardware claims; no broad suite executed per the owner restriction.
+
 ## Unified vehicle profile + UI specification, 2026-10-28
 
 The owner requests one coordinated project and explicitly prohibits executing

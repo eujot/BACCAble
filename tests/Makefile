@@ -2,7 +2,7 @@ CC := clang
 FIRMWARE := ../firmware/baccable
 CPPFLAGS := -I$(FIRMWARE)
 CFLAGS := -std=c11 -Wall -Wextra -Werror -g -O1 -fsanitize=address,undefined -fno-omit-frame-pointer
-HEADERS := test_report.h $(shell find stubs $(FIRMWARE)/app $(FIRMWARE)/protocol $(FIRMWARE)/diagnostics $(FIRMWARE)/storage $(FIRMWARE)/features $(FIRMWARE)/transport $(FIRMWARE)/platform $(FIRMWARE)/USB_DEVICE/App $(FIRMWARE)/third_party/printf -name '*.h')
+HEADERS := test_report.h $(shell find stubs $(FIRMWARE)/app $(FIRMWARE)/protocol $(FIRMWARE)/diagnostics $(FIRMWARE)/storage $(FIRMWARE)/features $(FIRMWARE)/vehicle $(FIRMWARE)/transport $(FIRMWARE)/platform $(FIRMWARE)/USB_DEVICE/App $(FIRMWARE)/third_party/printf -name '*.h')
 SOURCES := test_core.c $(FIRMWARE)/protocol/slcan_codec.c $(FIRMWARE)/diagnostics/uds_decode.c \
  $(FIRMWARE)/storage/record_store.c
 
@@ -106,7 +106,7 @@ test: build/test_drive_mode build/test_drive_mode_c2 build/test_drive_mode_bh
 MENU_SOURCES := test_menu.c $(addprefix $(FIRMWARE)/, features/menu.c features/menu_model.c \
  features/menu_input.c features/menu_demo.c features/my23_ui.c features/favorite_parameters.c features/ui_entry.c features/display_stream.c features/oil_bar_animation.c features/ibs_override.c features/board_sync.c features/drive_mode_check.c features/dashboard.c features/dashboard_format.c features/oil_level.c features/rain_test.c features/rain_lights.c \
  diagnostics/parameter_cache.c diagnostics/parameter_request.c diagnostics/parameter_catalog.c \
- protocol/checksum.c vehicle/steering_controls.c diagnostics/uds_decode.c diagnostics/fault_reader.c settings/persistence.c settings/setup_menu.c settings/setup_entries.c \
+ protocol/checksum.c vehicle/steering_controls.c diagnostics/uds_decode.c diagnostics/fault_reader.c settings/persistence.c settings/setup_menu.c settings/setup_entries.c vehicle/vehicle_profile.c \
  third_party/printf/printf.c)
 MENU_FIXTURES := test_oil_level.c test_my23_ui.c test_idle_latin1.c test_menu_contract.c test_setup_ui.c test_unified_ui.c
 build/test_menu: $(MENU_SOURCES) $(MENU_FIXTURES) $(HEADERS) Makefile
@@ -219,3 +219,39 @@ build/test_rain_uart: $(RAIN_UART_SOURCES) $(HEADERS) Makefile
 	@mkdir -p build
 	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -I$(FIRMWARE)/USB_DEVICE/App -DC1_FLAVOR=1 $(RAIN_UART_SOURCES) -o $@
 test: build/test_rain_uart
+
+
+# Scoped vehicle-profile/UI foundation (P0-P7). Built and run only via the
+# test-vehicle-ui target and its manifest; these are not part of the broad "test".
+READING_CATALOG_SOURCES := $(FIRMWARE)/features/reading_catalog.c $(FIRMWARE)/vehicle/vehicle_profile.c
+READING_FORMAT_SOURCES := $(FIRMWARE)/features/reading_format.c $(READING_CATALOG_SOURCES)
+FAVORITE_LAYOUT_SOURCES := $(FIRMWARE)/features/favorite_layout.c $(READING_FORMAT_SOURCES)
+UI_LAYOUT_SOURCES := $(FIRMWARE)/storage/ui_layout_store.c $(FAVORITE_LAYOUT_SOURCES)
+
+build/test_runner_selection: test_runner_selection.c $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) $(CPPFLAGS) $(CFLAGS) test_runner_selection.c -o $@
+
+build/test_vehicle_profile: test_vehicle_profile.c $(FIRMWARE)/vehicle/vehicle_profile.c $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) test_vehicle_profile.c $(FIRMWARE)/vehicle/vehicle_profile.c -o $@
+
+build/test_reading_catalog: test_reading_catalog.c $(READING_CATALOG_SOURCES) $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) test_reading_catalog.c $(READING_CATALOG_SOURCES) -o $@
+
+build/test_reading_layout: test_reading_layout.c $(READING_FORMAT_SOURCES) $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) test_reading_layout.c $(READING_FORMAT_SOURCES) -o $@
+
+build/test_favorite_layout: test_favorite_layout.c $(FAVORITE_LAYOUT_SOURCES) $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) test_favorite_layout.c $(FAVORITE_LAYOUT_SOURCES) -o $@
+
+build/test_ui_layout_store: test_ui_layout_store.c $(UI_LAYOUT_SOURCES) $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) test_ui_layout_store.c $(UI_LAYOUT_SOURCES) -o $@
+
+.PHONY: test-vehicle-ui
+test-vehicle-ui:
+	python3 run_vehicle_ui_tests.py --manifest $(MANIFEST) --run

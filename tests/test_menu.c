@@ -4,6 +4,7 @@
 #include "features/ui_entry.h"
 #include "features/my23_ui.h"
 #include "features/menu_demo.h"
+#include "vehicle/vehicle_profile.h"
 #include "features/favorite_parameters.h"
 #include "vehicle/steering_controls.h"
 #include "features/ibs_override.h"
@@ -42,6 +43,8 @@ static bool usb_needs_apply;
 static uint16_t fail_type;
 static uint16_t settings_record[SETUP_FLASH_PARAM_BUFFER_SIZE];
 static size_t settings_record_size;
+static uint8_t profile_record[VEHICLE_PROFILE_WIRE_SIZE];
+static bool have_profile;
 static unsigned old_settings_reads;
 static uint8_t last_command;
 static uint8_t last_ipc_pace, last_ipc_method, last_driver_rearm;
@@ -123,6 +126,11 @@ bool flash_record_load(unsigned slot, uint16_t type, void *data, size_t size) {
         memcpy(data, saved, size);
         return true;
     }
+    if (type == 0x107 && have_profile) {
+        assert(size == sizeof(profile_record));
+        memcpy(data, profile_record, size);
+        return true;
+    }
     return false;
 }
 bool flash_record_save(unsigned slot, uint16_t type, const void *data, size_t size) {
@@ -140,6 +148,11 @@ bool flash_record_save(unsigned slot, uint16_t type, const void *data, size_t si
         assert(size == sizeof(saved));
         memcpy(saved, data, size);
         have_saved = true;
+    }
+    if (type == 0x107) {
+        assert(size == sizeof(profile_record));
+        memcpy(profile_record, data, size);
+        have_profile = true;
     }
     return true;
 }
@@ -161,6 +174,13 @@ static void test_settings_migration(void) {
     assert(settings_state.gasoline_v6 == 1 && settings_state.default_suspension_softer == (old_size == 82));
     assert(settings_state.rain_lights_enabled == 0);
     assert(settings_state.default_drive_mode == 3 && settings_state.drivetrain == 2);
+    {
+        const VehicleProfile *profile = vehicle_profile_current();
+        assert(profile->engine == VEHICLE_ENGINE_PETROL29);
+        assert(profile->drivetrain == VEHICLE_DRIVETRAIN_Q4);
+        assert(profile->display_selection != VEHICLE_DISPLAY_MY23);
+        assert(!profile->confirmed);
+    }
     for (unsigned i = 0; i < setup_params_count; ++i) {
         assert(setup_params[i].flash_index <= SETUP_FLASH_PARAM_BUFFER_SIZE);
         for (unsigned j = 0; j < i; ++j)
@@ -172,6 +192,7 @@ static void test_settings_migration(void) {
     assert(settings_save() != 0 && settings_record_size == old_size);
     fail_save = false;
     assert(settings_save() == 0 && settings_record_size == 84);
+    assert(have_profile);
     assert(settings_record[35] == 1 && settings_record[40] == 1 && settings_record[41] == 1);
     settings_state.gasoline_v6 = 0;
     settings_state.default_suspension_softer = 0;
@@ -182,6 +203,7 @@ static void test_settings_migration(void) {
     assert(settings_save() == 0);
     assert(settings_record[35] == 0 && settings_record[40] == 1);
     assert(setup_read_flash_value(41, 0xffff) == 0 && setup_read_flash_value(41, 2) == 0);
+    assert(vehicle_profile_current()->engine == VEHICLE_ENGINE_PETROL20);
     memset(&settings_state, 0, sizeof(settings_state));
     settings_writes = usb_applies = 0;
 }
