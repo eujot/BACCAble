@@ -4,6 +4,22 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Vehicle profile audit for review, 2026-10-28
+
+Documentation-only branch `docs/vehicle-profile-audit`, based on master
+`ba9176e`; isolated from the user's older dirty checkout and the separate
+Rain test candidate branch. [Audit and proposed delivery sequence](architecture/VEHICLE_PROFILE_AUDIT.md)
+trace existing engine/IPC/drivetrain settings, Flash migration, menu/Favorites,
+OBD requests, oil ranges, feature permissions and auxiliary synchronization.
+The proposed `vehicle_profile` module separates vehicle facts/equipment from
+feature enables, live conditions and build capabilities. Proposed Vehicle menu,
+2023+ display default with override, migration strategy, execution gates and
+acceptance matrix await owner review. No firmware or operating behavior changed;
+no builds/hardware tests claimed. Local source references and diff checked.
+Existing user edits to the dictionary, catalog, action plan and untracked research/
+release files remain untouched. Next step: owner approval of scope and equipment
+migration policy, then behavior-preserving centralization before new filtering.
+
 ## CAN-to-LIN request correlation, 2026-10-26
 
 Added the [mirror correlation](architecture/CAN_CAPABILITIES.md#can-requests-to-lin-equipment-mirror-correlation):

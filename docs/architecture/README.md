@@ -34,6 +34,9 @@ with one event loop and statically allocated state.
 | `third_party` | FatFs and printf, kept separate from application code |
 | `Drivers`, `Middlewares` | Supplied ST/CMSIS libraries |
 
+The [vehicle profile audit](VEHICLE_PROFILE_AUDIT.md) records current vehicle
+configuration consumers and a proposed centralization plan awaiting review.
+
 ## Execution and ownership
 
 `main` initializes the platform and enabled features. Each loop processes a bounded
