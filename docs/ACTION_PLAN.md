@@ -6,8 +6,10 @@
 
 ## HANDOFF — current state and next steps, 2026-10-29 (start here)
 
-Branch `docs/vehicle-profile-audit`, HEAD `7c80b11`. Scoped host tests: 43/43 pass
-via the scoped runner. All four board flavors build and link.
+Branch `docs/vehicle-profile-audit`, HEAD `a9abc14` plus the CAN-dictionary
+snapshot fix recorded below; PR #96 targets `master`. Scoped host tests: 43/43
+pass via the scoped runner; `baccable_lab` `test_knowledge` 26/26. All four board
+flavors build and link.
 
 Completed (each committed separately, scoped tests green):
 1. `4bd5b6f` Favorites cutover to `FavoriteLayout` (render/edit/persist via 0x106).
@@ -53,6 +55,33 @@ Gotchas: read files in /private/tmp/baccable-vehicle-profile-audit via terminal
 Float formatting must use the project printf (snprintf_), not libc snprintf
 (newlib-nano lacks %f). Preserve unrelated local edits and keep both user guides
 in sync per AGENTS.md. Hardware acceptance remains open; no board has been flashed.
+
+## PR #96 CI fix: CAN dictionary source snapshot, 2026-10-29
+
+PR #96 (this branch) failed the Lab `test` job in
+`baccable_lab/tests/test_knowledge.py::test_source_snapshot_and_dispatcher_coverage`:
+the curated dictionary pins SHA256 digests for the firmware sources it decodes,
+and the cutover changed three of them.
+
+- `baccable_lab/baccable_lab/knowledge/giulia.json`: refreshed
+  `source_sha256` for `vehicle/telemetry_frames.c` (automatic-result view now
+  opens `READING_TIME_0_100`), `diagnostics/parameter_catalog.c` (compound-page
+  tables removed; definition/selection state only) and
+  `diagnostics/parameter_request.c` (single-source request path). Bumped
+  `dictionary_version` to `2026-10-29.1` and `firmware_source_commit` to
+  `20b0e00`, the last commit in the snapshot that touched a pinned source.
+- `baccable_lab/docs/CAN_DICTIONARY.md` regenerated with
+  `scripts/render_can_dictionary.py` so the readable catalog matches the
+  machine-readable dictionary (header version/snapshot only; no frame, field or
+  provenance text changed, because no removed symbol was cited as a source).
+- No layout, conversion, origin or evidence claim was altered; only provenance
+  of an already-documented snapshot. `firmware_source_commit` is not a behavior
+  claim.
+
+Verification: `python3 -m unittest tests.test_knowledge` in `baccable_lab` — 26/26
+pass, including the snapshot/dispatcher case and the generated-catalog check.
+The 43 scoped UI cases and the four firmware flavors are unchanged by this fix.
+Hardware acceptance remains open.
 
 ## P8 Readings cutover attempt: C1 FLASH overflow, 2026-10-28
 

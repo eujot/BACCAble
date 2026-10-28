@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "dictionary_version": "2026-10-25.6",
+  "dictionary_version": "2026-10-29.1",
   "vehicle": {
     "model": "Alfa Romeo Giulia (owner-reported)",
     "model_year": null,
@@ -9,10 +9,10 @@
     "scope": "This checkout and these sessions only; not a universal Alfa Romeo or cross-model DBC.",
     "lighting": "Facelift LED headlights (owner-reported 2026-10-25); exact model year and lamp variant unknown."
   },
-  "firmware_source_commit": "97ab257",
+  "firmware_source_commit": "20b0e00",
   "source_sha256": {
     "firmware/baccable/vehicle/display_frames.c": "0d9eca11b5892f835f5ad922e3a866ffbd596fbb6b2f81e3f57401481cf470bc",
-    "firmware/baccable/vehicle/telemetry_frames.c": "8eefb5d8933db9318d2d6a26cfa2929961a8b4d88bd2dbc924c62e54ac39e2bc",
+    "firmware/baccable/vehicle/telemetry_frames.c": "37a31b7a6ea220ef134635a8940b1c066d1b2bfe1bcccb027ce998be183fe596",
     "firmware/baccable/vehicle/engine_status.c": "ea177ee9394e39f14e1153a578c9312c92824b7b22d69dc4c26b4b821cce8951",
     "firmware/baccable/features/parking.c": "067f724edbb8b993e406f04450a98f25a8ca427e0e754a31b43690522a525a09",
     "firmware/baccable/vehicle/controls_frames.c": "5a43bb33bb6d93ca90d89baf50086902c8e5e29965250143a88ad3d60ce9eba9",
@@ -29,10 +29,10 @@
     "firmware/baccable/features/ibs_override.c": "20a5fbd5c5d4837d1f64786e513d26c7a6f726d32a44f1dfad7abc25314a45d6",
     "firmware/baccable/features/usb_modes.c": "8c632b9ff87433860597e58d94de0d3a9db9dac9a0d1ac9cd1837145d34c9809",
     "firmware/baccable/diagnostics/uds_decode.c": "25ab4028b943ba1e6bb825019be4208fb4a4739742a314aa8942e9b2708efae4",
-    "firmware/baccable/diagnostics/parameter_request.c": "09dcd9c40c48d9b816d70cacc549532b19345ff471998b42c2ea11b4bc8e4832",
+    "firmware/baccable/diagnostics/parameter_request.c": "cdcffc528d7f3dd92ea499376f4d4c20b5d3ce4280d5d6f504c6917af3dee379",
     "firmware/baccable/app/main.c": "e15824cfda2ce00d12c53d81d3e3978211efb89d731b5f65c154e61c8e782b74",
     "firmware/baccable/vehicle/standard_frames.c": "f17205fde78407ed1c79bb19907aa9d3bf14887f95c98ef3709d9b2eebc255ab",
-    "firmware/baccable/diagnostics/parameter_catalog.c": "14a710feaf2440ef6dc15a750c6fa957edf9172f224a512d8fe1a355a64f8417",
+    "firmware/baccable/diagnostics/parameter_catalog.c": "402be417bbb1abe6f644edfa70ac81bae75f1565cc3e3f72ae001616d6fe3f36",
     "firmware/baccable/diagnostics/parameter_cache.c": "f8a4418ddb715498c04dad012d480bc53d2aab79300f8d471c6bb6380b4477fe",
     "docs/architecture/REFERENCE_SIGNALS.md": "fb8188e6938df5e74e23682b02e065f79db95c059e0999d2b325d07a9c94e6cf",
     "firmware/baccable/features/body.c": "7d99ec9ecf34de3db1daf1fff006b122773176163ef6a9c133a1053fbc592df4",
