@@ -244,6 +244,26 @@ static void test_vehicle_profile_apply_legacy_flags(void) {
     puts("PASS: legacy flags apply to a profile without overwriting model/year/equipment");
 }
 
+static void test_vehicle_profile_legacy_flags(void) {
+    VehicleProfile p;
+    vehicle_profile_default(&p);
+    p.engine = VEHICLE_ENGINE_PETROL29;
+    p.drivetrain = VEHICLE_DRIVETRAIN_Q4;
+    p.display_selection = VEHICLE_DISPLAY_MY23;
+
+    bool diesel = true, v6 = false, my23 = false;
+    uint8_t drivetrain = 99;
+    vehicle_profile_legacy_flags(&p, &diesel, &v6, &drivetrain, &my23);
+    assert(!diesel && v6 && my23 && drivetrain == 2);
+
+    p.engine = VEHICLE_ENGINE_DIESEL22;
+    p.drivetrain = VEHICLE_DRIVETRAIN_RWD;
+    p.display_selection = VEHICLE_DISPLAY_LEGACY18;
+    vehicle_profile_legacy_flags(&p, &diesel, &v6, &drivetrain, &my23);
+    assert(diesel && !v6 && !my23 && drivetrain == 1);
+    puts("PASS: profile derives legacy flags without an extra writable copy");
+}
+
 static void test_vehicle_profile_commit(void) {
     VehicleProfile p;
     vehicle_profile_default(&p);
@@ -266,6 +286,7 @@ int main(void) {
         HOST_TEST(test_vehicle_profile_codec),
         HOST_TEST(test_vehicle_profile_legacy_import),
         HOST_TEST(test_vehicle_profile_apply_legacy_flags),
+        HOST_TEST(test_vehicle_profile_legacy_flags),
         HOST_TEST(test_vehicle_profile_commit),
     };
     host_tests_run(suite, tests, sizeof(tests) / sizeof(tests[0]));

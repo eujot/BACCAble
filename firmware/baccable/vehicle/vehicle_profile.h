@@ -135,6 +135,11 @@ bool vehicle_oil_range(OilRange *range);
 void vehicle_profile_apply_legacy_flags(VehicleProfile *profile, bool diesel, bool v6, uint8_t drivetrain,
                                         bool my23, unsigned legacy_width);
 
+/* Reverse transition adapter: derive the legacy engine/drivetrain/display flags
+ * from a profile so the existing menu/feature checks stay consistent. */
+void vehicle_profile_legacy_flags(const VehicleProfile *profile, bool *diesel, bool *v6, uint8_t *drivetrain,
+                                  bool *my23);
+
 /* Serialization: new settings schema 0x107 (explicit, length-checked). */
 enum { VEHICLE_PROFILE_WIRE_SIZE = 16U };
 bool vehicle_profile_encode(const VehicleProfile *profile, uint8_t out[VEHICLE_PROFILE_WIRE_SIZE]);

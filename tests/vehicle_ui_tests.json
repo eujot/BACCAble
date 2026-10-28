@@ -70,6 +70,11 @@
           "evidence": "test-impact.md#p2-legacy-flags"
         },
         {
+          "name": "test_vehicle_profile_legacy_flags",
+          "change": "new",
+          "evidence": "test-impact.md#p8-profile-legacy-flags"
+        },
+        {
           "name": "test_vehicle_profile_commit",
           "change": "new",
           "evidence": "test-impact.md#p2-profile-commit"

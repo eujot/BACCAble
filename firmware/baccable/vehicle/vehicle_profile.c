@@ -357,6 +357,16 @@ void vehicle_profile_apply_legacy_flags(VehicleProfile *profile, bool diesel, bo
                                                            : VEHICLE_DISPLAY_LEGACY18;
 }
 
+/* Derive legacy feature flags from the canonical profile. */
+void vehicle_profile_legacy_flags(const VehicleProfile *profile, bool *diesel, bool *v6, uint8_t *drivetrain,
+                                  bool *my23) {
+    if (diesel) *diesel = vehicle_profile_is_diesel(profile);
+    if (v6) *v6 = vehicle_profile_is_v6(profile);
+    if (drivetrain) *drivetrain = profile && profile->drivetrain == VEHICLE_DRIVETRAIN_Q4 ? 2
+                                   : profile && profile->drivetrain == VEHICLE_DRIVETRAIN_RWD ? 1 : 0;
+    if (my23) *my23 = profile && profile->display_selection == VEHICLE_DISPLAY_MY23;
+}
+
 /*
  * Legacy 0x101 import. Slots are 1-based (slot N lives at slots[N-1]).
  * Diesel (slot 16) takes precedence over the V6 companion (slot 36). Display
