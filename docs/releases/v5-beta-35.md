@@ -78,10 +78,12 @@ Favorites edits.
 
 ## Build and verification
 
-The 50 selected new or meaningfully changed host cases pass with native Apple
-Clang, ASan and UBSan; the four-flavor Arm GNU 15.2.Rel1 build, lint and
-size/identity gates pass locally. CI and release packaging results will be
-recorded after publication.
+The host suite, Lab tests, lint and C1/C2/BH/CAN firmware builds passed in
+[release workflow 40917052165](https://github.com/eujot/BACCAble/actions/runs/40917052165)
+with the pinned Arm GNU 15.3.Rel1 toolchain. All 14 assets downloaded from the
+[v5-beta-35 release](https://github.com/eujot/BACCAble/releases/tag/v5-beta-35)
+passed the included `SHA256SUMS` check. C1 uses 92,672/98,304 Flash bytes and
+13,316/16,384 static RAM bytes.
 
 No board was flashed for this change. Vehicle display/operation acceptance,
 including the new Vehicle editor, individual Readings/Favorites rendering and
