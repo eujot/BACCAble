@@ -4,6 +4,69 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Blocking implementation review, 2026-10-29
+
+Reviewed clean implementation HEAD `12aae0c`. The earlier implemented/non-blocking
+handoff above must not be treated as acceptance: the following production paths
+remain incomplete. This is a source review; no firmware fix or hardware test is
+claimed. Priority order for corrections:
+
+1. **P1 — Transactional profile/settings storage.** `settings/persistence.c`
+   skips profile writes when legacy slots compare equal, losing model/year/equipment
+   edits on reboot. The editor publishes before persistence and ignores save errors;
+   menu HOLD always reports Saved. Types 0x101 and 0x107 also share SETTINGS_RECORD's
+   two physical pages: writing a changed 0x101 can erase the only 0x107 copy before
+   the second write restores it. Use one atomic combined schema or genuinely
+   independent storage with a transaction design; retain the prior effective state
+   and editable draft on failure. Test real record_store pages, reboot and interrupted
+   writes, rather than independent per-type Flash stubs.
+2. **P1 — Connect equipment policy and confirmation.** vehicle_feature_support has
+   no production action/synchronization callers. AWD/exhaust and peer configuration
+   still use preferences alone. The editor never sets confirmed=true, and commit
+   validates fields without checking active AWD/brake/Dyno/exhaust/mirror workflows.
+   Add explicit confirmation, effective policy at execution and board synchronization,
+   explicit disabled options, and active-operation guards with recovery preserved.
+3. **P1 — Resolve runtime display end to end.** Auto/year resolution is unused by
+   menu rendering, which still reads the old MY23 boolean and compile-time width.
+   Legacy flag conversion treats Auto as non-MY23; saving legacy flags replaces
+   Auto/explicit width with a build-dependent selection. Preserve canonical selection
+   and drive rendering/transport from the resolved display contract.
+4. **P1 — Validate Favorite drafts before saving.** menu HOLD and ui_layout_encode
+   accept duplicate readings and a bar mixed with other items. ui_layout_decode
+   rejects those same rows on reboot, and menu_init replaces the entire record with
+   defaults. Thus one accepted invalid row destroys all custom sets after restart.
+   Validate structural and current-display fit constraints before persistence; keep
+   the draft and explain rejection. Add integrated save/restart cases.
+5. **P1 — Make default and edited Favorite rows fit.** favorite_row_render passes
+   Auto directly to reading_label_for, which returns the full label. It does not
+   resolve Auto or reserve worst-case widths, and overflow replaces the whole row
+   with '#'. Even cold default Warm-up ('Oil temp -- Coolant --', 22 glyphs) fails
+   legacy18 and MY23 line1. Implement width resolution, validated defaults and
+   deterministic continuation subpages for saved wider rows; test 16/18/22/24 widths
+   with missing, ordinary and extreme values.
+6. **P1 — Filter saved Favorites by applicability.** favorite_set_unique_sources,
+   sample collection and row rendering do not apply vehicle_reading_support. For
+   example a saved V6 ignition-cylinder-5 item continues requesting source 19 after
+   switching to I4; SCR Absent does not suppress saved AdBlue sources. Filter both
+   visible rendering and polling while retaining stored items for later profiles.
+7. **P2 — Poll only visible Favorite sources.** legacy rendering shows one row,
+   but menu_process collects UDS sources from both rows. Hidden-row requests consume
+   the 500 ms slots and delay visible values. Build the deduplicated request list
+   from actual visible rows/subpages; cover legacy row changes and MY23 two-row mode.
+
+Other required UI scope remains incomplete: there is no Restore defaults action
+in menu.c. Include its confirmation/failure/reboot behavior in the correction.
+The feature policy also groups SOFT_SUSPENSION with DEFAULT_RACE and reads the Race
+slot for both; use the Suspension equipment slot when wiring that policy.
+
+Evidence: the first review ran the authorized manifest (43 selected cases pass).
+This follow-up inspected production paths and existing test assertions; it did not
+rerun unchanged tests. Current model tests do not establish the missing integrated
+save, width, applicability or polling behavior. No build/vehicle acceptance added.
+Review documentation only; implementation remains `12aae0c`, release/installation
+unchanged. Next step: correct items 1–6 with meaningful scoped regression cases,
+then finish item 7 and remaining editor scope before claiming plan completion.
+
 ## HANDOFF — current state and next steps, 2026-10-29 (start here)
 
 Branch `docs/vehicle-profile-audit`, HEAD `a9abc14` plus the CAN-dictionary
