@@ -37,15 +37,15 @@ void vehicle_handle_gear_lever(const CAN_RxHeaderTypeDef *rx_header, uint8_t *fr
             comfort_state.number_of_release_button_clicks = 0;    // ensure we don't return here :-)
             status_led_activity();
             // execute action :-)
-            if (settings_state.qv_exhaust_flap_function_enabled) {
-                if (comfort_state.force_q_vexhaust_valve_opened == 0) { // if valves are closed
+            if ((settings_state.qv_exhaust_flap_function_enabled && vehicle_feature_allowed(VEHICLE_FEATURE_EXHAUST_ACTION)) || comfort_state.force_q_vexhaust_valve_opened || comfort_state.chinese_valve_is_opened) {
+                if (vehicle_feature_allowed(VEHICLE_FEATURE_EXHAUST_ACTION) && comfort_state.force_q_vexhaust_valve_opened == 0 && !comfort_state.chinese_valve_is_opened) { // new start
                     comfort_state.force_q_vexhaust_valve_opened = 1;    // start override sequence
                 } else {
                     comfort_state.force_q_vexhaust_valve_opened = 4;
                 }
 
                 // equivalent activity for chinese valves
-                if (comfort_state.chinese_valve_is_opened == 0) {      // if valves are closed,
+                if (vehicle_feature_allowed(VEHICLE_FEATURE_EXHAUST_ACTION) && comfort_state.force_q_vexhaust_valve_opened == 1) {
                     comfort_state.chinese_exhaust_valve_request = 'O'; // open request
                 } else {
                     comfort_state.chinese_exhaust_valve_request = 'C'; // close request

@@ -24,7 +24,7 @@ static RecordStorage storage_at(uint32_t *base) {
     RecordStorage storage = {.pages = {(const uint8_t *)*base, (const uint8_t *)(*base + STORAGE_PAGE_SIZE)},
                              .erase = erase_page,
                              .program = program_word,
-                             .context = base};
+                             .context = base, .page_size = STORAGE_PAGE_SIZE};
     return storage;
 }
 /* Load the saved record for the requested device-data category. */

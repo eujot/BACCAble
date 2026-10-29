@@ -4,7 +4,8 @@
 #include "features/ui_entry.h"
 #include "features/my23_ui.h"
 #include "features/menu_demo.h"
-#include "features/favorite_parameters.h"
+#include "vehicle/vehicle_profile.h"
+#include "vehicle/vehicle_editor.h"
 #include "vehicle/steering_controls.h"
 #include "features/ibs_override.h"
 #include "diagnostics/fault_reader.h"
@@ -14,7 +15,31 @@
 #include "diagnostics/parameter_cache.h"
 #include "diagnostics/parameter_request.h"
 #include "storage/flash_records.h"
+#include "storage/record_store.h"
+#include "storage/ui_layout_store.h"
+#include "vehicle/vehicle_runtime.h"
 #include <assert.h>
+static uint8_t combined_record[SETUP_FLASH_PARAM_BUFFER_SIZE * 2 + VEHICLE_PROFILE_WIRE_SIZE];
+static bool have_combined;
+static bool real_flash;
+static uint8_t flash_pages[3][2][2048];
+static int flash_budget = -1;
+static bool test_erase(void *ctx, unsigned page) {
+    if (flash_budget == 0) return false;
+    if (flash_budget > 0) --flash_budget;
+    memset(((uint8_t (*)[2048])ctx)[page], 0xff, 2048); return true;
+}
+static bool test_program(void *ctx, unsigned page, size_t offset, uint16_t value) {
+    if (flash_budget == 0) return false;
+    if (flash_budget > 0) --flash_budget;
+    uint8_t *dst = ((uint8_t (*)[2048])ctx)[page] + offset;
+    dst[0] &= value; dst[1] &= value >> 8; return true;
+}
+static RecordStorage test_storage(unsigned slot) {
+    assert(slot < 3);
+    return (RecordStorage){.pages = {flash_pages[slot][0], flash_pages[slot][1]},
+        .erase = test_erase, .program = test_program, .context = flash_pages[slot], .page_size = 2048};
+}
 #include <stdio.h>
 
 SettingsState settings_state;
@@ -32,22 +57,22 @@ DisplayState display_state;
 const char *FW_VERSION = "BACCABLE test";
 static uint32_t now;
 static char screen[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
-static uint8_t old_visibility[30], saved[MENU_PREFS_SIZE + FAVORITE_STORAGE_SIZE];
-static bool have_old, have_saved, fail_save, have_v1;
-static uint8_t v1_preferences[MENU_PREFS_SIZE];
 static uint8_t screen_packet[UART_SCREEN_BUFFER_SIZE];
+static uint8_t display_token, sent_dna, sent_mirror;
 static unsigned commands, queries, blank_screens;
-static unsigned settings_writes, preference_writes, usb_applies;
+static unsigned settings_writes, usb_applies;
 static bool usb_needs_apply;
 static uint16_t fail_type;
 static uint16_t settings_record[SETUP_FLASH_PARAM_BUFFER_SIZE];
 static size_t settings_record_size;
+static uint8_t profile_record[VEHICLE_PROFILE_WIRE_SIZE];
+static bool have_profile;
 static unsigned old_settings_reads;
 static uint8_t last_command;
 static uint8_t last_ipc_pace, last_ipc_method, last_driver_rearm;
 static uint8_t last_dna_action, last_dna_token;
 static bool uart_busy;
-static uint8_t setup_page_for(uint8_t slot);
+static bool fail_save;
 uint32_t HAL_GetTick(void) { return now; }
 uint8_t board_uart_send(const uint8_t *data, size_t size) {
     if (uart_busy)
@@ -61,6 +86,8 @@ uint8_t board_uart_send(const uint8_t *data, size_t size) {
         for (unsigned i = 0; i < DASHBOARD_MESSAGE_MAX_LENGTH; ++i) blank &= screen[i] == ' ';
         blank_screens += blank;
     } else {
+        if (data[1] == BH_CMD_DISPLAY_PROFILE) display_token = data[2];
+        if (data[1] == BHcmdFunctParkMirrorDisabled || data[1] == BHcmdFunctParkMirrorEnabled) sent_mirror = data[1];
         ++commands;
         last_command = size > 1 ? data[1] : 0;
         if (last_command == C2_Bh_cmdSetDriverAids) {
@@ -68,8 +95,7 @@ uint8_t board_uart_send(const uint8_t *data, size_t size) {
             last_driver_rearm = data[4];
         }
         if (data[0] == BhBusID && last_command == BH_CMD_DNA_DEFAULT) {
-            assert(size == 5 && (data[2] & BH_DNA_MODE_MASK) == settings_state.default_drive_mode);
-            assert(!!(data[2] & BH_DNA_SOFT_SUSPENSION) == !!settings_state.default_suspension_softer);
+            assert(size == 5); sent_dna = data[2];
             last_dna_action = data[3]; last_dna_token = data[4];
         }
         if (data[0] == BhBusID && last_command == BH_CMD_IPC_OPTIONS) {
@@ -104,31 +130,25 @@ uint32_t can_forward(const CAN_RxHeaderTypeDef *header, uint8_t *data) {
 static unsigned native_reads;
 float native_parameter_read(uint8_t id) { ++native_reads; return (float)id + 0.5f; }
 bool flash_record_load(unsigned slot, uint16_t type, void *data, size_t size) {
+    if (real_flash) { RecordStorage storage = test_storage(slot); return record_load(&storage, type, data, size); }
     (void)slot;
+    if (type == 0x108 && have_combined) { assert(size == sizeof(combined_record)); memcpy(data, combined_record, size); return true; }
     if (type == 0x101 && size == settings_record_size) {
         memcpy(data, settings_record, size);
         if (size == 80) ++old_settings_reads;
         return true;
     }
-    if (type == 0x103 && have_old) {
-        assert(size == sizeof(old_visibility));
-        memcpy(data, old_visibility, size);
-        return true;
-    }
-    if (type == 0x104 && have_v1 && size == sizeof(v1_preferences)) {
-        memcpy(data, v1_preferences, size); return true;
-    }
-    if (type == 0x105 && have_saved) {
-        assert(size == sizeof(saved));
-        memcpy(data, saved, size);
+    if (type == 0x107 && have_profile) {
+        assert(size == sizeof(profile_record));
+        memcpy(data, profile_record, size);
         return true;
     }
     return false;
 }
 bool flash_record_save(unsigned slot, uint16_t type, const void *data, size_t size) {
+    if (real_flash) { RecordStorage storage = test_storage(slot); return !fail_save && record_save(&storage, type, data, size); }
     (void)slot;
     if (type == 0x101) ++settings_writes;
-    if (type == 0x105) ++preference_writes;
     if (fail_save || type == fail_type)
         return false;
     if (type == 0x101) {
@@ -136,15 +156,21 @@ bool flash_record_save(unsigned slot, uint16_t type, const void *data, size_t si
         memcpy(settings_record, data, size);
         settings_record_size = size;
     }
-    if (type == 0x105) {
-        assert(size == sizeof(saved));
-        memcpy(saved, data, size);
-        have_saved = true;
+    if (type == 0x108) {
+        assert(size == sizeof(combined_record)); memcpy(combined_record, data, size); have_combined = true;
+        memcpy(settings_record, data, sizeof(settings_record)); settings_record_size = sizeof(settings_record);
+        memcpy(profile_record, (const uint8_t *)data + sizeof(settings_record), sizeof(profile_record)); have_profile = true;
+    }
+    if (type == 0x107) {
+        assert(size == sizeof(profile_record));
+        memcpy(profile_record, data, size);
+        have_profile = true;
     }
     return true;
 }
 /* Import a real old settings payload, keep every slot unique, and preserve engine/suspension independently. */
 static void test_settings_migration(void) {
+    real_flash = false; have_combined = false; have_profile = false; settings_load_begin();
     memset(settings_record, 0, sizeof(settings_record));
     settings_record[35] = 1; /* V6 in the old record. */
     settings_record[37] = 3; /* Race. */
@@ -161,6 +187,13 @@ static void test_settings_migration(void) {
     assert(settings_state.gasoline_v6 == 1 && settings_state.default_suspension_softer == (old_size == 82));
     assert(settings_state.rain_lights_enabled == 0);
     assert(settings_state.default_drive_mode == 3 && settings_state.drivetrain == 2);
+    {
+        const VehicleProfile *profile = vehicle_profile_current();
+        assert(profile->engine == VEHICLE_ENGINE_PETROL29);
+        assert(profile->drivetrain == VEHICLE_DRIVETRAIN_Q4);
+        assert(profile->display_selection != VEHICLE_DISPLAY_MY23);
+        assert(!profile->confirmed);
+    }
     for (unsigned i = 0; i < setup_params_count; ++i) {
         assert(setup_params[i].flash_index <= SETUP_FLASH_PARAM_BUFFER_SIZE);
         for (unsigned j = 0; j < i; ++j)
@@ -172,1221 +205,141 @@ static void test_settings_migration(void) {
     assert(settings_save() != 0 && settings_record_size == old_size);
     fail_save = false;
     assert(settings_save() == 0 && settings_record_size == 84);
+    assert(have_profile);
     assert(settings_record[35] == 1 && settings_record[40] == 1 && settings_record[41] == 1);
     settings_state.gasoline_v6 = 0;
     settings_state.default_suspension_softer = 0;
     setup_load_from_flash();
     assert(settings_state.gasoline_v6 == 1 && settings_state.default_suspension_softer == 1);
     assert(settings_state.rain_lights_enabled == 1);
-    settings_state.gasoline_v6 = 0;
-    assert(settings_save() == 0);
+    VehicleProfile edited = *vehicle_profile_current();
+    edited.engine = VEHICLE_ENGINE_PETROL20;
+    assert(settings_profile_save(&edited) == 0);
     assert(settings_record[35] == 0 && settings_record[40] == 1);
     assert(setup_read_flash_value(41, 0xffff) == 0 && setup_read_flash_value(41, 2) == 0);
+    assert(vehicle_profile_current()->engine == VEHICLE_ENGINE_PETROL20);
     memset(&settings_state, 0, sizeof(settings_state));
     settings_writes = usb_applies = 0;
 }
 
-/* The reply timeout starts on successful transmission, never while cranking or UART is full. */
-static void test_default_mode_engine_gate(void) {
-    now = 20000;
-    runtime_state.all_processors_wakeup_time = 0;
-    settings_state.default_drive_mode = 3;
-    settings_state.default_suspension_softer = 1;
-    telemetry_state.current_rpm_speed = 0;
-    board_sync_rearm(); board_sync_ignition(8);
-    commands = 0;
-    for (unsigned i = 0; i < 10; ++i) board_sync_process();
-    assert(commands == 8 && !strcmp(drive_mode_check_status(), "Start engine"));
-    now += 30000;
-    board_sync_process();
-    assert(commands == 8 && !strcmp(drive_mode_check_status(), "Start engine"));
-    telemetry_state.current_rpm_speed = 800;
-    for (unsigned t = 0; t < 2000; t += 100) {
-        now += 100; telemetry_state.current_rpm_updated_at = now; board_sync_process();
-        assert(commands == 8);
-    }
-    /* A stale report resets the two-second gate. */
-    now += 1001; board_sync_process();
-    uart_busy = true;
-    for (unsigned t = 0; t < 20000; t += 100) {
-        now += 100; telemetry_state.current_rpm_updated_at = now; board_sync_process();
-    }
-    assert(commands == 8 && !strcmp(drive_mode_check_status(), "Start engine"));
-    uart_busy = false; board_sync_process();
-    assert(commands == 9 && last_dna_action == 1);
-    assert(!strcmp(drive_mode_check_status(), "Waiting"));
-    now += 19999; board_sync_process();
-    assert(!strcmp(drive_mode_check_status(), "Waiting"));
-    ++now; board_sync_process();
-    assert(!strcmp(drive_mode_check_status(), "No confirm"));
-    board_sync_saved();
-    settings_state.default_drive_mode = settings_state.default_suspension_softer = 0;
-    telemetry_state.current_rpm_speed = 0;
-}
+static void test_vehicle_editor_equipment(void) {
+    VehicleProfile p;
+    vehicle_profile_default(&p);
+    vehicle_profile_commit(&p);
 
-/* Distinguish clicks, holds and stream loss at exact boundaries, including tick wrap. */
-static void test_input(void) {
-    const uint32_t starts[] = {100, UINT32_MAX - 500};
-    for (unsigned run = 0; run < 2; ++run) {
-        uint32_t start = starts[run];
-        MenuInput input = {0};
-        assert(menu_input_update(&input, 0x90, true, start) == MENU_NONE);
-        menu_input_update(&input, 0x10, true, start);
-        menu_input_update(&input, 0x90, true, start + 10);
-        for (unsigned t = 110; t < 910; t += 100)
-            assert(menu_input_update(&input, 0x90, true, start + t) == MENU_NONE);
-        assert(menu_input_update(&input, 0x90, true, start + 910) == MENU_HOLD);
-        assert(menu_input_update(&input, 0x90, true, start + 1010) == MENU_NONE);
-        assert(menu_input_update(&input, 0x10, true, start + 1110) == MENU_NONE);
-        menu_input_update(&input, 0x50, true, start + 1200);
-        assert(menu_input_update(&input, 0x10, true, start + 1300) == MENU_NONE);
-        assert(menu_input_poll(&input, true, start + 1580) == MENU_NONE);
-        assert(menu_input_poll(&input, true, start + 1581) == MENU_SELECT);
-        assert(menu_input_poll(&input, true, start + 1582) == MENU_NONE);
-        menu_input_update(&input, 0x90, true, start + 1600);
-        menu_input_update(&input, 0x10, true, start + 1650);
-        menu_input_update(&input, 0x90, true, start + 1750);
-        assert(menu_input_update(&input, 0x10, true, start + 1800) == MENU_BACK);
-        assert(menu_input_poll(&input, true, start + 2000) == MENU_NONE);
-        menu_input_update(&input, 0x90, true, start + 2100);
-        assert(menu_input_update(&input, 0x10, true, start + 2401) == MENU_NONE);
-        assert(!input.click_pending);
-    }
-}
-/* Apply queued fragments to a receiver that exposes each fragment immediately. */
-static unsigned drain_display(DisplayStream *stream, uint8_t *visible) {
-    uint8_t part, chars[3];
-    unsigned count = 0;
-    while (display_stream_peek(stream, &part, chars)) {
-        assert(++count <= DISPLAY_FRAGMENT_COUNT);
-        memcpy(visible + part * 3, chars, 3);
-        display_stream_accept(stream);
-    }
-    return count;
-}
-
-/* Check latest-target updates, retry ownership, fairness and restoration at both widths. */
-static void test_display(void) {
-    DisplayStream stream = {0};
-    uint8_t a[DISPLAY_OUTPUT_LENGTH], b[sizeof(a)], c[sizeof(a)], visible[sizeof(a)];
-    uint8_t part, chars[3];
-    memset(a, 'A', sizeof(a));
-    memset(b, 'B', sizeof(b));
-    memset(c, 'C', sizeof(c));
-    display_stream_submit(&stream, a);
-    assert(drain_display(&stream, visible) == DISPLAY_FRAGMENT_COUNT);
-    assert(!memcmp(visible, a, sizeof(a)));
-    display_stream_submit(&stream, a);
-    assert(!display_stream_peek(&stream, &part, chars));
-
-    unsigned changed = DISPLAY_FRAGMENT_COUNT / 2;
-    memcpy(a + changed * 3, "XYZ", 3);
-    display_stream_submit(&stream, a);
-    assert(display_stream_peek(&stream, &part, chars) && part == changed);
-    assert(!memcmp(chars, "XYZ", 3));
-    /* No accept after CAN failure: retry must retain the same pending fragment. */
-    assert(display_stream_peek(&stream, &part, chars) && part == changed);
-    assert(drain_display(&stream, visible) == 1);
-    assert(!memcmp(visible, a, sizeof(a)));
-
-    display_stream_reset(&stream);
-    display_stream_submit(&stream, a);
-    assert(display_stream_peek(&stream, &part, chars) && part == 0);
-    memcpy(visible, chars, 3);
-    display_stream_accept(&stream);
-    display_stream_submit(&stream, b);
-    assert(display_stream_peek(&stream, &part, chars) && part == 1 && chars[0] == 'B');
-    assert(drain_display(&stream, visible) == DISPLAY_FRAGMENT_COUNT);
-    assert(!memcmp(visible, b, sizeof(b)));
-
-    display_stream_submit(&stream, a);
-    assert(display_stream_peek(&stream, &part, chars));
-    uint8_t offered_part = part;
-    memcpy(visible + part * 3, chars, 3);
-    display_stream_submit(&stream, c); /* The accepted snapshot must not become C retroactively. */
-    display_stream_accept(&stream);
-    assert(stream.dirty & (1U << offered_part));
-    assert(drain_display(&stream, visible) == DISPLAY_FRAGMENT_COUNT);
-    assert(!memcmp(visible, c, sizeof(c)));
-
-    /* A failed obsolete fragment can be replaced by the newest target on retry. */
-    display_stream_submit(&stream, a);
-    assert(display_stream_peek(&stream, &part, chars));
-    display_stream_submit(&stream, b);
-    assert(display_stream_peek(&stream, &part, chars) && chars[0] == 'B');
-    drain_display(&stream, visible);
-    assert(!memcmp(visible, b, sizeof(b)));
-
-    /* Changing the start continually must not starve the end of the line. */
-    display_stream_reset(&stream);
-    for (unsigned i = 0; i < DISPLAY_FRAGMENT_COUNT; ++i) {
-        b[0] = 'a' + i;
-        display_stream_submit(&stream, b);
-        assert(display_stream_peek(&stream, &part, chars) && part == i);
-        memcpy(visible + part * 3, chars, 3);
-        display_stream_accept(&stream);
-    }
-    drain_display(&stream, visible);
-    assert(!memcmp(visible, b, sizeof(b)));
-
-    memset(c, ' ', sizeof(c));
-    memcpy(c, "Oil", 3);
-    display_stream_submit(&stream, c);
-    drain_display(&stream, visible);
-    assert(!memcmp(visible, c, sizeof(c))); /* Clear the complete old suffix. */
-    stream.cursor = DISPLAY_FRAGMENT_COUNT / 2; /* Last partial update ended mid-message. */
-    display_stream_refresh(&stream);
-    for (unsigned i = 0; i < DISPLAY_FRAGMENT_COUNT; ++i) {
-        display_stream_submit(&stream, c);
-        display_stream_refresh(&stream); /* Repeated factory traffic does not restart restoration. */
-        assert(display_stream_peek(&stream, &part, chars) && part == i);
-        display_stream_accept(&stream);
-    }
-    assert(!display_stream_peek(&stream, &part, chars));
-    memset(c, ' ', sizeof(c));
-    display_stream_submit(&stream, c);
-    drain_display(&stream, visible);
-    display_stream_refresh(&stream);
-    assert(!display_stream_peek(&stream, &part, chars));
-    display_stream_submit(&stream, a);
-    display_stream_reset(&stream);
-    assert(!display_stream_peek(&stream, &part, chars));
-}
-static void test_preferences(void) {
-    MenuPreferences prefs, copy;
-    menu_preferences_default(&prefs);
-    uint8_t list[MENU_PAGE_CAPACITY], raw[MENU_PREFS_SIZE];
-    for (unsigned e = 0; e < 2; ++e) {
-        assert(menu_page_list(&prefs, e, 0, true, false, list) == (e == 0 ? 6 : 4));
-        unsigned total = 0;
-        for (unsigned g = 1; g < MENU_GROUPS; ++g)
-            total += menu_page_list(&prefs, e, g, false, false, list);
-        assert(total == menu_page_count(e));
-        for (unsigned i = 0; i < menu_page_count(e); ++i) {
-            const ParameterPage *page = &parameter_pages[e][i];
-            assert(menu_page_index(e, page->id) == (int)i);
-            assert((page->id & 0x7f) > 0 && (page->id & 0x7f) <= 127);
-            assert(page->label && page->group > 0 && page->group < MENU_GROUPS);
-            for (unsigned j = 0; j < i; ++j)
-                assert(parameter_pages[e][j].id != page->id);
-        }
-    }
-    uint16_t first = prefs.favorites[0][0], second = prefs.favorites[0][1];
-    menu_favorite_move(&prefs, 0, first, 1);
-    assert(prefs.favorites[0][0] == second && prefs.favorites[0][1] == first);
-    menu_page_show(&prefs, 0, menu_page_index(0, first), false);
-    assert(menu_page_list(&prefs, 0, 0, true, false, list) == 6); /* Hide != remove favorite. */
-    prefs.alphabetical = 1;
-    unsigned n = menu_page_list(&prefs, 0, 0, false, false, list);
-    for (unsigned i = 1; i < n; ++i)
-        assert(strcmp(parameter_pages[0][list[i - 1]].label, parameter_pages[0][list[i]].label) <= 0);
-    menu_preferences_encode(&prefs, raw);
-    assert(menu_preferences_decode(&copy, raw));
-    assert(!memcmp(&prefs, &copy, sizeof(prefs)));
-    assert(!menu_page_visible(&copy, 0, menu_page_index(0, first)));
-    for (unsigned i = 0; i < menu_page_count(0); ++i)
-        menu_page_show(&copy, 0, i, false);
-    assert(menu_page_list(&copy, 0, 0, false, false, list) == 0);
-    assert(menu_page_list(&copy, 0, 0, false, true, list) == 65); /* Shipped gasoline reading catalog. */
-    raw[0] = 255;
-    assert(!menu_preferences_decode(&copy, raw));
-}
-static void fresh_menu(void) {
-    settings_state.drivetrain = 0;
-    settings_state.is_diesel_enabled = 0;
-    settings_state.ipc_my23_is_installed = 0;
-    settings_state.gasoline_v6 = 0;
-    settings_state.advanced_pages = 0;
-    dashboard_state.baccable_dashboard_menu_visible = 0;
-    now = 1000;
-    have_saved = false;
-    /* Existing navigation tests exercise the retained legacy page editor. */
-    have_v1 = true;
-    MenuPreferences legacy;
-    menu_preferences_default(&legacy);
-    menu_preferences_encode(&legacy, v1_preferences);
-    have_old = false;
-    fail_save = false;
-    fail_type = 0;
-    menu_init();
-    menu_event(MENU_BACK);
-}
-static void test_shipped_favorite_pairs(void) {
-    fresh_menu();
-    have_v1 = false;
-    menu_init();
-    assert(menu_preferences_save() == 0);
-    assert(saved[MENU_PREFS_SIZE + 1] == 1);
-    const FavoriteParameters *sets = (const FavoriteParameters *)(saved + MENU_PREFS_SIZE + 2);
-    for (unsigned f = 0; f < FAVORITE_SET_COUNT; ++f) {
-        assert(sets[f].params[0] == menu_default_favorite(0, f));
-        assert(sets[f].params[1] == menu_default_favorite_companion(0, f));
-    }
-    /* A matching primary in an existing record must not acquire a companion. */
-    fresh_menu();
-    assert(menu_preferences_save() == 0);
-    sets = (const FavoriteParameters *)(saved + MENU_PREFS_SIZE + 2);
-    assert(sets[1].params[0] == 0x01 && sets[1].params[1] == FAVORITE_EMPTY);
-}
-/* Set up exactly the pair that the filtered Readings list exposes. */
-static void preview_pair(uint16_t first, uint16_t second, bool my23) {
-    fresh_menu();
-    MenuPreferences prefs;
-    menu_preferences_default(&prefs);
-    for (unsigned i = 0; i < menu_page_count(0); ++i)
-        menu_page_show(&prefs, 0, i, parameter_pages[0][i].id == first || parameter_pages[0][i].id == second);
-    menu_preferences_encode(&prefs, v1_preferences);
-    settings_state.ipc_my23_is_installed = my23;
-    settings_state.advanced_pages = 1;
-    menu_init();
-    menu_event(MENU_BACK);
-    menu_show_parameter(menu_page_index(0, first));
-    menu_render();
-}
-static void reply_parameter(uint8_t id) {
-    const ParameterDefinition *p = &parameter_definitions[id];
-    uint16_t did = ((p->request_data >> 16) & 0xff) << 8 | (p->request_data >> 24);
-    uint8_t reply[8] = {7, 0x62, did >> 8, did, 0, 0, 0, 0};
-    reply[4 + p->value_offset + p->value_length - 1] = 70;
-    CAN_RxHeaderTypeDef header = {.IDE = CAN_ID_EXT, .ExtId = p->response_id, .DLC = 8};
-    parameter_request_receive(&header, reply);
-}
-static void test_readings_preview_prefetch(void) {
-    for (unsigned in_flight = 0; in_flight < 2; ++in_flight) {
-        preview_pair(0x12, 0x15, true); /* Oil / gearbox temperature. */
-        unsigned before = queries;
-        now += 149; menu_process();
-        assert(queries == before);
-        now += 1; menu_process(); reply_parameter(30);
-        assert(queries == before + 1);
-        now += 499; menu_process();
-        assert(queries == before + 1);
-        now += 1; menu_process();
-        assert(queries == before + 2);
-        assert(query_payload[2] == (uint8_t)(parameter_definitions[33].request_data >> 16));
-        assert(query_payload[3] == (uint8_t)(parameter_definitions[33].request_data >> 24));
-        float first_value = displayed_parameter_values[0];
-        if (!in_flight) {
-            reply_parameter(33);
-            assert(displayed_parameter_values[0] == first_value); /* Preview is cache-only. */
-        }
-        menu_event(MENU_NEXT);
-        if (in_flight) reply_parameter(33); /* Reply survives promotion to L1. */
-        assert(dashboard_state.dashboard_page_index == menu_page_index(0, 0x15));
-        assert(isfinite(displayed_parameter_values[0]));
-        assert(!memchr(screen_packet + 2, '-', MY23_L1_VISIBLE));
-        now += 4501; menu_render();
-        assert(isnan(displayed_parameter_values[0]));
-    }
-    /* Legacy single-page rendering does not query an invisible next page. */
-    preview_pair(0x12, 0x15, false);
-    now += 500; menu_process(); reply_parameter(30);
-    now += 500; menu_process(); reply_parameter(33);
-    assert(isnan(parameter_cache_get(33, now)));
-
-    /* Shared IDs in composite pages are polled once, including list wrap. */
-    preview_pair(0x39, 0x3a, true);
-    const uint8_t expected[] = {30, 42, 23, 22, 33};
-    for (unsigned i = 0; i < 10; ++i) {
-        now += 500;
-        unsigned before = queries;
-        menu_process();
-        assert(queries == before + 1);
-        const ParameterDefinition *p = &parameter_definitions[expected[i % 5]];
-        assert(query_ecu == p->request_id);
-        for (unsigned b = 0; b < 4; ++b) assert(query_payload[b] == (uint8_t)(p->request_data >> (8*b)));
-        reply_parameter(expected[i % 5]);
-    }
-    menu_event(MENU_NEXT); /* Last visible page previews the first. */
-    now += 500; menu_process(); reply_parameter(30);
-    now += 500; menu_process(); reply_parameter(42);
-    now += 500; menu_process(); reply_parameter(33);
-    now += 500; menu_process();
-    assert(query_payload[2] == (uint8_t)(parameter_definitions[23].request_data >> 16));
-    assert(query_payload[3] == (uint8_t)(parameter_definitions[23].request_data >> 24));
-    parameter_cache_put(23, NAN, now);
-    menu_event(MENU_BACK); reply_parameter(23); /* Leaving Readings cancels pending preview. */
-    assert(isnan(parameter_cache_get(23, now)));
-
-    preview_pair(0x12, 0x15, true);
-    now += 500; menu_process(); reply_parameter(30);
-    now += 500; menu_process();
-    now += 501; menu_event(MENU_NEXT); reply_parameter(33);
-    assert(isnan(parameter_cache_get(33, now))); /* Promotion does not extend the deadline. */
-
-    preview_pair(0x12, 0x12, true);
-    for (unsigned i = 0; i < 3; ++i) {
-        now += 500; menu_process(); reply_parameter(30);
-        assert(isfinite(displayed_parameter_values[0]));
-    }
-}
-static void to_settings(void) {
-    menu_event(MENU_BACK); /* Favorites -> root. */
-    menu_event(MENU_NEXT);
-    menu_event(MENU_NEXT);
-    menu_event(MENU_NEXT);
-    menu_event(MENU_SELECT);
-}
-/* Seek a favorite mixture for filtering tests: the shipped defaults with two
-   slots freed, refilled with an I4-incompatible favorite (cylinder 5) and the
-   Key ID page, so browsing hides cylinder 5 while storage keeps it. */
-static void seed_filtered_favorites(MenuPreferences *prefs) {
-    menu_preferences_default(prefs);
-    prefs->favorites[0][4] = 0;
-    prefs->favorites[0][5] = 0;
-    assert(menu_favorite_toggle(prefs, 0, 0x2f));
-    assert(menu_favorite_toggle(prefs, 0, 0x22));
-}
-/* Persistence compares committed domains and retries only the unsuccessful work. */
-static void test_automatic_persistence(void) {
-    fresh_menu(); to_settings();
-    assert(settings_save() == 0 && menu_preferences_save() == 0);
-    settings_writes = preference_writes = usb_applies = 0;
-    runtime_state.instruct_slave_boards_trigger_enabled = 0;
-    menu_event(MENU_SELECT); menu_event(MENU_BACK);
-    assert(settings_writes == 0 && preference_writes == 0 && usb_applies == 0);
-    assert(strstr(screen, "Features"));
-    for (unsigned i = 0; i < 4; ++i) menu_event(MENU_NEXT);
-    menu_event(MENU_SELECT); menu_event(MENU_NEXT); menu_event(MENU_BACK); menu_event(MENU_HOLD);
-    assert(preference_writes == 1 && settings_writes == 0 && usb_applies == 0);
-    menu_event(MENU_BACK); menu_event(MENU_BACK); menu_event(MENU_BACK);
-    assert(preference_writes == 1);
-
-    /* Remembered pages remain an independently persisted preference domain. */
-    fresh_menu();
-    assert(settings_save() == 0 && menu_preferences_save() == 0);
-    settings_writes = preference_writes = usb_applies = 0;
-    menu_event(MENU_NEXT); to_settings();
-    settings_state.shift_indicator_enabled = !settings_state.shift_indicator_enabled;
-    fail_type = 0x105;
-    menu_event(MENU_BACK);
-    assert(settings_writes == 1 && preference_writes == 1 && usb_applies == 1);
-    assert(strstr(screen, "Save failed"));
-    now += 60001; menu_process(); menu_event(MENU_NEXT);
-    assert(preference_writes == 1 && strstr(screen, "Save failed"));
-    menu_event(MENU_SELECT);
-    assert(settings_writes == 1 && preference_writes == 2 && usb_applies == 1);
-    fail_type = 0; menu_event(MENU_HOLD); /* Hold retries the remembered exit too. */
-    assert(preference_writes == 3 && settings_writes == 1 && usb_applies == 1);
-    menu_event(MENU_BACK); assert(preference_writes == 3);
-
-    fresh_menu();
-    assert(settings_save() == 0 && menu_preferences_save() == 0);
-    settings_writes = preference_writes = usb_applies = 0;
-    menu_event(MENU_NEXT); to_settings();
-    settings_state.shift_indicator_enabled = !settings_state.shift_indicator_enabled;
-    fail_type = 0x101; menu_event(MENU_BACK);
-    assert(strstr(screen, "Save failed") && usb_applies == 0 && preference_writes == 1);
-    menu_event(MENU_BACK); /* Cancel the pending exit. */
-    fail_type = 0; menu_event(MENU_BACK);
-    assert(settings_writes == 2 && preference_writes == 1 && usb_applies == 1);
-}
-
-static void test_usb_rearm_without_flash_write(void) {
-    fresh_menu();
-    settings_state.usb_sniffer = 1;
-    settings_state.usb_elm327 = 0;
-    assert(settings_save() == 0);
-    settings_writes = usb_applies = 0;
-    runtime_state.instruct_slave_boards_trigger_enabled = 0;
-    usb_needs_apply = true; /* Runtime expired, user selected saved CAN again. */
-    assert(settings_save() == 0);
-    assert(settings_writes == 0 && usb_applies == 1);
-    assert(runtime_state.instruct_slave_boards_trigger_enabled);
-    runtime_state.instruct_slave_boards_trigger_enabled = 0;
-    assert(settings_save() == 0);
-    assert(settings_writes == 0 && usb_applies == 1);
-    assert(!runtime_state.instruct_slave_boards_trigger_enabled);
-}
-
-/* A rejected screen remains retryable, including a periodic resend of identical text. */
-static void test_present_retry(void) {
-    fresh_menu();
-    menu_present("Old screen");
-    uart_busy = true;
-    menu_present("New screen");
-    assert(!strncmp(screen, "Old screen", 10));
-    uart_busy = false;
-    menu_present("New screen");
-    assert(!strncmp(screen, "New screen", 10));
-
-    now += 500;
-    uart_busy = true;
-    menu_present("New screen");
-    uart_busy = false;
-    memset(screen, 0, sizeof(screen));
-    menu_present("New screen");
-    assert(!strncmp(screen, "New screen", 10));
-    /* Successful submissions still suppress immediate duplicates. */
-    memset(screen, 0, sizeof(screen));
-    menu_present("New screen");
-    assert(screen[0] == 0);
-}
-static void test_controller(void) {
-    fresh_menu();
-    assert(dashboard_state.baccable_dashboard_menu_visible);
-    MenuPreferences defaults;
-    menu_preferences_default(&defaults);
-    assert(dashboard_state.dashboard_page_index ==
-           (unsigned)menu_page_index(0, defaults.favorites[0][0]));
-    menu_event(MENU_NEXT);
-    uint8_t selected = dashboard_state.dashboard_page_index;
-    menu_event(MENU_BACK);
-    menu_event(MENU_BACK); /* Root, close + persist. */
-    assert(!dashboard_state.baccable_dashboard_menu_visible && have_saved);
-    menu_init();
-    menu_event(MENU_BACK);
-    assert(dashboard_state.dashboard_page_index == selected);
-    fresh_menu();
-    to_settings();
-    menu_event(MENU_SELECT); /* Enter Feature setup. */
-    fail_save = true;
-    menu_event(MENU_BACK);
-    assert(strstr(screen, UI_SYMBOL_FAILURE " Save failed"));
-    now += 1800;
-    menu_render();
-    assert(strstr(screen, UI_SYMBOL_FAILURE " Save failed"));
-    fail_save = false;
-    menu_event(MENU_SELECT);
-    assert(!strstr(screen, "Saved"));
-    now += 1500;
-    menu_render();
-    assert(strstr(screen, "> Features"));
-    /* Import old visibility, retaining the existing settings record. */
-    memset(old_visibility, 0xff, sizeof(old_visibility));
-    old_visibility[0] &= ~2;
-    have_saved = false;
-    have_v1 = false;
-    have_old = true;
-    menu_init();
-    assert(menu_preferences_save() == 0);
-    MenuPreferences decoded;
-    assert(menu_preferences_decode(&decoded, saved));
-    assert(!menu_page_visible(&decoded, 0, 1) && !menu_page_visible(&decoded, 1, 1));
-    fresh_menu();
-    menu_show_parameter(23); /* Gasoline battery voltage UDS. */
-    now = 2000;
-    menu_process();
-    assert(queries);
-    const ParameterDefinition *p = &parameter_definitions[35];
-    assert(p->value_offset + p->value_length <= 4);
-    uint16_t did = ((p->request_data >> 16) & 0xff) << 8 | (p->request_data >> 24);
-    uint8_t reply[8] = {7, 0x62, did >> 8, did, 0, 0, 0, 10};
-    CAN_RxHeaderTypeDef header = {.IDE = CAN_ID_EXT, .ExtId = p->response_id, .DLC = 8};
-    reply[3] ^= 1;
-    parameter_request_receive(&header, reply);
-    assert(isnan(parameter_cache_get(35, now)));
-    reply[3] ^= 1;
-    parameter_request_receive(&header, reply);
-    assert(isfinite(parameter_cache_get(35, now)));
-    now += 3001;
-    menu_render();
-    assert(strstr(screen, "--"));
-    assert(isnan(parameter_cache_get(35, now)));
-    parameter_cache_put(35, 14.2f, now);
-    menu_render();
-    assert(strstr(screen, "14.20"));
-    parameter_cache_reset();
-    assert(isnan(parameter_cache_get(35, now)));
-    /* Data from an unrelated CAN frame cannot refresh an expired oil value. */
-    parameter_cache_observe(0x4b2, 4);
-    assert(isfinite(parameter_cache_get(5, now)));
-    now += 3001;
-    parameter_cache_observe(0x101, 3);
-    assert(isnan(parameter_cache_get(5, now)));
-    parameter_cache_observe(0x4b2, 3);
-    assert(isnan(parameter_cache_get(5, now)));
-}
-static void test_navigation_regressions(void) {
-    /* Rapid physical wheel reports update every selection while UART is busy. */
-    fresh_menu();
-    MenuPreferences defaults;
-    menu_preferences_default(&defaults);
-    uint8_t pages[256];
-    unsigned count = menu_page_list_filtered(&defaults, 0, 1, true, false, false, false, pages);
-    assert(count > 1);
-    unsigned initial = 0;
-    while (initial < count && pages[initial] != dashboard_state.dashboard_page_index)
-        ++initial;
-    assert(initial < count);
-    menu_button(0x10, true);
-    uart_busy = true;
-    for (unsigned i = 1; i <= 3; ++i) {
-        now += 20;
-        menu_button(0x18, true);
-        assert(dashboard_state.dashboard_page_index == pages[(initial + i) % count]);
-        menu_button(0x10, true);
-    }
-    uart_busy = false;
-    settings_state.rotate_readings = 1;
-    uint8_t manual_page = dashboard_state.dashboard_page_index;
-    now += 4999;
-    menu_process();
-    assert(dashboard_state.dashboard_page_index == manual_page);
-    now += 1;
-    menu_process();
-    assert(dashboard_state.dashboard_page_index == pages[(initial + 4) % count]);
-    settings_state.rotate_readings = 0;
-
-    fresh_menu();
-    menu_event(MENU_BACK);
-    menu_event(MENU_NEXT);
-    menu_event(MENU_SELECT); /* Parameter groups. */
-    menu_event(MENU_SELECT); /* Engine group. */
-    menu_event(MENU_NEXT);
-    uint8_t selected = dashboard_state.dashboard_page_index;
-    menu_event(MENU_BACK);
-    menu_event(MENU_NEXT);
-    menu_event(MENU_SELECT); /* Temperatures. */
-    menu_event(MENU_BACK);
-    menu_event(MENU_PREVIOUS);
-    menu_event(MENU_SELECT);
-    assert(dashboard_state.dashboard_page_index == selected);
-
-    fresh_menu();
-    to_settings();
-    menu_event(MENU_SELECT);
-    menu_event(MENU_NEXT); /* Browse a setting without committing it. */
-    fail_save = true;
-    menu_event(MENU_BACK);
-    assert(strstr(screen, UI_SYMBOL_FAILURE " Save failed"));
-    fail_save = false;
-    menu_event(MENU_SELECT); /* Retry BACK, without toggling the setting. */
-    now += 1500;
-    menu_render();
-    assert(strstr(screen, "> Features"));
-
-    fresh_menu();
-    settings_state.is_diesel_enabled = 1;
-    menu_event(MENU_NEXT); /* A second input can arrive before menu_process. */
-    assert(parameter_page_count == diesel_page_count);
-    assert(dashboard_state.dashboard_page_index < diesel_page_count);
-    assert(menu_parameters_active());
-    settings_state.is_diesel_enabled = 0;
-    menu_process();
-    assert(parameter_page_count == gasoline_page_count && menu_parameters_active());
-
-    fresh_menu();
-    menu_show_parameter(23);
-    now += 1000;
-    menu_process();
-    const ParameterDefinition *p = &parameter_definitions[35];
-    uint16_t did = ((p->request_data >> 16) & 0xff) << 8 | (p->request_data >> 24);
-    uint8_t reply[8] = {7, 0x62, did >> 8, did, 0, 0, 0, 10};
-    CAN_RxHeaderTypeDef header = {.IDE = CAN_ID_EXT, .ExtId = p->response_id, .DLC = 8};
-    menu_event(MENU_NEXT);
-    parameter_request_receive(&header, reply);
-    assert(isnan(parameter_cache_get(35, now))); /* Late answer from the previous page. */
-
-    MenuPreferences prefs;
-    menu_preferences_default(&prefs);
-    memset(prefs.favorites, 0, sizeof(prefs.favorites));
-    menu_page_show(&prefs, 0, 23, false);
-    menu_preferences_encode(&prefs, saved);
-    have_saved = true;
-    dashboard_state.baccable_dashboard_menu_visible = 0;
-    menu_init();
-    menu_event(MENU_BACK);
-    assert(strstr(screen, "No favorites"));
-    menu_event(MENU_NEXT);
-    assert(!menu_parameters_active());
-    menu_show_parameter(23);
-    assert(menu_parameters_active() && dashboard_state.dashboard_page_index == 23);
-    assert(menu_preferences_save() == 0);
-    assert(menu_preferences_decode(&prefs, saved));
-    assert(!menu_page_visible(&prefs, 0, 23));
-}
-/* Re-enter a section without resetting its remembered action, setting or information page. */
-static void test_navigation_context(void) {
-    for (unsigned section = 2; section <= 4; ++section) {
-        fresh_menu();
-        settings_state.dyno_mode_master_enabled = 1;
-        settings_state.qv_exhaust_flap_function_enabled = 1;
-        chassis_state.dyno_mode_enabled_on_master = 0;
-        menu_event(MENU_BACK); /* Favorites -> root. */
-        for (unsigned i = 0; i < section; ++i)
-            menu_event(MENU_NEXT);
-        menu_event(MENU_SELECT);
-        if (section == 2) {
-            for (unsigned i = 0; i < 16 && !strstr(screen, "Dyno"); ++i)
-                menu_event(MENU_NEXT);
-            assert(strstr(screen, "Dyno"));
-        } else {
-            menu_event(MENU_NEXT);
-            menu_event(MENU_NEXT);
-            if (section == 3)
-                assert(strstr(screen, "Shown pages"));
-            else {
-                menu_event(MENU_NEXT);
-                assert(strstr(screen, "MY23:"));
-            }
-        }
-        char selected[sizeof(screen)];
-        memcpy(selected, screen, sizeof(selected));
-        unsigned before = commands;
-        menu_event(MENU_BACK);
-        menu_event(MENU_SELECT);
-        assert(!strcmp(screen, selected));
-        assert(commands == before); /* Re-entry must never execute the remembered action. */
-
-        if (section == 4) {
-            menu_event(MENU_SELECT); /* Information SELECT is a status no-op. */
-            menu_event(MENU_SELECT);
-            assert(!strcmp(screen, selected));
-        }
-        menu_event(MENU_BACK);
-        menu_event(MENU_BACK); /* Close and save, but retain RAM navigation context. */
-        assert(!dashboard_state.baccable_dashboard_menu_visible);
-        menu_event(MENU_BACK); /* Reopen in Favorites. */
-        menu_event(MENU_BACK);
-        for (unsigned i = 0; i < section; ++i)
-            menu_event(MENU_NEXT);
-        menu_event(MENU_SELECT);
-        assert(!strcmp(screen, selected));
-        assert(commands == before);
-
-        if (section == 2) {
-            menu_event(MENU_BACK);
-            settings_state.dyno_mode_master_enabled = 0;
-            menu_event(MENU_SELECT);
-            assert(strncmp(screen, "Dyno:", 5)); /* A remembered action must still pass availability. */
-            assert(commands == before);
-        }
-        settings_state.dyno_mode_master_enabled = 0;
-        settings_state.qv_exhaust_flap_function_enabled = 0;
-    }
-}
-
-/* Input diagnostics expose the same counters used by the P2-01 host tests. */
-static void test_input_diagnostics(void) {
-    fresh_menu();
-    menu_button(0x10, true);
-    now += 301;
-    menu_button(0x10, true);
-    menu_event(MENU_BACK);
-    for (unsigned i = 0; i < 4; ++i)
-        menu_event(MENU_NEXT);
-    menu_event(MENU_SELECT);
+    vehicle_editor_begin();
     for (unsigned i = 0; i < 5; ++i)
-        menu_event(MENU_NEXT);
-    assert(strstr(screen, "Reports:2"));
-    menu_event(MENU_NEXT);
-    assert(strstr(screen, "Gaps:1"));
-    menu_event(MENU_NEXT);
-    assert(strstr(screen, "Max gap:301ms"));
-    menu_event(MENU_NEXT);
-    assert(strstr(screen, "Input age:0ms"));
+        vehicle_editor_navigate(1);
+    assert(!strcmp(vehicle_editor_field_label(), "Suspension"));
+
+    char buf[24];
+    assert(!strcmp(vehicle_editor_value_label(buf, sizeof(buf)), "Unknown"));
+
+    vehicle_editor_select();
+    vehicle_editor_navigate(1);
+    assert(!strcmp(vehicle_editor_value_label(buf, sizeof(buf)), "Absent"));
+    vehicle_editor_navigate(1);
+    assert(!strcmp(vehicle_editor_value_label(buf, sizeof(buf)), "Present"));
+    vehicle_editor_navigate(1);
+    assert(!strcmp(vehicle_editor_value_label(buf, sizeof(buf)), "Unknown"));
+
+    vehicle_editor_back();
+    puts("PASS: vehicle editor edits tri-state equipment");
 }
 
-/* Held directions repeat in lists, never in Actions or while moving a favorite. */
-static void test_repeat_views(void) {
-    fresh_menu();
-    to_settings();
-    menu_button(0x10, true);
-    menu_button(0x18, true);
-    assert(strstr(screen, "Page favorites"));
-    now += 250;
-    menu_button(0x18, true);
-    now += 250;
-    menu_button(0x18, true);
-    assert(strstr(screen, "Shown pages"));
-    now += 180;
-    menu_button(0x18, true);
-    now += 120;
-    menu_process();
-    assert(strstr(screen, "Favorite order"));
-    menu_button(0x10, true);
-    menu_event(MENU_SELECT);
-    menu_event(MENU_SELECT); /* Pick a favorite for reordering. */
-    menu_button(0x18, true);
-    char selected[sizeof(screen)];
-    memcpy(selected, screen, sizeof(selected));
-    for (unsigned i = 0; i < 5; ++i) {
-        now += 200;
-        menu_button(0x18, true);
-        assert(!strcmp(screen, selected));
+
+static void test_vehicle_editor(void) {
+    VehicleProfile p;
+    vehicle_profile_default(&p);
+    p.model = VEHICLE_MODEL_GIULIA;
+    p.engine = VEHICLE_ENGINE_PETROL20;
+    p.drivetrain = VEHICLE_DRIVETRAIN_RWD;
+    p.display_selection = VEHICLE_DISPLAY_MY23;
+    vehicle_profile_commit(&p);
+
+    vehicle_editor_begin();
+    assert(vehicle_editor_state() == VEHICLE_EDITOR_BROWSE);
+    assert(!strcmp(vehicle_editor_field_label(), "Model"));
+
+    char buf[24];
+    assert(!strcmp(vehicle_editor_value_label(buf, sizeof(buf)), "Giulia"));
+
+    vehicle_editor_navigate(1);
+    vehicle_editor_navigate(1);
+    assert(!strcmp(vehicle_editor_field_label(), "Engine"));
+    assert(!strcmp(vehicle_editor_value_label(buf, sizeof(buf)), "2.0 Petrol"));
+
+    vehicle_editor_select();
+    assert(vehicle_editor_state() == VEHICLE_EDITOR_EDIT);
+    vehicle_editor_navigate(1);
+    assert(!strcmp(vehicle_editor_value_label(buf, sizeof(buf)), "2.9 Petrol"));
+    vehicle_editor_navigate(1);
+    assert(!strcmp(vehicle_editor_value_label(buf, sizeof(buf)), "2.2 Diesel"));
+
+    assert(vehicle_editor_back() && vehicle_editor_state() == VEHICLE_EDITOR_BROWSE);
+    assert(vehicle_editor_back() && vehicle_editor_state() == VEHICLE_EDITOR_CONFIRM);
+    assert(!vehicle_editor_back());
+    puts("PASS: vehicle editor browses, edits and discards a profile draft");
+}
+
+static void test_my23_glyph_budget(void) {
+    const char *symbols = "\xe2\x80\xba\xe2\x80\xa2\xe2\x96\xb2\xe2\x96\xbc\xe2\x9c\x93\xc3\x97\xc2\xb0\xc2\xb1\xe2\x86\x92\xe2\x80\xa6";
+    const uint16_t expected[] = {0x203a, 0x2022, 0x25b2, 0x25bc, 0x2713, 0xd7, 0xb0, 0xb1, 0x2192, 0x2026};
+    uint8_t encoded[16];
+    memset(encoded, 'X', sizeof(encoded));
+    assert(my23_text_encode(encoded, 10, symbols) == 10);
+    for (unsigned i = 0; i < 10; ++i) assert(my23_codepoint(encoded[i]) == expected[i]);
+    assert(encoded[10] == 'X');
+    for (unsigned limit = 0; limit <= 10; ++limit) {
+        memset(encoded, 'X', sizeof(encoded));
+        assert(my23_text_encode(encoded, limit, symbols) == limit);
+        assert(encoded[limit] == 'X');
     }
+    uint8_t packet[MY23_PACKET_SIZE];
+    my23_packet_mode(packet, UI_MODE_LIST, "123456789012345", "");
+    assert(packet[1] == 0x80 && packet[MY23_L1_VISIBLE] == 0x87 &&
+           packet[1 + MY23_L1_VISIBLE] == ' ');
+    my23_packet_mode(packet, UI_MODE_LIST, "12345678901234", "next");
+    assert(!memcmp(packet + 3, "12345678901234", 14) &&
+           !memcmp(packet + 1 + MY23_L1_VISIBLE, "next", 4));
+    my23_packet(packet, "1234567890123456EXTRA", "1234567890123456789012EXTRA");
+    assert(!memcmp(packet + 1, "1234567890123456", MY23_L1_VISIBLE));
+    assert(!memcmp(packet + 1 + MY23_L1_VISIBLE, "1234567890123456789012", 22));
+    my23_packet(packet, "Gear", "RPM 3500");
+    assert(packet[5] == ' ' && !memcmp(packet + 1 + MY23_L1_VISIBLE, "RPM 3500", 8));
+    for (unsigned i = 5; i < 1 + MY23_L1_VISIBLE; ++i) assert(packet[i] == ' ');
+}
 
-    fresh_menu();
-    menu_event(MENU_BACK);
-    menu_event(MENU_NEXT);
-    menu_event(MENU_NEXT);
-    menu_event(MENU_SELECT); /* Actions */
-    menu_button(0x10, true);
-    menu_button(0x18, true);
-    memcpy(selected, screen, sizeof(selected));
-    unsigned before = commands;
-    for (unsigned i = 0; i < 5; ++i) {
-        now += 200;
-        menu_button(0x18, true);
-        assert(!strcmp(screen, selected) && commands == before);
+static void test_shared_renderers(void) {
+    char text[25];
+    for (size_t size = 19; size <= 25; size += 6) {
+        ui_render_toggle(text, size, "Auto rotate", false);
+        assert(!strcmp(text, "Auto rotate: OFF"));
+        ui_render_toggle(text, size, "Auto rotate", true);
+        assert(!strcmp(text, "Auto rotate: ON"));
+        ui_render_value(text, size, "ACC resume", "RES");
+        assert(!strcmp(text, "ACC resume: RES"));
+        ui_render_signed_number(text, size, "Pedal trim", 4, false);
+        assert(!strcmp(text, "Pedal trim: +4"));
+        ui_render_number(text, size, "Shift RPM", 3500, true);
+        assert(!strcmp(text, size == 19 ? "* Shift RPM: 3500" : "* Shift RPM: " "\xAB" " 3500 " "\xBB"));
+        ui_render_action(text, size, "Read faults");
+        assert(!strcmp(text, "> Read faults"));
+        ui_render_pending(text, size, "AWD req", "OFF");
+        assert(!strcmp(text, "AWD req: OFF WAIT"));
+        ui_render_unavailable(text, size, "Start engine");
+        assert(!strcmp(text, "! Start engine"));
     }
-}
-
-/* Feedback durations differ without preventing navigation from dismissing a notice. */
-static void test_notice_timing(void) {
-    fresh_menu();
-    menu_notice("Maximum hold: ON");
-    now += 749;
-    menu_render();
-    assert(strstr(screen, "Maximum hold: ON"));
-    now += 1;
-    menu_render();
-    assert(!strstr(screen, "Maximum hold: ON"));
-    menu_notice("! Unavailable");
-    now += 1799;
-    menu_render();
-    assert(strstr(screen, "! Unavailable"));
-    now += 1;
-    menu_render();
-    assert(!strstr(screen, "! Unavailable"));
-    menu_notice("! Unavailable");
-    menu_event(MENU_NEXT);
-    assert(!strstr(screen, "! Unavailable"));
-}
-
-/* Inactivity returns home without a blank handoff; explicit close remains retryable. */
-static void test_idle_close(void) {
-    fresh_menu();
-    now += 60001;
-    menu_process();
-    assert(menu_parameters_active()); /* Readings remain live. */
-    menu_event(MENU_BACK);
-    unsigned blanks = blank_screens;
-    now += 29999;
-    menu_process();
-    assert(!menu_parameters_active());
-    now += 1;
-    uart_busy = true;
-    menu_process();
-    assert(menu_parameters_active() && dashboard_state.baccable_dashboard_menu_visible);
-    uart_busy = false;
-    now += 100;
-    menu_process();
-    assert(blank_screens == blanks);
-    unsigned page = dashboard_state.dashboard_page_index;
-    menu_event(MENU_NEXT);
-    assert(dashboard_state.dashboard_page_index != page);
-    menu_event(MENU_PREVIOUS);
-    assert(dashboard_state.dashboard_page_index == page);
-
-    menu_event(MENU_BACK); /* ROOT. */
-    uart_busy = true;
-    menu_event(MENU_BACK); /* Only explicit close releases the display. */
-    assert(!dashboard_state.baccable_dashboard_menu_visible);
-    uart_busy = false;
-    menu_process();
-    assert(blank_screens == blanks + 1);
-    menu_event(MENU_BACK);
-    assert(menu_parameters_active());
-
-    fresh_menu();
-    menu_event(MENU_BACK);
-    uart_busy = true;
-    menu_event(MENU_BACK);
-    assert(!dashboard_state.baccable_dashboard_menu_visible);
-    uart_busy = false;
-    menu_event(MENU_BACK); /* Reopen before a rejected clear can erase the screen. */
-    char reopened[sizeof(screen)];
-    memcpy(reopened, screen, sizeof(reopened));
-    menu_process();
-    assert(!strcmp(screen, reopened));
-
-    fresh_menu();
-    to_settings();
-    blanks = blank_screens;
-    now += 59999;
-    menu_process();
-    assert(!menu_parameters_active());
-    fail_save = true;
-    now += 1;
-    menu_process();
-    assert(dashboard_state.baccable_dashboard_menu_visible && strstr(screen, "Save failed"));
-    fail_save = false;
-    now += 60001;
-    menu_process();
-    assert(!menu_parameters_active()); /* Wait for explicit retry. */
-    menu_event(MENU_SELECT);
-    assert(menu_parameters_active() && blank_screens == blanks);
-
-    fresh_menu();
-    menu_event(MENU_BACK);
-    diagnostics_state.clear_faults_request = 1;
-    now += 30001;
-    menu_process();
-    assert(!menu_parameters_active());
-    diagnostics_state.clear_faults_request = 0;
-    now += 29999;
-    menu_process();
-    assert(!menu_parameters_active());
-    now += 1;
-    menu_process();
-    assert(menu_parameters_active());
-
-    fresh_menu();
-    now = UINT32_MAX - 1000;
-    menu_event(MENU_BACK);
-    now += 30000;
-    menu_process();
-    assert(menu_parameters_active());
-}
-
-static void expect_reading(uint8_t engine, uint16_t id, float first, float second, const char *expected) {
-    int index = menu_page_index(engine, id);
-    assert(index >= 0);
-    const ParameterPage *page = &parameter_pages[engine][index];
-    float values[] = {first, second};
-    char text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
-    dashboard_format_values(page->name, values, page->parameter_ids, text);
-    if (strcmp(text, expected)) fprintf(stderr, "Reading %u/%u expected [%s], got [%s]\n", engine, id, expected, text);
-    assert(!strcmp(text, expected));
-}
-static void expect_setup(uint8_t id, const char *expected) {
-    const SetupParam *param = setup_find_by_flash_index(id);
-    assert(param);
-    memset(dashboard_setup_screen, 'X', sizeof(dashboard_setup_screen));
-    if (param->render) param->render();
-    else setup_render_page(setup_page_for(id));
-    if (memcmp(dashboard_setup_screen, expected, strlen(expected))) fprintf(stderr, "Setup %u expected [%s], got [%.*s]\n", id, expected, DASHBOARD_MESSAGE_MAX_LENGTH, dashboard_setup_screen);
-    assert(!memcmp(dashboard_setup_screen, expected, strlen(expected)));
-    for (unsigned i = strlen(expected); i < sizeof(dashboard_setup_screen); ++i)
-        assert(dashboard_setup_screen[i] == ' ');
-}
-static void test_readable_screens(void) {
-    fresh_menu();
-    expect_reading(0, 0x12, 100, 100, "Oil ECU temp 100" "\xB0" "C");
-    expect_reading(1, 0x98, 100, 100, "Oil temp 100" "\xB0" "C");
-    expect_reading(0, 0x20, 90, 90, "Coolant temp  90" "\xB0" "C");
-    expect_reading(1, 0xa0, -20, -20, "Coolant temp -20" "\xB0" "C");
-    expect_reading(0, 0x18, 14.2f, 14.2f, "Battery 14.20 V");
-    expect_reading(0, 0x17, -12.3f, -12.3f, "Battery  -12.3 A");
-    expect_reading(0, 0x07, 14.2f, -12.3f, "Batt 14.2V  -12.3A");
-    expect_reading(0, 0x07, 12.1f, -150.5f, "Batt 12.1V -150.5A");
-#ifdef LARGE_DISPLAY
-    expect_reading(0, 0x04, 100, 90, "Oil 100" "\xB0" "C Cool  90" "\xB0" "C");
-#else
-    expect_reading(0, 0x04, 100, 90, "Oil 100C Cool  90C"); /* Preserve dense numeric fields. */
-#endif
-#ifdef LARGE_DISPLAY
-    expect_reading(0, 0x02, 1.2f, 90, "Oil1.2bar Cool 90" "\xB0" "C");
-#else
-    expect_reading(0, 0x02, 1.2f, 90, "Oil1.2bar Cool 90C");
-#endif
-    expect_reading(1, 0x8d, 650, 650, "DPF temp  650" "\xB0" "C");
-    expect_reading(1, 0x99, 12.34f, 12.34f, "Oil press 12.34bar");
-    expect_reading(1, 0xa6, -0.65f, -0.65f, "Turbo  -0.65 bar");
-    expect_reading(1, 0xa8, -0.5f, -0.5f, "Boost req -0.50bar");
-    expect_reading(1, 0xa6, -33.768f, -33.768f, "Turbo -33.77 bar");
-    expect_reading(0, 0x18, NAN, NAN, "Battery    -- V");
-    expect_reading(0, 0x2d, 41, 41, "Best100-200 MISS");
-
-    settings_state.launch_torque_threshold = 25;
-    expect_setup(18, "Launch Nm: 25");
-    settings_state.launch_torque_threshold = 600;
-    expect_setup(18, "Launch Nm: 600");
-    settings_state.shift_threshold = 4500;
-    expect_setup(5, "Shift RPM: 4500");
-    settings_state.is_diesel_enabled = 0;
-    expect_setup(16, "Engine: 2.0 I4");
-    settings_state.is_diesel_enabled = 1;
-    expect_setup(16, "Engine: 2.2 D");
-    settings_state.pedal_map_power = -10;
-    expect_setup(29, "Pedal trim: -10");
-    settings_state.pedal_map_power = 10;
-    expect_setup(29, "Pedal trim: +10");
-    settings_state.close_windows_with_door_lock = 2;
-#ifdef LARGE_DISPLAY
-    expect_setup(25, "Close windows: 2 locks");
-#else
-    expect_setup(25, "Close win:2 locks");
-#endif
-    settings_state.open_windows_with_door_lock = 0;
-#ifdef LARGE_DISPLAY
-    expect_setup(26, "Open windows: OFF");
-#else
-    expect_setup(26, "Open win: OFF");
-#endif
-    settings_state.open_windows_with_door_lock = 2;
-#ifdef LARGE_DISPLAY
-    expect_setup(26, "Open windows: 2 unlocks");
-#else
-    expect_setup(26, "Open win:2 unlocks");
-#endif
-    settings_state.pedal_booster_enabled = 2;
-    expect_setup(20, "Pedal mode: Bypass");
-
-    const char *short_templates[] = {"", "$", "$1", "$1.", "$1.0"};
-    float values[] = {0, 0};
-    const uint8_t ids[] = {1, 1};
-    char text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
-    for (unsigned i = 0; i < sizeof(short_templates) / sizeof(short_templates[0]); ++i) {
-        dashboard_format_values(short_templates[i], values, ids, text);
-        assert(!strcmp(text, short_templates[i]));
+    for (size_t size = 0; size < sizeof(text); ++size) {
+        memset(text, 'X', sizeof(text));
+        ui_render_toggle(text, size, "A very long label", false);
+        for (size_t i = size; i < sizeof(text); ++i)
+            assert(text[i] == 'X');
+        if (size) assert(memchr(text, 0, size));
     }
 }
-/* Engine and complexity filters preserve saved identities, including temporarily unavailable favorites. */
-static void test_engine_filters(void) {
-    MenuPreferences prefs, restored;
-    uint8_t raw[MENU_PREFS_SIZE], list[MENU_PAGE_CAPACITY];
-    menu_preferences_default(&prefs);
-    seed_filtered_favorites(&prefs);
-    menu_preferences_encode(&prefs, raw);
-    assert(menu_preferences_decode(&restored, raw));
-    assert(!memcmp(prefs.favorites, restored.favorites, sizeof(prefs.favorites)));
-    for (unsigned v6 = 0; v6 < 2; ++v6) {
-        unsigned count = menu_page_list_filtered(&prefs, 0, 0, false, false, v6, true, list);
-        unsigned ignition = 0;
-        for (unsigned i = 0; i < count; ++i) {
-            unsigned id = parameter_pages[0][list[i]].id;
-            assert(menu_page_index(0, id) == list[i]);
-            ignition += (id >= 0x23 && id <= 0x26) || id == 0x2f || id == 0x30;
-            assert(v6 || (id != 0x2f && id != 0x30));
-            assert(!v6 || (id != 0x14 && id != 0x40));
-        }
-        assert(ignition == (v6 ? 6 : 4));
-        count = menu_page_list_filtered(&prefs, 0, 0, true, false, v6, false, list);
-        assert(count == (v6 ? 6 : 5)); /* Advanced favorite stays; cylinder 5 is temporarily filtered. */
-    }
-    unsigned count = menu_page_list_filtered(&prefs, 1, 0, false, false, false, true, list);
-    assert(count == diesel_page_count);
-    for (unsigned i = 0; i < count; ++i)
-        assert(parameter_pages[1][list[i]].id >= 0x81);
-    count = menu_page_list_filtered(&prefs, 0, 0, false, false, false, false, list);
-    for (unsigned i = 0; i < count; ++i)
-        assert(!menu_page_advanced(0, list[i]));
-    assert(menu_page_list_filtered(&prefs, 0, 0, false, true, false, false, list) == 63); /* 65 ordinary gasoline pages minus 2 V6-only. */
-    assert(menu_page_index(0, 0x2f) == 46 && menu_page_index(0, 0x30) == 47);
-    assert(parameter_page_elements(&parameter_pages[0][menu_page_index(0, 0x3b)]) == 2);
-    assert(parameter_page_elements(&parameter_pages[0][menu_page_index(0, 0x3c)]) == 2);
-    assert(parameter_page_elements(&parameter_pages[0][menu_page_index(0, 0x3f)]) == 2);
-    memset(prefs.favorites[0], 0, sizeof(prefs.favorites[0]));
-    prefs.favorites[0][0] = 0x04;
-    prefs.favorites[0][1] = 0x2f;
-    prefs.favorites[0][2] = 0x01;
-    menu_favorite_move_supported(&prefs, 0, 0x04, 1, false);
-    assert(prefs.favorites[0][0] == 0x01 && prefs.favorites[0][1] == 0x2f && prefs.favorites[0][2] == 0x04);
-    assert(setup_read_flash_value(36, 0xffff) == 0 && setup_read_flash_value(37, 0xffff) == 0);
-    assert(setup_read_flash_value(36, 0) == 0 && setup_read_flash_value(36, 1) == 1);
-    assert(setup_read_flash_value(36, 2) == 0);
-    fresh_menu();
-    uint8_t profile_page = setup_page_for(16);
-    setup_select_page(profile_page);
-    setup_move_page(1);
-    assert(!settings_state.is_diesel_enabled && !settings_state.gasoline_v6);
-    assert(setup_stage_back()); setup_stage_save();
-    assert(!settings_state.is_diesel_enabled && settings_state.gasoline_v6);
-    expect_setup(16, "Engine: 2.9 V6");
-    setup_select_page(profile_page); /* The render helper returned to the list. */
-    uint16_t values[SETUP_FLASH_PARAM_BUFFER_SIZE] = {0};
-    settings_state.advanced_pages = 1;
-    setup_fill_flash_params(values);
-    assert(values[15] == 0 && values[35] == 1 && values[36] == 1);
-    setup_select_page(profile_page);
-    assert(setup_stage_back()); setup_stage_save();
-    assert(settings_state.is_diesel_enabled);
-    setup_select_page(profile_page);
-    assert(setup_stage_back()); setup_stage_save();
-    assert(!settings_state.is_diesel_enabled && !settings_state.gasoline_v6);
-}
 
-/* Only permitted vehicle actions appear; preferences still control their original runtime gates. */
-static void test_action_availability(void) {
-    uint8_t *gates[] = {
-        &settings_state.dyno_mode_master_enabled,    &settings_state.awd_disabler_enabled,
-        &settings_state.esc_tc_customizator_enabled, &settings_state.qv_exhaust_flap_function_enabled,
-        &settings_state.has_function_enabled,        &settings_state.front_brake_forcer_master,
-        &settings_state.read_faults_enabled,         &settings_state.clear_faults_enabled};
-    const char *names[] = {"Dyno:",          "AWD off request", "Toggle ESC/TC",   "QV exhaust req",
-                           "Press HAS button", "Brake req",       "Read BCM faults", "Clear DTCs"};
-    for (unsigned i = 0; i < 8; ++i)
-        *gates[i] = 0;
-    fresh_menu();
-    menu_event(MENU_BACK);
-    menu_event(MENU_NEXT);
-    menu_event(MENU_NEXT);
-    assert(strstr(screen, "Actions"));
-    menu_event(MENU_SELECT);
-    for (unsigned gate = 0; gate < 8; ++gate) {
-        for (unsigned i = 0; i < 16; ++i) {
-            menu_event(MENU_NEXT);
-            assert(!strstr(screen, names[gate]));
-            assert(!strstr(screen, "Immobilizer"));
-        }
-        *gates[gate] = 1;
-        chassis_state.front_brake_forced = 0;
-        chassis_state.launch_assist_enabled = 0;
-        chassis_state.stability_inverted = 0;
-        chassis_state.dyno_mode_enabled_on_master = gate == 5;
-        telemetry_state.current_speed_km_h = 0;
-        runtime_state.car_steady_counter = 100;
-        bool found = false;
-        for (unsigned i = 0; i < 16; ++i) {
-            menu_event(MENU_NEXT);
-            found |= strstr(screen, names[gate]) != NULL;
-        }
-        assert(found);
-        *gates[gate] = 0;
-    }
-    menu_event(MENU_BACK);
-    menu_event(MENU_NEXT); /* Settings */
-    menu_event(MENU_NEXT); /* Information */
-    menu_event(MENU_SELECT);
-    for (unsigned i = 0; i < 4; ++i)
-        menu_event(MENU_NEXT);
-    assert(strstr(screen, "Immobil") && (strstr(screen, ": ON") || strstr(screen, ": OFF")));
-}
-
-/* Action wording must describe requests without claiming vehicle confirmation. */
-static void test_action_request_labels(void) {
-    fresh_menu();
-    runtime_state.car_steady_counter = 100;
-    settings_state.awd_disabler_enabled = 1;
-    settings_state.qv_exhaust_flap_function_enabled = 1;
-    chassis_state.awd_sequence = 0;
-    comfort_state.force_q_vexhaust_valve_opened = 0;
-    menu_event(MENU_BACK);
-    menu_event(MENU_NEXT);
-    menu_event(MENU_NEXT);
-    menu_event(MENU_SELECT);
-    for (unsigned i = 0; i < 16 && !strstr(screen, "QV exhaust req"); ++i)
-        menu_event(MENU_NEXT);
-    assert(strstr(screen, "> QV exhaust req"));
-    for (unsigned state = 1; state <= 4; ++state) {
-        comfort_state.force_q_vexhaust_valve_opened = state;
-        now += 1;
-        menu_render();
-        const char *expected = state == 4 ? "QV req: AUTO WAIT" : "QV req: OPEN WAIT";
-        assert(!strncmp(screen, expected, strlen(expected)));
-        for (unsigned i = strlen(expected); i < DASHBOARD_MESSAGE_MAX_LENGTH; ++i)
-            assert(screen[i] == ' ');
-    }
-    comfort_state.force_q_vexhaust_valve_opened = 0;
-    menu_render();
-    assert(strstr(screen, "> QV exhaust req"));
-    for (unsigned i = 0; i < 16 && !strstr(screen, "AWD off request"); ++i)
-        menu_event(MENU_NEXT);
-    assert(strstr(screen, "> AWD off request"));
-    for (unsigned state = 1; state <= 4; ++state) {
-        chassis_state.awd_sequence = state;
-        menu_render();
-        assert(strstr(screen, "AWD req: OFF WAIT"));
-    }
-    now = 12000; /* Periodic warning must also avoid claiming confirmed disablement. */
-    menu_render();
-    assert(strstr(screen, "! AWD OFF request"));
-    chassis_state.awd_sequence = 0;
-    menu_render();
-    assert(strstr(screen, "> AWD off request"));
-    settings_state.clear_faults_enabled = 1;
-    for (unsigned i = 0; i < 16 && !strstr(screen, "Clear DTCs"); ++i)
-        menu_event(MENU_NEXT);
-    assert(strstr(screen, "> Clear DTCs"));
-    diagnostics_state.clear_faults_request = 255;
-    menu_render();
-#ifdef LARGE_DISPLAY
-    assert(!strncmp(screen, "Clear DTCs: WAIT", strlen("Clear DTCs: WAIT")));
-#else
-    assert(!strncmp(screen, "Clear DTCs: WAIT", strlen("Clear DTCs: WAIT")));
-#endif
-    diagnostics_state.clear_faults_request = 0;
-    menu_render();
-    assert(strstr(screen, "> Clear DTCs"));
-    settings_state.clear_faults_enabled = 0;
-    settings_state.awd_disabler_enabled = 0;
-    settings_state.qv_exhaust_flap_function_enabled = 0;
-}
-
-static void test_cache_flags(void) {
-    parameter_cache_reset();
-    const uint8_t ids[] = {0, 7, 8, 31, 32, 95, 96, 97};
-    for (unsigned i = 0; i < sizeof(ids); ++i) {
-        assert(isnan(parameter_cache_get(ids[i], 0)));
-        parameter_cache_put(ids[i], i + 0.5f, UINT32_MAX - 100);
-    }
-    parameter_cache_put(7, NAN, UINT32_MAX - 100);
-    parameter_cache_put(96, INFINITY, UINT32_MAX - 100);
-    for (unsigned i = 0; i < sizeof(ids); ++i) {
-        float value = parameter_cache_get(ids[i], 100);
-        if (ids[i] == 7 || ids[i] == 96)
-            assert(isnan(value));
-        else
-            assert(value == i + 0.5f);
-        assert(isnan(parameter_cache_get(ids[i], 3000)));
-    }
-    parameter_cache_put(255, 1, 0);
-    assert(isnan(parameter_cache_get(255, 0)));
-    parameter_cache_reset();
-    assert(isnan(parameter_cache_get(97, 0)));
-}
-/* Hold numerical peaks without freezing status readings or showing stale measurements. */
-static void test_maximum_hold(void) {
-    parameter_cache_reset();
-    parameter_peak_enable(true);
-    parameter_cache_put(4, -12.0f, 100);
-    parameter_cache_put(4, -20.0f, 200);
-    assert(parameter_cache_get(4, 200) == -12.0f);
-    parameter_cache_put(8, 3, 100);
-    parameter_cache_put(8, 1, 200);
-    assert(parameter_cache_get(8, 200) == 1);
-    assert(isnan(parameter_cache_get(4, 3201)));
-    parameter_peak_reset();
-    parameter_cache_put(4, -30.0f, 3300);
-    assert(parameter_cache_get(4, 3300) == -30.0f);
-    parameter_peak_enable(false);
-    parameter_cache_put(4, -40.0f, 3400);
-    assert(parameter_cache_get(4, 3400) == -40.0f);
-    float values[] = {1, 2, 3, 4};
-    uint8_t ids[] = {91, 92, 93, 94};
-    char text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
-    dashboard_format_values("$1.0f/$1.0f/$1.0f/$1.0f", values, ids, text);
-    assert(!strcmp(text, "1/2/3/4"));
-}
-
-/* Retry auxiliary-board preferences after a busy link without losing or duplicating a setting. */
-static void test_board_sync_retry(void) {
-    settings_state.default_drive_mode = 0;
-    now = 20000;
-    runtime_state.all_processors_wakeup_time = 0;
-    commands = 0;
-    board_sync_rearm();
-    board_sync_ignition(8);
-    for (unsigned option = 0; option < 9; ++option) {
-        uart_busy = true;
-        board_sync_process();
-        assert(commands == option);
-        uart_busy = false;
-        board_sync_process();
-        assert(commands == option + 1);
-    }
-    board_sync_process();
-    assert(!runtime_state.instruct_slave_boards_trigger_enabled);
-    board_sync_process();
-    assert(commands == 9 && last_driver_rearm == 1 && last_dna_action == 1);
-    assert(last_dna_token == drive_mode_check_token());
-    board_sync_restart();
-    for (unsigned i = 0; i < 10; ++i) board_sync_process();
-    assert(last_driver_rearm == 0 && last_dna_action == 0);
-
-    board_sync_rearm();
-    board_sync_ignition(8);
-    assert(!strcmp(drive_mode_check_status(), settings_state.default_drive_mode ? "Start engine" : "Next start"));
-    board_sync_restart(); /* Preserve an undelivered ignition event across transport resync. */
-    for (unsigned i = 0; i < 10; ++i) board_sync_process();
-    assert(last_driver_rearm == 1);
-    board_sync_saved();
-    assert(!strcmp(drive_mode_check_status(), "Next start"));
-    for (unsigned i = 0; i < 10; ++i) board_sync_process();
-    assert(last_driver_rearm == 2);
-}
-
-static void fresh_contract(void);
-
-#include "test_setup_ui.c"
-#include "test_unified_ui.c"
-#include "test_menu_contract.c"
-#include "test_idle_latin1.c"
-#include "test_my23_ui.c"
-#include "test_oil_level.c"
+#include "test_vehicle_fixes.c"
 
 int main(void) {
 #if defined(IPC_MY23_IS_INSTALLED)
@@ -1397,81 +350,24 @@ int main(void) {
     const char *suite = "menu-18";
 #endif
     const HostTest tests[] = {
+        HOST_TEST(test_split_profile_migration),
+        HOST_TEST(test_cancelled_same_did),
+        HOST_TEST(test_profile_atomic_restart),
+        HOST_TEST(test_profile_editor_failure),
+        HOST_TEST(test_favorite_validation_restart),
+        HOST_TEST(test_favorite_widths),
+        HOST_TEST(test_favorite_policy_sources),
+        HOST_TEST(test_favorite_visible_polling),
+        HOST_TEST(test_profile_effective_options),
+        HOST_TEST(test_runtime_display),
+        HOST_TEST(test_restore_defaults_flow),
+
         HOST_TEST(test_settings_migration),
-        HOST_TEST(test_default_mode_engine_gate),
-        HOST_TEST(test_oil_level),
-        HOST_TEST(test_oil_favorites),
-        HOST_TEST(test_lka_save_gestures),
-        HOST_TEST(test_ignition_sessions_without_sleep),
-        HOST_TEST(test_direct_hold_other_editors),
+        HOST_TEST(test_vehicle_editor),
+        HOST_TEST(test_vehicle_editor_equipment),
         HOST_TEST(test_my23_glyph_budget),
-        HOST_TEST(test_render_interval_after_event),
-        HOST_TEST(test_navigation_snapshot_pacing),
-        HOST_TEST(test_display_only_demo),
-        HOST_TEST(test_saved_feedback),
-        HOST_TEST(test_ipc_options_are_volatile),
-        HOST_TEST(test_atomic_favorite_selection_identity),
-        HOST_TEST(test_my23_remaining_list_previews),
-        HOST_TEST(test_v6_parameter_label_identity),
-        HOST_TEST(test_page_editor_transactions),
-        HOST_TEST(test_my23_visibility_transaction),
-        HOST_TEST(test_favorite_slot_compact_label),
-        HOST_TEST(test_my23_favorite_duplicate_rollback),
-        HOST_TEST(test_my23_list_and_old_favorite_migration),
-        HOST_TEST(test_fifth_favorite_uds_reply),
-        HOST_TEST(test_double_click_and_noise),
-        HOST_TEST(test_atomic_favorite_packing),
-        HOST_TEST(test_whole_page_favorites_and_beta19_migration),
-        HOST_TEST(test_favorite_poll_cycle),
-        HOST_TEST(test_my23_reading_formats_fit),
-        HOST_TEST(test_my23_readings_preview_and_unavailable_gear),
-        HOST_TEST(test_staged_setting_failure_and_discard),
-        HOST_TEST(test_usb_draft_has_no_early_effect),
-        HOST_TEST(test_favorite_slot_draft_flow),
-        HOST_TEST(test_setup_ui),
-        HOST_TEST(test_default_mode_result),
         HOST_TEST(test_shared_renderers),
-        HOST_TEST(test_navigation_contract),
-        HOST_TEST(test_unnumbered_list_contract),
-        HOST_TEST(test_immediate_reading_integrity),
-        HOST_TEST(test_entry_renderer_bounds),
-        HOST_TEST(test_idle_home_contexts),
-        HOST_TEST(test_idle_commit_and_capture),
-        HOST_TEST(test_latin1_vocabulary),
-        HOST_TEST(test_temperature_glyph_bounds),
-        HOST_TEST(test_unnumbered_filtered_editors),
-        HOST_TEST(test_workflow_and_immediate_versions),
-        HOST_TEST(test_pending_action_feedback),
-        HOST_TEST(test_conditional_actions),
-        HOST_TEST(test_fault_action_exclusion),
-        HOST_TEST(test_numeric_menu_flow),
-        HOST_TEST(test_permission_guards),
-        HOST_TEST(test_usb_legacy_and_dependency),
-        HOST_TEST(test_steering_menu_ownership),
-        HOST_TEST(test_request_cancel_and_failure),
-        HOST_TEST(test_input),
-        HOST_TEST(test_input_diagnostics),
-        HOST_TEST(test_display),
-        HOST_TEST(test_preferences),
-        HOST_TEST(test_present_retry),
-        HOST_TEST(test_controller),
-        HOST_TEST(test_automatic_persistence),
-        HOST_TEST(test_usb_rearm_without_flash_write),
-        HOST_TEST(test_navigation_regressions),
-        HOST_TEST(test_navigation_context),
-        HOST_TEST(test_repeat_views),
-        HOST_TEST(test_notice_timing),
-        HOST_TEST(test_idle_close),
-        HOST_TEST(test_readable_screens),
-        HOST_TEST(test_action_request_labels),
-        HOST_TEST(test_cache_flags),
-        HOST_TEST(test_maximum_hold),
-        HOST_TEST(test_board_sync_retry),
-        HOST_TEST(test_shipped_favorite_pairs),
-        HOST_TEST(test_readings_preview_prefetch),
-        HOST_TEST(test_engine_filters),
-        HOST_TEST(test_action_availability)
     };
     host_tests_run(suite, tests, sizeof(tests) / sizeof(tests[0]));
-    puts("PASS: menu gestures, stable views, favorites, sorting, migration, save failure, UDS freshness");
+    puts("PASS: settings migration, vehicle editor");
 }

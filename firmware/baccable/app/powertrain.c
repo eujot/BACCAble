@@ -14,7 +14,6 @@ void powertrain_init() {
         dashboard_state.execute_dashboard_blinks = 2; // shows the user that the immobilizer is active (or
                                                       // not)
 
-    parameter_page_count = settings_state.is_diesel_enabled ? diesel_page_count : gasoline_page_count;
     // arise trigger to notify enabled functions to slave boards with dedicated messages,after some seconds
     runtime_state.all_processors_wakeup_time = currentTime;
     runtime_state.instruct_slave_boards_trigger_enabled = 1;

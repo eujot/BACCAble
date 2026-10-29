@@ -1,5 +1,6 @@
 #include "vehicle/standard_frames.h"
 #include "features/menu.h"
+#include "features/reading_catalog.h"
 #include "app/powertrain.h"
 /* CAN ID 0x000000FB. */
 /* Update engine torque and the driving features that depend on it. */
@@ -24,7 +25,7 @@ void vehicle_handle_engine_torque(const CAN_RxHeaderTypeDef *rx_header, uint8_t 
             board_uart_send(tmpArr3, 2);
             chassis_state.launch_assist_enabled = 0; // ensure we do not return here
             // jump to statistics
-            menu_show_parameter(parameter_page_find(0x1A));
+            menu_show_reading(READING_TIME_0_100);
         }
     }
 #endif
@@ -184,7 +185,7 @@ void vehicle_handle_regeneration(const CAN_RxHeaderTypeDef *rx_header, uint8_t *
     if (rx_header->DLC >= 6) {
         telemetry_state.diesel_engine_regeneration_mode = (frame_data[5] >> 2) & 0b00000111; // byte 5 bit 4-2
 
-        if (settings_state.regeneration_alert_enabled) {    // if  function was enabled in setup menu
+        if (settings_state.regeneration_alert_enabled && vehicle_feature_allowed(VEHICLE_FEATURE_DPF_REGEN)) {    // if  function was enabled in setup menu
             if (telemetry_state.regeneration_in_progress) { // if regeneration is in progress
                 if ((frame_data[4] & 0x04) == 0) {          // if the message needs to be changed
     #ifdef DPF_REGEN_VISUAL_ALERT

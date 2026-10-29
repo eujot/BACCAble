@@ -33,8 +33,7 @@ jego sterowników. Sama obecność opcji w menu nie oznacza, że samochód ją o
 - [Akcje: Actions](#akcje-actions)
 - [Informacje: Information](#informacje-information)
 - [Jak rozumieć odczyty](#jak-rozumieć-odczyty)
-- [Odczyty dla silników benzynowych](#odczyty-dla-silników-benzynowych)
-- [Odczyty dla silnika Diesla](#odczyty-dla-silnika-diesla)
+- [Katalog odczytów](#katalog-odczytów)
 - [Przechwytywanie CAN i diagnostyka przez USB](#przechwytywanie-can-i-diagnostyka-przez-usb)
 - [Rozwiązywanie problemów](#rozwiązywanie-problemów)
 - [Różnice względem starej instrukcji](#różnice-względem-starej-instrukcji)
@@ -46,15 +45,14 @@ jego sterowników. Sama obecność opcji w menu nie oznacza, że samochód ją o
    lub odczyt. Część danych jest dostępna tylko przy pracującym silniku.
 2. Wyłącz **CC i ACC**, a następnie puść przyciski kierownicy.
 3. Przytrzymaj **RES przez około 0,9 sekundy** i puść. Otworzą się Favorites.
-4. **Naciśnij RES dwukrotnie**, aby wrócić do menu głównego. Przyciskami góra/dół
-   wybierz `Settings`, naciśnij RES i otwórz `Features`.
-5. W `Engine` wybierz `2.0 I4`, `2.9 V6` lub `2.2 D` krótkimi naciśnięciami albo
-   góra/dół. Przytrzymaj RES, aby zapisać bezpośrednio, lub wykonaj dwuklik,
-   aby wyświetlić pytanie o zapis.
-   Ustawienie pozostanie na ekranie; osobny dwuklik wróci do listy Features.
-6. Sprawdź `MY23 display`. Profil MY23 korzysta z dwóch linii niezależnie od opcji
-   kompilacji 18/24 znaków dla starszego ekranu. Wgraj zgodny zestaw C1/C2/BH;
-   ta poprawka wprowadza dłuższy pakiet przesyłania ekranu.
+4. **Naciśnij RES dwukrotnie**, aby wrócić do menu głównego, i otwórz `Vehicle`.
+5. Ustaw `Model`, `Model year`, `Engine`, `Drivetrain`, `Display` i wyposażenie.
+   Pierwsze przytrzymanie otwiera podgląd skutków; góra/dół pokazuje ustawienia,
+   których działanie zostanie wyłączone. Kolejne przytrzymanie zapisuje profil.
+   BACK z edycji pola wraca do przeglądania; dwa BACK z przeglądania odrzucają cały
+   szkic. Błąd zapisu pozostawia aktywny poprzedni profil i zachowuje szkic.
+6. W `Display` wybierz `Auto`, `Legacy 18`, `Legacy 24` albo `MY23`. Zaktualizuj
+   razem C1/C2/BH. `Auto` wybiera MY23 dla podanego roku 2023 lub nowszego.
 
 C1 obsługuje CAN układu napędowego i przyciski menu, C2 CAN podwozia, a BH CAN
 nadwozia i wysyłanie tekstu do IPC. Wersje sprawdzisz w `Information`.
@@ -104,10 +102,10 @@ Nie ma Save & Exit. Bieżące odczyty pozostają widoczne. Pozostałe widoki wra
 do Favorites po 30 s bezczynności, a edytory po 60 s. Niedokończone szkice są
 odrzucane. Aktywny odczyt lub kasowanie błędów opóźnia automatyczny powrót.
 
-Edytory `Page favorites`, `Favorite order` i `Shown pages` mają takie same
-szkice, potwierdzenie, zapis przytrzymaniem i odrzucanie. Zapis zostawia Cię
-w edytorze; osobny dwuklik wraca do Settings. Bezczynność odrzuca niezapisane
-zmiany. Zapamiętane strony odczytów są zapisywane przy wyjściu ze zwykłych widoków. Przy `× Save failed: RES` krótkie RES lub przytrzymanie ponawia
+Edytor Favorites ma takie same szkice, potwierdzenie, zapis przytrzymaniem
+i odrzucanie. Zapis zostawia Cię w edytorze; osobny dwuklik wraca do Settings.
+Bezczynność odrzuca niezapisane zmiany. Wybrany odczyt i ulubione są zapisywane
+przy wyjściu ze zwykłych widoków. Przy `× Save failed: RES` krótkie RES lub przytrzymanie ponawia
 zapis i wyjście, a dwuklik anuluje próbę wyjścia i zostawia bieżący widok.
 Samo czekanie nie ponawia zapisu.
 
@@ -115,42 +113,76 @@ Samo czekanie nie ponawia zapisu.
 
 ```text
 Menu główne
-├─ Favorites                 Wybrane przez Ciebie bieżące odczyty
-├─ Readings                  Wszystkie dostępne odczyty, według grup
-│  ├─ All readings           Wszystkie odczyty
-│  ├─ Engine                 Silnik
-│  ├─ Temperatures           Temperatury
-│  ├─ Battery                Akumulator
-│  ├─ DPF / AdBlue           Filtr DPF i AdBlue
-│  ├─ Performance            Osiągi
-│  └─ Other                  Pozostałe
-├─ Actions                   Uruchamianie funkcji i operacji diagnostycznych
-├─ Settings                  Ustawienia
-│  ├─ Features               Ustawienia urządzenia i funkcji samochodu
-│  │  └─ Park mirror         Lusterka podczas cofania
-│  │     ├─ Enabled          Włączenie funkcji
-│  │     ├─ Store position   Zapis pozycji
-│  │     └─ < Back           Powrót
-│  ├─ Favorites              Favorite 1–6 → Slot 1–2 → strona odczytów
-│  ├─ Shown pages            Pokazywanie i ukrywanie stron w Readings
-│  ├─ Sort order             Sortowanie według grup albo alfabetycznie
-│  └─ BACCAble IPC           Tymczasowe próby odświeżania
-└─ Information               Wersje, stan przycisków i Demo
+├─ Favorites                6 zestawów, 2 wiersze × maks. 4 pozycje
+├─ Readings
+│  ├─ Oil
+│  ├─ Temperatures
+│  ├─ Engine
+│  ├─ Fuel
+│  ├─ Battery
+│  ├─ Diesel / DPF
+│  ├─ Driving
+│  ├─ Performance
+│  └─ Diagnostics
+├─ Actions                  Uruchom funkcję lub operację diagnostyczną
+├─ Settings
+│  ├─ Features               Ustawienia urządzenia i funkcji pojazdu
+│  │  └─ Park mirror
+│  │     ├─ Enabled
+│  │     ├─ Store position
+│  │     └─ < Back
+│  ├─ Favorites              Favorite 1–6 → Row A/B → pozycja → odczyt + format
+│  │  └─ Restore defaults    Potwierdzane przywrócenie tylko układów Favorites
+│  └─ BACCAble IPC           Tymczasowe eksperymenty z odświeżaniem
+├─ Information               Wersje, stan wejścia i Demo
+└─ Vehicle                   Model, rok, silnik, napęd, ekran i wyposażenie
 ```
 
-Ten układ Settings dotyczy MY23 oraz każdego profilu po zapisaniu zestawu
-dwu slotów ulubionych. Przed pierwszym takim zapisem starszy profil zachowuje
-kolejność: Features, Page favorites, Shown pages, Favorite order, Sort order,
-Favorites, BACCAble IPC.
+Kolejność menu głównego jest stała. Readings pokazuje pojedyncze pomiary
+pogrupowane jak wyżej; grupy bez odczytu dostępnego dla skonfigurowanego profilu
+pojazdu są pomijane. Dostępność odczytów zależy od profilu pojazdu (klasa silnika
+i wyposażenie), a nie od starych przełączników `Advanced pages`/`Shown pages`.
+Favorites składają pojedyncze odczyty w dwa logiczne wiersze. Przy pierwszym
+uruchomieniu ładowane są domyślne zestawy zależne od silnika i zapisywane raz
+(rekord UI 0x106).
 
-Kolejność menu głównego jest stała. Dostępność stron zależy od wybranego silnika
-oraz ustawień `Advanced pages` i `Shown pages`. Grupa bez dostępnych stron może
-pokazać `No pages`. Pełne wykazy w dalszej części obejmują również strony
-domyślnie ukryte.
+## Profil pojazdu
+
+`Vehicle` jest ostatnią pozycją menu głównego. `Engine` ma opcje `Unknown`,
+`2.0 Petrol`, `2.9 Petrol`, `2.2 Diesel`; `Drivetrain`: `Unknown`, `RWD`, `Q4`.
+`Model` to `Unknown`, `Giulia` albo `Stelvio`; rok to `Unknown` lub 2000–2099.
+Pola wyposażenia mają wartości `Unknown`, `Absent`, `Present`: `Suspension`,
+`Race`, `Exhaust valves`, `ACC`, `HAS`, `Lane assist`, `Park mirrors`, `SCR`.
+Włączenie ustawienia funkcji nie potwierdza obecności wyposażenia.
+
+Przeniesiona starsza instalacja zachowuje wcześniejsze uprawnienia do jawnego
+zapisu Vehicle. Przed HOLD przejrzyj góra/dół pozycje `OFF: …`: ustawienia pozostają
+zapisane, lecz niezgodne akcje i funkcje automatyczne nie będą wykonywane.
+Nieznane wyposażenie w nowym lub potwierdzonym profilu nie zezwala na rozpoczęcie
+akcji, która go wymaga. Race i regulowane zawieszenie są niezależne. Żądanie AWD
+wymaga Q4. Wyposażenie oznaczone jako nieobecne ukrywa odpowiednią opcję funkcji;
+`Configure Vehicle` wyjaśnia nieznany warunek. Zatrzymanie lub zwolnienie już
+rozpoczętej operacji pozostaje dostępne.
+
+Przed zapisem profilu zakończ operacje AWD, hamulców, Dyno, wydechu i lusterek
+parkingowych; edytor wskazuje operację do zakończenia. Stan lusterek musi być
+aktualny. Zapis nie ponawia startowych żądań DNA ani zawieszenia. `Saved` pojawia
+się po poprawnym atomowym zapisie; `Save failed` pozostawia poprzedni profil
+aktywny i pozwala ponowić próbę. Własne Favorites są zachowane przy zmianie profilu.
+
+`Auto` wybiera MY23 dla podanego roku >=2023, w pozostałych przypadkach Legacy 18.
+Jawny wybór ekranu ma pierwszeństwo przed rokiem. Nowa szerokość działa po
+potwierdzeniu obsługi protokołu przez BH; `Saved; IPC pending` oznacza zapisany
+profil i oczekiwanie przy zachowanym poprzednim działającym przesyłaniu obrazu.
+Zapytania są ponawiane co pięć sekund; poczekaj na kolejne zapytanie i odpowiedź
+przez UART. Jeśli `Mirror status wait` blokuje zapis, ponów próbę po następnej
+odpowiedzi; stan lusterek nadal musi pochodzić z ostatnich trzech sekund.
+Po uruchomieniu legacy korzysta z szerokości kompilacji do zakończenia uzgodnienia.
+Zaktualizuj wszystkie płytki razem. Próby rzeczywistego ekranu pozostają otwarte.
 
 ## Symbole i komunikaty
 
-Starszy profil, zależnie od kompilacji, wykorzystuje 18 lub 24
+Starszy profil, zgodnie z wyborem `Display`, wykorzystuje 18 lub 24
 pozycje tekstowe. Nazwa na liście może różnić się od podpisu bieżącego odczytu,
 aby zrobić miejsce na wartości. Na przykład strona `Batt charge BCM` wyświetla
 odczyt podpisany `Batt BCM SOC`.
@@ -158,9 +190,8 @@ odczyt podpisany `Batt BCM SOC`.
 MY23 ma **16 widocznych znaków w pierwszej linii i 22 w drugiej**. Lista
 pokazuje bieżącą pozycję z `›`, a pod nią następną. Edytor pokazuje ustawienie
 oraz szkic wartości z `HOLD SAVE`. Druga linia zawiera również pytanie o zapis
-lub jego wynik. Ulubione pokazują po jednej wybranej stronie odczytów w każdej
-linii. Readings pokazuje bieżącą stronę w pierwszej linii, a nazwę następnej
-strony w drugiej.
+lub jego wynik. Ulubione pokazują po jednym wierszu zestawu w każdej linii. Readings pokazuje
+nazwę jednego pomiaru w pierwszej linii, a jego wartość w drugiej.
 `SAVED` potwierdza zapis ustawienia, a `×` lokalny błąd.
 Starszy profil zachowuje pierwszą linię 18/24 znaki i podpis `BACCAble beta`.
 Obsługa przycisków i szkiców jest taka sama, a pytania mieszczą się w jednej linii.
@@ -239,162 +270,63 @@ Delta. Jeśli działanie się pogorszy, wybierz Reset default lub odłącz całe
 
 ## Ulubione i układ odczytów
 
-Ulubione odpytują każdy parametr diagnostyczny raz na cykl, nawet jeśli występuje w obu liniach. Przy ośmiu pomiarach odświeżenie całego zestawu może trwać cztery sekundy. Wartości pozostają widoczne przez ten czas, a po utracie odpowiedzi pojawia się `--`. Odczyty przychodzące bezpośrednio z CAN zachowują dotychczasowy czas ważności.
+Favorites to sześć zestawów, każdy z dwoma wierszami (**A** i **B**) po maksymalnie
+cztery pozycje. Każda pozycja przechowuje jeden pojedynczy odczyt i format
+wyświetlania: **Auto**, **Full**, **Medium** lub **Short**. **Auto** wybiera raz
+najczytelniejszą mieszczącą się etykietę. Wiersz ulubionych łączy pozycje co
+najmniej jedną spacją i nigdy nie obcina cyfr; `--` oznacza brak lub nieaktualność.
+MY23 pokazuje oba wiersze; legacy przechodzi po niepustych wierszach (1/A, 1/B,
+2/A, …). Ten sam odczyt może wystąpić w kilku widocznych wierszach i jest odpytywany tylko raz.
+Legacy odpytuje tylko widoczny wiersz lub podstronę; MY23 widoczne pozycje obu
+wierszy. Szerszy zapisany wiersz na węższym ekranie jest dzielony na stałe podstrony,
+bez zmiany zapisanego układu. Pojedyncza zapisana etykieta zbyt szeroka dla nowego
+ekranu tymczasowo używa skrótów Auto. Pozycje nie przesuwają się przy zmianach wartości.
+Nieoczekiwane przekroczenie miejsca na liczbę pokazuje `#` w polu tej wartości.
 
 ### Domyślne zestawy ulubionych
 
-Świeża instalacja (benzyna) startuje z sześcioma tematycznymi zestawami, z których
-każdy łączy stronę pierwszej linii ze stroną drugiej linii. Wyświetlacz 1-liniowy
-pokazuje tylko pierwszą kolumnę, a 2-liniowy obie linie. Po starcie wybrany jest
-zestaw **S1 Elektryka**.
+Pierwsze uruchomienie ładuje domyślne zestawy zależne od silnika i zapisuje je raz.
+Późniejsza zmiana profilu pojazdu nigdy nie nadpisuje zapisanego układu;
+nieobsługiwana zapisana pozycja jest ukryta i nie jest odpytywana, dopóki znów
+nie pasuje do profilu. Jej zapisane miejsce i format pozostają zachowane.
 
-| Zestaw | Linia 1 | Linia 2 |
+| Zestaw | Wiersz A | Wiersz B |
 | --- | --- | --- |
-| S1 Elektryka | `Oil L / mm / %` | `Batt charge BCM` |
-| S2 Osiągi | `Power / torque` | `Boost pressure` |
-| S3 Temperatury | `Oil/water/gear C` | `Intercooler out` |
-| S4 Jazda | `Speed` | `Gear` |
-| S5 Timery | `0-100 km/h` | `Best 0-100` |
-| S6 Olej / Multiair | `Oil/water/IC C` | `Misfires/MA temp` |
+| Warm-up | Oil temp + coolant | Gearbox temp |
+| Oil | Oil level mm + LOW/OK/HIGH | Oil level bar |
+| Engine | Power + boost | Power + torque |
+| Cooling | Coolant | Intercooler inlet + outlet |
+| Battery | Voltage + current | IBS state of charge |
+| Diesel DPF / Gasoline Performance | DPF load + temp (diesel) / 0–100 (benzyna) | Regen progress (diesel) / Best 0–100 (benzyna) |
 
-Diesel zachowuje cztery dotychczasowe domyślne strony i nie ma stron drugiej
-linii. Nowe instalacje używają układu ze slotami Favorites na obu profilach IPC.
-Pary są ustawiane tylko wtedy, gdy nie ma zapisanych ustawień stron ani slotów.
-Zapisane ulubione pozostają zachowane, nawet jeśli pierwsza strona ma taki sam
-numer jak strona domyślna. Edycja tych zestawów przebiega według poniższych kroków.
+Domyślne zestawy MY23 upraszczają pierwszą linię do 16 znaków: Warm-up pokazuje
+temperaturę oleju nad temperaturą skrzyni + płynu chłodzącego; Oil poziom liczbowy
+nad paskiem; Engine doładowanie nad mocą + momentem; Battery napięcie nad stanem
+naładowania IBS + prądem. Diesel DPF pokazuje zapełnienie nad postępem + temperaturą.
+Cooling i benzynowy Performance zachowują układ z tabeli. Legacy zachowuje tabelę,
+a szerokie wiersze dzieli na podstrony.
 
-### Dwie strony odczytów w jednym ulubionym widoku
+### Edycja ulubionych
 
-1. Otwórz `Settings → Favorites` i wybierz `Favorite 1` do `Favorite 6`.
-2. Wejdź krótkim RES. Wybierz `Slot 1` lub `Slot 2`, naciśnij RES, znajdź stronę
-   z katalogu Readings przyciskami góra/dół i zatwierdź krótkim RES. `Empty` czyści slot.
-3. **Slot 1 jest główną stroną odczytów**. MY23 pokazuje ją w pierwszej linii,
-   a Slot 2 w drugiej. Pusty slot główny ukrywa cały widok.
-   Kolejność zmieniasz przez zastępowanie slotów. Strona już obecna w innym
-   slocie jest z niego usuwany. Edycja jest dostępna wyłącznie w Settings.
-4. Przytrzymanie zapisuje bezpośrednio, również podczas wybierania wartości slotu.
-   Możesz też wykonać dwuklik, aby zobaczyć pytanie, a następnie przytrzymać,
-   aby zapisać, lub wykonać kolejny dwuklik, aby odrzucić. Udany zapis pozostawia wybrany slot na ekranie;
-   osobny dwuklik wraca.
-5. Bieżące wartości zobaczysz w `Favorites` menu głównego. Starszy ekran
-   pokazuje główną stronę zapisanego zestawu w jednej linii.
+1. Otwórz `Settings → Favorites` i wybierz `Favorite 1`–`Favorite 6`.
+2. Wybierz `Row A` lub `Row B`, a następnie pozycję.
+3. Wybierz odczyt (albo `Empty`) i format (Auto/Full/Medium/Short).
+4. Przytrzymaj, aby zapisać. Pierwszy BACK otwiera pytanie o zapis zmienionego
+   szkicu, a drugi go odrzuca. `Duplicate reading`, `Oil bar needs row` lub
+   `Too wide: shorten` odrzuca zapis i zachowuje szkic. Wybierz krótszy format
+   albo usuń pozycję.
 
-Po powrocie z innych list pozostaje wybrany ten sam zestaw ulubionych. Tak samo
-działa zmiana filtra silnika, jeśli zestaw nadal jest dostępny. W przeciwnym
-razie wyświetla się pierwszy dostępny zestaw. Wybór jest pamiętany osobno dla
-benzyny i diesla do ponownego uruchomienia urządzenia.
-
-Każdy slot pokazuje pomiary z wybranej strony katalogu. MY23 usuwa zbędne
-odstępy i w razie potrzeby skraca podpis; starszy ekran zachowuje dotychczasowy
-format. Na przykład
-`Oil/coolant temp` zawiera dwa odczyty w jednej linii i po dodaniu do ulubionych
-pozostaje jednym slotem. `--` oznacza brak aktualnej wartości. `Gear -` obejmuje surowy kod
-`0xF` („brak informacji”); nie jest to piętnasty bieg.
-
-Na MY23 `Oil/water/IC C` pokazuje cztery temperatury jako `O90 W85 I40 X35`:
-olej, płyn chłodzący, wlot i wylot intercoolera. Gdy wartości mają trzy cyfry,
-odstępy są ograniczane, np. `O101W102I103X104`, aby zachować wszystkie odczyty
-w 16 znakach. `Oil/coolant temp` pokazuje `Oil 101° W 88°`, gdzie `W` oznacza
-płyn chłodzący. `Misfires cyl 1-4` pokazuje liczniki w kolejności cylindrów,
-np. `12/ 23/ 34/ 45`.
-
-Wyświetlane i edytowane są tylko Slot 1 i Slot 2. Wcześniejsze rekordy pięciu
-slotów zachowują w pamięci miejsca 3–5 dla zgodności, ale nie są one pokazywane
-ani odpytywane. Zapis dwóch widocznych slotów nie usuwa pozostałych ID.
-W MY23 każda strona Readings pokazuje wszystkie swoje pomiary w pierwszej
-linii, także gdy zawiera dwa, trzy albo cztery pomiary. Krótszy format usuwa
-zbędne spacje i upraszcza długie podpisy, aby zmieścić się w 16 znakach. Ten sam
-format jest używany w ulubionych. Druga linia zapowiada następną stronę.
-Gdy widać ten podgląd, BACCAble odczytuje także jej wartości diagnostyczne w tle.
-Po przejściu do następnej strony od razu wykorzystuje zapamiętane wartości,
-jeśli odpowiedzi już nadeszły. Obie strony wspólnie korzystają z jednego zapytania
-co 500 ms; wspólny pomiar jest odczytywany tylko raz na cykl. Pełny cykl rozbudowanej
-pary może trwać do czterech sekund. W tym widoku wartości diagnostyczne zachowują
-ważność przez 4,5 sekundy, a odczyty z cyklicznych ramek CAN przez zwykłe trzy
-sekundy. Przy szybkim przewijaniu lub braku odpowiedzi sterownika nadal może
-pojawić się `--`.
-Na przykład `Oil 35.0mm Q 80%` mieści się dokładnie. `B 100-200 8.54s` oznacza
-najlepszy czas od 100 do 200 km/h. Na stronie czterech temperatur `O` oznacza
-olej, `W` płyn chłodzący, `I` temperaturę na wejściu intercoolera, a `X` na
-wyjściu. Liczba, która nie mieści się w swoim polu, jest pokazana jako `--`,
-a nie ucięta w połowie.
-Strony statusu Information też
-zapowiadają kolejną pozycję; przy wielu kodach usterek druga linia pokazuje
-następny kod.
-
-Benzyna i diesel mają osobne zestawy. Strona niepasująca do silnika pozostaje
-zapisany i jest pomijany do czasu ponownego wyboru jego profilu. Niepasujący
-główna strona ukrywa cały widok. Stare katalogi i identyfikatory stron pozostają
-bez zmian. Stare ulubione strony są importowane jako całe strony do Slotu 1.
-Atomowe identyfikatory pomiarów z beta 19 są w pamięci zamieniane na strony:
-najpierw wybierana jest strona z tym jednym pomiarem, a gdy jej nie ma, pierwsza
-strona, która go zawiera. Przed zapisem sprawdź wynik konwersji; dawny dodatkowy
-RPM pozostaje jako strona zgodności, lecz nowe wybory pochodzą z katalogu Readings. Zapis aktualizuje
-format preferencji. Starsze firmware nie odtworzy tego układu automatycznie.
-
-`Page favorites` i `Favorite order` są dostępne tylko w starszym profilu przed
-pierwszym zapisem zestawu ulubionych. Zatwierdzone zmiany aktualizują starszą listę
-stron i zestawy importowane z tej listy. Błąd zapisu lub odrzucenie nie zmieniają
-żadnej z nich. MY23 i profile z zapisanymi zestawami mają tylko edytor
-`Favorites`, aby nie było drugiej opcji zmieniającej inną listę. Kolejność
-stron ustalasz przez zawartość slotów. Pusty Slot 1 ukrywa cały zestaw;
-Slot 2 nie przesuwa się automatycznie na pozycję główną. Na MY23 listy slotów, wyboru strony,
-testów IPC i Shown pages pokazują bieżącą oraz następną pozycję, także po
-przejściu z końca listy na początek.
-`Shown pages` i `Advanced pages` dotyczą zwykłych Readings, a nie jawnego wyboru
-strony do zestawu. `Sort order` ma własny szkic i potwierdzenie zapisu.
-`Auto rotate` zmienia bieżący widok co pięć sekund.
+`Settings → Favorites → Restore defaults` znajduje się za `Favorite 6`.
+SELECT otwiera potwierdzenie, HOLD zastępuje wszystkie sześć zestawów, BACK anuluje.
+Błąd zapisu zachowuje poprzednie układy. Ustawienia, profil, statystyki i kalibracja
+lusterek pozostają zachowane.
 
 ### Poziom oleju i pasek
 
-W `Settings > Features` zapisz `Engine` i `Drivetrain`. Oba odczyty oleju są
-w `Readings > Engine`, bez konieczności włączania `Advanced pages`. Dotychczasowy
-benzynowy `Oil height` zachowuje zapisany identyfikator i nazywa się teraz `Oil level`.
-
-- `Oil level`: np. `Oil 77.0mm OK`; `LOW` oznacza poziom poniżej minimum,
-  `HIGH` powyżej maksimum. Obie wartości graniczne należą do `OK`.
-- `Oil level bar`: zajmuje całą dostępną szerokość linii. `[` i `]` oznaczają
-  minimum i maksimum, a `=` przedział między nimi. Punkt `•` wskazuje bieżący
-  odczyt na MY23; starsze wyświetlacze używają `*`. `<` lub `>` oznacza wynik poza skalą.
-
-W `Settings > Favorites` wybierz je jako dwa osobne odczyty w linii 1 i 2,
-w dowolnej kolejności. MY23 wykorzystuje 16 znaków w linii 1 i 22 w linii 2;
-starszy wyświetlacz ma skonfigurowaną linię 18/24 znaków. Przykład dla 2.0 I4 RWD:
-
-```text
-Oil 77.0mm OK
-----[=====•======]----
-```
-
-| Engine | Drivetrain | Zakres OK (mm, wraz z granicami) |
-| --- | --- | --- |
-| 2.0 I4 | RWD | 72–82 |
-| 2.0 I4 | Q4 | 67–77 |
-| 2.2 D | RWD | 61–65 |
-| 2.2 D | Q4 | 79–84 |
-
-Zakresy referencyjne podał właściciel; nie zostały niezależnie potwierdzone w tej
-zmianie. Ekran korzysta z istniejącego pomiaru wysokości oleju z ECU i nie potwierdza,
-że samochód spełnia warunki poprawnego pomiaru.
-`Not set` wyświetla `?` obok wartości liczbowej i `Set drivetrain` zamiast paska.
-Dla `2.9 V6` nie określono zakresu: pojawia się `?` / `No oil range`.
-Brak, przeterminowanie lub nieprawidłowa próbka daje `Oil -- mm`; stary punkt nie pozostaje.
-Dotychczasowe ulubione pozostają zapisane. Pasek i odczyt liczbowy można ukrywać osobno.
-
-Punkt przesuwa się po jednym znaku w obie strony. BH kończy wysyłanie każdego
-kroku przed rozpoczęciem następnego. Nowy pomiar zmienia cel ruchu, bez pomijania
-pośrednich pozycji. Przy pierwszym wyświetleniu oraz po powrocie z braku danych
-punkt pojawia się od razu w bieżącym miejscu. Liczba i LOW/OK/HIGH nadal pokazują
-najnowszy odczyt ECU; pośrednie pozycje są animacją, a nie dodatkowymi pomiarami.
-Obie linie Favorites animują się niezależnie.
-
-`Quick 20ms` oznacza odstęp między fragmentami CAN, a nie pełnymi ekranami.
-Przy domyślnym `Write Full` krok MY23 wymaga 13 fragmentów, czyli około 260 ms
-bez opóźnień magistrali lub radia. `Write Delta` wysyła tylko zmienione fragmenty
-i również kończy krok przed przejściem dalej. Ponowienie wysyłki CAN i przerwanie
-przez radio zachowują bieżący krok. Szybkość nadal wynika z `BACCAble IPC`;
-animacja nie zmienia tego ustawienia. Wygląd na liczniku wymaga próby w samochodzie.
-
+`Oil level` (mm + LOW/OK/HIGH) i `Oil level bar` to dwa osobne odczyty; pasek
+zajmuje cały wiersz sam. Zakresy OK podane przez właściciela są bez zmian: 2.0 RWD
+72–82 mm, 2.0 Q4 67–77 mm, 2.2 RWD 61–65 mm, 2.2 Q4 79–84 mm. Nie są one tutaj
+na nowo weryfikowane. Nieznany napęd pokazuje `?` i `Set drivetrain`.
 
 ## Ustawienia: Features
 
@@ -416,10 +348,8 @@ Szkic nie steruje samochodem przed udanym zapisem.
 | --- | --- | --- |
 | `Shift light` | Wyłączona / włączona | Wysyła polecenie pokazania sygnału zmiany biegu po przekroczeniu Shift RPM. Wymaga zgodnej obsługi wskazania w trybie Race. Nie zmienia biegu za kierowcę. |
 | `Shift RPM` | 1500–6000 obr./min, co 250 | Próg obrotów silnika dla sygnału zmiany biegu. |
-| `MY23 display` | Wyłączona / włączona | Włącza układ MY23: 16 znaków w pierwszej linii i 22 w drugiej. OFF zachowuje starszy układ jednej linii z szerokością 18/24 znaków wybraną przy kompilacji. |
 | `DPF regen alert` | Wyłączona / włączona | Włącza powiadomienia o regeneracji DPF w dieslu. Zobacz [obserwowanie DPF](#obserwowanie-dpf). |
 | `Auto rotate` | Wyłączona / włączona | Automatycznie zmienia stronę bieżących odczytów co pięć sekund. |
-| `Advanced pages` | Wyłączona / włączona | Dodaje techniczne i dodatkowe strony do Readings, z uwzględnieniem profilu silnika i ustawionej widoczności. |
 
 ### Grupa komfortu
 
@@ -487,8 +417,6 @@ pozycji menu nadal pojawia się od razu.
 | `CAN routing` | Wyłączona / włączona | Udostępnia wybrane zwykłe komunikaty CAN przez mechanizm diagnostyczny BACCAble zgodnym programom diagnostycznym. To nie jest przełącznik przechwytywania przez USB. |
 | `DTC clear action` | Wyłączona / włączona | Udostępnia `Clear DTCs`, czyli wysyłanie poleceń kasowania błędów do wielu sterowników. |
 | `BCM fault reader` | Wyłączona / włączona | Udostępnia `Read BCM faults`, czyli odczyt błędów wyłącznie sterownika nadwozia BCM. |
-| `Engine` | 2.0 I4 / 2.9 V6 / 2.2 D | Wybiera zestaw odczytów dla silnika. Zmiana usuwa pomiary przechowywane chwilowo w pamięci i tymczasowo ukrywa niepasujące ulubione. |
-| `Drivetrain` | Not set / RWD / Q4 | Wybiera napęd, który wraz z `Engine` określa zakres poziomu oleju; domyślnie `Not set`. Przytrzymaj RES, aby zapisać. To nie jest ustawienie skrzyni biegów. |
 | `USB mode` | OFF / CAN / ELM327 | Wybiera zwykłą pracę, binarne przechwytywanie CAN albo diagnostykę zgodną z częścią funkcji ELM327. ELM327 jest dostępny w wersjach z jego obsługą. Jednocześnie działa tylko jeden tryb. Przytrzymaj RES w edytorze, aby zapisać i zastosować zmianę, lub najpierw wykonaj dwuklik, aby zobaczyć pytanie o zapis. |
 
 Udostępnienie funkcji i jej rzeczywiste włączenie w samochodzie to różne rzeczy.
@@ -802,9 +730,9 @@ bieżącymi pomiarami samochodu.
 
 ## Jak rozumieć odczyty
 
-Wybierz `Readings`, grupę i stronę. Podpis przy bieżącej wartości może być krótszy
-niż nazwa na liście Favorites/Shown pages. Wszystkie odczyty opisane poniżej są
-w katalogu, ale nieobsługiwane zapytania do sterownika ECU mogą stale dawać `--`.
+Wybierz `Readings`, grupę i odczyt. Podpis przy bieżącej wartości może być krótszy
+niż jego etykieta. Wszystkie odczyty opisane poniżej są w katalogu, ale
+nieobsługiwane zapytania do sterownika ECU mogą stale dawać `--`.
 
 - **Power** to moc obliczona z podawanego momentu i obrotów silnika. Jednostka
   `PS` to metryczne konie mechaniczne, czyli polskie KM; w starej instrukcji
@@ -813,19 +741,15 @@ w katalogu, ale nieobsługiwane zapytania do sterownika ECU mogą stale dawać `
   Jakość jest oceną sterownika, a nie wynikiem badania laboratoryjnego.
   Poziom oleju oceniaj w warunkach pomiaru zalecanych przez producenta pojazdu.
 - **Ignition cyl 1–6** pokazuje korektę zapłonu dla danego cylindra w stopniach.
-  Nie jest licznikiem wypadania zapłonów. Strony wypadania zapłonów dla V6
-  obejmują tylko cylindry 1–4, ponieważ katalog nie zawiera potwierdzonych
-  definicji indywidualnych liczników dla cylindrów 5 i 6.
+  Nie jest licznikiem wypadania zapłonów. Dla V6 wypadanie zapłonów obejmuje
+  tylko cylindry 1–4, ponieważ katalog nie zawiera potwierdzonych definicji
+  indywidualnych liczników dla cylindrów 5 i 6.
 - **Distance (ECU)** to odczyt diagnostyczny opisany w starej instrukcji jako
   dystans od wyzerowania licznika ECU. Bez sprawdzenia interpretacji danego
   sterownika nie utożsamiaj go z całkowitym przebiegiem na zestawie wskaźników.
 - **Gear** pokazuje N, R lub numer biegu; DNA pokazuje A, N, D lub R.
   Brak rozpoznanego stanu może dawać `--`/`?`. `Pedal map` korzysta z odpowiedzi
   zewnętrznego kontrolera pedału.
-- W tabelach wartości na stronach łączonych opisano **od lewej do prawej**.
-  Na zwartej stronie temperatur `O` oznacza olej, `W` — płyn chłodzący,
-  `I`/`In` — wlot intercoolera, a `X`/`Out` — jego wylot. Wszystkie temperatury
-  na tej stronie są w stopniach Celsjusza.
 
 ### Naładowanie akumulatora: z którego źródła pochodzi SOC?
 
@@ -852,162 +776,129 @@ rozładowywanie. Samo napięcie nie dowodzi ładowania. Strony z surowymi bajtam
 służą do diagnostyki źródła danych. Nie odczytuj całego bajtu jako SOC bez
 uwzględnienia jego znaczników i sposobu dekodowania.
 
-### Oznaczenia w wykazach
+## Katalog odczytów
 
-**A** w ostatniej kolumnie oznacza stronę zaawansowaną: zwykle jest ukryta,
-dopóki nie włączysz `Advanced pages`. **—** oznacza zwykłą stronę, nadal zależną
-od ustawionej widoczności i zgodności z silnikiem.
-Skróty grup: **Eng** = Engine, silnik; **Temp** = Temperatures, temperatury;
-**Batt** = Battery, akumulator; **DPF** = DPF / AdBlue; **Perf** = Performance,
-osiągi; **Other** = pozostałe. Oba zestawy są też dostępne przez All readings.
+Readings to pojedyncze pomiary pogrupowane jak poniżej; grupy bez odczytu
+dostępnego dla skonfigurowanego profilu pojazdu są pomijane. Ekran może używać krótszej etykiety.
+Wartość, na którą ECU nie odpowiada, pokazuje `--`.
 
-## Odczyty dla silników benzynowych
+### Oil
 
-Poniżej znajdują się wszystkie **64 strony benzynowe**. Jeśli nie zaznaczono
-inaczej, dotyczą zarówno 2.0 I4, jak i 2.9 V6. Tabela zachowuje kolejność katalogu.
-Przy przeglądaniu według grup lub A–Z kolejność może być inna.
+| Odczyt | Jednostka / znaczenie | Dostępność |
+| --- | --- | --- |
+| Oil temp | C | wszystkie |
+| Oil pressure | bar | wszystkie |
+| Oil level | mm | wszystkie |
+| Oil status | LOW / OK / HIGH | wszystkie |
+| Oil bar | pasek na całą szerokość | wszystkie |
+| Oil volume | L | wszystkie |
+| Oil quality | % | wszystkie |
 
-W opisach „z komunikatów CAN” oznacza wartość pobieraną ze zwykłych komunikatów
-samochodu. „Odczyt diagnostyczny” oznacza wartość uzyskaną przez zapytanie
-do sterownika. Ten sam parametr z dwóch takich źródeł może mieć różną dostępność.
+### Temperatures
 
-| Nazwa strony | Grupa | Jednostki i znaczenie | A |
-| --- | --- | --- | --- |
-| Power / torque | Perf | PS / Nm; obliczona moc i moment obrotowy zgłaszany przez silnik. | — |
-| Oil bar/coolant | Temp | bar / °C; ciśnienie oleju z komunikatów CAN i temperatura płynu chłodzącego z ECU. | A |
-| Oil bar / temp | Temp | bar / °C; ciśnienie i temperatura oleju z komunikatów CAN. | A |
-| Oil/coolant temp | Temp | °C / °C; temperatura oleju z komunikatów CAN i temperatura płynu chłodzącego z ECU. | — |
-| Oil level/qual. | Eng | L / %; objętość oleju i ocena jego jakości ze sterownika silnika. | A |
-| Batt charge / A | Batt | % / A; SOC ze sterownika silnika i prąd akumulatora ze znakiem. | A |
-| Battery V / A | Batt | V / A; napięcie z BCM i prąd akumulatora ze znakiem. | — |
-| Power | Perf | PS; moc obliczona z momentu obrotowego i obrotów silnika. | — |
-| Torque | Perf | Nm; moment obrotowy zgłaszany przez silnik. | — |
-| Intercooler out | Temp | °C; temperatura powietrza na wylocie intercoolera, czyli chłodnicy powietrza doładowującego. | — |
-| Intercooler in | Temp | °C; temperatura powietrza na wlocie intercoolera. | — |
-| Intake abs press | Eng | bar; ciśnienie bezwzględne w dolocie, obejmujące ciśnienie atmosferyczne. | A |
-| Boost pressure | Eng | bar; ciśnienie bezwzględne w dolocie pomniejszone o stały poziom odniesienia 1 bar. Wynik może być ujemny. | — |
-| Turbo sensor V | Eng | V; napięcie sygnału czujnika ciśnienia turbo/dolotu. To nie jest ciśnienie doładowania. | A |
-| Distance (ECU) | Perf | km; diagnostyczny licznik dystansu z ECU. | A |
-| Oil volume | Eng | L; objętość oleju zgłaszana przez ECU. | — |
-| Oil pressure | Eng | bar; diagnostyczny odczyt ciśnienia oleju z ECU. Źródło inne niż na stronach łączonych z ciśnieniem z komunikatów CAN. | — |
-| Oil temp (ECU) | Temp | °C; diagnostyczny odczyt temperatury oleju z ECU. | — |
-| Oil quality | Eng | %; ocena jakości oleju według ECU. | A |
-| MultiAir temp | Temp | °C; temperatura oleju w module MultiAir. **Tylko I4.** | — |
-| Gearbox temp | Temp | °C; temperatura skrzyni biegów. | — |
-| Batt charge BCM | Batt | %; SOC akumulatora z BCM. Podpis bieżącego odczytu: `Batt BCM SOC`. | — |
-| Battery current | Batt | A; prąd akumulatora z komunikatów CAN, ze znakiem. | — |
-| Battery voltage | Batt | V; diagnostyczny odczyt napięcia akumulatora z BCM. | — |
-| A/C pressure | Other | bar; ciśnienie czynnika w układzie klimatyzacji. | A |
-| Gear | Eng | N / R / numer; zgłoszony aktualny bieg. | — |
-| Engine run time | Eng | min; zgłoszony czas od uruchomienia silnika. | A |
-| Over-rev time | Eng | s; czas pracy przy nadmiernych obrotach, zgłoszony przez ECU. | A |
-| Over-rev count | Eng | Liczba zgłoszonych przez ECU przypadków nadmiernych obrotów. | A |
-| Exhaust temp | Temp | °C; temperatura spalin według ECU. | — |
-| Catalyst temp | Temp | °C; temperatura katalizatora. | — |
-| Coolant temp | Temp | °C; temperatura płynu chłodzącego silnik. | — |
-| Knock sensor | Eng | mV; sygnał czujnika spalania stukowego. To nie jest licznik zdarzeń spalania stukowego. | A |
-| Key ID | Other | Liczbowy identyfikator klucza z diagnostyki. Nie jest pełnym identyfikatorem klucza w zapisie szesnastkowym. | A |
-| Ignition cyl 1 | Eng | °; korekta zapłonu cylindra 1. | — |
-| Ignition cyl 2 | Eng | °; korekta zapłonu cylindra 2. | — |
-| Ignition cyl 3 | Eng | °; korekta zapłonu cylindra 3. | — |
-| Ignition cyl 4 | Eng | °; korekta zapłonu cylindra 4. | — |
-| DNA mode | Other | A / N / D / R; zgłoszony tryb jazdy. | — |
-| Speed | Perf | km/h; prędkość zgłaszana przez samochód. | — |
-| Seatbelt alarm | Other | ON / OFF; zgłoszone ustawienie dźwiękowego ostrzegania o pasach. | A |
-| 0-100 km/h | Perf | s, RUN albo MISS; bieżąca lub ostatnia próba 0–100. | — |
-| 100-200 km/h | Perf | s, RUN albo MISS; bieżąca lub ostatnia próba 100–200. | — |
-| Best 0-100 | Perf | s; zapisany najlepszy czas 0–100. | — |
-| Best 100-200 | Perf | s; zapisany najlepszy czas 100–200. | — |
-| Pedal map | Other | B / A / N / D / R; mapa zgłoszona przez kontroler pedału albo znacznik braku odczytu. | — |
-| Ignition cyl 5 | Eng | °; korekta zapłonu cylindra 5. **Tylko V6.** | — |
-| Ignition cyl 6 | Eng | °; korekta zapłonu cylindra 6. **Tylko V6.** | — |
-| Oil level | Eng | mm; wysokość oleju z ECU i LOW / OK / HIGH dla wybranego silnika i napędu. | — |
-| Oil level bar | Eng | Pasek wysokości oleju na całą linię z granicami zakresu. | — |
-| Misfires total | Eng | Całkowita liczba wypadnięć zapłonu zgłoszona przez ECU. | — |
-| Misfires cyl 1 | Eng | Liczba wypadnięć zapłonu w cylindrze 1. | A |
-| Misfires cyl 2 | Eng | Liczba wypadnięć zapłonu w cylindrze 2. | A |
-| Misfires cyl 3 | Eng | Liczba wypadnięć zapłonu w cylindrze 3. | A |
-| Misfires cyl 4 | Eng | Liczba wypadnięć zapłonu w cylindrze 4. | A |
-| Misfires cyl 1-4 | Eng | Cztery liczniki, kolejno dla cylindrów 1, 2, 3 i 4. W V6 obejmują tylko część cylindrów. | — |
-| Oil L / mm / % | Eng | L / mm / %; objętość oleju, wysokość jego poziomu i ocena jakości. | A |
-| Oil/water/IC C | Temp | °C × 4; temperatury: oleju z ECU, płynu chłodzącego, wlotu i wylotu intercoolera. | A |
-| Oil/water/gear C | Temp | °C × 3; temperatury: oleju z ECU, płynu chłodzącego i skrzyni biegów. | A |
-| Battery sources | Batt | % / %; SOC z komunikatu IBS i SOC ze sterownika silnika. | A |
-| Battery IBS raw | Batt | Dwa surowe bajty IBS w zapisie dziesiętnym: najpierw bajt 0, potem bajt 1. Bez jednostki fizycznej. | A |
-| IBS raw0/SOC/V | Batt | Surowy bajt 0 / % / V; dane IBS, SOC z BCM i napięcie z BCM. | A |
-| IBS raw1/SOC/V | Batt | Surowy bajt 1 / % / V; dane IBS, SOC z BCM i napięcie z BCM. | A |
-| Oil volume/mm | Eng | L / mm; objętość oleju i wysokość jego poziomu. | A |
-| Misfires/MA temp | Eng | Liczba / °C; całkowita liczba wypadnięć zapłonu i temperatura oleju MultiAir. **Tylko I4.** | A |
+| Odczyt | Jednostka / znaczenie | Dostępność |
+| --- | --- | --- |
+| Coolant | C | wszystkie |
+| Gearbox | C | wszystkie |
+| IC inlet | C | benzyna |
+| IC outlet | C | benzyna |
+| Intake air | C | diesel |
+| Exhaust | C | wszystkie |
+| Fuel temp | C | diesel |
+| Catalyst | C | benzyna |
 
-## Odczyty dla silnika Diesla
+### Engine
 
-Poniżej znajdują się wszystkie **60 stron dla diesla**, dostępne w profilu 2.2 D.
-Odczyty AdBlue wymagają dodatkowo wyposażenia w SCR. Niektóre techniczne zapytania
-diagnostyczne mogą nie być obsługiwane przez daną wersję sterownika.
+| Odczyt | Jednostka / znaczenie | Dostępność |
+| --- | --- | --- |
+| Power | PS | wszystkie |
+| Torque | Nm | wszystkie |
+| Boost | bar | wszystkie |
+| Intake | bar | benzyna |
+| Ign cyl 1 | deg | wszystkie |
+| Ign cyl 2 | deg | wszystkie |
+| Ign cyl 3 | deg | wszystkie |
+| Ign cyl 4 | deg | wszystkie |
+| Ign cyl 5 | deg | benzyna 2.9 |
+| Ign cyl 6 | deg | benzyna 2.9 |
+| Misfires | liczba | wszystkie |
+| EGR target | % | diesel |
+| EGR actual | % | diesel |
+| Turbo temp | C | diesel |
 
-| Nazwa strony | Grupa | Jednostki i znaczenie | A |
-| --- | --- | --- | --- |
-| Power / torque | Perf | PS / Nm; obliczona moc i moment obrotowy zgłaszany przez silnik. | — |
-| Oil bar/coolant | Temp | bar / °C; ciśnienie oleju z komunikatów CAN i temperatura płynu chłodzącego z ECU. | A |
-| Oil bar / temp | Temp | bar / °C; ciśnienie i temperatura oleju z komunikatów CAN. | A |
-| Oil/coolant temp | Temp | °C / °C; temperatura oleju z komunikatów CAN i temperatura płynu chłodzącego z ECU. | — |
-| Oil level/qual. | Eng | mm / %; wysokość poziomu oleju i ocena jakości. W przeciwieństwie do benzyny pierwsza wartość nie jest w litrach. | A |
-| Batt charge / A | Batt | % / A; SOC ze sterownika silnika i prąd akumulatora ze znakiem. | A |
-| Battery V / A | Batt | V / A; diagnostyczny odczyt napięcia i prąd akumulatora ze znakiem. | — |
-| DPF load / temp | DPF | % / °C; szacowane zapełnienie filtra i temperatura DPF. | — |
-| DPF regen / temp | DPF | % / °C; postęp regeneracji i temperatura DPF. | A |
-| Power | Perf | PS; moc obliczona z momentu obrotowego i obrotów silnika. | — |
-| Torque | Perf | Nm; moment obrotowy zgłaszany przez silnik. | — |
-| DPF load | DPF | %; szacowane zapełnienie filtra cząstek stałych. | — |
-| DPF temp | DPF | °C; temperatura filtra cząstek stałych. | — |
-| DPF regen % | DPF | %; postęp regeneracji, a nie zapełnienie filtra. | — |
-| DPF regen mode | DPF | Rozpoznana faza regeneracji lub pracy układu oczyszczania spalin. Zobacz rozdział o DPF. | — |
-| Since DPF regen | DPF | km; dystans od ostatniej regeneracji. | — |
-| DPF regen count | DPF | Liczba regeneracji zgłoszona przez ECU. | A |
-| DPF avg interval | DPF | km; średni dystans między regeneracjami według ECU. | A |
-| DPF avg duration | DPF | min; średni czas regeneracji według ECU. | A |
-| Battery voltage | Batt | V; diagnostyczny odczyt napięcia akumulatora dla diesla. | — |
-| Battery charge | Batt | %; SOC akumulatora z komunikatu IBS. | — |
-| Battery current | Batt | A; prąd akumulatora z komunikatów CAN, ze znakiem. | — |
-| Oil quality | Eng | %; ocena jakości oleju według ECU. | A |
-| Oil temp | Temp | °C; temperatura oleju silnikowego z komunikatów CAN. | — |
-| Oil pressure | Eng | bar; ciśnienie oleju silnikowego z komunikatów CAN. | — |
-| Oil level | Eng | mm; wysokość oleju z ECU i LOW / OK / HIGH dla wybranego silnika i napędu. | — |
-| Oil level bar | Eng | Pasek wysokości oleju na całą linię z granicami zakresu. | — |
-| AdBlue volume | DPF | L; ilość AdBlue. **Wymagany układ SCR.** | — |
-| AdBlue level | DPF | %; poziom AdBlue w zbiorniku. **Wymagany układ SCR.** | — |
-| Gearbox temp | Temp | °C; temperatura skrzyni biegów. | — |
-| Exhaust temp | Temp | °C; temperatura spalin. | — |
-| Gear | Eng | N / R / numer; zgłoszony aktualny bieg. | — |
-| Coolant temp | Temp | °C; temperatura płynu chłodzącego silnik. | — |
-| EGR target | Eng | %; zadana wartość sterowania recyrkulacją spalin EGR. | A |
-| EGR actual | Eng | %; zgłoszona rzeczywista wartość EGR. | A |
-| Turbo target bar | Eng | bar; docelowe ciśnienie turbo według ECU. | A |
-| Turbo target % | Eng | %; docelowa wartość sterowania turbo według ECU. | A |
-| Turbo temp | Temp | °C; temperatura z odczytu diagnostycznego związanego z turbo. | — |
-| Turbo actual bar | Eng | bar; rzeczywiste ciśnienie turbo według ECU. | — |
-| Turbo actual % | Eng | %; rzeczywista wartość sterowania turbo według ECU. | A |
-| Boost target | Eng | bar; osobny odczyt docelowego ciśnienia doładowania z ECU. | — |
-| Intake sensor V | Eng | V; napięcie sygnału czujnika dolotu. | A |
-| Fuel pressure | Eng | bar; ciśnienie paliwa. | — |
-| Fuel temp | Temp | °C; temperatura paliwa. | — |
-| Distance (ECU) | Perf | km; diagnostyczny licznik dystansu z ECU. | A |
-| A/C pressure | Other | bar; ciśnienie czynnika w układzie klimatyzacji. | A |
-| Fuel rate | Eng | L/h; chwilowe zużycie paliwa w litrach na godzinę, nie w L/100 km. | — |
-| Intake air temp | Temp | °C; temperatura powietrza dolotowego. | — |
-| Speed | Perf | km/h; prędkość zgłaszana przez samochód. | — |
-| Seatbelt alarm | Other | ON / OFF; zgłoszone ustawienie dźwiękowego ostrzegania o pasach. | A |
-| 0-100 km/h | Perf | s, RUN albo MISS; bieżąca lub ostatnia próba 0–100. | — |
-| 100-200 km/h | Perf | s, RUN albo MISS; bieżąca lub ostatnia próba 100–200. | — |
-| Best 0-100 | Perf | s; zapisany najlepszy czas 0–100. | — |
-| Best 100-200 | Perf | s; zapisany najlepszy czas 100–200. | — |
-| DNA mode | Other | A / N / D / R; zgłoszony tryb jazdy. | — |
-| Pedal map | Other | B / A / N / D / R; mapa zgłoszona przez kontroler pedału albo znacznik braku odczytu. | — |
-| Battery sources | Batt | % / %; SOC z komunikatu IBS i SOC ze sterownika silnika. | A |
-| Battery IBS raw | Batt | Dwa surowe bajty IBS w zapisie dziesiętnym: najpierw bajt 0, potem bajt 1. Bez jednostki fizycznej. | A |
-| IBS raw0/SOC/V | Batt | Surowy bajt 0 / % / V; dane IBS oraz definicje SOC i napięcia BCM, które mogą być nieobsługiwane w dieslu. | A |
-| IBS raw1/SOC/V | Batt | Surowy bajt 1 / % / V; dane IBS oraz definicje SOC i napięcia BCM, które mogą być nieobsługiwane w dieslu. | A |
-| Oil/water/gear C | Temp | °C × 3; temperatura oleju z komunikatów CAN, płynu chłodzącego z ECU i skrzyni biegów. | A |
+### Fuel
+
+| Odczyt | Jednostka / znaczenie | Dostępność |
+| --- | --- | --- |
+| Fuel rate | L/h | diesel |
+| Fuel rail | bar | diesel |
+
+### Battery
+
+| Odczyt | Jednostka / znaczenie | Dostępność |
+| --- | --- | --- |
+| Battery | V | wszystkie |
+| Battery A | A | wszystkie |
+| Batt IBS | % | wszystkie |
+| Batt ECU | % | wszystkie |
+| Batt BCM | % | wszystkie |
+| IBS raw 0 | surowy bajt | wszystkie |
+| IBS raw 1 | surowy bajt | wszystkie |
+
+### Diesel / DPF
+
+| Odczyt | Jednostka / znaczenie | Dostępność |
+| --- | --- | --- |
+| DPF load | % | diesel |
+| DPF temp | C | diesel |
+| Regen | % | diesel |
+| Regen mode | faza | diesel |
+| Regen ago | km | diesel |
+| Regen count | liczba | diesel |
+| Regen avg km | km | diesel |
+| Regen avg min | min | diesel |
+| AdBlue | L | diesel + SCR |
+| AdBlue % | % | diesel + SCR |
+
+### Driving
+
+| Odczyt | Jednostka / znaczenie | Dostępność |
+| --- | --- | --- |
+| Speed | km/h | wszystkie |
+| Gear | N / R / bieg | wszystkie |
+| DNA mode | A / N / D / R | wszystkie |
+| Pedal map | litera mapy | wszystkie |
+| Seatbelt | ON / OFF | wszystkie |
+| Distance | km | wszystkie |
+
+### Performance
+
+| Odczyt | Jednostka / znaczenie | Dostępność |
+| --- | --- | --- |
+| 0-100 | s | wszystkie |
+| 100-200 | s | wszystkie |
+| Best 0-100 | s | wszystkie |
+| Best100-200 | s | wszystkie |
+
+### Diagnostics
+
+| Odczyt | Jednostka / znaczenie | Dostępność |
+| --- | --- | --- |
+| Oil ECU temp | C | wszystkie |
+| Oil ECU press | bar | wszystkie |
+| MultiAir | C | benzyna 2.0 |
+| Knock | mV | benzyna |
+| Key ID | liczba | benzyna |
+| Run time | min | wszystkie |
+| Over-rev s | s | wszystkie |
+| Over-rev n | liczba | wszystkie |
+| A/C pressure | bar | wszystkie |
+| Turbo V | V | benzyna |
+| Intake V | V | diesel |
+| Turbo req bar | bar | diesel |
+| Turbo req % | % | diesel |
+| Turbo % | % | diesel |
+| Boost req | bar | diesel |
 
 ## Przechwytywanie CAN i diagnostyka przez USB
 
@@ -1154,7 +1045,7 @@ Po zakończeniu używaj USB mode OFF do zwykłej pracy.
 | RES nie otwiera menu | Włączony zapłon i aktywny zestaw wskaźników; CC i ACC wyłączone. Puść przyciski, a potem przytrzymaj RES przez 0,9 s. Sprawdź połączenie i oprogramowanie C1. Diagnostyka ELM może chwilowo wstrzymywać obsługę menu. |
 | Menu przeskakuje albo przestaje reagować | Rozróżniaj lekkie i mocne naciśnięcia. Po przerwie w komunikacji puść przycisk. W Information sprawdź Reports/Gaps/Input age oraz stan C2/BH. |
 | Na wyświetlaczu zostaje tekst radia | BH powinien ponawiać cały dwuliniowy komunikat BACCAble mniej więcej raz na sekundę i zaczynać go od początku po wiadomości radia. Używa źródła ostatniego odebranego tekstu multimediów. Jeśli menu nadal nie widać, sprawdź łącze BH, zgodność firmware i ramki nadawane przez BH; capture na komputerze zapisuje ramki odebrane, nie własną transmisję BH. |
-| Brakuje strony lub akcji | Sprawdź profil silnika, Shown pages, Advanced pages oraz ustawienie udostępniające akcję w Features. Ukryta strona z innego profilu może nadal zajmować miejsce w ulubionych. |
+| Brakuje odczytu lub akcji | Sprawdź profil pojazdu oraz ustawienie udostępniające akcję w Features. Nieobsługiwane zapisane ulubione pokazuje `--`, dopóki jego profil znów nie zacznie obowiązywać. |
 | `No favorites` / `No pages` | Dodaj zgodne ulubione lub przywróć widoczność stron. Dwuklik RES nadal pozwala wrócić. |
 | Odczyt pokazuje `--` | Poczekaj na aktualne dane, sprawdź stan zapłonu/silnika i obsługę przez ECU. Diagnostyka USB może wstrzymywać zwykłe zapytania. Obecność strony nie gwarantuje, że sterownik obsługuje jej parametr. |
 | `Batt BCM SOC --` lub `Batt charge --%` | Porównaj niezależne źródła na Battery sources. Nie traktuj braku SOC jak 0% i nie używaj IBS override jako naprawy odczytu. |
@@ -1170,6 +1061,12 @@ Po zakończeniu używaj USB mode OFF do zwykłej pracy.
 | Ramki się zapisują, ale sygnały są nieznane | Przechwytywanie nie nazywa automatycznie sygnałów. Porównuj zmiany ramek z zapisanymi czynnościami i powtarzanymi próbami. Zachowaj oryginalną sesję. |
 
 ## Różnice względem starej instrukcji
+
+Readings i Favorites to teraz pojedyncze pomiary. Stare strony łączone,
+`Page favorites`, `Shown pages`, `Favorite order` i `Sort order` zniknęły;
+Favorites to sześć dwuwierszowych układów, a Readings to pogrupowane pojedyncze
+odczyty (patrz [Układ menu](#układ-menu)). Stare identyfikatory stron celowo nie
+są zachowywane; pierwsze uruchomienie ładuje i zapisuje raz nowe domyślne zestawy.
 
 | Starsza nazwa lub sposób działania | Obecny odpowiednik |
 | --- | --- |

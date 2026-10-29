@@ -1,4 +1,5 @@
 #include "test_report.h"
+#include "vehicle/vehicle_runtime.h"
 #include "app/powertrain.h"
 #include "features/rain_lights.h"
 #include "features/rain_test.h"
@@ -18,7 +19,7 @@ static uint32_t now = 10000, complete_at;
 static uint8_t outgoing[UART_SCREEN_BUFFER_SIZE], *rx_target;
 static uint8_t peer_mode[2], peer_token[2];
 static uint32_t seen[2][2], max_gap[2][2], rain_seen, max_rain_gap;
-static unsigned rain_polls, screens;
+static unsigned rain_polls, screens, display_polls, display_replies;
 static unsigned test_c2_polls, test_bh_polls, queue_errors;
 static uint32_t last_force_poll, max_force_gap;
 void _putchar(char character) { (void)character; }
@@ -77,6 +78,7 @@ uint32_t can_forward(const CAN_RxHeaderTypeDef *h, uint8_t *data) {
 /* Deliver actual UART parser output to the feature consumers exercised here. */
 void board_commands_dispatch(const uint8_t *message) {
     assert(message[0] == C1BusID || message[0] == C1_Bh_BusID);
+    if (message[1] == C1_CMD_DISPLAY_PROFILE) ++display_replies;
     if (message[1] == C1_CMD_RAIN_TEST)
         rain_test_reply(message[2], message[3], message[4], message[5], message[6]);
     if (message[1] == C1_CMD_RAIN_SENSOR)
@@ -92,7 +94,11 @@ static void finish_transfer(void) {
     uint8_t reply[UART_BUFFER_SIZE] = {C1BusID};
     if (outgoing[0] == BhBusIDparamString) { ++screens; return; }
     unsigned peer = outgoing[0] == C2BusID ? 0 : 1;
-    if (outgoing[1] == C2_CMD_RAIN_LIGHTS && peer == 0) {
+    if (outgoing[1] == BH_CMD_DISPLAY_PROFILE) {
+        ++display_polls;
+        if (display_polls == 2) return; /* Missing reply must not starve normal status/USB polls. */
+        reply[1] = C1_CMD_DISPLAY_PROFILE; reply[2] = outgoing[2]; reply[3] = 1;
+    } else if (outgoing[1] == C2_CMD_RAIN_LIGHTS && peer == 0) {
         ++rain_polls;
         if (rain_seen && now - rain_seen > max_rain_gap) max_rain_gap = now - rain_seen;
         rain_seen = now;
@@ -145,11 +151,16 @@ static void test_rain_with_usb_and_display(void) {
     settings_state.usb_sniffer = 1;
     usb_modes_apply();
     const uint32_t start = now;
+    uint32_t display_sent = now - VEHICLE_DISPLAY_POLL_MS;
     for (; now - start < 60000; ++now) {
         if (complete_at && now >= complete_at) finish_transfer();
         board_uart_process();
         usb_modes_process();
         rain_lights_process();
+        if (now - display_sent >= VEHICLE_DISPLAY_POLL_MS) {
+            uint8_t command[] = {BhBusID, BH_CMD_DISPLAY_PROFILE, (uint8_t)((now - start) / 1000)};
+            if (board_uart_send(command, sizeof(command))) display_sent = now;
+        }
         if ((now - start) % 20 == 0) {
             uint8_t screen[UART_SCREEN_BUFFER_SIZE] = {BhBusIDparamString};
             assert(board_uart_send(screen, sizeof(screen)));
@@ -167,6 +178,8 @@ static void test_rain_with_usb_and_display(void) {
             assert(max_gap[peer][usb] < 5000);
         }
     assert(rain_polls > 50 && max_rain_gap < 2000 && screens > 10);
+    assert(queue_errors == 0);
+    assert(display_polls >= 11 && display_replies == display_polls - 1);
     fprintf(stdout, "Maximum reply intervals: C2 version/USB %u/%u ms, BH %u/%u ms; rain %u ms\n",
             max_gap[0][0], max_gap[0][1], max_gap[1][0], max_gap[1][1], max_rain_gap);
     settings_state.rain_lights_enabled = 0;
@@ -220,6 +233,10 @@ static void test_rain_test_with_shared_uart(void) {
             rain_test_move_page(); /* Force while displaying BH. */
             rain_test_toggle_force();
         }
+        if (elapsed % VEHICLE_DISPLAY_POLL_MS == 0) {
+            uint8_t command[] = {BhBusID, BH_CMD_DISPLAY_PROFILE, (uint8_t)(elapsed / VEHICLE_DISPLAY_POLL_MS)};
+            assert(board_uart_send(command, sizeof(command)));
+        }
         unsigned screen_period = elapsed >= 90000 ? 2000 : 1500;
         if (elapsed % screen_period == 0) {
             uint8_t screen[UART_SCREEN_BUFFER_SIZE] = {BhBusIDparamString};
@@ -229,7 +246,10 @@ static void test_rain_test_with_shared_uart(void) {
             elapsed != 25000 && elapsed != 50000 && elapsed != 80000 && elapsed != 90000) {
             char first[32], second[32];
             rain_test_render(first, sizeof(first), second, sizeof(second));
+            if (strstr(first, "no reply"))
+                fprintf(stderr, "elapsed=%u first=%s second=%s c2=%u bh=%u queue=%u\n", elapsed, first, second, test_c2_polls, test_bh_polls, queue_errors);
             assert(strstr(first, "no reply") == NULL);
+            assert(strstr(first, "BH738") || strstr(first, "Wiper"));
         }
     }
     assert(test_c2_polls > 20 && test_bh_polls > 15 && max_force_gap < 3000);

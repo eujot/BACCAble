@@ -5,42 +5,27 @@
 #include "features/menu.h"
 #if defined(BACCABLE_C1)
 static struct {
-    uint8_t active, engine, page, element, parameter;
+    uint8_t active;
+    uint8_t parameter;
     uint32_t started;
 } request;
+static bool draining;
+static uint32_t drain_started;
 
 /* Discard a pending reading when its screen is no longer relevant. */
-void parameter_request_cancel(void) { request.active = 0; }
-
-/* Keep an in-flight preview reply only when its value belongs to the new page. */
-void parameter_request_follow_page(void) {
-    if (request.active && request.element == 255 &&
-        settings_state.is_diesel_enabled == request.engine &&
-        dashboard_state.dashboard_page_index < parameter_page_count) {
-        const ParameterPage *page = &parameter_pages[request.engine][dashboard_state.dashboard_page_index];
-        for (unsigned i = 0; i < parameter_page_elements(page); ++i)
-            if (page->parameter_ids[i] == request.parameter) {
-                request.page = dashboard_state.dashboard_page_index;
-                return;
-            }
-    }
-    parameter_request_cancel();
+void parameter_request_cancel(void) {
+    if (request.active) { draining = true; drain_started = request.started; }
+    request.active = 0;
 }
 
-/* Ask the vehicle for the diagnostic value selected on the current screen. */
-void parameter_request_begin(void) {
-    if (settings_state.is_diesel_enabled > 1 ||
-        dashboard_state.dashboard_page_index >= parameter_page_count ||
-        selected_parameter_element >=
-            parameter_page_elements(
-                &parameter_pages[settings_state.is_diesel_enabled][dashboard_state.dashboard_page_index]))
-        return;
-    uint8_t id = parameter_pages[settings_state.is_diesel_enabled][dashboard_state.dashboard_page_index]
-                     .parameter_ids[selected_parameter_element];
-    parameter_request_begin_id(id, selected_parameter_element);
-}
+/* Ask the vehicle for a single diagnostic source (UDS request_id > 0xff). */
 void parameter_request_begin_id(uint8_t id, uint8_t element) {
-    if (request.active && currentTime - request.started < 500) return;
+    (void)element;
+    if (draining && currentTime - drain_started < 500U) return;
+    draining = false;
+    if (vehicle_parameter_support(id) == VEHICLE_SUPPORT_UNSUPPORTED) return;
+    if (request.active && currentTime - request.started < 500)
+        return;
     request.active = 0;
     if (id >= PARAMETER_DEFINITION_COUNT)
         return;
@@ -54,21 +39,17 @@ void parameter_request_begin_id(uint8_t id, uint8_t element) {
         .IDE = CAN_ID_EXT, .RTR = CAN_RTR_DATA, .ExtId = parameter->request_id, .DLC = 4};
     if (can_tx(&header, data) != HAL_OK)
         return;
-    request.engine = settings_state.is_diesel_enabled;
-    request.page = dashboard_state.dashboard_page_index;
-    request.element = element;
     request.parameter = id;
     request.started = currentTime;
     request.active = 1;
 }
 
-/* Accept a matching diagnostic reply and update the current reading. */
+/* Accept a matching diagnostic reply and update the shared cache. */
 void parameter_request_receive(const CAN_RxHeaderTypeDef *header, const uint8_t *data) {
     if (!request.active)
         return;
     if (currentTime - request.started > 500 || !dashboard_state.baccable_dashboard_menu_visible ||
-        !menu_parameters_active() || settings_state.is_diesel_enabled != request.engine ||
-        dashboard_state.dashboard_page_index != request.page) {
+        !menu_parameters_active()) {
         request.active = 0;
         return;
     }
@@ -80,7 +61,6 @@ void parameter_request_receive(const CAN_RxHeaderTypeDef *header, const uint8_t 
                           parameter->raw_offset, parameter->scale, parameter->scaled_offset, &value))
         return;
     parameter_cache_put(request.parameter, value, currentTime);
-    if (request.element < 4) displayed_parameter_values[request.element] = value;
     request.active = 0;
     menu_render();
 }

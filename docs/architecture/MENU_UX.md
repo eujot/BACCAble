@@ -27,23 +27,33 @@ flowchart LR
     BH --> IPC[IPC text field]
 ```
 
-`IPC_MY23_IS_INSTALLED` chooses the C1 **default** profile. Saved `MY23 IPC`
-can override it. `LARGE_DISPLAY` independently chooses the legacy 18/24-character
-width. MY23 always has budgets `MY23_L1_VISIBLE = 16` and
-`MY23_L2_VISIBLE = 22`. Those are visible glyph counts, not UTF-8 byte limits.
+`Vehicle` owns display selection: Auto, Legacy 18, Legacy 24 and MY23.
+Auto resolves known years >=2023 to MY23, otherwise Legacy 18. C1 retains its
+working display until BH answers a token-correlated capability query (0x53/0x54).
+Legacy packets have explicit 18/24 markers after negotiation; MY23 retains its
+16+22 marker. Old peers see only the fallback transport. BH resets pending screen
+fragments on width changes and preserves factory source tracking and saved text.
+C1 queries also report whether mirror work is active before a profile save.
+Queries repeat every 5000 ms to leave shared UART capacity for rain leases,
+status and screens. Token-matched replies have a 3000 ms queue/response window;
+mirror status still expires 3000 ms after receipt, so a blocked save may require
+a retry after the next reply.
 
-The main menu is Favorites, Readings, Actions, Settings and Information.
-Information ends with `Demo`, a timed display-only tour. Its screens use the
-ordinary LIST, PARAMETER and EDIT packet renderers and fixed example values.
-The tour does not call menu actions, setup staging, CAN requests or Flash saves.
-Only the shared double-click BACK event ends it early; all other menu gestures
-are ignored until it finishes. A completed or interrupted tour returns to the
-`Demo` entry in Information. The script varies stays from 1.4 to 2.3 seconds;
-radio arbitration can still delay physical display. No `DEMO` text is placed on
-the active screens, so both user guides explain that their values are examples.
-MY23/atomic Settings contains Features, Favorites, Shown pages, Sort order, BACCAble IPC.
-Legacy before its first five-slot save retains Features, Page favorites,
-Shown pages, Favorite order, Sort order, Favorites, BACCAble IPC. Existing catalogs, engine gates and page IDs are retained.
+The main menu is Favorites, Readings, Actions, Settings, Information, Vehicle.
+Settings contains Features, Favorites and BACCAble IPC. Vehicle is the sole editor
+for engine, drivetrain and display; old Flash slots remain serialization adapters.
+Favorites has six two-row sets and a confirmed Restore defaults action. Width
+resolution uses reserved value budgets; rendering and polling share filtered,
+deduplicated visible rows/subpages. Unsupported stored items are retained.
+
+Profile and feature settings share one atomic SETTINGS_RECORD 0x108 payload
+(42 explicit little-endian slots + 17 profile bytes). Old 0x101 and experimental
+0x107 are import-only. Do not write two types as independent records in the same
+two-page category. Initial conversion appends to an erased 256-byte slot within
+the same reserved pages; both old payloads survive an interrupted conversion.
+Normal combined-record updates alternate pages. Publication follows a successful write; failed edits remain
+isolated. Profile HOLD first opens a consequences review and a second HOLD commits.
+
 The external WS281x LED-strip controller is removed; Flash slot 3 stays hidden
 and is normalized to zero on load. Instrument-cluster `Shift light` is separate
 and keeps its slot and behavior. USB ELM327 and CAN capture remain available.

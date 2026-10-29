@@ -311,6 +311,41 @@ static void test_temporary_pace_and_lease(void) {
 
 #include "test_oil_animation.c"
 
+static void test_runtime_legacy_packet_widths(void) {
+    now += 10000; transmitted_count = 0; body_init();
+    const unsigned widths[] = {24, 18, 24};
+    for (unsigned pass = 0; pass < 3; ++pass) {
+        uint8_t packet[39]; memset(packet, ' ', sizeof(packet));
+        unsigned width = widths[pass];
+        packet[0] = width == 24 ? LEGACY24_PACKET_MARKER : LEGACY18_PACKET_MARKER;
+        for (unsigned i = 0; i < width; ++i) packet[i+1] = 'A' + i;
+        body_display_submit(packet);
+        unsigned first = transmitted_count;
+        advance(750);
+        unsigned fragments = (width + 1 + DISPLAY_FOOTER_LENGTH + 2) / 3;
+        assert(transmitted_count >= first + fragments);
+        uint8_t screen[39] = {0};
+        for (unsigned i = 0; i < fragments; ++i) {
+            assert(fragment(transmitted[first+i]) == i);
+            assert(transmitted[first+i][0] >> 3 == fragments - 1);
+            screen[3*i] = transmitted[first+i][3];
+            screen[3*i+1] = transmitted[first+i][5];
+            screen[3*i+2] = transmitted[first+i][7];
+        }
+        for (unsigned i = 0; i < width; ++i) assert(screen[i] == 'A' + i);
+        assert(screen[width] == '\r');
+        assert(!memcmp(screen + width + 1, DISPLAY_FOOTER, DISPLAY_FOOTER_LENGTH));
+    }
+    const uint8_t song[] = "Radio!";
+    factory_text(0x06, 1, song);
+    uint8_t packet[39]; memset(packet, ' ', sizeof(packet)); packet[0] = LEGACY18_PACKET_MARKER;
+    body_display_submit(packet); /* Width switch + release keeps the original source. */
+    unsigned first = transmitted_count; advance(400);
+    assert(transmitted_count >= first + 2);
+    assert(code(transmitted[first]) == 0x06 && fragment(transmitted[first]) == 0);
+    assert(transmitted[first][3] == 'R' && transmitted[first+1][7] == '!');
+}
+
 int main(void) {
     const HostTest tests[] = {
         HOST_TEST(test_oil_animation_steps),
@@ -323,6 +358,8 @@ int main(void) {
         HOST_TEST(test_full_snapshot_and_latest_pending),
         HOST_TEST(test_temporary_pace_and_lease),
         HOST_TEST(test_oil_animation_can_pacing),
+        /* The original cases above share a sequential radio/display fixture. */
+        HOST_TEST(test_runtime_legacy_packet_widths),
     };
     host_tests_run(DASHBOARD_MESSAGE_MAX_LENGTH == 24 ? "body-display-24" : "body-display-18", tests, sizeof(tests) / sizeof(tests[0]));
 }

@@ -142,7 +142,7 @@ static void test_immediate_reading_integrity(void) {
         for (unsigned page = 0; page < menu_page_count(engine); ++page) {
             if (!menu_page_supported(engine, page, !engine)) continue;
             for (unsigned missing = 0; missing < 2; ++missing) {
-                menu_show_parameter(page);
+                menu_show_reading(page);
                 float values[4] = {1, 2, 3, 4};
                 if (missing) for (unsigned i = 0; i < 4; ++i) values[i] = NAN;
                 char original[DASHBOARD_MESSAGE_MAX_LENGTH + 1];

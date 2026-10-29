@@ -27,8 +27,7 @@ are supported; a menu entry alone does not establish compatibility.
 - [Actions](#actions)
 - [Information](#information)
 - [Reading the measurements](#reading-the-measurements)
-- [Gasoline reading catalog](#gasoline-reading-catalog)
-- [Diesel reading catalog](#diesel-reading-catalog)
+- [Reading catalog](#reading-catalog)
 - [USB CAN capture and diagnostics](#usb-can-capture-and-diagnostics)
 - [Troubleshooting](#troubleshooting)
 - [Changes from the old manual](#changes-from-the-old-manual)
@@ -40,14 +39,13 @@ are supported; a menu entry alone does not establish compatibility.
    that need it. Some readings are available only with the engine running.
 2. Switch **both CC and ACC off**, then release the steering-wheel buttons.
 3. Hold **RES for about 0.9 seconds**, then release. The menu opens in Favorites.
-4. **Double-click RES** to return to the main menu. Use up/down to find `Settings`,
-   click RES, then enter `Features`.
-5. Select `Engine`. Choose `2.0 I4`, `2.9 V6` or `2.2 D` with clicks or up/down.
-   Hold RES to save directly, or double-click to show the save/discard prompt. The
-   screen remains on that setting. Double-click again to return to Features.
-6. Check `MY23 display` against the installed instrument panel. MY23 uses two lines
-   regardless of the legacy 18/24-character build option. Build and flash a
-   matching C1/C2/BH set; this candidate introduces a longer screen packet.
+4. **Double-click RES** to return to the main menu, then open `Vehicle`.
+5. Set `Model`, `Model year`, `Engine`, `Drivetrain`, `Display` and equipment.
+   First HOLD opens the review; up/down lists preferences that would be suppressed.
+   HOLD again saves. BACK from a field returns to browsing; two BACKs from browsing
+   discard the complete draft. A failed save keeps the old profile and your draft.
+6. Use `Display` to choose `Auto`, `Legacy 18`, `Legacy 24` or `MY23`. Update
+   C1/C2/BH together. `Auto` selects MY23 for a known year of 2023 or later.
 
 C1 handles powertrain CAN and menu input, C2 chassis CAN, and BH body CAN and
 IPC transmission. Check `Information` for board versions. Configure the menu
@@ -65,7 +63,7 @@ RES and the ACC distance button have the same menu role when CC and ACC are off.
 | Hold RES for about 0.9 s in an editor | Save the displayed draft directly, including after a save/discard prompt. |
 | Hold RES in a displayed APPLY/STORE prompt | Confirm that action or mirror capture. |
 | Gentle down/up | Next/previous item or change the draft. Lists wrap. |
-| Hold gentle down/up | Repeat after 0.5 s, then every 0.18 s; no repeats in Actions or while reordering a page favorite. |
+| Hold gentle down/up | Repeat after 0.5 s, then every 0.18 s; no repeats in Actions or while reordering a favorite item. |
 | Stronger down/up | Jump between functional groups; in a draft, adjust its value. |
 
 A click is resolved after the double-click window, so a single click has a short
@@ -94,10 +92,10 @@ Sort order. There is no Save & Exit item. Live readings stay visible. Other menu
 views return to Favorites after 30 s without input, or 60 s in editors; unfinished
 drafts are discarded. Active fault work postpones this timeout.
 
-The page editors `Page favorites`, `Favorite order` and `Shown pages` use the
-same draft, confirmation, hold-to-save and discard rules. Saving stays in the
-editor; a separate double-click returns to Settings. Timeout discards unfinished
-changes. Remembered reading positions are persisted when leaving ordinary views.
+The Favorites editor uses the same draft, confirmation, hold-to-save and discard
+rules. Saving stays in the editor; a separate double-click returns to Settings.
+Timeout discards unfinished changes. The selected reading and favorite are
+persisted when leaving ordinary views.
 If `× Save failed: RES` appears during
 an exit, click or hold to retry that exit or double-click to cancel it and remain in the
 current view. Waiting does not automatically retry.
@@ -106,15 +104,17 @@ current view. Waiting does not automatically retry.
 
 ```text
 Main menu
-├─ Favorites                 Your selected live pages
+├─ Favorites                 6 sets, 2 rows × up to 4 items
 ├─ Readings
-│  ├─ All readings
-│  ├─ Engine
+│  ├─ Oil
 │  ├─ Temperatures
+│  ├─ Engine
+│  ├─ Fuel
 │  ├─ Battery
-│  ├─ DPF / AdBlue
+│  ├─ Diesel / DPF
+│  ├─ Driving
 │  ├─ Performance
-│  └─ Other
+│  └─ Diagnostics
 ├─ Actions                   Run a function or diagnostic operation
 ├─ Settings
 │  ├─ Features               Device and vehicle-function settings
@@ -122,28 +122,59 @@ Main menu
 │  │     ├─ Enabled
 │  │     ├─ Store position
 │  │     └─ < Back
-│  ├─ Favorites              Favorite 1–6 → Slot 1–2 → reading page
-│  ├─ Shown pages            Show/hide pages in Readings
-│  ├─ Sort order             Grouped or alphabetical reading lists
+│  ├─ Favorites              Favorite 1–6 → Row A/B → item → reading + format
+│  │  └─ Restore defaults    Confirmed replacement of Favorite layouts only
 │  └─ BACCAble IPC           Temporary refresh experiments
-└─ Information               Versions, input status and Demo
+├─ Information               Versions, input status and Demo
+└─ Vehicle                   Model, year, engine, drivetrain, display, equipment
 ```
 
-This Settings layout applies to MY23 and to any profile after an atomic Favorite set
-has been saved. Before that first save, legacy Settings retains Features,
-Page favorites, Shown pages, Favorite order, Sort order, Favorites, BACCAble IPC.
+The main menu order is fixed. Readings shows individual measurements organized
+into the groups above; groups with no reading eligible for the configured vehicle
+profile are omitted. Reading availability follows the vehicle profile (engine
+class and installed equipment), not the old `Advanced pages`/`Shown pages` toggles.
+Favorites compose individual readings into two logical rows. On first start the
+engine-aware defaults are loaded and saved once (the 0x106 UI record).
 
-The main menu order is fixed. Page availability follows the selected engine,
-`Advanced pages` and `Shown pages`. A group without eligible pages may show
-`No pages`. The complete catalogs below include pages that are hidden by default.
+## Vehicle profile
+
+`Vehicle` is the last main-menu entry. Engine choices are `Unknown`, `2.0 Petrol`,
+`2.9 Petrol`, `2.2 Diesel`; drivetrain choices are `Unknown`, `RWD`, `Q4`.
+Model is `Unknown`, `Giulia` or `Stelvio`; year is `Unknown` or 2000–2099.
+Equipment fields use `Unknown`, `Absent`, `Present`: `Suspension`, `Race`,
+`Exhaust valves`, `ACC`, `HAS`, `Lane assist`, `Park mirrors`, `SCR`.
+A feature preference never proves that equipment is installed.
+
+An imported installation keeps its previous permissions until Vehicle is explicitly
+saved. Review `OFF: …` entries with up/down before HOLD: the saved preferences
+remain, but incompatible actions and automatic functions are suppressed. Unknown
+equipment on a new or confirmed profile cannot authorize a new equipment-dependent
+action. Race and adjustable suspension are independent. AWD requests require Q4.
+Known absent equipment hides its feature option; `Configure Vehicle` explains an
+unknown prerequisite. Stop/release paths remain available for an owned operation.
+
+Finish AWD, brake, Dyno, exhaust and parking-mirror operations before saving a
+profile; the editor reports the operation to finish. Mirror status must be fresh.
+Saving never replays startup DNA or suspension. `Saved` follows successful atomic
+persistence; `Save failed` leaves the previous profile active and allows retry.
+Custom Favorites are retained across profile changes.
+
+`Auto` uses MY23 for a known year >=2023, otherwise Legacy 18. Explicit display
+choices override the year. A new width is activated after BH confirms protocol
+support; `Saved; IPC pending` means the profile is saved while the previous working
+transport remains active. Queries repeat every five seconds; allow time for the
+next query and its UART reply. If `Mirror status wait` blocks a save, retry after
+the next reply; the mirror status freshness limit remains three seconds.
+At boot legacy uses the compiled fallback width until
+negotiation. Update all boards together. Physical screen acceptance is still open.
 
 ## Display symbols and messages
 
 MY23 has **16 visible glyphs in line 1 and 22 in line 2**. A list shows the
 current item with `›` above the next item. Editors show a setting and its draft
 value, with `HOLD SAVE`. Confirmation and saved feedback use the second line.
-Live Favorites show one complete selected reading page on each line. Readings
-show one page in the first line and preview the next page in the second line.
+Live Favorites show one row of a Favorite set on each line (MY23), or one row
+subpage on legacy. Readings show one selected measurement.
 `SAVED` confirms a completed settings save; `×` means a local failure.
 The legacy profile retains its 18/24-character first line and `BACCAble beta`
 footer. It uses the same button and draft rules, with single-line prompts.
@@ -222,152 +253,60 @@ If behavior worsens, select Reset default or completely power down the device.
 
 ## Favorites and reading layout
 
-Favorites poll each diagnostic value once per cycle, even if it appears on both lines. Dense pairs of pages can take up to four seconds to refresh all eight values; they remain visible for that cycle and show `--` if replies stop. Native CAN readings retain their usual freshness limit.
+Favorites are six sets, each with two rows (**A** and **B**) of up to four items.
+Each item stores one individual reading and a display format: **Auto**, **Full**,
+**Medium** or **Short**. **Auto** chooses the most readable fitting label once
+when the layout is resolved. A Favorite row joins its items with at least one
+space and never clips digits; `--` means missing or stale. MY23 shows both rows;
+legacy navigates the non-empty rows (1/A, 1/B, 2/A, …). The same reading may
+appear in several visible rows and is polled only once. Legacy polls only its
+visible row/subpage; MY23 polls the visible items from both rows. A saved wider
+row becomes deterministic continuation subpages on a narrower screen, without
+rewriting the stored layout. An individual saved label too wide for the new
+screen temporarily uses Auto abbreviations. Positions do not shift as values change. Unexpected
+numeric overflow uses `#` in that value field.
 
-### Shipped default favorites
+### Default favorites
 
-A fresh install (gasoline) starts with six themed sets, each pairing a first-line
-page with a second-line page. A 1-line IPC shows only the first column; a 2-line
-IPC shows both lines. The set selected on start-up is **S1 Elektryka**.
+A first start loads engine-aware defaults and saves them once. A later vehicle
+profile change never overwrites a saved layout; an unsupported saved item is hidden and not polled until it applies again.
+Its stored position and format remain unchanged.
 
-| Set | Line 1 | Line 2 |
+| Set | Row A | Row B |
 | --- | --- | --- |
-| S1 Elektryka | `Oil L / mm / %` | `Batt charge BCM` |
-| S2 Osiągi | `Power / torque` | `Boost pressure` |
-| S3 Temperatury | `Oil/water/gear C` | `Intercooler out` |
-| S4 Jazda | `Speed` | `Gear` |
-| S5 Timery | `0-100 km/h` | `Best 0-100` |
-| S6 Olej / Multiair | `Oil/water/IC C` | `Misfires/MA temp` |
+| Warm-up | Oil temp + coolant | Gearbox temp |
+| Oil | Oil level mm + LOW/OK/HIGH | Oil level bar |
+| Engine | Power + boost | Power + torque |
+| Cooling | Coolant | Intercooler inlet + outlet |
+| Battery | Voltage + current | IBS state of charge |
+| Diesel DPF / Gasoline Performance | DPF load + temp (diesel) / 0–100 (gasoline) | Regen progress (diesel) / Best 0–100 (gasoline) |
 
-Diesel keeps its four existing defaults and has no second-line pages. New
-installations use the Favorite slot layout on both IPC profiles. Pairs are seeded
-only when no saved page or slot preferences exist. Existing saved favorites are
-preserved, even when their primary page matches a shipped default. Editing
-these sets follows the same steps below.
+MY23 defaults simplify the 16-glyph first row: Warm-up has oil temperature above
+gearbox + coolant; Oil has numeric level above the bar; Engine has boost above
+power + torque; Battery has voltage above IBS charge + current. Diesel DPF has
+load above progress + temperature. Cooling and gasoline Performance keep the
+table layout. Legacy retains the table and splits wide rows into subpages.
 
-### Configure two reading pages per favorite
+### Edit a favorite
 
 1. Open `Settings → Favorites` and choose `Favorite 1` through `Favorite 6`.
-2. Click to edit. Choose `Slot 1` or `Slot 2`, click, then browse the
-   same catalog pages as in Readings with up/down and click to use one. `Empty` clears that slot.
-3. **Slot 1 is the primary reading page**. MY23 puts it in line 1. Slot 2
-   appears in line 2. An empty primary hides that favorite.
-   To change order, replace the slots; assigning a page already in another
-   slot clears its old position. Editing is available only in Settings.
-4. Hold to save directly, also while choosing a slot value. Alternatively,
-   double-click for the save prompt, then hold to save or double-click to discard. A successful save stays at the selected slot; double-click to leave.
-5. Open main-menu `Favorites` to view live values. On legacy, a configured set
-   shows its primary page on the single line.
+2. Choose `Row A` or `Row B`, then an item slot.
+3. Choose a reading (or `Empty`) and a format (Auto/Full/Medium/Short).
+4. Hold to save. A first BACK opens confirmation for a dirty draft; a second
+   BACK discards it. `Duplicate reading`, `Oil bar needs row` or `Too wide: shorten`
+   rejects the save and keeps the draft. Choose a shorter format or remove an item.
 
-Returning from other lists keeps the selected Favorite, as does engine filtering
-if that set remains available. Otherwise the first available set is selected.
-This selection is remembered separately for gasoline and diesel until restart.
-
-Each slot uses the selected page's measurements. MY23 removes numeric padding
-and uses a shorter caption where necessary; legacy keeps the catalog format. A page such as
-`Oil/coolant temp` contains two values in one line; it remains one slot when
-added to Favorites. `--` means unavailable or stale. `Gear -` includes the raw
-`0xF` unavailable code; it is not gear 15.
-
-On MY23, `Oil/water/IC C` shows all four temperatures as `O90 W85 I40 X35`:
-oil, coolant, intercooler inlet and outlet. Spaces shrink when three-digit
-values need the 16-character line, for example `O101W102I103X104`.
-`Oil/coolant temp` uses `Oil 101° W 88°`; `W` is coolant. `Misfires cyl 1-4`
-shows counts in cylinder order, for example `12/ 23/ 34/ 45`.
-
-Only the first two saved slots are shown and editable in this revision. Earlier
-five-slot records retain slots 3–5 in storage for compatibility, but those slots
-are not displayed or polled. Saving Slots 1–2 does not erase those old IDs.
-Every MY23 Readings page keeps all of its measurements on line 1, whether it
-contains one, two, three or four values. Its compact format removes extra spaces
-and shortens long captions to fit 16 glyphs; the same format is used in MY23
-Favorites. Line 2 previews the next page. While that preview is visible, BACCAble
-also reads its diagnostic values in the background. Moving forward uses the
-cached values immediately when replies have arrived. Current and preview pages
-share one query every 500 ms, with shared values read only once per cycle; dense
-pairs can take up to four seconds. Diagnostic values remain usable for 4.5 seconds
-in this view, while native CAN values keep their normal three-second freshness
-limit. Fast scrolling or a missing ECU reply can still show `--`.
-Information status pages likewise
-preview the next page; multiple fault codes show the following code on line 2.
-For example, `Oil 35.0mm Q 80%` fits exactly. `B 100-200 8.54s` means the
-best 100–200 km/h run. The four-temperature page uses `O` for oil, `W` for
-coolant, `I` for intercooler inlet and `X` for intercooler outlet. A number too
-wide for its field appears as `--` rather than a partial number.
-
-Gasoline and diesel retain separate sets. Engine-incompatible saved pages
-remain stored and are omitted until that profile is selected again. A hidden
-incompatible primary hides the whole favorite. Both engine page catalogs and old
-page IDs remain unchanged. Existing page favorites import as whole pages in
-Slot 1. Beta-19 atomic measurement IDs convert to catalog page IDs in memory:
-a dedicated page is preferred, otherwise the first page containing that value.
-Check the converted choices before saving; the old extra RPM value is retained
-as a compatibility page, while new choices browse the Readings catalog. Saving upgrades the menu preference
-record. Downgrading to old firmware does not convert it back.
-
-`Page favorites` and `Favorite order` are offered only on legacy before the
-first atomic Favorite save. Their committed edits update both the old page list and
-its imported sets; failed saves and discarded drafts update neither. MY23 and
-profiles using saved atomic sets offer only `Favorites`, so there is no second
-editor changing a different list. Slot contents determine page order.
-Empty Slot 1 hides that Favorite;
-Slot 2 does not move automatically into the primary position.
-Slot browsing and page selection show current/next on MY23, including
-wraparound; IPC display-test lists and Shown pages do the same.
-`Shown pages` and `Advanced pages` affect ordinary Readings, not explicit set
-selection. `Sort order` changes catalog ordering through its own draft/save
-prompt. `Auto rotate` advances the live list every five seconds.
+`Settings → Favorites → Restore defaults` follows `Favorite 6`. SELECT opens
+confirmation, HOLD replaces all six sets, and BACK cancels. Failed writes retain
+your previous layouts; settings, profile, statistics and mirror calibration are
+preserved.
 
 ### Oil level and bar
 
-Under `Settings > Features`, save `Engine` and `Drivetrain`. Both oil readings
-are in `Readings > Engine`, with no `Advanced pages` requirement. The former
-gasoline `Oil height` keeps its saved identity and is now called `Oil level`.
-
-- `Oil level`: for example `Oil 77.0mm OK`; `LOW` is below the minimum,
-  `HIGH` above the maximum, and both boundary values are `OK`.
-- `Oil level bar`: fills the available line width. `[` and `]` mark the minimum
-  and maximum; `=` marks the interval. The point `•` marks the current reading
-  on MY23; legacy displays use `*`. `<` or `>` indicates a value off the scale.
-
-In `Settings > Favorites`, select these as two separate readings in line 1 and
-line 2, in either order. MY23 uses 16 characters on line 1 and 22 on line 2;
-legacy uses its configured 18/24-character line. Example for 2.0 I4 RWD:
-
-```text
-Oil 77.0mm OK
-----[=====•======]----
-```
-
-| Engine | Drivetrain | OK interval (mm, inclusive) |
-| --- | --- | --- |
-| 2.0 I4 | RWD | 72–82 |
-| 2.0 I4 | Q4 | 67–77 |
-| 2.2 D | RWD | 61–65 |
-| 2.2 D | Q4 | 79–84 |
-
-These reference limits were supplied by the owner; they have not been independently
-verified in this change. The display reuses the existing ECU oil-height measurement
-and does not establish whether the vehicle's measurement conditions are satisfied.
-`Not set` shows `?` beside the numeric value and `Set drivetrain` in the bar.
-For `2.9 V6`, no range is defined: `?` / `No oil range`.
-Missing, expired or invalid samples show `Oil -- mm`; no last-known point is retained.
-Existing favorites remain saved. The bar and numeric page can be hidden independently.
-
-The point moves one character at a time in either direction. BH finishes sending
-each step before starting the next; a new measurement changes the destination,
-without skipping intermediate positions. First appearance and return after an
-unavailable reading show the current position directly. The numeric value and
-LOW/OK/HIGH remain the latest ECU reading; intermediate points are animation,
-not additional measurements. Both Favorite lines animate independently.
-
-`Quick 20ms` is the interval between CAN fragments, not complete screens.
-With default `Write Full`, a MY23 step uses 13 fragments: about 260 ms with no
-bus/radio delay. `Write Delta` sends only changed fragments and also finishes
-each step before advancing. CAN retries and radio interruptions retain the
-pending step. Refresh speed still follows `BACCAble IPC`; animation does not
-change that setting. Actual IPC appearance requires a vehicle check.
-
+`Oil level` (mm + LOW/OK/HIGH) and `Oil level bar` are two separate Readings;
+the bar occupies its row alone. The owner-supplied OK ranges are unchanged:
+2.0 RWD 72–82 mm, 2.0 Q4 67–77 mm, 2.2 RWD 61–65 mm, 2.2 Q4 79–84 mm. They are
+not newly verified here. Unknown drivetrain shows `?` and `Set drivetrain`.
 
 ## Settings: Features
 
@@ -388,10 +327,8 @@ workflow; their draft does not control the car before successful persistence.
 | --- | --- | --- |
 | `Shift light` | Off / on | Request the instrument-panel shift warning above `Shift RPM`, with compatible Race-mode display support. This does not shift the gearbox. |
 | `Shift RPM` | 1500–6000 RPM, step 250 | Engine-speed threshold for the shift warning. |
-| `MY23 display` | Off / on | Use the MY23 menu layout: 16 glyphs on line 1 and 22 on line 2. OFF retains the legacy single-line layout with the compiled 18/24-character width. |
 | `DPF regen alert` | Off / on | Enable diesel regeneration notifications. See [DPF monitoring](#dpf-monitoring). |
 | `Auto rotate` | Off / on | Rotate live pages every five seconds. |
-| `Advanced pages` | Off / on | Include technical/secondary pages in Readings, subject to profile and manual visibility. |
 
 ### Comfort group
 
@@ -458,8 +395,6 @@ selection still appears immediately.
 | `CAN routing` | Off / on | Expose selected native CAN reports through the firmware's diagnostic routing mechanism for compatible diagnostic clients. It is not the USB capture switch. |
 | `DTC clear action` | Off / on | Permit the multi-controller `Clear DTCs` action. |
 | `BCM fault reader` | Off / on | Permit `Read BCM faults`, which reads the Body Control Module only. |
-| `Engine` | 2.0 I4 / 2.9 V6 / 2.2 D | Select the engine-specific reading catalog. Switching discards cached measurements and temporarily filters incompatible favorites. |
-| `Drivetrain` | Not set / RWD / Q4 | Select the drivetrain used with `Engine` for oil-level limits; default `Not set`. Save the choice by holding RES. This is not a gearbox setting. |
 | `USB mode` | OFF / CAN / ELM327 | Select normal operation, binary CAN capture, or ELM-compatible diagnostics. ELM327 is offered in builds with that support. Modes are exclusive. Hold RES in the editor to save and apply, or double-click for confirmation first. |
 
 Feature permissions and vehicle states are different: enabling `Dyno action`,
@@ -645,7 +580,7 @@ action executes.
 | `Read BCM faults` | BCM fault reader; no DTC clear running | Open the BCM fault-code browser immediately. Reading does not erase codes. |
 | `Clear DTCs` | DTC clear action; no conflicting BCM read/clear | Run a clear request across the configured controllers on the vehicle buses. It is broader than the BCM reader and does not repair the fault. |
 | `Reset best times` | No feature permission required | Clear the saved best acceleration records. Confirmation is required; a completed save reports `Records cleared`. |
-| `Peak hold` | No feature permission required | Immediately toggle numerical maximum hold for the current reading page. |
+| `Peak hold` | No feature permission required | Immediately toggle numerical maximum hold for the current reading. |
 | `IBS SOC override` | Running engine; explicit confirmation | Toggle a temporary experimental SOC-message override. See the limitations below. |
 | `Rain test` | No permission required; matching C1/C2/BH firmware | Open two rain-lights diagnostic pages; up/down switches between wiper status and the BH light-responsive sample. In AUTO, SELECT requests dark BH `0x738` copies for at most 30 s from either page; BH stops within 3 s if renewals cease. BACK ends the test. |
 
@@ -751,9 +686,9 @@ Information automatically after its final screen. Values such as `77 mm` and
 
 ## Reading the measurements
 
-Select `Readings`, a group, and a page. The live screen may use a shorter caption
-than its label in Favorites/Shown pages. All readings below are included in the
-catalog, but unsupported ECU requests can remain `--`.
+Select `Readings`, a group, and a reading. The live screen may use a shorter
+caption than its label. All readings below are included in the catalog, but
+unsupported ECU requests can remain `--`.
 
 - **Power** is calculated from reported torque and RPM and expressed in metric
   horsepower (`PS`, called CV in the old manual). It is not a dyno measurement.
@@ -761,16 +696,13 @@ catalog, but unsupported ECU requests can remain `--`.
   Quality is an ECU-reported estimate, not a laboratory assessment. Observe the
   vehicle manufacturer's conditions for a valid oil-level measurement.
 - **Ignition cyl 1–6** reports cylinder ignition correction in degrees. It is not
-  a misfire count. V6 misfire pages cover only cylinders 1–4 because the catalog
-  has no verified individual cylinder 5/6 misfire definitions.
+  a misfire count. V6 misfire coverage is limited to cylinders 1–4 because the
+  catalog has no verified individual cylinder 5/6 misfire definitions.
 - **Distance (ECU)** is the diagnostic distance value described in the old manual
   as distance since ECU odometer reset; do not equate it with the cluster's total
   lifetime odometer without validating that ECU's interpretation.
 - **Gear** uses N, R or a gear number; DNA uses A, N, D or R. Missing states can
   show `--`/`?`. `Pedal map` uses the external controller's map response.
-- Combined-page values are listed **left to right** in the tables. `O` means oil,
-  `W` water/coolant, `I`/`In` intercooler inlet and `X`/`Out` intercooler outlet on
-  the dense temperature layout. All temperatures in that layout use Celsius.
 
 ### Battery charge: which SOC is being shown?
 
@@ -796,157 +728,129 @@ discharging. Voltage alone does not prove charging. Raw IBS pages are for source
 diagnosis; do not reinterpret an entire raw byte as SOC without accounting for
 its flags and decoding.
 
-### Catalog notation
+## Reading catalog
 
-**A** in the last column means advanced: ordinarily hidden until `Advanced pages`
-is enabled. **—** means ordinary browsing, subject to manual visibility and
-engine compatibility. Group abbreviations are **Eng** = Engine, **Temp** =
-Temperatures, **Batt** = Battery, **DPF** = DPF / AdBlue, **Perf** = Performance,
-**Other** = Other. Both catalogs are also accessible through All readings.
+Readings are individual measurements grouped as below; groups with no reading
+eligible for the configured vehicle profile are omitted. The live screen may use a shorter caption.
+A value the ECU does not answer shows `--`.
 
-## Gasoline reading catalog
+### Oil
 
-These are all **64 gasoline pages**. Unless stated otherwise, they apply to both
-2.0 I4 and 2.9 V6. The table follows catalog order; grouped or A–Z navigation can
-present them in a different order.
+| Reading | Unit / meaning | Eligibility |
+| --- | --- | --- |
+| Oil temp | C | both |
+| Oil pressure | bar | both |
+| Oil level | mm | both |
+| Oil status | LOW / OK / HIGH | both |
+| Oil bar | full-width bar | both |
+| Oil volume | L | both |
+| Oil quality | % | both |
 
-| Page label | Group | Unit(s) and meaning | A |
-| --- | --- | --- | --- |
-| Power / torque | Perf | PS / Nm; calculated power and reported engine torque. | — |
-| Oil bar/coolant | Temp | bar / °C; native oil pressure and ECU coolant temperature. | A |
-| Oil bar / temp | Temp | bar / °C; native oil pressure and native oil temperature. | A |
-| Oil/coolant temp | Temp | °C / °C; native oil temperature and ECU coolant temperature. | — |
-| Oil level/qual. | Eng | L / %; ECU oil volume and oil-quality estimate. | A |
-| Batt charge / A | Batt | % / A; engine ECU SOC and signed battery current. | A |
-| Battery V / A | Batt | V / A; BCM voltage and signed battery current. | — |
-| Power | Perf | PS; power calculated from torque and RPM. | — |
-| Torque | Perf | Nm; reported engine torque. | — |
-| Intercooler out | Temp | °C; intercooler outlet air temperature. | — |
-| Intercooler in | Temp | °C; intercooler inlet air temperature. | — |
-| Intake abs press | Eng | bar; absolute intake pressure, including atmospheric pressure. | A |
-| Boost pressure | Eng | bar; intake absolute pressure minus a fixed 1 bar reference. It can be negative. | — |
-| Turbo sensor V | Eng | V; turbo/intake pressure-sensor signal voltage, not boost pressure. | A |
-| Distance (ECU) | Perf | km; ECU diagnostic distance counter. | A |
-| Oil volume | Eng | L; ECU-reported oil volume. | — |
-| Oil pressure | Eng | bar; ECU diagnostic oil pressure; a different source from native combined oil-pressure pages. | — |
-| Oil temp (ECU) | Temp | °C; ECU diagnostic oil temperature. | — |
-| Oil quality | Eng | %; ECU oil-quality estimate. | A |
-| MultiAir temp | Temp | °C; MultiAir module oil temperature. **I4 only.** | — |
-| Gearbox temp | Temp | °C; transmission temperature. | — |
-| Batt charge BCM | Batt | %; BCM battery SOC; live caption `Batt BCM SOC`. | — |
-| Battery current | Batt | A; signed native battery current. | — |
-| Battery voltage | Batt | V; BCM diagnostic battery voltage. | — |
-| A/C pressure | Other | bar; air-conditioning refrigerant pressure. | A |
-| Gear | Eng | N / R / number; reported current gear. | — |
-| Engine run time | Eng | min; reported time since engine start. | A |
-| Over-rev time | Eng | s; ECU-reported duration in an over-rev condition. | A |
-| Over-rev count | Eng | count; ECU-reported over-rev occurrences. | A |
-| Exhaust temp | Temp | °C; ECU exhaust-gas temperature. | — |
-| Catalyst temp | Temp | °C; catalytic-converter temperature. | — |
-| Coolant temp | Temp | °C; engine coolant temperature. | — |
-| Knock sensor | Eng | mV; knock-sensor signal, not a count of knocking events. | A |
-| Key ID | Other | Numeric diagnostic key identifier; not a complete hexadecimal key identity. | A |
-| Ignition cyl 1 | Eng | °; cylinder 1 ignition correction. | — |
-| Ignition cyl 2 | Eng | °; cylinder 2 ignition correction. | — |
-| Ignition cyl 3 | Eng | °; cylinder 3 ignition correction. | — |
-| Ignition cyl 4 | Eng | °; cylinder 4 ignition correction. | — |
-| DNA mode | Other | A / N / D / R; reported drive-mode selection. | — |
-| Speed | Perf | km/h; reported vehicle speed. | — |
-| Seatbelt alarm | Other | ON / OFF; reported acoustic-warning configuration. | A |
-| 0-100 km/h | Perf | s, RUN or MISS; current/latest 0–100 attempt. | — |
-| 100-200 km/h | Perf | s, RUN or MISS; current/latest 100–200 attempt. | — |
-| Best 0-100 | Perf | s; saved best 0–100 time. | — |
-| Best 100-200 | Perf | s; saved best 100–200 time. | — |
-| Pedal map | Other | B / A / N / D / R; pedal-controller reply, or unavailable marker. | — |
-| Ignition cyl 5 | Eng | °; cylinder 5 ignition correction. **V6 only.** | — |
-| Ignition cyl 6 | Eng | °; cylinder 6 ignition correction. **V6 only.** | — |
-| Oil level | Eng | mm; ECU oil height with LOW / OK / HIGH for the selected engine and drivetrain. | — |
-| Oil level bar | Eng | Full-width oil-height bar with reference limits. | — |
-| Misfires total | Eng | count; ECU-reported total misfires. | — |
-| Misfires cyl 1 | Eng | count; cylinder 1 misfires. | A |
-| Misfires cyl 2 | Eng | count; cylinder 2 misfires. | A |
-| Misfires cyl 3 | Eng | count; cylinder 3 misfires. | A |
-| Misfires cyl 4 | Eng | count; cylinder 4 misfires. | A |
-| Misfires cyl 1-4 | Eng | Four counts, for cylinders 1, 2, 3 and 4. V6 coverage is partial. | — |
-| Oil L / mm / % | Eng | L / mm / %; oil volume, height and quality. | A |
-| Oil/water/IC C | Temp | °C × 4; ECU oil, coolant, intercooler inlet and outlet temperatures. | A |
-| Oil/water/gear C | Temp | °C × 3; ECU oil, coolant and gearbox temperatures. | A |
-| Battery sources | Batt | % / %; native IBS SOC and engine ECU SOC. | A |
-| Battery IBS raw | Batt | Two raw decimal bytes, IBS byte 0 then byte 1; no physical unit. | A |
-| IBS raw0/SOC/V | Batt | Raw byte 0 / % / V; IBS raw data, BCM SOC and BCM voltage. | A |
-| IBS raw1/SOC/V | Batt | Raw byte 1 / % / V; IBS raw data, BCM SOC and BCM voltage. | A |
-| Oil volume/mm | Eng | L / mm; oil volume and oil-level height. | A |
-| Misfires/MA temp | Eng | count / °C; total misfires and MultiAir oil temperature. **I4 only.** | A |
+### Temperatures
 
-## Diesel reading catalog
+| Reading | Unit / meaning | Eligibility |
+| --- | --- | --- |
+| Coolant | C | both |
+| Gearbox | C | both |
+| IC inlet | C | gasoline |
+| IC outlet | C | gasoline |
+| Intake air | C | diesel |
+| Exhaust | C | both |
+| Fuel temp | C | diesel |
+| Catalyst | C | gasoline |
 
-These are all **60 diesel pages** for the 2.2 D profile. AdBlue readings additionally
-require an SCR-equipped vehicle. Some technical diagnostic requests may not be
-supported by an individual ECU version.
+### Engine
 
-| Page label | Group | Unit(s) and meaning | A |
-| --- | --- | --- | --- |
-| Power / torque | Perf | PS / Nm; calculated power and reported engine torque. | — |
-| Oil bar/coolant | Temp | bar / °C; native oil pressure and ECU coolant temperature. | A |
-| Oil bar / temp | Temp | bar / °C; native oil pressure and native oil temperature. | A |
-| Oil/coolant temp | Temp | °C / °C; native oil temperature and ECU coolant temperature. | — |
-| Oil level/qual. | Eng | mm / %; oil-level height and quality estimate. Unlike gasoline, the first value is not liters. | A |
-| Batt charge / A | Batt | % / A; engine ECU SOC and signed battery current. | A |
-| Battery V / A | Batt | V / A; diagnostic voltage and signed battery current. | — |
-| DPF load / temp | DPF | % / °C; estimated filter loading and DPF temperature. | — |
-| DPF regen / temp | DPF | % / °C; regeneration progress and DPF temperature. | A |
-| Power | Perf | PS; power calculated from torque and RPM. | — |
-| Torque | Perf | Nm; reported engine torque. | — |
-| DPF load | DPF | %; estimated particulate-filter loading/occlusion. | — |
-| DPF temp | DPF | °C; particulate-filter temperature. | — |
-| DPF regen % | DPF | %; regeneration progress, not filter loading. | — |
-| DPF regen mode | DPF | Decoded regeneration/aftertreatment phase; see DPF monitoring. | — |
-| Since DPF regen | DPF | km; distance since the last regeneration. | — |
-| DPF regen count | DPF | count; number of regenerations reported by the ECU. | A |
-| DPF avg interval | DPF | km; ECU average distance between regenerations. | A |
-| DPF avg duration | DPF | min; ECU average regeneration duration. | A |
-| Battery voltage | Batt | V; diesel diagnostic battery voltage. | — |
-| Battery charge | Batt | %; native IBS battery SOC. | — |
-| Battery current | Batt | A; signed native battery current. | — |
-| Oil quality | Eng | %; ECU oil-quality estimate. | A |
-| Oil temp | Temp | °C; native engine oil temperature. | — |
-| Oil pressure | Eng | bar; native engine oil pressure. | — |
-| Oil level | Eng | mm; ECU oil height with LOW / OK / HIGH for the selected engine and drivetrain. | — |
-| Oil level bar | Eng | Full-width oil-height bar with reference limits. | — |
-| AdBlue volume | DPF | L; AdBlue quantity. **SCR equipment required.** | — |
-| AdBlue level | DPF | %; AdBlue tank level. **SCR equipment required.** | — |
-| Gearbox temp | Temp | °C; transmission temperature. | — |
-| Exhaust temp | Temp | °C; exhaust-gas temperature. | — |
-| Gear | Eng | N / R / number; reported current gear. | — |
-| Coolant temp | Temp | °C; engine coolant temperature. | — |
-| EGR target | Eng | %; requested exhaust-gas-recirculation value. | A |
-| EGR actual | Eng | %; reported actual EGR value. | A |
-| Turbo target bar | Eng | bar; ECU target turbo pressure. | A |
-| Turbo target % | Eng | %; ECU target turbo-control value. | A |
-| Turbo temp | Temp | °C; temperature reported by the turbo-related diagnostic reading. | — |
-| Turbo actual bar | Eng | bar; ECU actual turbo pressure. | — |
-| Turbo actual % | Eng | %; ECU actual turbo-control value. | A |
-| Boost target | Eng | bar; separate ECU boost-pressure target reading. | — |
-| Intake sensor V | Eng | V; intake-sensor signal voltage. | A |
-| Fuel pressure | Eng | bar; fuel-system pressure. | — |
-| Fuel temp | Temp | °C; fuel temperature. | — |
-| Distance (ECU) | Perf | km; ECU diagnostic distance counter. | A |
-| A/C pressure | Other | bar; air-conditioning refrigerant pressure. | A |
-| Fuel rate | Eng | L/h; instantaneous fuel consumption by volume per hour, not L/100 km. | — |
-| Intake air temp | Temp | °C; intake-air temperature. | — |
-| Speed | Perf | km/h; reported vehicle speed. | — |
-| Seatbelt alarm | Other | ON / OFF; reported acoustic-warning configuration. | A |
-| 0-100 km/h | Perf | s, RUN or MISS; current/latest 0–100 attempt. | — |
-| 100-200 km/h | Perf | s, RUN or MISS; current/latest 100–200 attempt. | — |
-| Best 0-100 | Perf | s; saved best 0–100 time. | — |
-| Best 100-200 | Perf | s; saved best 100–200 time. | — |
-| DNA mode | Other | A / N / D / R; reported drive-mode selection. | — |
-| Pedal map | Other | B / A / N / D / R; pedal-controller reply, or unavailable marker. | — |
-| Battery sources | Batt | % / %; native IBS SOC and engine ECU SOC. | A |
-| Battery IBS raw | Batt | Two raw decimal bytes, IBS byte 0 then byte 1; no physical unit. | A |
-| IBS raw0/SOC/V | Batt | Raw byte 0 / % / V; IBS raw data and BCM SOC/voltage definitions, potentially unsupported on diesel. | A |
-| IBS raw1/SOC/V | Batt | Raw byte 1 / % / V; IBS raw data and BCM SOC/voltage definitions, potentially unsupported on diesel. | A |
-| Oil/water/gear C | Temp | °C × 3; native oil, ECU coolant and gearbox temperatures. | A |
+| Reading | Unit / meaning | Eligibility |
+| --- | --- | --- |
+| Power | PS | both |
+| Torque | Nm | both |
+| Boost | bar | both |
+| Intake | bar | gasoline |
+| Ign cyl 1 | deg | both |
+| Ign cyl 2 | deg | both |
+| Ign cyl 3 | deg | both |
+| Ign cyl 4 | deg | both |
+| Ign cyl 5 | deg | 2.9 petrol |
+| Ign cyl 6 | deg | 2.9 petrol |
+| Misfires | count | both |
+| EGR target | % | diesel |
+| EGR actual | % | diesel |
+| Turbo temp | C | diesel |
+
+### Fuel
+
+| Reading | Unit / meaning | Eligibility |
+| --- | --- | --- |
+| Fuel rate | L/h | diesel |
+| Fuel rail | bar | diesel |
+
+### Battery
+
+| Reading | Unit / meaning | Eligibility |
+| --- | --- | --- |
+| Battery | V | both |
+| Battery A | A | both |
+| Batt IBS | % | both |
+| Batt ECU | % | both |
+| Batt BCM | % | both |
+| IBS raw 0 | raw byte | both |
+| IBS raw 1 | raw byte | both |
+
+### Diesel / DPF
+
+| Reading | Unit / meaning | Eligibility |
+| --- | --- | --- |
+| DPF load | % | diesel |
+| DPF temp | C | diesel |
+| Regen | % | diesel |
+| Regen mode | phase | diesel |
+| Regen ago | km | diesel |
+| Regen count | count | diesel |
+| Regen avg km | km | diesel |
+| Regen avg min | min | diesel |
+| AdBlue | L | diesel + SCR |
+| AdBlue % | % | diesel + SCR |
+
+### Driving
+
+| Reading | Unit / meaning | Eligibility |
+| --- | --- | --- |
+| Speed | km/h | both |
+| Gear | N / R / gear | both |
+| DNA mode | A / N / D / R | both |
+| Pedal map | map letter | both |
+| Seatbelt | ON / OFF | both |
+| Distance | km | both |
+
+### Performance
+
+| Reading | Unit / meaning | Eligibility |
+| --- | --- | --- |
+| 0-100 | s | both |
+| 100-200 | s | both |
+| Best 0-100 | s | both |
+| Best100-200 | s | both |
+
+### Diagnostics
+
+| Reading | Unit / meaning | Eligibility |
+| --- | --- | --- |
+| Oil ECU temp | C | both |
+| Oil ECU press | bar | both |
+| MultiAir | C | 2.0 petrol |
+| Knock | mV | gasoline |
+| Key ID | number | gasoline |
+| Run time | min | both |
+| Over-rev s | s | both |
+| Over-rev n | count | both |
+| A/C pressure | bar | both |
+| Turbo V | V | gasoline |
+| Intake V | V | diesel |
+| Turbo req bar | bar | diesel |
+| Turbo req % | % | diesel |
+| Turbo % | % | diesel |
+| Boost req | bar | diesel |
 
 ## USB CAN capture and diagnostics
 
@@ -1082,7 +986,7 @@ commands and bus behavior. Use explicitly save USB mode OFF for ordinary operati
 | RES does not open the menu | Ignition/panel awake; CC and ACC both off; release controls, then hold RES for 0.9 s. Check C1 connection/firmware. ELM diagnostics can temporarily own processing. |
 | Menu skips or stops reacting | Distinguish gentle from strong presses. Release after a stream interruption. Inspect Information's Reports/Gaps/Input age and C2/BH status. |
 | Radio text remains on the display | BH should resend the complete two-line BACCAble message about once per second and restart it after a radio title/artist transfer. It follows the last observed media-text source. If the menu remains absent, check the BH link, matching firmware and the actual BH CAN output; host capture records received frames, not BH's own transmissions. |
-| A page or action is missing | Correct engine profile; Shown pages; Advanced pages; action permission in Features. A hidden favorite may still occupy its saved slot under another profile. |
+| A reading or action is missing | Correct vehicle profile; check the action permission in Features. An unsupported saved favorite shows `--` until its profile applies again. |
 | `No favorites` / `No pages` | Add compatible favorites or restore page visibility. Double-click RES still returns. |
 | A value shows `--` | Wait for fresh reports, check ignition/engine conditions and ECU compatibility. USB diagnostics can suspend normal queries. A displayed catalog entry is not a guarantee that the ECU implements it. |
 | `Batt BCM SOC --` or `Batt charge --%` | Compare the independent sources using Battery sources. Do not treat missing SOC as 0%, and do not use IBS override as a repair. |
@@ -1098,6 +1002,12 @@ commands and bus behavior. Use explicitly save USB mode OFF for ordinary operati
 | Capture has frames but unknown signals | Raw capture does not automatically name signals. Correlate logged actions and repeated tests with frame changes; preserve the original session. |
 
 ## Changes from the old manual
+
+Readings and Favorites are now individual measurements. The old compound pages,
+`Page favorites`, `Shown pages`, `Favorite order` and `Sort order` are gone;
+Favorites are six two-row layouts and Readings are grouped individual readings
+(see [Menu structure](#menu-structure)). Old page IDs are intentionally not
+retained; a first start loads and saves the new engine-aware defaults once.
 
 | Older wording or behavior | Current equivalent |
 | --- | --- |

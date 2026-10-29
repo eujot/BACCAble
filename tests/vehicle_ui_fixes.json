@@ -1,0 +1,319 @@
+{
+  "schema": 1,
+  "stage": "review-fixes",
+  "runs": [
+    {
+      "build_target": "build/test_menu",
+      "variant": "legacy18",
+      "source": "test_menu.c",
+      "cases": [
+        {
+          "name": "test_profile_atomic_restart",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_profile_editor_failure",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_favorite_validation_restart",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_favorite_widths",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_favorite_policy_sources",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_favorite_visible_polling",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_profile_effective_options",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_runtime_display",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_restore_defaults_flow",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_cancelled_same_did",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_settings_migration",
+          "change": "update",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_split_profile_migration",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        }
+      ]
+    },
+    {
+      "build_target": "build/test_menu_large",
+      "variant": "legacy24",
+      "source": "test_menu.c",
+      "cases": [
+        {
+          "name": "test_profile_atomic_restart",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_profile_editor_failure",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_favorite_validation_restart",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_favorite_widths",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_favorite_policy_sources",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_favorite_visible_polling",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_profile_effective_options",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_runtime_display",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_restore_defaults_flow",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_cancelled_same_did",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_split_profile_migration",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        }
+      ]
+    },
+    {
+      "build_target": "build/test_menu_my23",
+      "variant": "my23",
+      "source": "test_menu.c",
+      "cases": [
+        {
+          "name": "test_profile_atomic_restart",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_profile_editor_failure",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_favorite_validation_restart",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_favorite_widths",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_favorite_policy_sources",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_favorite_visible_polling",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_profile_effective_options",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_runtime_display",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_restore_defaults_flow",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_cancelled_same_did",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_split_profile_migration",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        }
+      ]
+    },
+    {
+      "build_target": "build/test_menu_my23_large",
+      "variant": "my23-large",
+      "source": "test_menu.c",
+      "cases": [
+        {
+          "name": "test_profile_atomic_restart",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_profile_editor_failure",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_favorite_validation_restart",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_favorite_widths",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_favorite_policy_sources",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_favorite_visible_polling",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_profile_effective_options",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_runtime_display",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_restore_defaults_flow",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_cancelled_same_did",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        },
+        {
+          "name": "test_split_profile_migration",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        }
+      ]
+    },
+    {
+      "build_target": "build/test_body_display",
+      "variant": "bh18",
+      "source": "test_body_display.c",
+      "cases": [
+        {
+          "name": "test_runtime_legacy_packet_widths",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        }
+      ]
+    },
+    {
+      "build_target": "build/test_body_display_large",
+      "variant": "bh24",
+      "source": "test_body_display.c",
+      "cases": [
+        {
+          "name": "test_runtime_legacy_packet_widths",
+          "change": "new",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        }
+      ]
+    },
+    {
+      "build_target": "build/test_exhaust",
+      "variant": "c1",
+      "source": "test_exhaust.c",
+      "cases": [
+        {
+          "name": "test_exhaust_profile_and_recovery",
+          "change": "update",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        }
+      ]
+    },
+    {
+      "build_target": "build/test_rain_uart",
+      "variant": "c1-uart",
+      "source": "test_rain_uart.c",
+      "cases": [
+        {
+          "name": "test_rain_with_usb_and_display",
+          "change": "update",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        }
+      ]
+    },
+    {
+      "build_target": "build/test_vehicle_profile",
+      "variant": "legacy18",
+      "source": "test_vehicle_profile.c",
+      "cases": [
+        {
+          "name": "test_vehicle_feature_support",
+          "change": "update",
+          "evidence": "test-impact.md#review-corrections-2026-10-29"
+        }
+      ]
+    }
+  ]
+}

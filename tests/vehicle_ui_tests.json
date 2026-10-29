@@ -1,0 +1,270 @@
+{
+  "schema": 1,
+  "stage": "P7",
+  "runs": [
+    {
+      "build_target": "build/test_menu",
+      "variant": "legacy18",
+      "source": "test_menu.c",
+      "cases": [
+        {
+          "name": "test_settings_migration",
+          "change": "updated",
+          "evidence": "test-impact.md#p8-settings-profile"
+        },
+        {
+          "name": "test_vehicle_editor",
+          "change": "new",
+          "evidence": "test-impact.md#p8-vehicle-editor"
+        },
+        {
+          "name": "test_vehicle_editor_equipment",
+          "change": "new",
+          "evidence": "test-impact.md#p8-vehicle-editor-equipment"
+        },
+        {
+          "name": "test_my23_glyph_budget",
+          "change": "updated",
+          "evidence": "test-impact.md#p8-my23-glyphs"
+        },
+        {
+          "name": "test_shared_renderers",
+          "change": "updated",
+          "evidence": "test-impact.md#p8-shared-renderers"
+        }
+      ]
+    },
+    {
+      "build_target": "build/test_vehicle_profile",
+      "variant": "legacy18",
+      "source": "test_vehicle_profile.c",
+      "cases": [
+        {
+          "name": "test_vehicle_profile_default",
+          "change": "new",
+          "evidence": "test-impact.md#p2-profile-default"
+        },
+        {
+          "name": "test_vehicle_profile_validate",
+          "change": "new",
+          "evidence": "test-impact.md#p2-profile-validate"
+        },
+        {
+          "name": "test_vehicle_profile_engine_helpers",
+          "change": "new",
+          "evidence": "test-impact.md#p2-profile-engine"
+        },
+        {
+          "name": "test_vehicle_feature_support",
+          "change": "new",
+          "evidence": "test-impact.md#p2-feature-support"
+        },
+        {
+          "name": "test_vehicle_parameter_support",
+          "change": "new",
+          "evidence": "test-impact.md#p2-parameter-support"
+        },
+        {
+          "name": "test_vehicle_display_profile",
+          "change": "new",
+          "evidence": "test-impact.md#p2-display-profile"
+        },
+        {
+          "name": "test_vehicle_oil_range",
+          "change": "new",
+          "evidence": "test-impact.md#p2-oil-range"
+        },
+        {
+          "name": "test_vehicle_profile_codec",
+          "change": "new",
+          "evidence": "test-impact.md#p2-profile-codec"
+        },
+        {
+          "name": "test_vehicle_profile_legacy_import",
+          "change": "new",
+          "evidence": "test-impact.md#p2-legacy-import"
+        },
+        {
+          "name": "test_vehicle_profile_apply_legacy_flags",
+          "change": "new",
+          "evidence": "test-impact.md#p2-legacy-flags"
+        },
+        {
+          "name": "test_vehicle_profile_legacy_flags",
+          "change": "new",
+          "evidence": "test-impact.md#p8-profile-legacy-flags"
+        },
+        {
+          "name": "test_vehicle_profile_commit",
+          "change": "new",
+          "evidence": "test-impact.md#p2-profile-commit"
+        }
+      ]
+    },
+    {
+      "build_target": "build/test_runner_selection",
+      "variant": "selection",
+      "source": "test_runner_selection.c",
+      "cases": [
+        {
+          "name": "test_runner_selection_runs",
+          "change": "new",
+          "evidence": "test-impact.md#p0-runner-selection"
+        }
+      ]
+    },
+    {
+      "build_target": "build/test_reading_catalog",
+      "variant": "legacy18",
+      "source": "test_reading_catalog.c",
+      "cases": [
+        {
+          "name": "test_reading_catalog_unique_and_ordered",
+          "change": "new",
+          "evidence": "test-impact.md#p3-catalog-unique"
+        },
+        {
+          "name": "test_reading_catalog_sources",
+          "change": "new",
+          "evidence": "test-impact.md#p3-catalog-sources"
+        },
+        {
+          "name": "test_reading_catalog_eligibility",
+          "change": "new",
+          "evidence": "test-impact.md#p3-catalog-eligibility"
+        },
+        {
+          "name": "test_reading_catalog_source_resolution",
+          "change": "new",
+          "evidence": "test-impact.md#p3-catalog-source-resolution"
+        },
+        {
+          "name": "test_reading_catalog_list",
+          "change": "new",
+          "evidence": "test-impact.md#p3-catalog-list"
+        },
+        {
+          "name": "test_reading_catalog_enum_labels",
+          "change": "new",
+          "evidence": "test-impact.md#p3-catalog-enum-labels"
+        }
+      ]
+    },
+    {
+      "build_target": "build/test_reading_layout",
+      "variant": "legacy18",
+      "source": "test_reading_layout.c",
+      "cases": [
+        {
+          "name": "test_reading_glyph_count",
+          "change": "new",
+          "evidence": "test-impact.md#p4-glyph-count"
+        },
+        {
+          "name": "test_reading_missing_never_zero",
+          "change": "new",
+          "evidence": "test-impact.md#p4-missing"
+        },
+        {
+          "name": "test_reading_numeric_format",
+          "change": "new",
+          "evidence": "test-impact.md#p4-numeric"
+        },
+        {
+          "name": "test_reading_overflow_indicator",
+          "change": "new",
+          "evidence": "test-impact.md#p4-overflow"
+        },
+        {
+          "name": "test_reading_auto_format",
+          "change": "new",
+          "evidence": "test-impact.md#p4-auto"
+        },
+        {
+          "name": "test_reading_line_fit",
+          "change": "new",
+          "evidence": "test-impact.md#p4-line"
+        },
+        {
+          "name": "test_reading_oil_status",
+          "change": "new",
+          "evidence": "test-impact.md#p4-oil-status"
+        },
+        {
+          "name": "test_reading_oil_bar",
+          "change": "new",
+          "evidence": "test-impact.md#p4-oil-bar"
+        }
+      ]
+    },
+    {
+      "build_target": "build/test_favorite_layout",
+      "variant": "legacy18",
+      "source": "test_favorite_layout.c",
+      "cases": [
+        {
+          "name": "test_favorite_item_and_clear",
+          "change": "new",
+          "evidence": "test-impact.md#p6-item-clear"
+        },
+        {
+          "name": "test_favorite_duplicate_and_bar",
+          "change": "new",
+          "evidence": "test-impact.md#p6-duplicate-bar"
+        },
+        {
+          "name": "test_favorite_defaults_valid",
+          "change": "new",
+          "evidence": "test-impact.md#p6-defaults-valid"
+        },
+        {
+          "name": "test_favorite_defaults_engine_aware",
+          "change": "new",
+          "evidence": "test-impact.md#p6-defaults-engine"
+        },
+        {
+          "name": "test_favorite_unique_sources_dedup",
+          "change": "new",
+          "evidence": "test-impact.md#p6-source-dedup"
+        },
+        {
+          "name": "test_favorite_row_render",
+          "change": "new",
+          "evidence": "test-impact.md#p6-row-render"
+        }
+      ]
+    },
+    {
+      "build_target": "build/test_ui_layout_store",
+      "variant": "legacy18",
+      "source": "test_ui_layout_store.c",
+      "cases": [
+        {
+          "name": "test_ui_layout_default",
+          "change": "new",
+          "evidence": "test-impact.md#p7-layout-default"
+        },
+        {
+          "name": "test_ui_layout_roundtrip",
+          "change": "new",
+          "evidence": "test-impact.md#p7-layout-roundtrip"
+        },
+        {
+          "name": "test_ui_layout_reject_bad_schema",
+          "change": "new",
+          "evidence": "test-impact.md#p7-layout-schema"
+        },
+        {
+          "name": "test_ui_layout_reject_invalid_item",
+          "change": "new",
+          "evidence": "test-impact.md#p7-layout-invalid-item"
+        },
+        {
+          "name": "test_ui_layout_restart_persistence",
+          "change": "new",
+          "evidence": "test-impact.md#p7-layout-restart"
+        }
+      ]
+    }
+  ]
+}

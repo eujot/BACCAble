@@ -10,6 +10,7 @@
 #include "features/ibs_override.h"
 #include "features/drive_mode_check.h"
 #include "diagnostics/fault_reader.h"
+#include "vehicle/vehicle_runtime.h"
 
 #if defined(BACCABLE_C1)
 
@@ -19,7 +20,7 @@
 
 
 uint8_t setup_dashboardPageIndex = 0;
-uint8_t dashboard_setup_screen[DASHBOARD_MESSAGE_MAX_LENGTH];
+uint8_t dashboard_setup_screen[24];
 uint8_t total_pages_in_setup_dashboard_menu = 0;
 
 /* Draft values remain separate until the explicit save succeeds. */
@@ -64,6 +65,7 @@ bool setup_back(void) {
 
 /* Parking capture has no storage acknowledgement on the inter-board protocol. */
 static void setup_park_select(void) {
+    if (!vehicle_feature_allowed(VEHICLE_FEATURE_PARK_MIRROR)) { menu_notice("Configure Vehicle"); return; }
     if (park_capture == 2) {
         park_capture = 0;
     } else if (park_capture) {
@@ -124,7 +126,12 @@ static void setup_set_value(const SetupParam *param, uint16_t value) {
 }
 
 /* Check whether a saved preference has a user-facing menu entry. */
-static uint8_t setup_param_is_visible(const SetupParam *param) { return param->menu_text != 0; }
+static uint8_t setup_param_is_visible(const SetupParam *param) {
+    if (!param->menu_text) return 0;
+    VehicleFeature feature = vehicle_setting_feature(param->flash_index);
+    return feature == VEHICLE_FEATURE_COUNT || !vehicle_profile_current()->confirmed ||
+           vehicle_feature_support(feature) != VEHICLE_SUPPORT_UNSUPPORTED;
+}
 
 /* Count the available feature settings, without synthetic navigation entries. */
 static uint8_t setup_menu_pages_count(void) {
@@ -240,6 +247,7 @@ uint16_t setup_read_flash_value(uint8_t flash_index, uint16_t stored_value) {
 
 /* Restore all feature preferences before vehicle operation starts. */
 void setup_load_from_flash(void) {
+    settings_load_begin();
     setup_menu_pages_count();
     for (uint8_t i = 0; i < setup_params_count; i++)
         setup_set_value(&setup_params[i], settings_read(setup_params[i].flash_index));
@@ -258,6 +266,8 @@ void setup_fill_flash_params(uint16_t *params) {
 
 /* Refuse permission changes that would hide an active feature or silently reset another one. */
 static const char *setup_unavailable(const SetupParam *param) {
+    const char *policy = vehicle_setting_reason(param->flash_index);
+    if (policy && !setup_get_value(param)) return policy;
     if (setup_get_value(param) && menu_setting_busy(param->flash_index))
         return "Request pending";
     switch (param->flash_index) {
@@ -321,7 +331,7 @@ static void setup_default_mode_result(char result[24]) {
     static const char *const modes[] = {"N", "A", "D", "Race"};
     unsigned mode = settings_state.default_drive_mode;
     const char *label = modes[mode <= 3 ? mode : 0];
-    if (mode == 3 && !settings_state.ipc_my23_is_installed) label = "R";
+    if (mode == 3 && !(vehicle_display_effective().rows == 2)) label = "R";
     snprintf_(result, 24, "%s %s", label, drive_mode_check_status());
 }
 
@@ -334,16 +344,16 @@ void setup_render_page(uint8_t page_index) {
         char number[24], hint[24];
         const char *value = setup_value_label(staged, stage_value, stage_extra, number);
         snprintf_(hint, sizeof(hint), "%s" MY23_BULLET "HOLD SAVE", value);
-        if (settings_state.ipc_my23_is_installed)
+        if ((vehicle_display_effective().rows == 2))
             menu_present_view(stage_confirm ? UI_MODE_CONFIRM : UI_MODE_EDIT, staged->menu_text, stage_confirm ? "HOLD SAVE" MY23_BULLET "2X DISCARD" : hint);
         else {
-            char text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
-            if (stage_confirm) snprintf_(text, sizeof(text), "Hold save/2x drop");
+            char text[25];
+            if (stage_confirm) snprintf_(text, (vehicle_display_effective().rows == 2 ? sizeof(text) : vehicle_display_effective().widths[0] + 1U), "Hold save/2x drop");
             else if (staged->entry_type == UI_ENTRY_NUMBER && staged->value_type == SETUP_VALUE_INT8_AS_UINT8)
-                ui_render_signed_number(text, sizeof(text), staged->menu_text, (int8_t)stage_value, true);
+                ui_render_signed_number(text, (vehicle_display_effective().rows == 2 ? sizeof(text) : vehicle_display_effective().widths[0] + 1U), staged->menu_text, (int8_t)stage_value, true);
             else if (staged->entry_type == UI_ENTRY_NUMBER)
-                ui_render_number(text, sizeof(text), staged->menu_text, stage_value, true);
-            else ui_render_value(text, sizeof(text), staged->menu_text, value);
+                ui_render_number(text, (vehicle_display_effective().rows == 2 ? sizeof(text) : vehicle_display_effective().widths[0] + 1U), staged->menu_text, stage_value, true);
+            else ui_render_value(text, (vehicle_display_effective().rows == 2 ? sizeof(text) : vehicle_display_effective().widths[0] + 1U), staged->menu_text, value);
             menu_present(text);
         }
         return;
@@ -353,16 +363,16 @@ void setup_render_page(uint8_t page_index) {
     if (!param)
         return;
 
-    char text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
+    char text[25];
     const char *reason = setup_unavailable(param);
     if (reason)
-        ui_render_unavailable(text, sizeof(text), reason);
+        ui_render_unavailable(text, (vehicle_display_effective().rows == 2 ? sizeof(text) : vehicle_display_effective().widths[0] + 1U), reason);
     else if (park_menu)
-        setup_park_render(text, sizeof(text));
+        setup_park_render(text, (vehicle_display_effective().rows == 2 ? sizeof(text) : vehicle_display_effective().widths[0] + 1U));
     else if (param->entry_type == UI_ENTRY_TOGGLE && param->flash_index != 39)
-        ui_render_checkbox(text, sizeof(text), param->menu_text, !!setup_get_value(param));
+        ui_render_checkbox(text, (vehicle_display_effective().rows == 2 ? sizeof(text) : vehicle_display_effective().widths[0] + 1U), param->menu_text, !!setup_get_value(param));
     else if (param->entry_type == UI_ENTRY_SUBMENU)
-        ui_render_action(text, sizeof(text), param->menu_text);
+        ui_render_action(text, (vehicle_display_effective().rows == 2 ? sizeof(text) : vehicle_display_effective().widths[0] + 1U), param->menu_text);
     else {
         if (param->render) { param->render(); return; }
         char number[24];
@@ -372,9 +382,9 @@ void setup_render_page(uint8_t page_index) {
             char result[24];
             setup_default_mode_result(result);
             if (!strcmp(drive_mode_check_status(), "Start engine"))
-                ui_render_value(text, sizeof(text), value, "Start engine");
-            else ui_render_value(text, sizeof(text), "DNA", result);
-        } else ui_render_value(text, sizeof(text), param->menu_text, value);
+                ui_render_value(text, (vehicle_display_effective().rows == 2 ? sizeof(text) : vehicle_display_effective().widths[0] + 1U), value, "Start engine");
+            else ui_render_value(text, (vehicle_display_effective().rows == 2 ? sizeof(text) : vehicle_display_effective().widths[0] + 1U), "DNA", result);
+        } else ui_render_value(text, (vehicle_display_effective().rows == 2 ? sizeof(text) : vehicle_display_effective().widths[0] + 1U), param->menu_text, value);
     }
     memset(dashboard_setup_screen, ' ', sizeof(dashboard_setup_screen));
     memcpy(dashboard_setup_screen, text, strlen(text));
@@ -497,6 +507,11 @@ void setup_stage_save(void) {
     /* Conditions may have changed while the draft was being edited. */
     const char *reason = setup_unavailable(staged);
     if (reason) { menu_notice(reason); return; }
+    VehicleFeature feature = vehicle_setting_feature(staged->flash_index);
+    if ((stage_value && feature != VEHICLE_FEATURE_COUNT && !vehicle_feature_allowed(feature)) ||
+        (staged->flash_index == 38 && stage_value == 3 && !vehicle_feature_allowed(VEHICLE_FEATURE_DEFAULT_RACE))) {
+        menu_notice("Configure Vehicle"); return;
+    }
     stage_assign(stage_value, stage_extra);
     if (settings_save()) {
         stage_assign(stage_original, stage_original_extra);
@@ -523,11 +538,11 @@ void setup_stage_save(void) {
 #if defined(BACCABLE_C1)
 bool setup_stage_active(void) { return staged != NULL; }
 bool setup_present_my23(void) {
-    if (!settings_state.ipc_my23_is_installed) return false;
+    if (!(vehicle_display_effective().rows == 2)) return false;
     if (staged) return true;
     if (park_menu) {
-        char text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
-        setup_park_render(text, sizeof(text));
+        char text[25];
+        setup_park_render(text, (vehicle_display_effective().rows == 2 ? sizeof(text) : vehicle_display_effective().widths[0] + 1U));
         menu_present_lines(text, park_capture == 1 ? "HOLD STORE" MY23_BULLET "2X BACK" : "CLICK USE" MY23_BULLET "2X BACK");
         return true;
     }

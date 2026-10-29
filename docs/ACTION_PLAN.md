@@ -4,6 +4,402 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## PR 96 CI UART correction, 2026-10-29
+
+Run 40914037083 failed in `test_rain_test_with_shared_uart`: one-second display
+capability queries saturated the UART queue during the preceding USB/rain/screen
+scenario. The first BH sample arrived after its deadline. Firmware/lint jobs were
+skipped by dependency, not independently failing. Capability queries now repeat
+every five seconds with a three-second correlated reply window. Mirror freshness
+remains three seconds. EN/PL guides describe pending negotiation/save retries.
+The two updated UART scenarios pass with zero queue errors; the updated runtime
+display case passes in four menu variants (six selected ASan/UBSan executions).
+C1 also builds with Arm GNU 15.2.Rel1. Run 40915444154 passed UART and then
+exposed test fixture contamination: the new BH width case preceded a legacy
+sequential suite reading frame zero. It now follows that suite and advances time
+monotonically. The selected width case passes in both BH variants. Hardware
+acceptance remains open. New PR CI results must confirm the full suite.
+
+## Vehicle UI review corrections completed locally, 2026-10-29
+
+Fix implementation `ec1665e`; baseline `09bc1e7` / reviewed implementation
+`12aae0c`, same isolated branch
+`docs/vehicle-profile-audit`. All seven blocking review items below and the
+reported confirmation/Restore defaults/suspension-policy gaps are corrected.
+This entry supersedes their open status, not the hardware acceptance boundary.
+
+- One SETTINGS_RECORD 0x108 transaction contains all 42 feature slots and the
+  complete 17-byte profile, including explicit imported-permission provenance.
+  Model/year/equipment-only saves persist; failed writes retain the live profile
+  and draft and report failure. Canonical profile fields cannot be overwritten by
+  hidden legacy aliases. 0x101 (40/41/42 slots) and experimental 0x107 are import-only.
+- Initial migration appends a combined record into unused 256-byte slots within
+  the existing two reserved pages, preserving both split legacy payloads until
+  commit. Retries skip partial slots; exhausting them fails without erasing old
+  data. Normal updates alternate pages. Statistics/UI/mirror allocations do not move.
+- Vehicle HOLD opens consequences review (up/down shows suppressed saved options),
+  then HOLD confirms. Busy AWD/brake/Dyno/exhaust/mirror workflows block commits.
+  Equipment policy gates new actions, periodic C1 actuation and effective peer
+  options; explicit OFF reaches peers. Recovery stays available. Saves retain
+  preferences and do not replay startup actions. Suspension and Race are distinct.
+- Runtime Auto/year and explicit 18/24/MY23 selection drive menu/layout output.
+  Token-correlated BH capability replies precede a display change; unsupported
+  peers retain the working fallback. Width-marked legacy packets reset stale
+  fragments without destroying factory source history. Saved-but-pending is shown.
+- Favorite drafts validate structure and current width before persistence. Auto
+  resolves from reserved widths; individual values have bounded overflow fields.
+  Defaults fit through explicit MY23 simplification or legacy continuation pages.
+  Narrower displays may temporarily abbreviate an individual saved wider label;
+  stored IDs/styles remain intact. Ineligible items are filtered from both rendering
+  and polling. The same visible subset drives deduplicated requests (legacy only
+  its displayed subpage; MY23 both displayed rows).
+- Restore defaults is a separate confirmed Favorite action with cancel/failure
+  rollback. Unknown future UI schema is read-only. Cancelled UDS requests retain
+  their old response window before reusing a DID. EN/PL guides and MENU_UX updated.
+
+Validation: `tests/vehicle_ui_fixes.json`, 50 selected new/meaningfully updated
+case executions PASS with native Apple Clang, ASan and UBSan. Includes real
+record_store migration/restart and every interrupted halfword write (including
+split 0x101+0x107 import), editor failure/retry, policy and recovery, default width
+matrices, retained ineligible IDs, visible polling, same-DID late replies,
+Restore defaults, BH 24/18 switching and factory restore, plus actual UART queue
+under display-capability traffic, USB capture and Rain lights with a lost reply.
+The ledger is `tests/test-impact.md`. Untouched host/Lab cases were not executed.
+
+Arm GNU 15.2.Rel1: four-flavor lint, all builds and 16 board/display combinations
+PASS, version `vehicle-fixes`; four standard size/identity gates PASS. Totals:
+
+| Board | Default Flash / static RAM | Largest matrix Flash / static RAM |
+| --- | --- | --- |
+| C1 | 92,932 / 13,316 B | 93,004 / 13,508 B |
+| C2 | 31,192 / 12,336 B | 31,324 / 12,424 B |
+| BH | 36,392 / 13,032 B | 36,440 / 13,128 B |
+| CAN | 24,984 / 6,928 B | 24,984 / 6,968 B |
+
+Largest C1 leaves 5,300 B Flash and 2,876 B beyond static RAM; the latter is not
+measured runtime stack headroom. No hardware flash, vehicle acceptance, push,
+merge or release. Existing user edits: none in this worktree at task start.
+Next: review these corrections, then vehicle display/operation acceptance; the
+broader untouched regression suite requires the owner's test-scope revision.
+CAN dictionary 2026-10-29.2 source digests and regenerated catalog track
+implementation `ec1665e` in the accompanying provenance commit; source scales/DIDs and research evidence are
+unchanged. The historical full-plan completeness claims are not new acceptance
+claims for unrelated unimplemented editor conveniences.
+
+## Blocking implementation review, 2026-10-29
+
+Reviewed clean implementation HEAD `12aae0c`. The earlier implemented/non-blocking
+handoff above must not be treated as acceptance: the following production paths
+remain incomplete. This is a source review; no firmware fix or hardware test is
+claimed. Priority order for corrections:
+
+1. **P1 — Transactional profile/settings storage.** `settings/persistence.c`
+   skips profile writes when legacy slots compare equal, losing model/year/equipment
+   edits on reboot. The editor publishes before persistence and ignores save errors;
+   menu HOLD always reports Saved. Types 0x101 and 0x107 also share SETTINGS_RECORD's
+   two physical pages: writing a changed 0x101 can erase the only 0x107 copy before
+   the second write restores it. Use one atomic combined schema or genuinely
+   independent storage with a transaction design; retain the prior effective state
+   and editable draft on failure. Test real record_store pages, reboot and interrupted
+   writes, rather than independent per-type Flash stubs.
+2. **P1 — Connect equipment policy and confirmation.** vehicle_feature_support has
+   no production action/synchronization callers. AWD/exhaust and peer configuration
+   still use preferences alone. The editor never sets confirmed=true, and commit
+   validates fields without checking active AWD/brake/Dyno/exhaust/mirror workflows.
+   Add explicit confirmation, effective policy at execution and board synchronization,
+   explicit disabled options, and active-operation guards with recovery preserved.
+3. **P1 — Resolve runtime display end to end.** Auto/year resolution is unused by
+   menu rendering, which still reads the old MY23 boolean and compile-time width.
+   Legacy flag conversion treats Auto as non-MY23; saving legacy flags replaces
+   Auto/explicit width with a build-dependent selection. Preserve canonical selection
+   and drive rendering/transport from the resolved display contract.
+4. **P1 — Validate Favorite drafts before saving.** menu HOLD and ui_layout_encode
+   accept duplicate readings and a bar mixed with other items. ui_layout_decode
+   rejects those same rows on reboot, and menu_init replaces the entire record with
+   defaults. Thus one accepted invalid row destroys all custom sets after restart.
+   Validate structural and current-display fit constraints before persistence; keep
+   the draft and explain rejection. Add integrated save/restart cases.
+5. **P1 — Make default and edited Favorite rows fit.** favorite_row_render passes
+   Auto directly to reading_label_for, which returns the full label. It does not
+   resolve Auto or reserve worst-case widths, and overflow replaces the whole row
+   with '#'. Even cold default Warm-up ('Oil temp -- Coolant --', 22 glyphs) fails
+   legacy18 and MY23 line1. Implement width resolution, validated defaults and
+   deterministic continuation subpages for saved wider rows; test 16/18/22/24 widths
+   with missing, ordinary and extreme values.
+6. **P1 — Filter saved Favorites by applicability.** favorite_set_unique_sources,
+   sample collection and row rendering do not apply vehicle_reading_support. For
+   example a saved V6 ignition-cylinder-5 item continues requesting source 19 after
+   switching to I4; SCR Absent does not suppress saved AdBlue sources. Filter both
+   visible rendering and polling while retaining stored items for later profiles.
+7. **P2 — Poll only visible Favorite sources.** legacy rendering shows one row,
+   but menu_process collects UDS sources from both rows. Hidden-row requests consume
+   the 500 ms slots and delay visible values. Build the deduplicated request list
+   from actual visible rows/subpages; cover legacy row changes and MY23 two-row mode.
+
+Other required UI scope remains incomplete: there is no Restore defaults action
+in menu.c. Include its confirmation/failure/reboot behavior in the correction.
+The feature policy also groups SOFT_SUSPENSION with DEFAULT_RACE and reads the Race
+slot for both; use the Suspension equipment slot when wiring that policy.
+
+Evidence: the first review ran the authorized manifest (43 selected cases pass).
+This follow-up inspected production paths and existing test assertions; it did not
+rerun unchanged tests. Current model tests do not establish the missing integrated
+save, width, applicability or polling behavior. No build/vehicle acceptance added.
+Review documentation only; implementation remains `12aae0c`, release/installation
+unchanged. Next step: correct items 1–6 with meaningful scoped regression cases,
+then finish item 7 and remaining editor scope before claiming plan completion.
+
+## HANDOFF — current state and next steps, 2026-10-29 (start here)
+
+Branch `docs/vehicle-profile-audit`, HEAD `a9abc14` plus the CAN-dictionary
+snapshot fix recorded below; PR #96 targets `master`. Scoped host tests: 43/43
+pass via the scoped runner; `baccable_lab` `test_knowledge` 26/26. All four board
+flavors build and link.
+
+Completed (each committed separately, scoped tests green):
+1. `4bd5b6f` Favorites cutover to `FavoriteLayout` (render/edit/persist via 0x106).
+2. `a312194` Removed EDIT_FAVORITES / EDIT_VISIBLE / ORDER_FAVORITES.
+3. `cc2d95c` Automatic-result view cut to `menu_show_reading(READING_TIME_0_100)`.
+4-5. `20b0e00` Removed the compound-page model and wired the ReadingId Readings
+   path: deleted `parameter_pages`/`ParameterPage`, `menu_model.c`/`MenuPreferences`,
+   `dashboard_format.c`, page-based `oil_level.c`, `favorite_parameters.c` and
+   `parameter_navigation.c`; kept `parameter_definitions` (98 UDS sources).
+   Readings now uses `reading_group_name`/`reading_list` + `reading_format_line/value`
+   with single-source polling and `ui_layout.last_reading`. `parameter_request.c`
+   is single-source; `dashboard_send_values` and the page formatters are gone.
+6. `e8c5c59` Rewrote `tests/test_menu.c` to keep the scoped settings-migration and
+   vehicle-editor cases plus new-record flash stubs, dropping the obsolete
+   compound-page menu fixtures.
+7. `b6e23ed` Updated the EN/PL user-guide menu-structure and Favorites/Readings
+   sections, replaced `test_catalog.c` with a parameter-definition layout test,
+   and recorded the retired expectations in `test-impact.md`.
+8. `78e42f3` Routed `READING_OIL_LEVEL_BAR` through a dedicated full-width bar
+   renderer (bracket/scale + marker + off-scale arrows) instead of the oil-status
+   label; `favorite_row_render` renders it full-width without a label. Added
+   `test_reading_oil_bar` (41/41).
+
+Flash/RAM now (text/data/bss): C1 86312/1836/11328, C2 30236/952/11384,
+BH 34984/860/12168, CAN 24328/656/6272.
+
+Remaining (documentation polish, non-blocking):
+- Re-integrate the last orphaned menu/setup/action fixtures that need the removed
+  shared navigation helpers (`test_latin1_vocabulary` in `test_idle_latin1.c`,
+  `test_setup_ui.c`, `test_unified_ui.c` action/setup cases, and the obsolete
+  `test_menu_contract.c`/`test_oil_level.c`). The still-valid `test_my23_glyph_budget`
+  and `test_shared_renderers` are already re-integrated; the new-model invariants
+  are covered by the 43 scoped cases.
+- `docs/ACTION_PLAN.md` remains the backlog; architecture-doc status notes are
+  updated. Hardware acceptance remains open.
+
+Build/test commands (worktree root, full ARM toolchain):
+- scoped tests: python3 tests/run_vehicle_ui_tests.py --manifest tests/vehicle_ui_tests.json --run
+- firmware: make -C firmware/baccable FLAVOR=C1 TOOLCHAIN=/Applications/ArmGNUToolchain/15.2.rel1/arm-none-eabi/bin/arm-none-eabi- VERSION=local-test all
+
+Gotchas: read files in /private/tmp/baccable-vehicle-profile-audit via terminal
+(not read_file, which points at the stale /Users/eujot/git/BACCAble checkout).
+Float formatting must use the project printf (snprintf_), not libc snprintf
+(newlib-nano lacks %f). Preserve unrelated local edits and keep both user guides
+in sync per AGENTS.md. Hardware acceptance remains open; no board has been flashed.
+
+## PR #96 CI fix: CAN dictionary source snapshot, 2026-10-29
+
+PR #96 (this branch) failed the Lab `test` job in
+`baccable_lab/tests/test_knowledge.py::test_source_snapshot_and_dispatcher_coverage`:
+the curated dictionary pins SHA256 digests for the firmware sources it decodes,
+and the cutover changed three of them.
+
+- `baccable_lab/baccable_lab/knowledge/giulia.json`: refreshed
+  `source_sha256` for `vehicle/telemetry_frames.c` (automatic-result view now
+  opens `READING_TIME_0_100`), `diagnostics/parameter_catalog.c` (compound-page
+  tables removed; definition/selection state only) and
+  `diagnostics/parameter_request.c` (single-source request path). Bumped
+  `dictionary_version` to `2026-10-29.1` and `firmware_source_commit` to
+  `20b0e00`, the last commit in the snapshot that touched a pinned source.
+- `baccable_lab/docs/CAN_DICTIONARY.md` regenerated with
+  `scripts/render_can_dictionary.py` so the readable catalog matches the
+  machine-readable dictionary (header version/snapshot only; no frame, field or
+  provenance text changed, because no removed symbol was cited as a source).
+- No layout, conversion, origin or evidence claim was altered; only provenance
+  of an already-documented snapshot. `firmware_source_commit` is not a behavior
+  claim.
+
+Verification: `python3 -m unittest tests.test_knowledge` in `baccable_lab` — 26/26
+pass, including the snapshot/dispatcher case and the generated-catalog check.
+The 43 scoped UI cases and the four firmware flavors are unchanged by this fix.
+Hardware acceptance remains open.
+
+## P8 Readings cutover attempt: C1 FLASH overflow, 2026-10-28
+
+Attempted the Readings cutover (GROUPS -> individual `ReadingId` via
+`reading_list`/`reading_format`, single-source polling). The code is correct but
+the C1 image no longer links: `region 'FLASH' overflowed by 2324 bytes`
+(`.rodata`). Root cause is that the new reading-catalog strings/format code now
+coexist with the still-live old compound-page tables, which Favorites and the
+automatic-result view have not yet been cut over. This is the P10 resource gate.
+
+Reverted `features/menu.c` to keep the build green; the tree builds again.
+Resolving this requires, in order: (1) finish the Favorites and automatic-result
+cutover, then remove the retired `parameter_pages` compound tables (frees FLASH),
+and (2) route `reading_format.c` float formatting through `third_party/printf`
+(`snprintf_`) instead of libc `snprintf` (newlib-nano has no `%f`). Both are P8/P9
+follow-ups, not blockers for the already-committed Vehicle editor work.
+
+## P8 step 1: canonical profile persistence, 2026-10-28
+
+Started the P8 cutover with the safest, testable slice: the `VehicleProfile` is
+now the canonical source for the legacy engine/drivetrain/display facts at the
+settings load/save boundary.
+
+- `vehicle/vehicle_profile.c/.h`: added `vehicle_profile_apply_legacy_flags`
+  (legacy flags -> profile, preserving model/year/equipment/confirmed).
+- `settings/persistence.c`: on first settings load, decode the new 0x107 profile
+  record or import the legacy 0x101 engine/drivetrain/display slots (unconfirmed);
+  on settings save, derive the profile from the legacy flags and persist 0x107.
+- `tests/test_menu.c`: extended the flash stubs and `test_settings_migration` to
+  assert the profile import (V6/Q4/unconfirmed), the 0x107 write, and the
+  engine re-derivation after a flag change.
+- `tests/vehicle_ui_tests.json` now also runs the updated `test_settings_migration`
+  through the scoped runner.
+
+Verification: 37 selected cases pass (ASan/UBSan); C1 firmware builds and links
+(text/data/bss = 90608/1836/10784). The legacy setup menu still edits the old
+booleans; the profile is derived from them on save. Next P8 step: add the Vehicle
+editor (model/year/equipment) and replace the Readings/Favorites UI + polling.
+
+## Vehicle profile / Readings / Favorites foundation (P0–P7) implemented, 2026-10-28
+
+Implemented the model/storage/renderer/policy foundation of
+[VEHICLE_UI_IMPLEMENTATION_PLAN](architecture/VEHICLE_UI_IMPLEMENTATION_PLAN.md)
+and the required scoped test runner. This is a reviewable, tested base for the
+P8 UI/polling cutover; the old compound Readings/Favorites UI is still active
+until that cutover, so no released legacy-compound mode is removed yet.
+
+Delivered (new files):
+
+- `firmware/baccable/vehicle/vehicle_profile.h/.c` — canonical `VehicleProfile`
+  (model/engine/year/drivetrain/display/equipment/confirmed), validation,
+  feature/parameter policy, display-profile resolution, owner oil ranges,
+  generation counter, explicit 0x107 codec and legacy 0x101 import.
+- `firmware/baccable/features/reading_catalog.h/.c` — stable `ReadingId` catalog
+  mapping every reading to one UDS source per engine class, groups, labels,
+  units, precision and eligibility. See
+  [VEHICLE_UI_SOURCE_READING_MAP](architecture/VEHICLE_UI_SOURCE_READING_MAP.md).
+- `firmware/baccable/features/reading_format.h/.c` — width-aware scalar/line
+  renderer with UTF-8 glyph counting, `--` for stale/missing, bounded overflow
+  indicator and Auto label resolution.
+- `firmware/baccable/features/favorite_layout.h/.c` — 6x2x4 layout model,
+  deterministic engine-aware defaults, validation (duplicate-in-row, bar
+  exclusivity), source dedup and row rendering.
+- `firmware/baccable/storage/ui_layout_store.h/.c` — new `0x106` UI-layout
+  record codec (default/reset, encode/decode, corrupt-schema rejection). Not yet
+  attached to the boot path (per Step 7).
+- `tests/test_report.h` — exact-case `BACCABLE_TEST_CASES` allowlist (backward
+  compatible; unset runs all). Missing names fail the process.
+- `tests/run_vehicle_ui_tests.py` + `tests/vehicle_ui_tests.json` — scoped
+  runner/manifest with `--list` dry-run and `--run`, exact accounting, duplicate
+  and unknown-target rejection. New `tests/Makefile` `test-vehicle-ui` target.
+- `tests/test_vehicle_profile.c`, `test_runner_selection.c`,
+  `test_reading_catalog.c`, `test_reading_layout.c`, `test_favorite_layout.c`,
+  `test_ui_layout_store.c` — 35 new cases, all registered and executed through
+  the scoped runner.
+- `tests/test-impact.md` — the execution allowlist ledger.
+
+Verification on this Mac (Apple Clang + ASan/UBSan):
+
+- `python3 tests/run_vehicle_ui_tests.py --manifest tests/vehicle_ui_tests.json --run`
+  — 35/35 selected cases pass.
+- C1 firmware `lint` (102/102 files) and `all` build pass with the full
+  15.2.Rel1 ARM toolchain; the five new modules compile and link (`--gc-sections`
+  drops them until the P8 cutover wires them in).
+
+P10 build/resource matrix completed 2026-10-28: all four board flavors (C1, C2,
+BH, CAN) pass `lint` + `all`, and the 16-combination UI display matrix
+(legacy/legacy-large/my23/my23-large per flavor) builds and links with the new
+modules present. C1 text/data/bss = 90096/1836/10760 (legacy-large
+90336/1836/10968); C2 30244/952/11384; BH 34996/860/12168; CAN 24332/656/6272.
+The five new modules remain `--gc-sections`-dead until the cutover wires them in,
+so these sizes are the pre-cutover baseline, not the final delta. P9 Demo updated
+to preview the new Vehicle/Favorites/Readings structure (display-only).
+
+Remaining (critical path): P8 the real UI/polling cutover — connect the Vehicle
+editor/confirmation, replace Readings group/list + Favorite row/item editing,
+replace page-based polling with visible-source polling and request
+invalidation, then remove retired compound-page paths. The EN/PL user guides
+(P9) and vehicle hardware acceptance (P10) are gated on P8 because they document
+and certify behavior the menu does not expose yet. Native RPM has no UDS source
+(Engine default uses Power as the documented substitute); exact enum label
+strings and float formatting through the project printf are finalized at the P8
+cutover. No hardware claims; no broad suite executed per the owner restriction.
+
+## Unified vehicle profile + UI specification, 2026-10-28
+
+The owner requests one coordinated project and explicitly prohibits executing
+unmodified tests. [VEHICLE_UI_IMPLEMENTATION_PLAN](architecture/VEHICLE_UI_IMPLEMENTATION_PLAN.md)
+is the single authoritative execution specification, superseding the earlier
+separate plans. It includes complete profile fields/equipment/confirmation,
+settings migration versus UI reset, shared capabilities and oil ranges, runtime
+18/24/MY23 display contract, individual Readings, composed/default Favorites,
+request/cache generations, peer option suppression and release-path preservation.
+P0–P10 fix the dependency order and gates. Test-impact ledger + exact-case
+allowlist precede any execution; only new or meaningfully changed cases run.
+Broad baseline/full-suite commands were withdrawn, not just left in an old plan.
+The specification explains existing runner limitations, required scoped tooling,
+CI-policy conflicts and reporting of unexecuted coverage. Earlier execution plan
+is now a redirect; profile audit is marked historical. Documentation only: no
+firmware/tests/CI changes or test execution. Local references/diff checked.
+Next action: implement this joint specification when requested, on a fresh task
+branch after inspecting live Git; retain unrelated user edits. Current planning
+branch is `docs/vehicle-profile-audit`.
+
+## Individual Readings/Favorites execution plan, 2026-10-28
+
+Owner explicitly rejected preservation of old compound Readings and old Favorite
+layouts. [Detailed implementation plan](architecture/READINGS_FAVORITES_IMPLEMENTATION_PLAN.md)
+is now the authoritative next-step procedure: new grouped individual readings,
+useful engine-aware defaults, composed rows/formats, runtime display profiles,
+one-time UI-only reset and preserved source/vehicle/statistics data. It orders
+baseline/inventory, profile boundary, catalog, rendering, display transport,
+layouts/defaults, reset storage, UI/polling cutover, cleanup and verification.
+Each step names files, test changes and completion gates; a dedicated matrix
+replaces obsolete migration/page tests while retaining decoder/storage/gesture/
+transport coverage. Earlier layout proposal was rewritten and profile audit
+annotated to prevent conflicting instructions. Documentation only: no firmware
+or tests edited/run, no hardware acceptance or release claimed. Next agent must
+inspect live Git baseline and update tests with implementation, not skip failures.
+Current work is committed on `docs/vehicle-profile-audit`; user edits preserved.
+
+## Width-aware reading/Favorites concept, 2026-10-28
+
+Extended `docs/vehicle-profile-audit` with the
+[reading layout proposal](architecture/READING_LAYOUT_PROPOSAL.md). Audited actual
+page-Favorites rendering and original gaucho1978 code at `96a9f1f`: upstream has
+18/default and 24/LARGE_DISPLAY text budgets, with the latter marked unfinished;
+no physical small-screen diagonal/capacity mapping was established by the inspected
+headers and EN/IT/PL manuals. Our MY23 path has 16/22 fields, but ordinary page
+formatting does not consume the second-line width (oil already does).
+Proposed shared individual-value presentations, width-aware rendering, compound
+presets, per-item Auto/Full/Medium/Short, versioned row editing and legacy subpages.
+Refines the profile proposal to explicit Legacy18/Legacy24/MY23 modes and records
+required C1/BH runtime transport work, migration, polling and memory limits.
+Documentation only; awaits owner review. Firmware/user guides unchanged; no
+build or hardware verification claimed. Source links and examples checked.
+
+## Vehicle profile audit for review, 2026-10-28
+
+Documentation-only branch `docs/vehicle-profile-audit`, based on master
+`ba9176e`; isolated from the user's older dirty checkout and the separate
+Rain test candidate branch. [Audit and proposed delivery sequence](architecture/VEHICLE_PROFILE_AUDIT.md)
+trace existing engine/IPC/drivetrain settings, Flash migration, menu/Favorites,
+OBD requests, oil ranges, feature permissions and auxiliary synchronization.
+The proposed `vehicle_profile` module separates vehicle facts/equipment from
+feature enables, live conditions and build capabilities. Proposed Vehicle menu,
+2023+ display default with override, migration strategy, execution gates and
+acceptance matrix await owner review. No firmware or operating behavior changed;
+no builds/hardware tests claimed. Local source references and diff checked.
+Existing user edits to the dictionary, catalog, action plan and untracked research/
+release files remain untouched. Next step: owner approval of scope and equipment
+migration policy, then behavior-preserving centralization before new filtering.
+
 ## CAN-to-LIN request correlation, 2026-10-26
 
 Added the [mirror correlation](architecture/CAN_CAPABILITIES.md#can-requests-to-lin-equipment-mirror-correlation):

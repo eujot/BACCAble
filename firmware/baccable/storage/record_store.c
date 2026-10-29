@@ -35,16 +35,28 @@ static bool valid(const uint8_t *page, uint16_t type, size_t length) {
     return page && read32(page) == 0x42414343U && read16(page + 4) == type && read16(page + 6) == length &&
            read16(page + 16) == 0 && read16(page + 18) == 1 && read32(page + 12) == record_crc(page, length);
 }
-/* Choose the newest valid copy of a saved record. */
+/* Additional erased slots let a schema conversion preserve two distinct legacy
+ * payloads until the combined transaction commits. Normal updates still alternate
+ * pages. Small host stores retain their original one-slot behavior. */
+#define RECORD_SLOT_SIZE 256U
+static unsigned slots_per_page(const RecordStorage *storage) {
+    return storage->page_size >= RECORD_SLOT_SIZE ? storage->page_size / RECORD_SLOT_SIZE : 1;
+}
+static const uint8_t *slot_at(const RecordStorage *storage, unsigned slot) {
+    unsigned count = slots_per_page(storage);
+    return storage->pages[slot / count] ? storage->pages[slot / count] + (slot % count) * RECORD_SLOT_SIZE : NULL;
+}
+static bool newer(const uint8_t *a, const uint8_t *b) {
+    uint32_t difference = read32(a + 8) - read32(b + 8);
+    return difference != 0 && difference < 0x80000000U;
+}
 static int latest(const RecordStorage *storage, uint16_t type, size_t length) {
-    bool first = valid(storage->pages[0], type, length);
-    bool second = valid(storage->pages[1], type, length);
-    if (!first)
-        return second ? 1 : -1;
-    if (!second)
-        return 0;
-    uint32_t difference = read32(storage->pages[1] + 8) - read32(storage->pages[0] + 8);
-    return difference != 0 && difference < 0x80000000U ? 1 : 0;
+    int best = -1;
+    for (unsigned i = 0; i < slots_per_page(storage) * 2; ++i) {
+        const uint8_t *slot = slot_at(storage, i);
+        if (valid(slot, type, length) && (best < 0 || newer(slot, slot_at(storage, best)))) best = i;
+    }
+    return best;
 }
 /* Restore the newest intact saved value when its format matches. */
 bool record_load(const RecordStorage *storage, uint16_t type, void *data, size_t length) {
@@ -53,7 +65,7 @@ bool record_load(const RecordStorage *storage, uint16_t type, void *data, size_t
     int page = latest(storage, type, length);
     if (page < 0)
         return false;
-    memcpy(data, storage->pages[page] + RECORD_HEADER_SIZE, length);
+    memcpy(data, slot_at(storage, page) + RECORD_HEADER_SIZE, length);
     return true;
 }
 /* Save a changed value while retaining a recoverable previous copy. */
@@ -61,21 +73,38 @@ bool record_save(const RecordStorage *storage, uint16_t type, const void *data, 
     if (!storage || !storage->erase || !storage->program || !data || !length || length > RECORD_MAX_PAYLOAD)
         return false;
     int previous = latest(storage, type, length);
-    if (previous >= 0 && !memcmp(storage->pages[previous] + RECORD_HEADER_SIZE, data, length))
+    if (previous >= 0 && !memcmp(slot_at(storage, previous) + RECORD_HEADER_SIZE, data, length))
         return true;
-    /* A format migration must not erase the only valid old record before commit. */
-    if (previous < 0) {
-        for (unsigned i = 0; i < 2; ++i) {
-            const uint8_t *page = storage->pages[i];
-            if (!page) continue;
-            size_t old_length = read16(page + 6);
-            if (old_length && old_length <= RECORD_MAX_PAYLOAD && valid(page, read16(page + 4), old_length) &&
-                (previous < 0 || (uint32_t)(read32(page + 8) - read32(storage->pages[previous] + 8)) < 0x80000000U))
-                previous = i;
+    bool migration = previous < 0;
+    unsigned slots = slots_per_page(storage);
+    if (migration) {
+        for (unsigned i = 0; i < slots * 2; ++i) {
+            const uint8_t *slot = slot_at(storage, i);
+            if (!slot) continue;
+            size_t old_length = read16(slot + 6);
+            if (old_length && old_length <= RECORD_MAX_PAYLOAD && valid(slot, read16(slot + 4), old_length) &&
+                (previous < 0 || newer(slot, slot_at(storage, previous)))) previous = i;
         }
     }
-    unsigned next = previous == 0 ? 1 : 0;
-    uint32_t generation = previous < 0 ? 0 : read32(storage->pages[previous] + 8) + 1;
+    unsigned next = previous < 0 ? 0 : 1 - (unsigned)previous / slots;
+    size_t base = 0;
+    bool erase = true;
+    if (migration && previous >= 0 && slots > 1) {
+        /* Never erase either old payload during the first combined save. A retry
+         * skips partially programmed slots; exhaustion fails without data loss. */
+        bool found = false;
+        for (unsigned i = 0; i < slots * 2 && !found; ++i) {
+            if (i % slots == 0) continue;
+            const uint8_t *slot = slot_at(storage, i);
+            bool erased = slot != NULL;
+            for (unsigned byte = 0; erased && byte < RECORD_HEADER_SIZE + RECORD_MAX_PAYLOAD; ++byte)
+                erased = slot[byte] == 0xff;
+            if (erased) { next = i / slots; base = (i % slots) * RECORD_SLOT_SIZE; found = true; }
+        }
+        if (!found) return false;
+        erase = false;
+    }
+    uint32_t generation = previous < 0 ? 0 : read32(slot_at(storage, previous) + 8) + 1;
     uint8_t record[RECORD_HEADER_SIZE + RECORD_MAX_PAYLOAD];
     memset(record, 0xff, sizeof(record));
     write32(record, 0x42414343U);
@@ -85,17 +114,17 @@ bool record_save(const RecordStorage *storage, uint16_t type, const void *data, 
     write16(record + 18, 1);
     memcpy(record + RECORD_HEADER_SIZE, data, length);
     write32(record + 12, record_crc(record, length));
-    if (!storage->erase(storage->context, next))
+    if (erase && !storage->erase(storage->context, next))
         return false;
     size_t end = RECORD_HEADER_SIZE + ((length + 1) & ~(size_t)1);
     for (size_t offset = 0; offset < end; offset += 2) {
         if (offset == 16)
             continue;
-        if (!storage->program(storage->context, next, offset, read16(record + offset)))
+        if (!storage->program(storage->context, next, base + offset, read16(record + offset)))
             return false;
     }
     /* The previous page remains valid until this last halfword is committed. */
-    if (!storage->program(storage->context, next, 16, 0))
+    if (!storage->program(storage->context, next, base + 16, 0))
         return false;
-    return valid(storage->pages[next], type, length);
+    return valid(storage->pages[next] + base, type, length);
 }

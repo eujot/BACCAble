@@ -90,7 +90,7 @@ void board_sync_process(void) {
         break;
     case 4:
         command[0] = BhBusID;
-        command[1] = settings_state.park_mirror ? BHcmdFunctParkMirrorEnabled : BHcmdFunctParkMirrorDisabled;
+        command[1] = (settings_state.park_mirror && vehicle_feature_allowed(VEHICLE_FEATURE_PARK_MIRROR)) ? BHcmdFunctParkMirrorEnabled : BHcmdFunctParkMirrorDisabled;
         break;
     case 5:
         command[0] = C2_Bh_BusID;
@@ -102,13 +102,13 @@ void board_sync_process(void) {
     case 6:
         command[0] = C2_Bh_BusID;
         command[1] =
-            settings_state.has_function_enabled ? C2_Bh_cmdFunctHAS_Enabled : C2_Bh_cmdFunctHAS_Disabled;
+            (settings_state.has_function_enabled && vehicle_feature_allowed(VEHICLE_FEATURE_VIRTUAL_HAS)) ? C2_Bh_cmdFunctHAS_Enabled : C2_Bh_cmdFunctHAS_Disabled;
         break;
     case 7:
         command[0] = C2_Bh_BusID;
         command[1] = C2_Bh_cmdSetDriverAids;
         command[2] = 0; /* Disable the obsolete report rewrite on older peers. */
-        command[3] = settings_state.lane_assist_disabled;
+        command[3] = settings_state.lane_assist_disabled && vehicle_feature_allowed(VEHICLE_FEATURE_LANE_ASSIST);
         command[4] = driver_aids_action;
         length = 5;
         break;
@@ -119,8 +119,9 @@ void board_sync_process(void) {
         }
         command[0] = BhBusID;
         command[1] = BH_CMD_DNA_DEFAULT;
-        command[2] = settings_state.default_drive_mode |
-                     (settings_state.default_suspension_softer ? BH_DNA_SOFT_SUSPENSION : 0);
+        command[2] = (settings_state.default_drive_mode == 3 && !vehicle_feature_allowed(VEHICLE_FEATURE_DEFAULT_RACE) ?
+                      0 : settings_state.default_drive_mode) |
+                     ((settings_state.default_suspension_softer && vehicle_feature_allowed(VEHICLE_FEATURE_SOFT_SUSPENSION)) ? BH_DNA_SOFT_SUSPENSION : 0);
         command[3] = dna_action;
         command[4] = drive_mode_check_token();
         length = 5;
