@@ -8,10 +8,18 @@
 
 PR [#96](https://github.com/eujot/BACCAble/pull/96) merged the joint vehicle
 profile + individual Readings/Favorites cutover to `master` (`643440f`), plus
-the transactional settings and review corrections. Release notes live in
-[releases/v5-beta-35.md](releases/v5-beta-35.md). Publication details (tag,
-workflow run, asset and size checks) are recorded below after the beta workflow
-publishes the tag.
+the transactional settings and review corrections. PR
+[#97](https://github.com/eujot/BACCAble/pull/97) merged the release notes
+([releases/v5-beta-35.md](releases/v5-beta-35.md)); master is `63a7e83`.
+
+Published prerelease [v5-beta-35](https://github.com/eujot/BACCAble/releases/tag/v5-beta-35)
+from `63a7e83b8e0da25b9ac3a8438bedd54d525eda57`, embedded identity
+`beta-63a7e83`, with [workflow 40917052165](https://github.com/eujot/BACCAble/actions/runs/40917052165)
+on the pinned Arm GNU 15.3.Rel1 toolchain. All 14 assets plus `BUILD_INFO.json`
+and `SHA256SUMS` were downloaded and verified against the included checksums.
+C1 uses 92,672/98,304 Flash bytes and 13,316/16,384 static RAM bytes. No board
+was flashed; vehicle display/operation acceptance (Vehicle editor, individual
+Readings/Favorites rendering and the oil bar) remains open.
 
 ## PR 96 CI UART correction, 2026-10-29
 
