@@ -90,3 +90,44 @@ The remaining menu/gesture fixtures (`test_my23_ui.c`, `test_setup_ui.c`,
 `test_unified_ui.c`, `test_idle_latin1.c`, `test_menu_contract.c`) still contain
 obsolete page-model cases and are therefore not compiled by the scoped runner;
 re-integrating their still-valid cases is tracked as follow-up documentation work.
+
+## Review corrections, 2026-10-29
+
+New cases in test_vehicle_fixes.c (included by test_menu.c), selected by
+vehicle_ui_fixes.json. Only these cases execute during this repair.
+
+| Case | Contract / independent oracle | Status |
+| --- | --- | --- |
+| test_profile_atomic_restart | Combined settings/profile survives reboot and every interrupted halfword write; real record_store pages | new |
+| test_profile_editor_failure | Draft preserved, active profile unchanged on failed Flash; confirmation and operation guard | new |
+| test_favorite_validation_restart | Invalid duplicate/bar layout rejected before persistence; valid custom data survives restart | new |
+| test_favorite_widths | Missing/ordinary/extreme samples across 16/18/22/24; default rows and deterministic subpages | new |
+| test_favorite_policy_sources | V6-to-I4 and SCR absence exclude requests while retaining stored IDs | new |
+| test_favorite_visible_polling | Actual menu sends only visible row sources on legacy and both rows on MY23 | new |
+| test_profile_effective_options | New/legacy/confirmed policy, Race vs suspension, explicit peer OFF and no startup replay | new |
+| test_runtime_display | Auto and explicit widths, peer negotiation and packet boundaries | new |
+| test_restore_defaults_flow | Confirm/cancel/failure/success/reboot without changing settings | new |
+
+- New `test_cancelled_same_did` (test_vehicle_fixes.c): reject an old reply in the
+  cancelled request's original 500 ms window; accept a fresh request afterwards.
+- New `test_runtime_legacy_packet_widths` (test_body_display.c): same BH build
+  renders 24/18/24 glyph streams with correct CR/footer/frame counts and retains
+  factory radio frames on release. Selected in both BH compile widths.
+- Updated `test_settings_migration`: canonical profile save replaces writable
+  legacy engine flags; mock supports the combined transaction record.
+
+- Updated `test_rain_with_usb_and_display`: adds one-second display capability
+  commands and a lost capability reply to the real UART/USB/rain scenario.
+- Updated/re-registered `test_exhaust_profile_and_recovery`: preserves GPIO pulse
+  timing, verifies equipment rejection and closing an already owned override.
+- Updated `test_vehicle_feature_support`: confirmed RWD is Unsupported and Race
+  Present cannot authorize suspension; distinct Absent suspension is asserted.
+
+- New `test_split_profile_migration`: two real legacy pages (0x101 + 0x107),
+  every interrupted write in initial 0x108 migration, restart and retry. Both
+  original profile metadata and feature preferences must survive each cut.
+
+Final repair validation: 50 selected executions PASS across four menu variants,
+two BH widths, exhaust, UART and pure policy. New/updated cases only.
+Arm GNU 15.2.Rel1: four lints/builds and 16 UI matrix combinations PASS;
+size/identity gates PASS. Hardware and untouched regression suites not executed.

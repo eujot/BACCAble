@@ -12,7 +12,8 @@ void exhaust_process(void) {
         comfort_state.exhaust_valve_mosfet_command_time = 0;
     }
 
-    if (settings_state.qv_exhaust_flap_function_enabled) {
+    if ((settings_state.qv_exhaust_flap_function_enabled && vehicle_feature_allowed(VEHICLE_FEATURE_EXHAUST_ACTION)) ||
+        comfort_state.force_q_vexhaust_valve_opened == 4 || comfort_state.chinese_exhaust_valve_request == 'C' || comfort_state.chinese_valve_is_opened) {
         // if a request to press the button on the radiocontrol was made
         if (comfort_state.chinese_exhaust_valve_request) {
             HAL_GPIO_WritePin(Q10mosfet_Port,

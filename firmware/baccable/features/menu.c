@@ -14,7 +14,10 @@
 #include "diagnostics/parameter_request.h"
 #include "storage/flash_records.h"
 #include "vehicle/vehicle_editor.h"
+#include "vehicle/vehicle_runtime.h"
 #if defined(BACCABLE_C1)
+static bool menu_my23(void) { return vehicle_display_effective().rows == 2; }
+static unsigned menu_width(void) { return vehicle_display_effective().widths[0]; }
 
 typedef enum {
     ROOT,
@@ -27,7 +30,7 @@ typedef enum {
     INFO,
     IPC_OPTIONS,
     FAV_SETS, FAV_ROWS, FAV_ITEMS, FAV_PICK, FAV_FORMAT,
-    FAULTS, RAIN_TEST, VEHICLE
+    FAULTS, RAIN_TEST, VEHICLE, FAV_RESET
 } MenuView;
 typedef enum {
     ACTION_READ,
@@ -98,7 +101,7 @@ static uint8_t selected_favorite;
 static uint8_t favorite_set, favorite_row, favorite_slot, favorite_pick, favorite_format;
 static bool favorite_confirm;
 static uint8_t saved_ui_layout[UI_LAYOUT_RECORD_SIZE];
-static bool ui_layout_saved;
+static bool ui_layout_saved, ui_layout_readonly;
 
 static MenuInput input;
 static MenuView view = FAVORITES;
@@ -114,7 +117,7 @@ static const char *const ipc_paces[] = {"Safe 50ms", "Quick 20ms", "Fast 10ms"};
 /* Allow one complete display transfer between snapshots of rapid navigation. */
 static uint32_t navigation_interval(void) {
     static const uint8_t fragment_ms[] = {50, 20, 10};
-    return (settings_state.ipc_my23_is_installed ? DISPLAY_FRAGMENT_COUNT : DISPLAY_LEGACY_FRAGMENT_COUNT) *
+    return (menu_my23() ? DISPLAY_FRAGMENT_COUNT : DISPLAY_LEGACY_FRAGMENT_COUNT) *
            fragment_ms[ipc_pace] + 20U;
 }
 static void ipc_option_text(char *out, size_t size, unsigned option) {
@@ -136,7 +139,7 @@ static uint8_t demo_step;
 static uint32_t demo_started;
 static const char *notice;
 static const char *notice_label = "Settings";
-static char notice_text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
+static char notice_text[24 + 1];
 static uint8_t previous_text[UART_SCREEN_BUFFER_SIZE - 1], previous_valid;
 static uint32_t previous_sent;
 static uint8_t confirmed_action = 255;
@@ -216,21 +219,29 @@ static unsigned favorite_uds_sources(const FavoriteSet *set, uint8_t ids[8]) {
     return count;
 }
 
-/* Present one FavoriteSet row (legacy) or both rows (MY23). */
-static void present_favorite_layout(unsigned cell) {
-    unsigned set = settings_state.ipc_my23_is_installed ? cell : cell / 2;
-    unsigned row = settings_state.ipc_my23_is_installed ? 0 : cell % 2;
-    favorite_fill_samples(&favorites_layout.sets[set]);
-    char first[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
-    char second[MY23_L2_VISIBLE + 1];
-    if (settings_state.ipc_my23_is_installed) {
-        favorite_row_render(favorites_layout.sets[set].rows[0], favorite_sample_cache, MY23_L1_VISIBLE, first, sizeof(first));
-        favorite_row_render(favorites_layout.sets[set].rows[1], favorite_sample_cache, MY23_L2_VISIBLE, second, sizeof(second));
-        menu_present_lines(first, second);
+/* Rendering and polling share this exact visible subset. */
+static void favorite_visible(unsigned cell, FavoriteSet *visible) {
+    favorite_set_clear(visible);
+    unsigned set = cell / 8, row = (cell % 8) / 4, page = cell % 4;
+    if (menu_my23()) {
+        for (unsigned r = 0; r < 2; ++r)
+            favorite_row_page(favorites_layout.sets[set].rows[r], vehicle_profile_current(),
+                              r ? 22 : 16, page, visible->rows[r]);
     } else {
-        favorite_row_render(favorites_layout.sets[set].rows[row], favorite_sample_cache, DASHBOARD_MESSAGE_MAX_LENGTH, first, sizeof(first));
-        menu_present(first);
+        favorite_row_page(favorites_layout.sets[set].rows[row], vehicle_profile_current(),
+                          menu_width(), page, visible->rows[0]);
     }
+}
+static void present_favorite_layout(unsigned cell) {
+    FavoriteSet visible;
+    favorite_visible(cell, &visible);
+    favorite_fill_samples(&visible);
+    char first[25], second[25];
+    favorite_row_render(visible.rows[0], favorite_sample_cache, menu_width(), first, sizeof(first));
+    if (menu_my23()) {
+        favorite_row_render(visible.rows[1], favorite_sample_cache, 22, second, sizeof(second));
+        menu_present_lines(first, second);
+    } else menu_present(first);
 }
 
 /* Present one reading (automatic result / single-reading view). */
@@ -243,13 +254,13 @@ static void present_reading(uint8_t id) {
                                               : parameter_cache_get_max_age(source, currentTime, 3000U);
     ReadingSample sample = isfinite(value) ? (ReadingSample){READING_STATE_VALID, value}
                                            : (ReadingSample){READING_STATE_STALE, 0.0f};
-    if (settings_state.ipc_my23_is_installed) {
+    if (menu_my23()) {
         char value_buf[MY23_L2_VISIBLE + 1];
         reading_format_value((ReadingId)id, &sample, MY23_L2_VISIBLE, value_buf, sizeof(value_buf));
         menu_present_lines(reading_label_for((ReadingId)id, READING_FORMAT_FULL), value_buf);
     } else {
-        char line[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
-        reading_format_line((ReadingId)id, &sample, READING_FORMAT_AUTO, DASHBOARD_MESSAGE_MAX_LENGTH, line, sizeof(line));
+        char line[24 + 1];
+        reading_format_line((ReadingId)id, &sample, READING_FORMAT_AUTO, menu_width(), line, sizeof(line));
         menu_present(line);
     }
 }
@@ -291,11 +302,11 @@ static bool available(MenuAction id) {
     case ACTION_LAUNCH:
         return settings_state.front_brake_forcer_master;
     case ACTION_AWD:
-        return settings_state.awd_disabler_enabled;
+        return settings_state.awd_disabler_enabled || chassis_state.awd_sequence;
     case ACTION_HAS:
         return settings_state.has_function_enabled;
     case ACTION_EXHAUST:
-        return settings_state.qv_exhaust_flap_function_enabled;
+        return settings_state.qv_exhaust_flap_function_enabled || comfort_state.force_q_vexhaust_valve_opened || comfort_state.chinese_valve_is_opened;
     default:
         return true;
     }
@@ -317,8 +328,13 @@ bool menu_setting_busy(uint8_t flash_index) {
 
 /* Explain the same known conditions before selection and immediately before execution. */
 static const char *action_unavailable(MenuAction id) {
-    if (!available(id))
-        return "Disabled in setup";
+    if (id == ACTION_AWD && chassis_state.awd_sequence) return NULL;
+    if (id == ACTION_EXHAUST && (comfort_state.force_q_vexhaust_valve_opened || comfort_state.chinese_valve_is_opened)) return NULL;
+    if (!available(id)) return "Disabled in setup";
+    VehicleFeature feature = id == ACTION_AWD ? VEHICLE_FEATURE_AWD_DISABLE :
+        id == ACTION_EXHAUST ? VEHICLE_FEATURE_EXHAUST_ACTION :
+        id == ACTION_HAS ? VEHICLE_FEATURE_VIRTUAL_HAS : VEHICLE_FEATURE_COUNT;
+    if (feature != VEHICLE_FEATURE_COUNT && !vehicle_feature_allowed(feature)) return "Configure Vehicle";
     if (requests[id].state == REQUEST_WAIT)
         return "Request pending";
     switch (id) {
@@ -423,8 +439,8 @@ static bool menu_present_packet(const uint8_t *content) {
 
 /* Keep one shared renderer in Flash instead of LTO copies at every menu branch. */
 __attribute__((noinline)) void menu_present_view(UiMode mode, const char *first, const char *second) {
-    if (!settings_state.ipc_my23_is_installed) {
-        char legacy[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
+    if (!menu_my23()) {
+        char legacy[24 + 1];
         size_t n = 0;
         for (; first[n] && n < sizeof(legacy) - 1; ++n) {
             uint8_t token = first[n];
@@ -446,7 +462,7 @@ void menu_present_lines(const char *first, const char *second) {
 
 /* Request the current screen while avoiding unnecessary repeated text updates. */
 void menu_present(const char *text) {
-    if (settings_state.ipc_my23_is_installed && text[0]) {
+    if (menu_my23() && text[0]) {
         uint8_t content[MY23_PACKET_SIZE];
         memset(content, ' ', sizeof(content));
         content[0] = MY23_PACKET_MARKER;
@@ -457,9 +473,10 @@ void menu_present(const char *text) {
     uint8_t content[UART_SCREEN_BUFFER_SIZE - 1];
     memset(content, ' ', sizeof(content));
     size_t length = strlen(text);
-    if (length > DASHBOARD_MESSAGE_MAX_LENGTH)
-        length = DASHBOARD_MESSAGE_MAX_LENGTH;
-    memcpy(content, text, length);
+    if (length > menu_width()) length = menu_width();
+    unsigned offset = vehicle_display_negotiated() ? 1 : 0;
+    if (offset) content[0] = menu_width() == 24 ? LEGACY24_PACKET_MARKER : LEGACY18_PACKET_MARKER;
+    memcpy(content + offset, text, length);
     if (menu_present_packet(content) && !text[0])
         close_pending = false;
 }
@@ -495,6 +512,7 @@ void menu_notice_saved(const char *title) {
 
 /* Save the FavoriteLayout / last-reading UI record (0x106). */
 static uint8_t ui_layout_save(void) {
+    if (ui_layout_readonly) return 255;
     uint8_t data[UI_LAYOUT_RECORD_SIZE];
     if (!ui_layout_encode(&ui_layout, data))
         return 255;
@@ -509,6 +527,7 @@ static uint8_t ui_layout_save(void) {
 
 /* Switch parameter catalogs and discard readings from the previous engine profile. */
 void menu_engine_changed(void) {
+    previous_valid = 0;
     list_count = 0;
     parameter_request_cancel();
     parameter_cache_reset();
@@ -519,6 +538,7 @@ void menu_engine_changed(void) {
 
 /* Restore the user's menu layout or start with useful defaults. */
 void menu_init(void) {
+    vehicle_runtime_init();
     memset(&input, 0, sizeof(input));
     memset(requests, 0, sizeof(requests));
     setup_cancel_edit();
@@ -543,14 +563,16 @@ void menu_init(void) {
     last_render = 0;
     save_failed = save_close = close_pending = false;
     ui_layout_saved = false;
+    ui_layout_readonly = false;
     last_input = currentTime;
 
     /* New FavoriteLayout record. Old 0x103/0x104/0x105 compound layouts are
        intentionally ignored; this is the one-time UI reset. */
     ui_layout_default(&ui_layout, vehicle_profile_current());
     uint8_t ui_data[UI_LAYOUT_RECORD_SIZE];
-    if (flash_record_load(VISIBILITY_RECORD, UI_LAYOUT_RECORD_TYPE, ui_data, sizeof(ui_data)) &&
-        ui_layout_decode(ui_data, &ui_layout)) {
+    bool have_ui = flash_record_load(VISIBILITY_RECORD, UI_LAYOUT_RECORD_TYPE, ui_data, sizeof(ui_data));
+    ui_layout_readonly = have_ui && ui_data[0] > UI_LAYOUT_SCHEMA_VERSION;
+    if (have_ui && ui_layout_decode(ui_data, &ui_layout)) {
         memcpy(saved_ui_layout, ui_data, sizeof(ui_data));
         ui_layout_saved = true;
     } else {
@@ -580,7 +602,7 @@ static void select_page(void) {
     uint8_t index = (uint8_t)list[selection];
     if (view == FAVORITES) {
         selected_favorite = index;
-        favorite_row = settings_state.ipc_my23_is_installed ? 0 : index % 2;
+        favorite_row = menu_my23() ? 0 : (index % 8) / 4;
         parameter_request_cancel();
         parameter_peak_reset();
         selected_parameter_element = 0;
@@ -600,14 +622,17 @@ static void build_pages(uint16_t selected) {
        group must not hide pages from Favorites or Shown pages. */
     if (view == FAVORITES) {
         list_count = 0;
-        if (settings_state.ipc_my23_is_installed) {
-            for (unsigned i = 0; i < FAVORITE_SET_COUNT; ++i)
-                list[list_count++] = (ReadingId)i;
-        } else {
-            for (unsigned s = 0; s < FAVORITE_SET_COUNT; ++s)
-                for (unsigned r = 0; r < FAVORITE_ROWS; ++r)
-                    if (favorite_row_item_count(favorites_layout.sets[s].rows[r]))
-                        list[list_count++] = (ReadingId)(s * 2 + r);
+        FavoriteItem part[4];
+        for (unsigned s = 0; s < FAVORITE_SET_COUNT; ++s) {
+            unsigned counts[2];
+            for (unsigned r = 0; r < 2; ++r)
+                counts[r] = favorite_row_page(favorites_layout.sets[s].rows[r], vehicle_profile_current(),
+                                              menu_my23() && r ? 22 : menu_width(), 0, part);
+            if (menu_my23()) {
+                unsigned count = counts[0] > counts[1] ? counts[0] : counts[1];
+                for (unsigned page = 0; page < count; ++page) list[list_count++] = (ReadingId)(s * 8 + page);
+            } else for (unsigned r = 0; r < 2; ++r)
+                for (unsigned page = 0; page < counts[r]; ++page) list[list_count++] = (ReadingId)(s * 8 + r * 4 + page);
         }
         selection = 0;
         for (unsigned i = 0; i < list_count; ++i)
@@ -646,7 +671,7 @@ static void action_run(void) {
     MenuAction id = actions[function].id;
     const char *reason = action_unavailable(id);
     if (reason) {
-        char text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
+        char text[24 + 1];
         ui_render_unavailable(text, sizeof(text), reason);
         menu_notice(text);
         return;
@@ -660,7 +685,7 @@ static void action_run(void) {
     }
     if (id == ACTION_PEAK) {
         parameter_peak_enable(!parameter_peak_enabled());
-        char text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
+        char text[24 + 1];
         ui_render_checkbox(text, sizeof(text), "Peak hold", parameter_peak_enabled());
         menu_notice(text);
         return;
@@ -688,7 +713,7 @@ static void action_run(void) {
             return;
         }
         ibs_override_enable(!ibs_override_enabled());
-        char text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
+        char text[24 + 1];
         ui_render_toggle(text, sizeof(text), "IBS override", ibs_override_enabled());
         menu_notice(text);
         return;
@@ -732,11 +757,13 @@ static void action_run(void) {
         }
         menu_notice("AWD requested");
         return;
-    case ACTION_EXHAUST:
-        comfort_state.force_q_vexhaust_valve_opened = comfort_state.force_q_vexhaust_valve_opened ? 4 : 1;
-        comfort_state.chinese_exhaust_valve_request = comfort_state.chinese_valve_is_opened ? 'C' : 'O';
+    case ACTION_EXHAUST: {
+        bool release = comfort_state.force_q_vexhaust_valve_opened || comfort_state.chinese_valve_is_opened;
+        comfort_state.force_q_vexhaust_valve_opened = release ? 4 : 1;
+        comfort_state.chinese_exhaust_valve_request = release ? 'C' : 'O';
         menu_notice("Exhaust requested");
         return;
+    }
     default:
         return;
     }
@@ -815,13 +842,13 @@ void menu_render(void) {
         return;
     }
     if (view == FUNCTIONS && confirmed_action == actions[function].id && currentTime - confirm_started <= 3000) {
-        if (settings_state.ipc_my23_is_installed)
+        if (menu_my23())
             menu_present_view(UI_MODE_CONFIRM, actions[function].name, "HOLD APPLY" MY23_BULLET "2X BACK");
         else menu_present(notice ? notice : "Hold to confirm");
         return;
     }
     if (notice && currentTime - notice_started < notice_duration) {
-        if (settings_state.ipc_my23_is_installed && !strcmp(notice, "Saved")) menu_present_view(UI_MODE_NOTICE, notice_label, "SAVED");
+        if (menu_my23() && !strcmp(notice, "Saved")) menu_present_view(UI_MODE_NOTICE, notice_label, "SAVED");
         else menu_present(notice);
         return;
     }
@@ -831,16 +858,16 @@ void menu_render(void) {
         menu_present(UI_SYMBOL_WARNING " AWD OFF request");
         return;
     }
-    char text[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
+    char text[24 + 1];
     switch (view) {
     case ROOT:
-        if (settings_state.ipc_my23_is_installed) {
+        if (menu_my23()) {
             menu_present_view(UI_MODE_LIST, roots[root], roots[(root + 1) % (sizeof(roots) / sizeof(roots[0]))]); return;
         }
         snprintf_(text, sizeof(text), UI_SYMBOL_ENTER " %s", roots[root]);
         break;
     case GROUPS:
-        if (settings_state.ipc_my23_is_installed) {
+        if (menu_my23()) {
             menu_present_view(UI_MODE_LIST, reading_group_name((ReadingGroup)group),
                               reading_group_name((ReadingGroup)next_group(group, 1))); return;
         }
@@ -859,7 +886,7 @@ void menu_render(void) {
         if (!available(actions[function].id))
             function_move(1, false);
         action_render(text, sizeof(text), &actions[function]);
-        if (settings_state.ipc_my23_is_installed) {
+        if (menu_my23()) {
             const char *reason = action_unavailable(actions[function].id);
             if (reason) menu_present_view(UI_MODE_NOTICE, actions[function].name, reason);
             else if (text[0] != '>') menu_present_lines(actions[function].name, text);
@@ -873,7 +900,7 @@ void menu_render(void) {
         break;
     }
     case SETTINGS:
-        if (settings_state.ipc_my23_is_installed) {
+        if (menu_my23()) {
             menu_present_view(UI_MODE_LIST, settings[setting], settings[setting_move(setting, 1)]); return;
         }
         snprintf_(text, sizeof(text), "%s%s", UI_SYMBOL_ENTER " ", settings[setting]);
@@ -882,7 +909,7 @@ void menu_render(void) {
         char value[24];
         const char *v = vehicle_editor_value_label(value, sizeof(value));
         VehicleEditorState st = vehicle_editor_state();
-        if (settings_state.ipc_my23_is_installed) {
+        if (menu_my23()) {
             if (st == VEHICLE_EDITOR_CONFIRM)
                 menu_present_view(UI_MODE_CONFIRM, vehicle_editor_field_label(), "HOLD SAVE" MY23_BULLET "2X DISCARD");
             else
@@ -891,7 +918,7 @@ void menu_render(void) {
             return;
         }
         if (st == VEHICLE_EDITOR_CONFIRM)
-            snprintf_(text, sizeof(text), "Hold save/2x drop");
+            snprintf_(text, sizeof(text), "%s", vehicle_editor_field_label());
         else
             snprintf_(text, sizeof(text), "%s %s", vehicle_editor_field_label(), v);
         break;
@@ -906,7 +933,9 @@ void menu_render(void) {
     case SETUP:
         dashboard_send_setup();
         return;
+    case FAV_RESET: menu_present_view(UI_MODE_CONFIRM, "Restore defaults", "HOLD save; BACK no"); return;
     case FAV_SETS: {
+        if (favorite_set == FAVORITE_SET_COUNT) { menu_present("Restore defaults"); return; }
         char next_favorite[16];
         snprintf_(text, sizeof(text), "Favorite %u", favorite_set + 1);
         snprintf_(next_favorite, sizeof(next_favorite), "Favorite %u", wrap(favorite_set, FAVORITE_SET_COUNT, 1) + 1);
@@ -924,7 +953,7 @@ void menu_render(void) {
         favorite_item_text(next, sizeof(next), wrap(favorite_slot, FAVORITE_ROW_ITEMS, 1));
         menu_present_view(favorite_confirm ? UI_MODE_CONFIRM : UI_MODE_LIST, text,
                           favorite_confirm ? "HOLD SAVE" MY23_BULLET "2X DISCARD" : next);
-        if (favorite_confirm && !settings_state.ipc_my23_is_installed) menu_present("Hold save/2x drop");
+        if (favorite_confirm && !menu_my23()) menu_present("Hold save/2x drop");
         return;
     }
     case FAV_PICK: {
@@ -941,7 +970,7 @@ void menu_render(void) {
     }
     case FAULTS:
         fault_reader_text(fault_index, text, sizeof(text));
-        if (settings_state.ipc_my23_is_installed) {
+        if (menu_my23()) {
             char next[24];
             if (fault_reader_count() > 1) {
                 fault_reader_text(wrap(fault_index, fault_reader_count(), 1), next, sizeof(next));
@@ -957,7 +986,7 @@ void menu_render(void) {
         return;
     }
     case INFO:
-        if (settings_state.ipc_my23_is_installed && info < 5) {
+        if (menu_my23() && info < 5) {
             if (info == 0) menu_present_lines("C1 firmware", !strncmp(FW_VERSION, "BACCABLE ", 9) ? FW_VERSION + 9 : FW_VERSION);
             else if (info == 1 || info == 2) {
                 unsigned peer = info - 1;
@@ -987,7 +1016,7 @@ void menu_render(void) {
             ui_render_toggle(text, sizeof(text), "Immobilizer", security_state.immobilizer_enabled);
         else if (info == 3)
             snprintf_(text, sizeof(text), "MY23:%s %uch",
-                      settings_state.ipc_my23_is_installed ? "ON" : "OFF", DASHBOARD_MESSAGE_MAX_LENGTH);
+                      menu_my23() ? "ON" : "OFF", DASHBOARD_MESSAGE_MAX_LENGTH);
         else {
             unsigned peer = info - 1;
             if (peer_seen[peer] && currentTime - peer_updated[peer] <= 5000)
@@ -995,7 +1024,7 @@ void menu_render(void) {
             else
                 snprintf_(text, sizeof(text), UI_SYMBOL_UNKNOWN " %s no reply", peer ? "BH" : "C2");
         }
-        if (settings_state.ipc_my23_is_installed) {
+        if (menu_my23()) {
             if (info == 9) {
                 menu_present_view(UI_MODE_LIST, "Demo", "C1 firmware");
                 return;
@@ -1060,6 +1089,7 @@ static bool favorite_draft_dirty(void) {
 
 /* Cancel one unfinished workflow or return to its parent after persistence. */
 static void back(void) {
+    if (view == FAV_RESET) { view = FAV_SETS; return; }
     if (view == FAV_FORMAT) { view = FAV_ITEMS; return; }
     if (view == FAV_PICK) { view = FAV_ITEMS; return; }
     if (view == FAV_ITEMS) {
@@ -1107,15 +1137,31 @@ static void back(void) {
 /* Apply one navigation gesture to the currently visible menu. */
 /* Keep editor save handling outside the navigation switch on the small C1 target. */
 static __attribute__((noinline)) void menu_hold(void) {
+    if (view == FAV_RESET) {
+        FavoriteLayout original = ui_layout.favorites;
+        favorite_layout_default(&ui_layout.favorites, vehicle_profile_current());
+        if (ui_layout_save()) { ui_layout.favorites = original; menu_notice("Save failed"); }
+        else { favorites_layout = ui_layout.favorites; view = FAV_SETS; menu_notice_saved("Favorites"); }
+        return;
+    }
     if (view == VEHICLE) {
-        vehicle_editor_save();
-        menu_notice_saved("Vehicle");
+        const char *error = vehicle_editor_save();
+        if (error) menu_notice(error);
+        else if (vehicle_display_profile().mode != vehicle_display_effective().mode) menu_notice("Saved; IPC pending");
+        else menu_notice_saved("Vehicle");
         return;
     }
     if (view == SETUP) { setup_stage_save(); return; }
     if (view == FUNCTIONS && confirmed_action == actions[function].id && currentTime - confirm_started <= 3000)
         action_run();
     if (view == FAV_ITEMS || view == FAV_ROWS) {
+        FavoriteError error;
+        if (!favorite_set_validate(&favorite_draft, &error)) {
+            menu_notice(error == FAVORITE_ERR_DUPLICATE_IN_ROW ? "Duplicate reading" : "Oil bar needs row"); return;
+        }
+        if (!favorite_set_fits(&favorite_draft, vehicle_display_effective())) {
+            menu_notice("Too wide: shorten"); return;
+        }
         FavoriteSet original = favorites_layout.sets[favorite_set];
         favorites_layout.sets[favorite_set] = favorite_draft;
         ui_layout.favorites = favorites_layout;
@@ -1183,7 +1229,8 @@ void menu_event(MenuEvent event) {
     bool jump = event == MENU_NEXT_GROUP || event == MENU_PREVIOUS_GROUP;
     if (event != MENU_SELECT) {
         switch (view) {
-        case FAV_SETS: favorite_set = wrap(favorite_set, FAVORITE_SET_COUNT, direction); break;
+        case FAV_RESET: break;
+        case FAV_SETS: favorite_set = wrap(favorite_set, FAVORITE_SET_COUNT + 1, direction); break;
         case FAV_ROWS: favorite_row = wrap(favorite_row, FAVORITE_ROWS, direction); break;
         case FAV_ITEMS: if (!favorite_confirm) favorite_slot = wrap(favorite_slot, FAVORITE_ROW_ITEMS, direction); break;
         case FAV_PICK: favorite_pick = next_favorite_reading(favorite_pick, direction); break;
@@ -1237,7 +1284,9 @@ void menu_event(MenuEvent event) {
         }
     } else {
         switch (view) {
+        case FAV_RESET: break;
         case FAV_SETS:
+            if (favorite_set == FAVORITE_SET_COUNT) { view = FAV_RESET; break; }
             favorite_draft = favorites_layout.sets[favorite_set];
             favorite_row = 0; favorite_slot = 0; favorite_confirm = false;
             view = FAV_ROWS;
@@ -1381,6 +1430,7 @@ void menu_button(uint8_t button, bool allowed) {
 
 /* Refresh the display and request readings at their intended intervals. */
 void menu_process(void) {
+    vehicle_runtime_process();
     /* Keep non-default IPC display options synchronized with BH. */
     if (ipc_options_sync && currentTime - ipc_options_sent >= 1000U) {
         ipc_options_send(ipc_pace, ipc_method);
@@ -1414,7 +1464,7 @@ void menu_process(void) {
     }
     bool editor = view == SETTINGS || view == SETUP || view == IPC_OPTIONS ||
                   view == FAV_SETS || view == FAV_ROWS || view == FAV_ITEMS ||
-                  view == FAV_PICK || view == FAV_FORMAT;
+                  view == FAV_PICK || view == FAV_FORMAT || view == FAV_RESET || view == VEHICLE;
     /* Reading screens are intentionally persistent; active diagnostics get a fresh grace period. */
     if (fault_reader_busy() || diagnostics_state.clear_faults_request) {
         last_input = currentTime;
@@ -1446,9 +1496,10 @@ void menu_process(void) {
         }
     } else if (menu_parameters_active() && view == FAVORITES &&
         !diagnostics_state.clear_faults_request && currentTime - page_changed >= 150 && currentTime - last_query >= 500) {
-        unsigned set = settings_state.ipc_my23_is_installed ? list[selection] : list[selection] / 2;
+        FavoriteSet visible;
+        favorite_visible(list[selection], &visible);
         uint8_t ids[8];
-        unsigned total = favorite_uds_sources(&favorites_layout.sets[set], ids);
+        unsigned total = favorite_uds_sources(&visible, ids);
         if (total) {
             unsigned position = selected_parameter_element % total;
             parameter_request_begin_id(ids[position], 255);

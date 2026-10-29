@@ -13,7 +13,10 @@ void dashboard_send_setup(void);
 float native_parameter_read(uint8_t paramId);
 uint32_t system_free_ram(void);
 void dashboard_clear(void);
+#include "vehicle/vehicle_profile.h"
 uint8_t settings_save(void);
+uint8_t settings_profile_save(const VehicleProfile *profile);
+void settings_load_begin(void);
 uint8_t statistics_reset();
 uint8_t statistics_save_best(void);
 uint16_t settings_read(uint8_t paramId);

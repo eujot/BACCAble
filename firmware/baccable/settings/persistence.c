@@ -9,45 +9,61 @@ static uint16_t saved_settings[SETUP_FLASH_PARAM_BUFFER_SIZE];
 static uint16_t best_times[2];
 static uint8_t settings_loaded, times_loaded;
 
-/* Populate the canonical vehicle profile once: prefer the new 0x107 record,
- * otherwise import the legacy engine/drivetrain/display slots (unconfirmed). */
-static void vehicle_profile_load(void) {
-    uint8_t wire[VEHICLE_PROFILE_WIRE_SIZE];
-    VehicleProfile profile;
-    if (flash_record_load(SETTINGS_RECORD, 0x107, wire, sizeof(wire)) && vehicle_profile_decode(wire, &profile)) {
-        vehicle_profile_commit(&profile);
-        return;
-    }
-    vehicle_profile_import_legacy(saved_settings, SETUP_FLASH_PARAM_BUFFER_SIZE, &profile);
-    if (profile.display_selection != VEHICLE_DISPLAY_MY23)
-        profile.display_selection = DASHBOARD_MESSAGE_MAX_LENGTH >= 24 ? VEHICLE_DISPLAY_LEGACY24
-                                                                       : VEHICLE_DISPLAY_LEGACY18;
-    vehicle_profile_commit(&profile);
+enum { SETTINGS_PROFILE_TYPE = 0x108, SETTINGS_PROFILE_SIZE =
+    SETUP_FLASH_PARAM_BUFFER_SIZE * 2 + VEHICLE_PROFILE_WIRE_SIZE };
+static uint8_t saved_wire[SETTINGS_PROFILE_SIZE];
+static bool combined_loaded;
+
+static void profile_slots(const VehicleProfile *profile, uint16_t *slots) {
+    bool diesel, v6, my23;
+    uint8_t drivetrain;
+    vehicle_profile_legacy_flags(profile, &diesel, &v6, &drivetrain, &my23);
+    slots[15] = diesel; slots[35] = v6; slots[39] = drivetrain; slots[5] = my23;
+}
+static void profile_runtime(const VehicleProfile *profile) {
+    bool diesel, v6, my23;
+    uint8_t drivetrain;
+    vehicle_profile_legacy_flags(profile, &diesel, &v6, &drivetrain, &my23);
+    settings_state.is_diesel_enabled = diesel;
+    settings_state.gasoline_v6 = v6;
+    settings_state.drivetrain = drivetrain;
+    settings_state.ipc_my23_is_installed = my23;
 }
 
-/* Derive the profile from the current legacy feature flags and persist 0x107. */
-static void vehicle_profile_save(void) {
-    VehicleProfile profile = *vehicle_profile_current();
-    vehicle_profile_apply_legacy_flags(&profile, settings_state.is_diesel_enabled, settings_state.gasoline_v6,
-                                       settings_state.drivetrain, settings_state.ipc_my23_is_installed,
-                                       DASHBOARD_MESSAGE_MAX_LENGTH);
-    uint8_t wire[VEHICLE_PROFILE_WIRE_SIZE];
-    if (!vehicle_profile_encode(&profile, wire) || !vehicle_profile_commit(&profile))
-        return;
-    flash_record_save(SETTINGS_RECORD, 0x107, wire, sizeof(wire));
-}
+/* Called before a complete settings reload, including a simulated cold boot. */
+void settings_load_begin(void) { settings_loaded = 0; }
 
-/* Load saved feature preferences once for subsequent lookups. */
 static void load_settings(void) {
-    if (settings_loaded)
-        return;
-    memset(saved_settings, 0xff, sizeof(saved_settings));
-    /* Import older records without changing their slots; new options remain erased/default. */
-    if (!flash_record_load(SETTINGS_RECORD, 0x101, saved_settings, sizeof(saved_settings)) &&
-        !flash_record_load(SETTINGS_RECORD, 0x101, saved_settings, 41U * sizeof(uint16_t)))
-        flash_record_load(SETTINGS_RECORD, 0x101, saved_settings, 40U * sizeof(uint16_t));
+    if (settings_loaded) return;
+    VehicleProfile profile;
+    combined_loaded = flash_record_load(SETTINGS_RECORD, SETTINGS_PROFILE_TYPE,
+                                        saved_wire, sizeof(saved_wire)) &&
+        vehicle_profile_decode(saved_wire + SETUP_FLASH_PARAM_BUFFER_SIZE * 2, &profile);
+    if (combined_loaded) {
+        for (unsigned i = 0; i < SETUP_FLASH_PARAM_BUFFER_SIZE; ++i)
+            saved_settings[i] = saved_wire[2*i] | (uint16_t)saved_wire[2*i+1] << 8;
+    } else {
+        memset(saved_settings, 0xff, sizeof(saved_settings));
+        bool imported = flash_record_load(SETTINGS_RECORD, 0x101, saved_settings, sizeof(saved_settings)) ||
+            flash_record_load(SETTINGS_RECORD, 0x101, saved_settings, 41U * sizeof(uint16_t)) ||
+            flash_record_load(SETTINGS_RECORD, 0x101, saved_settings, 40U * sizeof(uint16_t));
+        uint8_t old_profile[VEHICLE_PROFILE_WIRE_SIZE] = {0};
+        if (!(flash_record_load(SETTINGS_RECORD, 0x107, old_profile, 16) &&
+              vehicle_profile_decode(old_profile, &profile))) {
+            /* Erased Flash uses declared build defaults, without granting legacy permissions. */
+            uint16_t normalized[SETUP_FLASH_PARAM_BUFFER_SIZE];
+            for (unsigned i = 0; i < SETUP_FLASH_PARAM_BUFFER_SIZE; ++i)
+                normalized[i] = setup_read_flash_value(i + 1, saved_settings[i]);
+            vehicle_profile_import_legacy(normalized, SETUP_FLASH_PARAM_BUFFER_SIZE, &profile);
+            if (profile.display_selection != VEHICLE_DISPLAY_MY23)
+                profile.display_selection = DASHBOARD_MESSAGE_MAX_LENGTH == 24 ?
+                    VEHICLE_DISPLAY_LEGACY24 : VEHICLE_DISPLAY_LEGACY18;
+        }
+        profile.legacy_permissions = imported;
+    }
+    vehicle_profile_commit(&profile);
+    profile_slots(&profile, saved_settings);
     settings_loaded = 1;
-    vehicle_profile_load();
 }
 
 /* Load saved performance records once for subsequent lookups. */
@@ -67,31 +83,36 @@ uint16_t settings_read(uint8_t id) {
     return setup_read_flash_value(id, saved_settings[id - 1]);
 }
 
-/* Store the current feature preferences for the next startup. */
-uint8_t settings_save(void) {
+/* Persist the complete transaction before publishing the candidate profile. */
+uint8_t settings_profile_save(const VehicleProfile *profile) {
     uint16_t values[SETUP_FLASH_PARAM_BUFFER_SIZE] = {0};
-    if (setup_flash_slots_count() > SETUP_FLASH_PARAM_BUFFER_SIZE)
-        return 254;
+    uint8_t wire[SETTINGS_PROFILE_SIZE];
+    if (setup_flash_slots_count() > SETUP_FLASH_PARAM_BUFFER_SIZE ||
+        !vehicle_profile_encode(profile, wire + sizeof(values))) return 254;
     setup_fill_flash_params(values);
+    profile_slots(profile, values);
     load_settings();
-    /* Serialized comparison also catches changes made outside menu callbacks. */
-    if (!memcmp(saved_settings, values, sizeof(values))) {
-        /* A USB timeout changes runtime state, not the saved Flash record.
-         * Selecting the saved mode again must still restart all three ports. */
-        if (usb_modes_needs_apply()) {
-            board_sync_restart();
-            usb_modes_apply();
-        }
+    for (unsigned i = 0; i < SETUP_FLASH_PARAM_BUFFER_SIZE; ++i) {
+        wire[2*i] = values[i]; wire[2*i+1] = values[i] >> 8;
+    }
+    if (combined_loaded && !memcmp(saved_wire, wire, sizeof(wire))) {
+        if (usb_modes_needs_apply()) { board_sync_restart(); usb_modes_apply(); }
         return 0;
     }
-    if (!flash_record_save(SETTINGS_RECORD, 0x101, values, sizeof(values)))
-        return 255;
+    if (!flash_record_save(SETTINGS_RECORD, SETTINGS_PROFILE_TYPE, wire, sizeof(wire))) return 255;
+    memcpy(saved_wire, wire, sizeof(wire));
     memcpy(saved_settings, values, sizeof(values));
-    settings_loaded = 1;
-    vehicle_profile_save();
+    combined_loaded = true;
+    vehicle_profile_commit(profile);
+    profile_runtime(profile);
     board_sync_saved();
     usb_modes_apply();
     return 0;
+}
+uint8_t settings_save(void) {
+    load_settings();
+    VehicleProfile profile = *vehicle_profile_current();
+    return settings_profile_save(&profile);
 }
 
 /* Return the best saved acceleration time for the requested interval. */

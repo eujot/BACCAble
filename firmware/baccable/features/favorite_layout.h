@@ -36,6 +36,11 @@ typedef enum {
 bool favorite_item_empty(FavoriteItem item);
 void favorite_set_clear(FavoriteSet *set);
 bool favorite_set_validate(const FavoriteSet *set, FavoriteError *error);
+bool favorite_row_resolve(const FavoriteItem row[4], unsigned width, FavoriteItem resolved[4]);
+bool favorite_set_fits(const FavoriteSet *set, DisplayProfile display);
+/* Filter without mutating storage, then split into stable width-based continuation pages. */
+unsigned favorite_row_page(const FavoriteItem row[4], const VehicleProfile *profile, unsigned width,
+                           unsigned page, FavoriteItem out[4]);
 
 unsigned favorite_row_item_count(const FavoriteItem row[FAVORITE_ROW_ITEMS]);
 unsigned favorite_set_unique_sources(const FavoriteSet *set, const VehicleProfile *profile, uint8_t sources[8]);

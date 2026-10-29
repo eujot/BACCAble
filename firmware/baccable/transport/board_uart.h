@@ -57,6 +57,8 @@ uint8_t board_uart_diagnostic_send(const uint8_t *data, size_t length);
 #define BH_CMD_RAIN_SENSOR 0x51 /* C1->BH request for raw 0x738 light-responsive bytes. */
 #define C1_CMD_RAIN_SENSOR 0x52 /* BH->C1 light bytes, valid, token and CAN TX count. */
 #define C1_CMD_DNA_RESULT 0x4B /* Request token and completed/failed outcome. */
+#define BH_CMD_DISPLAY_PROFILE 0x53 /* Capability query, token; does not change output. */
+#define C1_CMD_DISPLAY_PROFILE 0x54 /* Token, version=1, mirror operation busy. */
 #define BH_CMD_IPC_OPTIONS 0x47 /* RAM-only pace/method, five-second lease. */
 #define BOARD_CMD_USB_STATE 0x45
 #define C1_CMD_USB_STATE 0x46

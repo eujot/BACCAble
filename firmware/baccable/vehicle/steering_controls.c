@@ -24,7 +24,7 @@ void vehicle_handle_steering_controls(const CAN_RxHeaderTypeDef *rx_header, uint
 
     // function ACC Virtual Pad
 
-    if (settings_state.acc_virtual_pad_enabled == 1) {
+    if (settings_state.acc_virtual_pad_enabled == 1 && vehicle_feature_allowed(VEHICLE_FEATURE_VIRTUAL_ACC)) {
         switch (frame_data[0]) {
         case 0x12: // CC on
             comfort_state.new_wheel_pressed_button_id = 0x12;
@@ -68,7 +68,7 @@ void vehicle_handle_steering_controls(const CAN_RxHeaderTypeDef *rx_header, uint
         }
     }
 
-    if (!settings_state.acc_autostart || !comfort_state.acc_engaged ||
+    if (!vehicle_feature_allowed(VEHICLE_FEATURE_VIRTUAL_ACC) || !settings_state.acc_autostart || !comfort_state.acc_engaged ||
         runtime_state.car_steady_counter < 200 || !chassis_state.brake_intervention_acc_esc_asr ||
         frame_data[0] != 0x10)
         runtime_state.autostart_msg_counter = 0;

@@ -80,11 +80,14 @@ static void test_vehicle_feature_support(void) {
     p.confirmed = true;
 
     p.drivetrain = VEHICLE_DRIVETRAIN_RWD;
-    assert(vehicle_feature_support_for(&p, VEHICLE_FEATURE_AWD_DISABLE) == VEHICLE_SUPPORT_UNKNOWN);
+    assert(vehicle_feature_support_for(&p, VEHICLE_FEATURE_AWD_DISABLE) == VEHICLE_SUPPORT_UNSUPPORTED);
     p.drivetrain = VEHICLE_DRIVETRAIN_Q4;
     assert(vehicle_feature_support_for(&p, VEHICLE_FEATURE_AWD_DISABLE) == VEHICLE_SUPPORT_SUPPORTED);
 
     p.equipment[VEHICLE_EQUIPMENT_RACE] = VEHICLE_EQUIPMENT_PRESENT;
+    assert(vehicle_feature_support_for(&p, VEHICLE_FEATURE_SOFT_SUSPENSION) == VEHICLE_SUPPORT_UNKNOWN);
+    p.equipment[VEHICLE_EQUIPMENT_SUSPENSION] = VEHICLE_EQUIPMENT_ABSENT;
+    assert(vehicle_feature_support_for(&p, VEHICLE_FEATURE_SOFT_SUSPENSION) == VEHICLE_SUPPORT_UNSUPPORTED);
     assert(vehicle_feature_support_for(&p, VEHICLE_FEATURE_DEFAULT_RACE) == VEHICLE_SUPPORT_SUPPORTED);
     p.equipment[VEHICLE_EQUIPMENT_RACE] = VEHICLE_EQUIPMENT_ABSENT;
     assert(vehicle_feature_support_for(&p, VEHICLE_FEATURE_DEFAULT_RACE) == VEHICLE_SUPPORT_UNSUPPORTED);
@@ -175,6 +178,9 @@ static void test_vehicle_profile_codec(void) {
     p.drivetrain = VEHICLE_DRIVETRAIN_Q4;
     p.display_selection = VEHICLE_DISPLAY_MY23;
     p.equipment[VEHICLE_EQUIPMENT_RACE] = VEHICLE_EQUIPMENT_PRESENT;
+    assert(vehicle_feature_support_for(&p, VEHICLE_FEATURE_SOFT_SUSPENSION) == VEHICLE_SUPPORT_UNKNOWN);
+    p.equipment[VEHICLE_EQUIPMENT_SUSPENSION] = VEHICLE_EQUIPMENT_ABSENT;
+    assert(vehicle_feature_support_for(&p, VEHICLE_FEATURE_SOFT_SUSPENSION) == VEHICLE_SUPPORT_UNSUPPORTED);
     p.equipment[VEHICLE_EQUIPMENT_SCR] = VEHICLE_EQUIPMENT_ABSENT;
     p.confirmed = true;
 
@@ -222,6 +228,9 @@ static void test_vehicle_profile_apply_legacy_flags(void) {
     p.model = VEHICLE_MODEL_GIULIA;
     p.model_year = 2020;
     p.equipment[VEHICLE_EQUIPMENT_RACE] = VEHICLE_EQUIPMENT_PRESENT;
+    assert(vehicle_feature_support_for(&p, VEHICLE_FEATURE_SOFT_SUSPENSION) == VEHICLE_SUPPORT_UNKNOWN);
+    p.equipment[VEHICLE_EQUIPMENT_SUSPENSION] = VEHICLE_EQUIPMENT_ABSENT;
+    assert(vehicle_feature_support_for(&p, VEHICLE_FEATURE_SOFT_SUSPENSION) == VEHICLE_SUPPORT_UNSUPPORTED);
     p.confirmed = true;
 
     vehicle_profile_apply_legacy_flags(&p, true, true, 2, true, 18);

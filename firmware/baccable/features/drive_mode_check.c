@@ -12,6 +12,7 @@ void drive_mode_check_start(uint8_t enabled) {
     static const uint8_t dna[] = {0, 4, 2, 12};
     static const uint8_t transmission[] = {0, 1, 2, 6};
     unsigned mode = settings_state.default_drive_mode;
+    if (mode == 3 && !vehicle_feature_allowed(VEHICLE_FEATURE_DEFAULT_RACE)) mode = 0;
     ++token;
     state = enabled && mode >= 1 && mode <= 3 ? CHECK_ENGINE : CHECK_IDLE;
     started = currentTime;

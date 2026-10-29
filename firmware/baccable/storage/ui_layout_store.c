@@ -11,6 +11,8 @@ void ui_layout_default(UiLayoutRecord *record, const VehicleProfile *profile) {
 bool ui_layout_encode(const UiLayoutRecord *record, uint8_t out[UI_LAYOUT_RECORD_SIZE]) {
     if (!record || !out)
         return false;
+    for (unsigned s = 0; s < FAVORITE_SET_COUNT; ++s)
+        if (!favorite_set_validate(&record->favorites.sets[s], NULL)) return false;
     memset(out, 0, UI_LAYOUT_RECORD_SIZE);
     out[0] = UI_LAYOUT_SCHEMA_VERSION;
     out[1] = record->last_reading < READING_COUNT ? (uint8_t)record->last_reading : (uint8_t)READING_OIL_TEMPERATURE;

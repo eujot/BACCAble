@@ -19,7 +19,14 @@ TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 # rejects arbitrary build targets that are not part of this scoped workflow.
 VARIANT_EXPECT = {
     "build/test_vehicle_profile": {"legacy18"},
+    "build/test_exhaust": {"c1"},
+    "build/test_rain_uart": {"c1-uart"},
     "build/test_menu": {"legacy18"},
+    "build/test_menu_large": {"legacy24"},
+    "build/test_menu_my23": {"my23"},
+    "build/test_menu_my23_large": {"my23-large"},
+    "build/test_body_display": {"bh18"},
+    "build/test_body_display_large": {"bh24"},
     "build/test_runner_selection": {"selection"},
     "build/test_reading_catalog": {"legacy18"},
     "build/test_reading_layout": {"legacy18"},
@@ -77,9 +84,9 @@ def validate_runs(runs):
             name = case.get("name", "")
             if not name:
                 fail(f"run {target}/{variant} has a case without a name")
-            if name in seen_cases:
+            if (target, variant, name) in seen_cases:
                 fail(f"duplicate case name {name!r}")
-            seen_cases[name] = key
+            seen_cases[(target, variant, name)] = key
     return seen_cases
 
 

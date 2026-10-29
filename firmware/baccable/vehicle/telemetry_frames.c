@@ -185,7 +185,7 @@ void vehicle_handle_regeneration(const CAN_RxHeaderTypeDef *rx_header, uint8_t *
     if (rx_header->DLC >= 6) {
         telemetry_state.diesel_engine_regeneration_mode = (frame_data[5] >> 2) & 0b00000111; // byte 5 bit 4-2
 
-        if (settings_state.regeneration_alert_enabled) {    // if  function was enabled in setup menu
+        if (settings_state.regeneration_alert_enabled && vehicle_feature_allowed(VEHICLE_FEATURE_DPF_REGEN)) {    // if  function was enabled in setup menu
             if (telemetry_state.regeneration_in_progress) { // if regeneration is in progress
                 if ((frame_data[4] & 0x04) == 0) {          // if the message needs to be changed
     #ifdef DPF_REGEN_VISUAL_ALERT

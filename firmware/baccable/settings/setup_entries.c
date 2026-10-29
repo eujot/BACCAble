@@ -269,7 +269,7 @@ const SetupParam setup_params[] = {
                  settings_state.shift_indicator_enabled),
     SETUP_NUMBER(SETUP_FLASH_SHIFT_RPM, "Shift RPM", 6000, DEFAULT_SHIFT_RPM,
                  SETUP_VALUE_UINT16, settings_state.shift_threshold, NULL, 1500, 250),
-    SETUP_TOGGLE(SETUP_FLASH_MY23_IPC, "MY23 display", DEFAULT_MY23_IPC,
+    SETUP_HIDDEN_TOGGLE(SETUP_FLASH_MY23_IPC, DEFAULT_MY23_IPC,
                  settings_state.ipc_my23_is_installed),
     SETUP_TOGGLE(SETUP_FLASH_REGEN_ALERT, "DPF regen alert", DEFAULT_REGEN_ALERT,
                  settings_state.regeneration_alert_enabled),
@@ -293,10 +293,9 @@ const SetupParam setup_params[] = {
     SETUP_TOGGLE(SETUP_FLASH_READ_FAULTS, "BCM fault reader", DEFAULT_READ_FAULTS,
                  settings_state.read_faults_enabled),
     SETUP_HIDDEN_TOGGLE(SETUP_FLASH_REMOTE_START, DEFAULT_REMOTE_START, settings_state.remote_start_enabled),
-    SETUP_PROFILE(SETUP_FLASH_DIESEL_PARAMS, "Engine", DEFAULT_DIESEL_PARAMS,
-                               settings_state.is_diesel_enabled, NULL),
+    SETUP_HIDDEN_TOGGLE(SETUP_FLASH_DIESEL_PARAMS, DEFAULT_DIESEL_PARAMS, settings_state.is_diesel_enabled),
 
-    SETUP_ENUM8(40, "Drivetrain", 2, 0, settings_state.drivetrain, NULL),
+    SETUP_ENUM8(40, NULL, 2, 0, settings_state.drivetrain, NULL),
 
     // Driver assistance and comfort
     SETUP_TOGGLE(SETUP_FLASH_ODOMETER_BLINK, "Stop odo blink", DEFAULT_ODOMETER_BLINK,
@@ -344,9 +343,9 @@ const uint8_t setup_params_count = sizeof(setup_params) / sizeof(setup_params[0]
 /* Replace the current setting text and clear any leftover characters. */
 static void setup_write_text(uint8_t start, const char *text) {
     uint8_t col = start;
-    while (col < DASHBOARD_MESSAGE_MAX_LENGTH && *text)
+    while (col < 24 && *text)
         dashboard_setup_screen[col++] = (uint8_t)*text++;
-    while (col < DASHBOARD_MESSAGE_MAX_LENGTH)
+    while (col < 24)
         dashboard_setup_screen[col++] = ' ';
 }
 

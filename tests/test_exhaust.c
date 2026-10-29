@@ -1,4 +1,6 @@
+#include "test_report.h"
 #include "features/periodic.h"
+#include "vehicle/vehicle_profile.h"
 #include "state/comfort.h"
 #include "state/settings.h"
 #include "state/telemetry.h"
@@ -29,7 +31,11 @@ uint32_t can_tx(CAN_TxHeaderTypeDef *header, uint8_t *data) {
     return HAL_OK;
 }
 
-int main(void) {
+static void test_exhaust_profile_and_recovery(void) {
+    VehicleProfile profile; vehicle_profile_default(&profile);
+    profile.confirmed = true;
+    profile.equipment[VEHICLE_EQUIPMENT_EXHAUST_VALVES] = VEHICLE_EQUIPMENT_PRESENT;
+    vehicle_profile_commit(&profile);
     settings_state.qv_exhaust_flap_function_enabled = 1;
     comfort_state.chinese_exhaust_valve_request = 'O';
     telemetry_state.current_rpm_speed = 1000;
@@ -43,11 +49,21 @@ int main(void) {
     exhaust_process();
     assert(resets == 2 && comfort_state.exhaust_valve_mosfet_command_time == 0);
 
-    /* No new request is executed while the feature is disabled. */
+    /* An owned open valve can still be closed after disabling the preference. */
     comfort_state.chinese_exhaust_valve_request = 'C';
     exhaust_process();
-    assert(sets == 1 && comfort_state.chinese_exhaust_valve_request == 'C');
+    assert(sets == 2 && comfort_state.chinese_exhaust_valve_request == 0);
+    profile.equipment[VEHICLE_EQUIPMENT_EXHAUST_VALVES] = VEHICLE_EQUIPMENT_ABSENT;
+    vehicle_profile_commit(&profile);
+    settings_state.qv_exhaust_flap_function_enabled = 1;
+    comfort_state.chinese_exhaust_valve_request = 'O';
+    now += 1100; exhaust_process();
+    assert(sets == 2 && comfort_state.chinese_exhaust_valve_request == 'O');
 
     puts("exhaust: PASS");
+}
+int main(void) {
+    const HostTest tests[] = {HOST_TEST(test_exhaust_profile_and_recovery)};
+    host_tests_run("exhaust", tests, 1);
     return 0;
 }

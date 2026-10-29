@@ -1,6 +1,7 @@
 #include "vehicle/vehicle_editor.h"
 #include "app/powertrain.h"
 #include "features/menu.h"
+#include "vehicle/vehicle_runtime.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -31,10 +32,37 @@ static int equipment_slot(VehicleField f) {
 static VehicleProfile draft;
 static VehicleField field;
 static bool editing, confirm;
+static unsigned consequence;
+/* Review saved preferences that will be suppressed, without changing those preferences. */
+static const char *confirmation_label(void) {
+    const struct { VehicleFeature feature; bool enabled; const char *label; } options[] = {
+        {VEHICLE_FEATURE_AWD_DISABLE, settings_state.awd_disabler_enabled, "OFF: AWD action"},
+        {VEHICLE_FEATURE_DEFAULT_RACE, settings_state.default_drive_mode == 3, "OFF: Default Race"},
+        {VEHICLE_FEATURE_SOFT_SUSPENSION, settings_state.default_suspension_softer, "OFF: Suspension"},
+        {VEHICLE_FEATURE_EXHAUST_ACTION, settings_state.qv_exhaust_flap_function_enabled, "OFF: QV exhaust"},
+        {VEHICLE_FEATURE_VIRTUAL_ACC, settings_state.acc_virtual_pad_enabled || settings_state.acc_autostart, "OFF: Virtual ACC"},
+        {VEHICLE_FEATURE_VIRTUAL_HAS, settings_state.has_function_enabled, "OFF: Virtual HAS"},
+        {VEHICLE_FEATURE_LANE_ASSIST, settings_state.lane_assist_disabled, "OFF: LKA"},
+        {VEHICLE_FEATURE_PARK_MIRROR, settings_state.park_mirror, "OFF: Park mirror"},
+        {VEHICLE_FEATURE_DPF_REGEN, settings_state.regeneration_alert_enabled, "OFF: DPF alert"},
+    };
+    VehicleProfile accepted = draft;
+    accepted.confirmed = true; accepted.legacy_permissions = false;
+    unsigned count = 0;
+    for (unsigned i = 0; i < sizeof(options)/sizeof(options[0]); ++i)
+        if (options[i].enabled && !vehicle_feature_allowed_for(&accepted, options[i].feature)) ++count;
+    unsigned selected = consequence % (count + 1);
+    if (!selected) return "HOLD save Vehicle";
+    for (unsigned i = 0; i < sizeof(options)/sizeof(options[0]); ++i)
+        if (options[i].enabled && !vehicle_feature_allowed_for(&accepted, options[i].feature) && --selected == 0)
+            return options[i].label;
+    return "HOLD save Vehicle";
+}
 
 void vehicle_editor_begin(void) {
     draft = *vehicle_profile_current();
     field = VEHICLE_FIELD_MODEL;
+    consequence = 0;
     editing = false;
     confirm = false;
 }
@@ -85,6 +113,7 @@ static void cycle(int direction) {
 }
 
 void vehicle_editor_navigate(int direction) {
+    if (confirm) { consequence = direction < 0 && consequence ? consequence - 1 : consequence + 1; return; }
     if (editing) {
         cycle(direction);
     } else if (!confirm) {
@@ -93,6 +122,7 @@ void vehicle_editor_navigate(int direction) {
 }
 
 void vehicle_editor_select(void) {
+    if (confirm) return;
     if (!editing)
         editing = true;
     else
@@ -112,19 +142,18 @@ bool vehicle_editor_back(void) {
     return false;
 }
 
-void vehicle_editor_save(void) {
-    if (!vehicle_profile_commit(&draft))
-        return;
-    bool diesel = false, v6 = false, my23 = false;
-    uint8_t drivetrain = 0;
-    vehicle_profile_legacy_flags(&draft, &diesel, &v6, &drivetrain, &my23);
-    settings_state.is_diesel_enabled = diesel;
-    settings_state.gasoline_v6 = v6;
-    settings_state.drivetrain = drivetrain;
-    settings_state.ipc_my23_is_installed = my23;
-    settings_save();
+const char *vehicle_editor_save(void) {
+    if (!confirm) { editing = false; confirm = true; return "Review; HOLD save"; }
+    const char *reason = vehicle_profile_busy_reason();
+    if (reason) return reason;
+    VehicleProfile candidate = draft;
+    candidate.confirmed = true;
+    candidate.legacy_permissions = false;
+    if (!vehicle_profile_validate(&candidate, NULL)) return "Invalid Vehicle";
+    if (settings_profile_save(&candidate)) return "Save failed";
     menu_engine_changed();
     vehicle_editor_begin();
+    return NULL;
 }
 
 VehicleEditorState vehicle_editor_state(void) {
@@ -136,6 +165,7 @@ VehicleEditorState vehicle_editor_state(void) {
 }
 
 const char *vehicle_editor_field_label(void) {
+    if (confirm) return confirmation_label();
     static const char *const labels[] = {"Model", "Model year", "Engine", "Drivetrain", "Display",
                                          "Suspension", "Race", "Exhaust valves", "ACC", "HAS",
                                          "Lane assist", "Park mirrors", "SCR"};
@@ -160,7 +190,7 @@ const char *vehicle_editor_value_label(char *buf, size_t size) {
         return v[draft.drivetrain <= 2 ? draft.drivetrain : 0];
     }
     case VEHICLE_FIELD_DISPLAY: {
-        static const char *const v[] = {"Auto", "18", "24", "MY23"};
+        static const char *const v[] = {"Auto", "Legacy 18", "Legacy 24", "MY23"};
         return v[draft.display_selection <= 3 ? draft.display_selection : 0];
     }
     default: {

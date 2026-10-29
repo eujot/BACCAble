@@ -17,6 +17,7 @@ void vehicle_profile_default(VehicleProfile *profile) {
     for (unsigned i = 0; i < VEHICLE_EQUIPMENT_COUNT; ++i)
         profile->equipment[i] = VEHICLE_EQUIPMENT_UNKNOWN;
     profile->confirmed = false;
+    profile->legacy_permissions = false;
 }
 
 /* Accept a wider type so untrusted decoded bytes are validated, not assumed in-range. */
@@ -114,8 +115,9 @@ static VehicleSupport equipment_support(const VehicleProfile *profile, unsigned 
 
 /* Confirmed-drivetrain gate: AWD-disable requires an explicitly accepted Q4 car. */
 static VehicleSupport drivetrain_q4_support(const VehicleProfile *profile) {
-    if (!profile || !profile->confirmed || profile->drivetrain != VEHICLE_DRIVETRAIN_Q4)
-        return VEHICLE_SUPPORT_UNKNOWN;
+    if (!profile || !profile->confirmed) return VEHICLE_SUPPORT_UNKNOWN;
+    if (profile->drivetrain == VEHICLE_DRIVETRAIN_RWD) return VEHICLE_SUPPORT_UNSUPPORTED;
+    if (profile->drivetrain != VEHICLE_DRIVETRAIN_Q4) return VEHICLE_SUPPORT_UNKNOWN;
     return VEHICLE_SUPPORT_SUPPORTED;
 }
 
@@ -126,6 +128,7 @@ VehicleSupport vehicle_feature_support_for(const VehicleProfile *profile, Vehicl
     case VEHICLE_FEATURE_AWD_DISABLE:
         return drivetrain_q4_support(profile);
     case VEHICLE_FEATURE_SOFT_SUSPENSION:
+        return equipment_support(profile, VEHICLE_EQUIPMENT_SUSPENSION);
     case VEHICLE_FEATURE_DEFAULT_RACE:
         if (profile->equipment[VEHICLE_EQUIPMENT_RACE] == VEHICLE_EQUIPMENT_PRESENT)
             return VEHICLE_SUPPORT_SUPPORTED;
@@ -287,7 +290,7 @@ bool vehicle_oil_range_for(const VehicleProfile *profile, OilRange *range) {
 bool vehicle_oil_range(OilRange *range) { return vehicle_oil_range_for(vehicle_profile_current(), range); }
 
 /*
- * New settings schema 0x107. Fixed 16 bytes, explicit per-field encoding so the
+ * Profile schema v2. Fixed 17 bytes, explicit per-field encoding so the
  * layout never depends on struct padding or compiler ordering.
  */
 bool vehicle_profile_encode(const VehicleProfile *profile, uint8_t out[VEHICLE_PROFILE_WIRE_SIZE]) {
@@ -295,7 +298,8 @@ bool vehicle_profile_encode(const VehicleProfile *profile, uint8_t out[VEHICLE_P
         return false;
     for (unsigned i = 0; i < VEHICLE_PROFILE_WIRE_SIZE; ++i)
         out[i] = 0;
-    out[0] = 1; /* schema version */
+    out[0] = 2; /* schema version */
+    out[16] = profile->legacy_permissions ? 1 : 0;
     out[1] = (uint8_t)profile->model;
     out[2] = (uint8_t)profile->engine;
     out[3] = (uint8_t)(profile->model_year & 0xff);
@@ -312,7 +316,7 @@ bool vehicle_profile_encode(const VehicleProfile *profile, uint8_t out[VEHICLE_P
 bool vehicle_profile_decode(const uint8_t data[VEHICLE_PROFILE_WIRE_SIZE], VehicleProfile *profile) {
     if (!data || !profile)
         return false;
-    if (data[0] != 1)
+    if (data[0] != 1 && data[0] != 2)
         return false;
 
     VehicleProfile draft;
@@ -322,7 +326,9 @@ bool vehicle_profile_decode(const uint8_t data[VEHICLE_PROFILE_WIRE_SIZE], Vehic
     draft.model_year = (uint16_t)data[3] | (uint16_t)data[4] << 8;
     draft.drivetrain = (VehicleDrivetrain)data[5];
     draft.display_selection = (VehicleDisplaySelection)data[6];
+    if (data[7] > 1 || (data[0] == 2 && data[16] > 1)) return false;
     draft.confirmed = data[7] == 1U;
+    draft.legacy_permissions = data[0] == 1 || data[16] == 1;
     for (unsigned i = 0; i < VEHICLE_EQUIPMENT_COUNT; ++i)
         draft.equipment[i] = (VehicleEquipment)data[8 + i];
 
@@ -364,7 +370,7 @@ void vehicle_profile_legacy_flags(const VehicleProfile *profile, bool *diesel, b
     if (v6) *v6 = vehicle_profile_is_v6(profile);
     if (drivetrain) *drivetrain = profile && profile->drivetrain == VEHICLE_DRIVETRAIN_Q4 ? 2
                                    : profile && profile->drivetrain == VEHICLE_DRIVETRAIN_RWD ? 1 : 0;
-    if (my23) *my23 = profile && profile->display_selection == VEHICLE_DISPLAY_MY23;
+    if (my23) *my23 = vehicle_display_profile_for(profile).mode == VEHICLE_DISPLAY_MY23;
 }
 
 /*
@@ -401,4 +407,14 @@ void vehicle_profile_import_legacy(const uint16_t *slots, uint16_t slot_count, V
             profile->display_selection = VEHICLE_DISPLAY_LEGACY18;
     }
     profile->confirmed = false;
+    profile->legacy_permissions = false;
+}
+
+bool vehicle_feature_allowed_for(const VehicleProfile *profile, VehicleFeature feature) {
+    if (!profile) return false;
+    if (!profile->confirmed && profile->legacy_permissions) return true;
+    return vehicle_feature_support_for(profile, feature) == VEHICLE_SUPPORT_SUPPORTED;
+}
+bool vehicle_feature_allowed(VehicleFeature feature) {
+    return vehicle_feature_allowed_for(vehicle_profile_current(), feature);
 }

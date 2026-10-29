@@ -28,12 +28,17 @@ static unsigned label_width_for(const ReadingMeta *meta, ReadingFormat format) {
     return reading_glyph_count(reading_label_for(meta->id, format));
 }
 
+unsigned reading_value_budget(ReadingId id) {
+    const ReadingMeta *meta = reading_lookup(id);
+    if (!meta) return 0;
+    return meta->value_width + (meta->unit ? reading_glyph_count(meta->unit) : 0);
+}
 ReadingFormat reading_auto_format(ReadingId id, unsigned width) {
     const ReadingMeta *meta = reading_lookup(id);
     if (!meta)
         return READING_FORMAT_FULL;
     /* One space separator is always reserved between label and value. */
-    unsigned available = width > (meta->value_width + 1U) ? width - (meta->value_width + 1U) : 0;
+    unsigned available = width > (reading_value_budget(id) + 1U) ? width - (reading_value_budget(id) + 1U) : 0;
     if (label_width_for(meta, READING_FORMAT_FULL) <= available)
         return READING_FORMAT_FULL;
     if (label_width_for(meta, READING_FORMAT_MEDIUM) <= available)

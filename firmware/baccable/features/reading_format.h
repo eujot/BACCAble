@@ -39,6 +39,7 @@ ReadingFit reading_format_line(ReadingId id, const ReadingSample *sample, Readin
                                char *out, size_t size);
 
 /* Resolve Auto to a concrete format using reserved field widths (stable, once). */
+unsigned reading_value_budget(ReadingId id);
 ReadingFormat reading_auto_format(ReadingId id, unsigned width);
 
 #endif /* BACCABLE_READING_FORMAT_H */

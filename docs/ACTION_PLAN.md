@@ -4,6 +4,71 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Vehicle UI review corrections completed locally, 2026-10-29
+
+Baseline `09bc1e7` / reviewed implementation `12aae0c`, same isolated branch
+`docs/vehicle-profile-audit`. All seven blocking review items below and the
+reported confirmation/Restore defaults/suspension-policy gaps are corrected.
+This entry supersedes their open status, not the hardware acceptance boundary.
+
+- One SETTINGS_RECORD 0x108 transaction contains all 42 feature slots and the
+  complete 17-byte profile, including explicit imported-permission provenance.
+  Model/year/equipment-only saves persist; failed writes retain the live profile
+  and draft and report failure. Canonical profile fields cannot be overwritten by
+  hidden legacy aliases. 0x101 (40/41/42 slots) and experimental 0x107 are import-only.
+- Initial migration appends a combined record into unused 256-byte slots within
+  the existing two reserved pages, preserving both split legacy payloads until
+  commit. Retries skip partial slots; exhausting them fails without erasing old
+  data. Normal updates alternate pages. Statistics/UI/mirror allocations do not move.
+- Vehicle HOLD opens consequences review (up/down shows suppressed saved options),
+  then HOLD confirms. Busy AWD/brake/Dyno/exhaust/mirror workflows block commits.
+  Equipment policy gates new actions, periodic C1 actuation and effective peer
+  options; explicit OFF reaches peers. Recovery stays available. Saves retain
+  preferences and do not replay startup actions. Suspension and Race are distinct.
+- Runtime Auto/year and explicit 18/24/MY23 selection drive menu/layout output.
+  Token-correlated BH capability replies precede a display change; unsupported
+  peers retain the working fallback. Width-marked legacy packets reset stale
+  fragments without destroying factory source history. Saved-but-pending is shown.
+- Favorite drafts validate structure and current width before persistence. Auto
+  resolves from reserved widths; individual values have bounded overflow fields.
+  Defaults fit through explicit MY23 simplification or legacy continuation pages.
+  Narrower displays may temporarily abbreviate an individual saved wider label;
+  stored IDs/styles remain intact. Ineligible items are filtered from both rendering
+  and polling. The same visible subset drives deduplicated requests (legacy only
+  its displayed subpage; MY23 both displayed rows).
+- Restore defaults is a separate confirmed Favorite action with cancel/failure
+  rollback. Unknown future UI schema is read-only. Cancelled UDS requests retain
+  their old response window before reusing a DID. EN/PL guides and MENU_UX updated.
+
+Validation: `tests/vehicle_ui_fixes.json`, 50 selected new/meaningfully updated
+case executions PASS with native Apple Clang, ASan and UBSan. Includes real
+record_store migration/restart and every interrupted halfword write (including
+split 0x101+0x107 import), editor failure/retry, policy and recovery, default width
+matrices, retained ineligible IDs, visible polling, same-DID late replies,
+Restore defaults, BH 24/18 switching and factory restore, plus actual UART queue
+under display-capability traffic, USB capture and Rain lights with a lost reply.
+The ledger is `tests/test-impact.md`. Untouched host/Lab cases were not executed.
+
+Arm GNU 15.2.Rel1: four-flavor lint, all builds and 16 board/display combinations
+PASS, version `vehicle-fixes`; four standard size/identity gates PASS. Totals:
+
+| Board | Default Flash / static RAM | Largest matrix Flash / static RAM |
+| --- | --- | --- |
+| C1 | 92,932 / 13,316 B | 93,004 / 13,508 B |
+| C2 | 31,192 / 12,336 B | 31,324 / 12,424 B |
+| BH | 36,392 / 13,032 B | 36,440 / 13,128 B |
+| CAN | 24,984 / 6,928 B | 24,984 / 6,968 B |
+
+Largest C1 leaves 5,300 B Flash and 2,876 B beyond static RAM; the latter is not
+measured runtime stack headroom. No hardware flash, vehicle acceptance, push,
+merge or release. Existing user edits: none in this worktree at task start.
+Next: review these corrections, then vehicle display/operation acceptance; the
+broader untouched regression suite requires the owner's test-scope revision.
+CAN dictionary source digests/catalog must track the implementation commit in
+the accompanying provenance commit; source scales/DIDs and research evidence are
+unchanged. The historical full-plan completeness claims are not new acceptance
+claims for unrelated unimplemented editor conveniences.
+
 ## Blocking implementation review, 2026-10-29
 
 Reviewed clean implementation HEAD `12aae0c`. The earlier implemented/non-blocking

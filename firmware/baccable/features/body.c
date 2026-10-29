@@ -41,6 +41,8 @@ void body_display_options(uint8_t pace, uint8_t method) {
 }
 
 static bool screen_my23;
+static uint8_t screen_width = DASHBOARD_MESSAGE_MAX_LENGTH;
+static uint8_t legacy_fragment_count(void) { return (screen_width + 1U + DISPLAY_FOOTER_LENGTH + 2U) / 3U; }
 static uint32_t last_full_refresh;
 static uint32_t factory_last_frame_time;
 static uint32_t factory_defer_started;
@@ -73,7 +75,7 @@ static void release_display(void) {
     } else {
         uint8_t blank[DISPLAY_OUTPUT_LENGTH];
         memset(blank, ' ', sizeof(blank));
-        uint8_t count = screen_my23 ? DISPLAY_FRAGMENT_COUNT : DISPLAY_LEGACY_FRAGMENT_COUNT;
+        uint8_t count = screen_my23 ? DISPLAY_FRAGMENT_COUNT : legacy_fragment_count();
         display_state.telematic_display_info_field_total_frame_number = count - 1;
         display_stream_submit_parts(&screen, blank, count);
     }
@@ -84,14 +86,18 @@ void body_display_submit(const uint8_t *text) {
     if (chassis_state.stability_inverted)
         return;
     bool my23 = text[0] == MY23_PACKET_MARKER;
-    if (!nonblank(text + my23, my23 ? MY23_PACKET_SIZE - 1 : DASHBOARD_MESSAGE_MAX_LENGTH)) {
+    uint8_t width = text[0] == LEGACY24_PACKET_MARKER ? 24 :
+                    text[0] == LEGACY18_PACKET_MARKER ? 18 : DASHBOARD_MESSAGE_MAX_LENGTH;
+    if (!my23 && (text[0] == LEGACY18_PACKET_MARKER || text[0] == LEGACY24_PACKET_MARKER)) ++text;
+    if (width != screen_width) { screen_width = width; reset_screen(); }
+    if (!nonblank(text + my23, my23 ? MY23_PACKET_SIZE - 1 : screen_width)) {
         release_display();
         return;
     }
 
     uint8_t output[DISPLAY_OUTPUT_LENGTH];
     memset(output, ' ', sizeof(output));
-    unsigned length = DASHBOARD_MESSAGE_MAX_LENGTH;
+    unsigned length = screen_width;
     if (screen_my23 != my23) reset_screen();
     screen_my23 = my23;
     if (my23) {
@@ -109,7 +115,7 @@ void body_display_submit(const uint8_t *text) {
     bool opening = !menu_active;
     menu_active = true;
     factory_restore = false;
-    uint8_t count = screen_my23 ? DISPLAY_FRAGMENT_COUNT : DISPLAY_LEGACY_FRAGMENT_COUNT;
+    uint8_t count = screen_my23 ? DISPLAY_FRAGMENT_COUNT : legacy_fragment_count();
     display_state.telematic_display_info_field_total_frame_number = count - 1;
     /* New content postpones the idle reassertion until navigation settles. */
     if (!screen.valid || screen.count != count || memcmp(screen.target, output, sizeof(output)))

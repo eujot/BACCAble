@@ -10,6 +10,7 @@ typedef struct {
     bool (*erase)(void *context, unsigned page);
     bool (*program)(void *context, unsigned page, size_t offset, uint16_t value);
     void *context;
+    size_t page_size; /* Zero retains the original single-slot storage contract. */
 } RecordStorage;
 bool record_load(const RecordStorage *storage, uint16_t type, void *data, size_t length);
 bool record_save(const RecordStorage *storage, uint16_t type, const void *data, size_t length);

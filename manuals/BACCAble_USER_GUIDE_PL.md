@@ -45,15 +45,14 @@ jego sterowników. Sama obecność opcji w menu nie oznacza, że samochód ją o
    lub odczyt. Część danych jest dostępna tylko przy pracującym silniku.
 2. Wyłącz **CC i ACC**, a następnie puść przyciski kierownicy.
 3. Przytrzymaj **RES przez około 0,9 sekundy** i puść. Otworzą się Favorites.
-4. **Naciśnij RES dwukrotnie**, aby wrócić do menu głównego. Przyciskami góra/dół
-   wybierz `Settings`, naciśnij RES i otwórz `Features`.
-5. W `Engine` wybierz `2.0 I4`, `2.9 V6` lub `2.2 D` krótkimi naciśnięciami albo
-   góra/dół. Przytrzymaj RES, aby zapisać bezpośrednio, lub wykonaj dwuklik,
-   aby wyświetlić pytanie o zapis.
-   Ustawienie pozostanie na ekranie; osobny dwuklik wróci do listy Features.
-6. Sprawdź `MY23 display`. Profil MY23 korzysta z dwóch linii niezależnie od opcji
-   kompilacji 18/24 znaków dla starszego ekranu. Wgraj zgodny zestaw C1/C2/BH;
-   ta poprawka wprowadza dłuższy pakiet przesyłania ekranu.
+4. **Naciśnij RES dwukrotnie**, aby wrócić do menu głównego, i otwórz `Vehicle`.
+5. Ustaw `Model`, `Model year`, `Engine`, `Drivetrain`, `Display` i wyposażenie.
+   Pierwsze przytrzymanie otwiera podgląd skutków; góra/dół pokazuje ustawienia,
+   których działanie zostanie wyłączone. Kolejne przytrzymanie zapisuje profil.
+   BACK z edycji pola wraca do przeglądania; dwa BACK z przeglądania odrzucają cały
+   szkic. Błąd zapisu pozostawia aktywny poprzedni profil i zachowuje szkic.
+6. W `Display` wybierz `Auto`, `Legacy 18`, `Legacy 24` albo `MY23`. Zaktualizuj
+   razem C1/C2/BH. `Auto` wybiera MY23 dla podanego roku 2023 lub nowszego.
 
 C1 obsługuje CAN układu napędowego i przyciski menu, C2 CAN podwozia, a BH CAN
 nadwozia i wysyłanie tekstu do IPC. Wersje sprawdzisz w `Information`.
@@ -133,8 +132,10 @@ Menu główne
 │  │     ├─ Store position
 │  │     └─ < Back
 │  ├─ Favorites              Favorite 1–6 → Row A/B → pozycja → odczyt + format
+│  │  └─ Restore defaults    Potwierdzane przywrócenie tylko układów Favorites
 │  └─ BACCAble IPC           Tymczasowe eksperymenty z odświeżaniem
-└─ Information               Wersje, stan wejścia i Demo
+├─ Information               Wersje, stan wejścia i Demo
+└─ Vehicle                   Model, rok, silnik, napęd, ekran i wyposażenie
 ```
 
 Kolejność menu głównego jest stała. Readings pokazuje pojedyncze pomiary
@@ -145,9 +146,40 @@ Favorites składają pojedyncze odczyty w dwa logiczne wiersze. Przy pierwszym
 uruchomieniu ładowane są domyślne zestawy zależne od silnika i zapisywane raz
 (rekord UI 0x106).
 
+## Profil pojazdu
+
+`Vehicle` jest ostatnią pozycją menu głównego. `Engine` ma opcje `Unknown`,
+`2.0 Petrol`, `2.9 Petrol`, `2.2 Diesel`; `Drivetrain`: `Unknown`, `RWD`, `Q4`.
+`Model` to `Unknown`, `Giulia` albo `Stelvio`; rok to `Unknown` lub 2000–2099.
+Pola wyposażenia mają wartości `Unknown`, `Absent`, `Present`: `Suspension`,
+`Race`, `Exhaust valves`, `ACC`, `HAS`, `Lane assist`, `Park mirrors`, `SCR`.
+Włączenie ustawienia funkcji nie potwierdza obecności wyposażenia.
+
+Przeniesiona starsza instalacja zachowuje wcześniejsze uprawnienia do jawnego
+zapisu Vehicle. Przed HOLD przejrzyj góra/dół pozycje `OFF: …`: ustawienia pozostają
+zapisane, lecz niezgodne akcje i funkcje automatyczne nie będą wykonywane.
+Nieznane wyposażenie w nowym lub potwierdzonym profilu nie zezwala na rozpoczęcie
+akcji, która go wymaga. Race i regulowane zawieszenie są niezależne. Żądanie AWD
+wymaga Q4. Wyposażenie oznaczone jako nieobecne ukrywa odpowiednią opcję funkcji;
+`Configure Vehicle` wyjaśnia nieznany warunek. Zatrzymanie lub zwolnienie już
+rozpoczętej operacji pozostaje dostępne.
+
+Przed zapisem profilu zakończ operacje AWD, hamulców, Dyno, wydechu i lusterek
+parkingowych; edytor wskazuje operację do zakończenia. Stan lusterek musi być
+aktualny. Zapis nie ponawia startowych żądań DNA ani zawieszenia. `Saved` pojawia
+się po poprawnym atomowym zapisie; `Save failed` pozostawia poprzedni profil
+aktywny i pozwala ponowić próbę. Własne Favorites są zachowane przy zmianie profilu.
+
+`Auto` wybiera MY23 dla podanego roku >=2023, w pozostałych przypadkach Legacy 18.
+Jawny wybór ekranu ma pierwszeństwo przed rokiem. Nowa szerokość działa po
+potwierdzeniu obsługi protokołu przez BH; `Saved; IPC pending` oznacza zapisany
+profil i oczekiwanie przy zachowanym poprzednim działającym przesyłaniu obrazu.
+Po uruchomieniu legacy korzysta z szerokości kompilacji do zakończenia uzgodnienia.
+Zaktualizuj wszystkie płytki razem. Próby rzeczywistego ekranu pozostają otwarte.
+
 ## Symbole i komunikaty
 
-Starszy profil, zależnie od kompilacji, wykorzystuje 18 lub 24
+Starszy profil, zgodnie z wyborem `Display`, wykorzystuje 18 lub 24
 pozycje tekstowe. Nazwa na liście może różnić się od podpisu bieżącego odczytu,
 aby zrobić miejsce na wartości. Na przykład strona `Batt charge BCM` wyświetla
 odczyt podpisany `Batt BCM SOC`.
@@ -155,9 +187,8 @@ odczyt podpisany `Batt BCM SOC`.
 MY23 ma **16 widocznych znaków w pierwszej linii i 22 w drugiej**. Lista
 pokazuje bieżącą pozycję z `›`, a pod nią następną. Edytor pokazuje ustawienie
 oraz szkic wartości z `HOLD SAVE`. Druga linia zawiera również pytanie o zapis
-lub jego wynik. Ulubione pokazują po jednej wybranej stronie odczytów w każdej
-linii. Readings pokazuje bieżącą stronę w pierwszej linii, a nazwę następnej
-strony w drugiej.
+lub jego wynik. Ulubione pokazują po jednym wierszu zestawu w każdej linii. Readings pokazuje
+nazwę jednego pomiaru w pierwszej linii, a jego wartość w drugiej.
 `SAVED` potwierdza zapis ustawienia, a `×` lokalny błąd.
 Starszy profil zachowuje pierwszą linię 18/24 znaki i podpis `BACCAble beta`.
 Obsługa przycisków i szkiców jest taka sama, a pytania mieszczą się w jednej linii.
@@ -242,14 +273,19 @@ wyświetlania: **Auto**, **Full**, **Medium** lub **Short**. **Auto** wybiera ra
 najczytelniejszą mieszczącą się etykietę. Wiersz ulubionych łączy pozycje co
 najmniej jedną spacją i nigdy nie obcina cyfr; `--` oznacza brak lub nieaktualność.
 MY23 pokazuje oba wiersze; legacy przechodzi po niepustych wierszach (1/A, 1/B,
-2/A, …). Ten sam odczyt może wystąpić w kilku wierszach i jest odpytywany tylko raz.
+2/A, …). Ten sam odczyt może wystąpić w kilku widocznych wierszach i jest odpytywany tylko raz.
+Legacy odpytuje tylko widoczny wiersz lub podstronę; MY23 widoczne pozycje obu
+wierszy. Szerszy zapisany wiersz na węższym ekranie jest dzielony na stałe podstrony,
+bez zmiany zapisanego układu. Pojedyncza zapisana etykieta zbyt szeroka dla nowego
+ekranu tymczasowo używa skrótów Auto. Pozycje nie przesuwają się przy zmianach wartości.
+Nieoczekiwane przekroczenie miejsca na liczbę pokazuje `#` w polu tej wartości.
 
 ### Domyślne zestawy ulubionych
 
 Pierwsze uruchomienie ładuje domyślne zestawy zależne od silnika i zapisuje je raz.
 Późniejsza zmiana profilu pojazdu nigdy nie nadpisuje zapisanego układu;
-nieobsługiwana zapisana pozycja pokazuje po prostu `--`, dopóki znów nie zacznie
-obowiązywać.
+nieobsługiwana zapisana pozycja jest ukryta i nie jest odpytywana, dopóki znów
+nie pasuje do profilu. Jej zapisane miejsce i format pozostają zachowane.
 
 | Zestaw | Wiersz A | Wiersz B |
 | --- | --- | --- |
@@ -260,12 +296,27 @@ obowiązywać.
 | Battery | Voltage + current | IBS state of charge |
 | Diesel DPF / Gasoline Performance | DPF load + temp (diesel) / 0–100 (benzyna) | Regen progress (diesel) / Best 0–100 (benzyna) |
 
+Domyślne zestawy MY23 upraszczają pierwszą linię do 16 znaków: Warm-up pokazuje
+temperaturę oleju nad temperaturą skrzyni + płynu chłodzącego; Oil poziom liczbowy
+nad paskiem; Engine doładowanie nad mocą + momentem; Battery napięcie nad stanem
+naładowania IBS + prądem. Diesel DPF pokazuje zapełnienie nad postępem + temperaturą.
+Cooling i benzynowy Performance zachowują układ z tabeli. Legacy zachowuje tabelę,
+a szerokie wiersze dzieli na podstrony.
+
 ### Edycja ulubionych
 
 1. Otwórz `Settings → Favorites` i wybierz `Favorite 1`–`Favorite 6`.
 2. Wybierz `Row A` lub `Row B`, a następnie pozycję.
 3. Wybierz odczyt (albo `Empty`) i format (Auto/Full/Medium/Short).
-4. Przytrzymaj, aby zapisać. Pierwszy BACK zatwierdza szkic, drugi BACK go odrzuca.
+4. Przytrzymaj, aby zapisać. Pierwszy BACK otwiera pytanie o zapis zmienionego
+   szkicu, a drugi go odrzuca. `Duplicate reading`, `Oil bar needs row` lub
+   `Too wide: shorten` odrzuca zapis i zachowuje szkic. Wybierz krótszy format
+   albo usuń pozycję.
+
+`Settings → Favorites → Restore defaults` znajduje się za `Favorite 6`.
+SELECT otwiera potwierdzenie, HOLD zastępuje wszystkie sześć zestawów, BACK anuluje.
+Błąd zapisu zachowuje poprzednie układy. Ustawienia, profil, statystyki i kalibracja
+lusterek pozostają zachowane.
 
 ### Poziom oleju i pasek
 
@@ -294,7 +345,6 @@ Szkic nie steruje samochodem przed udanym zapisem.
 | --- | --- | --- |
 | `Shift light` | Wyłączona / włączona | Wysyła polecenie pokazania sygnału zmiany biegu po przekroczeniu Shift RPM. Wymaga zgodnej obsługi wskazania w trybie Race. Nie zmienia biegu za kierowcę. |
 | `Shift RPM` | 1500–6000 obr./min, co 250 | Próg obrotów silnika dla sygnału zmiany biegu. |
-| `MY23 display` | Wyłączona / włączona | Włącza układ MY23: 16 znaków w pierwszej linii i 22 w drugiej. OFF zachowuje starszy układ jednej linii z szerokością 18/24 znaków wybraną przy kompilacji. |
 | `DPF regen alert` | Wyłączona / włączona | Włącza powiadomienia o regeneracji DPF w dieslu. Zobacz [obserwowanie DPF](#obserwowanie-dpf). |
 | `Auto rotate` | Wyłączona / włączona | Automatycznie zmienia stronę bieżących odczytów co pięć sekund. |
 
@@ -364,8 +414,6 @@ pozycji menu nadal pojawia się od razu.
 | `CAN routing` | Wyłączona / włączona | Udostępnia wybrane zwykłe komunikaty CAN przez mechanizm diagnostyczny BACCAble zgodnym programom diagnostycznym. To nie jest przełącznik przechwytywania przez USB. |
 | `DTC clear action` | Wyłączona / włączona | Udostępnia `Clear DTCs`, czyli wysyłanie poleceń kasowania błędów do wielu sterowników. |
 | `BCM fault reader` | Wyłączona / włączona | Udostępnia `Read BCM faults`, czyli odczyt błędów wyłącznie sterownika nadwozia BCM. |
-| `Engine` | 2.0 I4 / 2.9 V6 / 2.2 D | Wybiera zestaw odczytów dla silnika. Zmiana usuwa pomiary przechowywane chwilowo w pamięci i tymczasowo ukrywa niepasujące ulubione. |
-| `Drivetrain` | Not set / RWD / Q4 | Wybiera napęd, który wraz z `Engine` określa zakres poziomu oleju; domyślnie `Not set`. Przytrzymaj RES, aby zapisać. To nie jest ustawienie skrzyni biegów. |
 | `USB mode` | OFF / CAN / ELM327 | Wybiera zwykłą pracę, binarne przechwytywanie CAN albo diagnostykę zgodną z częścią funkcji ELM327. ELM327 jest dostępny w wersjach z jego obsługą. Jednocześnie działa tylko jeden tryb. Przytrzymaj RES w edytorze, aby zapisać i zastosować zmianę, lub najpierw wykonaj dwuklik, aby zobaczyć pytanie o zapis. |
 
 Udostępnienie funkcji i jej rzeczywiste włączenie w samochodzie to różne rzeczy.

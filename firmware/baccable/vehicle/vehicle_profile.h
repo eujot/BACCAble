@@ -63,6 +63,7 @@ typedef struct {
     VehicleDrivetrain drivetrain;
     VehicleDisplaySelection display_selection;
     VehicleEquipment equipment[VEHICLE_EQUIPMENT_COUNT];
+    bool legacy_permissions; /* Imported existing preferences only; never new installs. */
     bool confirmed; /* Distinguishes imported legacy behavior from an accepted profile. */
 } VehicleProfile;
 
@@ -123,6 +124,8 @@ uint8_t vehicle_profile_cylinders(const VehicleProfile *profile);
 
 VehicleSupport vehicle_feature_support_for(const VehicleProfile *profile, VehicleFeature feature);
 VehicleSupport vehicle_feature_support(VehicleFeature feature);
+bool vehicle_feature_allowed_for(const VehicleProfile *profile, VehicleFeature feature);
+bool vehicle_feature_allowed(VehicleFeature feature);
 VehicleSupport vehicle_parameter_support_for(const VehicleProfile *profile, uint8_t parameter_id);
 VehicleSupport vehicle_parameter_support(uint8_t parameter_id);
 DisplayProfile vehicle_display_profile_for(const VehicleProfile *profile);
@@ -140,8 +143,8 @@ void vehicle_profile_apply_legacy_flags(VehicleProfile *profile, bool diesel, bo
 void vehicle_profile_legacy_flags(const VehicleProfile *profile, bool *diesel, bool *v6, uint8_t *drivetrain,
                                   bool *my23);
 
-/* Serialization: new settings schema 0x107 (explicit, length-checked). */
-enum { VEHICLE_PROFILE_WIRE_SIZE = 16U };
+/* Profile subrecord v2 in combined settings 0x108; v1 supports old 0x107 import. */
+enum { VEHICLE_PROFILE_WIRE_SIZE = 17U };
 bool vehicle_profile_encode(const VehicleProfile *profile, uint8_t out[VEHICLE_PROFILE_WIRE_SIZE]);
 bool vehicle_profile_decode(const uint8_t data[VEHICLE_PROFILE_WIRE_SIZE], VehicleProfile *profile);
 

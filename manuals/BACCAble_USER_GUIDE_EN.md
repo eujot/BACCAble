@@ -39,14 +39,13 @@ are supported; a menu entry alone does not establish compatibility.
    that need it. Some readings are available only with the engine running.
 2. Switch **both CC and ACC off**, then release the steering-wheel buttons.
 3. Hold **RES for about 0.9 seconds**, then release. The menu opens in Favorites.
-4. **Double-click RES** to return to the main menu. Use up/down to find `Settings`,
-   click RES, then enter `Features`.
-5. Select `Engine`. Choose `2.0 I4`, `2.9 V6` or `2.2 D` with clicks or up/down.
-   Hold RES to save directly, or double-click to show the save/discard prompt. The
-   screen remains on that setting. Double-click again to return to Features.
-6. Check `MY23 display` against the installed instrument panel. MY23 uses two lines
-   regardless of the legacy 18/24-character build option. Build and flash a
-   matching C1/C2/BH set; this candidate introduces a longer screen packet.
+4. **Double-click RES** to return to the main menu, then open `Vehicle`.
+5. Set `Model`, `Model year`, `Engine`, `Drivetrain`, `Display` and equipment.
+   First HOLD opens the review; up/down lists preferences that would be suppressed.
+   HOLD again saves. BACK from a field returns to browsing; two BACKs from browsing
+   discard the complete draft. A failed save keeps the old profile and your draft.
+6. Use `Display` to choose `Auto`, `Legacy 18`, `Legacy 24` or `MY23`. Update
+   C1/C2/BH together. `Auto` selects MY23 for a known year of 2023 or later.
 
 C1 handles powertrain CAN and menu input, C2 chassis CAN, and BH body CAN and
 IPC transmission. Check `Information` for board versions. Configure the menu
@@ -124,8 +123,10 @@ Main menu
 │  │     ├─ Store position
 │  │     └─ < Back
 │  ├─ Favorites              Favorite 1–6 → Row A/B → item → reading + format
+│  │  └─ Restore defaults    Confirmed replacement of Favorite layouts only
 │  └─ BACCAble IPC           Temporary refresh experiments
-└─ Information               Versions, input status and Demo
+├─ Information               Versions, input status and Demo
+└─ Vehicle                   Model, year, engine, drivetrain, display, equipment
 ```
 
 The main menu order is fixed. Readings shows individual measurements organized
@@ -134,6 +135,35 @@ profile are omitted. Reading availability follows the vehicle profile (engine
 class and installed equipment), not the old `Advanced pages`/`Shown pages` toggles.
 Favorites compose individual readings into two logical rows. On first start the
 engine-aware defaults are loaded and saved once (the 0x106 UI record).
+
+## Vehicle profile
+
+`Vehicle` is the last main-menu entry. Engine choices are `Unknown`, `2.0 Petrol`,
+`2.9 Petrol`, `2.2 Diesel`; drivetrain choices are `Unknown`, `RWD`, `Q4`.
+Model is `Unknown`, `Giulia` or `Stelvio`; year is `Unknown` or 2000–2099.
+Equipment fields use `Unknown`, `Absent`, `Present`: `Suspension`, `Race`,
+`Exhaust valves`, `ACC`, `HAS`, `Lane assist`, `Park mirrors`, `SCR`.
+A feature preference never proves that equipment is installed.
+
+An imported installation keeps its previous permissions until Vehicle is explicitly
+saved. Review `OFF: …` entries with up/down before HOLD: the saved preferences
+remain, but incompatible actions and automatic functions are suppressed. Unknown
+equipment on a new or confirmed profile cannot authorize a new equipment-dependent
+action. Race and adjustable suspension are independent. AWD requests require Q4.
+Known absent equipment hides its feature option; `Configure Vehicle` explains an
+unknown prerequisite. Stop/release paths remain available for an owned operation.
+
+Finish AWD, brake, Dyno, exhaust and parking-mirror operations before saving a
+profile; the editor reports the operation to finish. Mirror status must be fresh.
+Saving never replays startup DNA or suspension. `Saved` follows successful atomic
+persistence; `Save failed` leaves the previous profile active and allows retry.
+Custom Favorites are retained across profile changes.
+
+`Auto` uses MY23 for a known year >=2023, otherwise Legacy 18. Explicit display
+choices override the year. A new width is activated after BH confirms protocol
+support; `Saved; IPC pending` means the profile is saved while the previous working
+transport remains active. At boot legacy uses the compiled fallback width until
+negotiation. Update all boards together. Physical screen acceptance is still open.
 
 ## Display symbols and messages
 
@@ -226,13 +256,18 @@ Each item stores one individual reading and a display format: **Auto**, **Full**
 when the layout is resolved. A Favorite row joins its items with at least one
 space and never clips digits; `--` means missing or stale. MY23 shows both rows;
 legacy navigates the non-empty rows (1/A, 1/B, 2/A, …). The same reading may
-appear in several rows and is polled only once.
+appear in several visible rows and is polled only once. Legacy polls only its
+visible row/subpage; MY23 polls the visible items from both rows. A saved wider
+row becomes deterministic continuation subpages on a narrower screen, without
+rewriting the stored layout. An individual saved label too wide for the new
+screen temporarily uses Auto abbreviations. Positions do not shift as values change. Unexpected
+numeric overflow uses `#` in that value field.
 
 ### Default favorites
 
 A first start loads engine-aware defaults and saves them once. A later vehicle
-profile change never overwrites a saved layout; an unsupported saved item simply
-shows `--` until it applies again.
+profile change never overwrites a saved layout; an unsupported saved item is hidden and not polled until it applies again.
+Its stored position and format remain unchanged.
 
 | Set | Row A | Row B |
 | --- | --- | --- |
@@ -243,12 +278,25 @@ shows `--` until it applies again.
 | Battery | Voltage + current | IBS state of charge |
 | Diesel DPF / Gasoline Performance | DPF load + temp (diesel) / 0–100 (gasoline) | Regen progress (diesel) / Best 0–100 (gasoline) |
 
+MY23 defaults simplify the 16-glyph first row: Warm-up has oil temperature above
+gearbox + coolant; Oil has numeric level above the bar; Engine has boost above
+power + torque; Battery has voltage above IBS charge + current. Diesel DPF has
+load above progress + temperature. Cooling and gasoline Performance keep the
+table layout. Legacy retains the table and splits wide rows into subpages.
+
 ### Edit a favorite
 
 1. Open `Settings → Favorites` and choose `Favorite 1` through `Favorite 6`.
 2. Choose `Row A` or `Row B`, then an item slot.
 3. Choose a reading (or `Empty`) and a format (Auto/Full/Medium/Short).
-4. Hold to save. A first BACK confirms a dirty draft; a second BACK discards it.
+4. Hold to save. A first BACK opens confirmation for a dirty draft; a second
+   BACK discards it. `Duplicate reading`, `Oil bar needs row` or `Too wide: shorten`
+   rejects the save and keeps the draft. Choose a shorter format or remove an item.
+
+`Settings → Favorites → Restore defaults` follows `Favorite 6`. SELECT opens
+confirmation, HOLD replaces all six sets, and BACK cancels. Failed writes retain
+your previous layouts; settings, profile, statistics and mirror calibration are
+preserved.
 
 ### Oil level and bar
 
@@ -276,7 +324,6 @@ workflow; their draft does not control the car before successful persistence.
 | --- | --- | --- |
 | `Shift light` | Off / on | Request the instrument-panel shift warning above `Shift RPM`, with compatible Race-mode display support. This does not shift the gearbox. |
 | `Shift RPM` | 1500–6000 RPM, step 250 | Engine-speed threshold for the shift warning. |
-| `MY23 display` | Off / on | Use the MY23 menu layout: 16 glyphs on line 1 and 22 on line 2. OFF retains the legacy single-line layout with the compiled 18/24-character width. |
 | `DPF regen alert` | Off / on | Enable diesel regeneration notifications. See [DPF monitoring](#dpf-monitoring). |
 | `Auto rotate` | Off / on | Rotate live pages every five seconds. |
 
@@ -345,8 +392,6 @@ selection still appears immediately.
 | `CAN routing` | Off / on | Expose selected native CAN reports through the firmware's diagnostic routing mechanism for compatible diagnostic clients. It is not the USB capture switch. |
 | `DTC clear action` | Off / on | Permit the multi-controller `Clear DTCs` action. |
 | `BCM fault reader` | Off / on | Permit `Read BCM faults`, which reads the Body Control Module only. |
-| `Engine` | 2.0 I4 / 2.9 V6 / 2.2 D | Select the engine-specific reading catalog. Switching discards cached measurements and temporarily filters incompatible favorites. |
-| `Drivetrain` | Not set / RWD / Q4 | Select the drivetrain used with `Engine` for oil-level limits; default `Not set`. Save the choice by holding RES. This is not a gearbox setting. |
 | `USB mode` | OFF / CAN / ELM327 | Select normal operation, binary CAN capture, or ELM-compatible diagnostics. ELM327 is offered in builds with that support. Modes are exclusive. Hold RES in the editor to save and apply, or double-click for confirmation first. |
 
 Feature permissions and vehicle states are different: enabling `Dyno action`,

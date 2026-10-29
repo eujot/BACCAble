@@ -5,8 +5,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-/* Minimal Vehicle editor for the core profile facts. Equipment editing is a later
- * step; unknown equipment is preserved by the draft. */
+/* Isolated complete profile draft, consequences review, then atomic save. */
 
 typedef enum {
     VEHICLE_EDITOR_BROWSE = 0,
@@ -19,7 +18,7 @@ void vehicle_editor_cancel(void);  /* Discard the draft. */
 void vehicle_editor_navigate(int direction);
 void vehicle_editor_select(void);
 bool vehicle_editor_back(void);    /* Returns false when the editor should close. */
-void vehicle_editor_save(void);    /* Commit + persist + sync legacy flags. */
+const char *vehicle_editor_save(void);    /* NULL on success, otherwise a review/error message; retains failed draft. */
 
 VehicleEditorState vehicle_editor_state(void);
 const char *vehicle_editor_field_label(void);

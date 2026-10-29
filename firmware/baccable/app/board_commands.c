@@ -1,4 +1,5 @@
 #include "app/main.h"
+#include "vehicle/vehicle_runtime.h"
 #include "features/body.h"
 #include "features/dna_selector.h"
 #include "features/drive_mode_check.h"
@@ -36,6 +37,9 @@ void board_commands_dispatch(const uint8_t *message) {
 #if defined(BACCABLE_C1)
         menu_action_reply(message[1]);
         switch (message[1]) {
+        case C1_CMD_DISPLAY_PROFILE:
+            vehicle_runtime_reply(message[2], message[3], message[4]);
+            break;
         case C1_CMD_RAIN_TEST:
             rain_test_reply(message[2], message[3], message[4], message[5], message[6]);
             break;
@@ -72,7 +76,7 @@ void board_commands_dispatch(const uint8_t *message) {
             chassis_state.dyno_mode_enabled_on_master = 0; // dyno not active
             break;
         case C1cmdLaneDoubleTap:
-            if (settings_state.has_function_enabled)
+            if (settings_state.has_function_enabled && vehicle_feature_allowed(VEHICLE_FEATURE_VIRTUAL_HAS))
                 comfort_state.has_button_press_requested = 5; // press HAS for 5 times (5 messages)
             break;
         case C1cmdLaneSingleTap: // request to C2 to execute the ESC/TC toggle
@@ -155,6 +159,15 @@ void board_commands_dispatch(const uint8_t *message) {
     case BhBusID: // message directed to baccable connected to BH bus
 #if defined(BACCABLE_BH)
         switch (message[1]) {
+        case BH_CMD_DISPLAY_PROFILE: {
+            bool busy = mirrors_state.store_current_park_mirror_position || mirrors_state.store_operative_mirror_position ||
+                mirrors_state.restore_operative_mirrors_position || mirrors_state.left_park_mirror_position_required ||
+                mirrors_state.right_park_mirror_position_required ||
+                (settings_state.park_mirror && telemetry_state.current_gear == 0x0e);
+            uint8_t reply[] = {C1BusID, C1_CMD_DISPLAY_PROFILE, message[2], 1, busy};
+            board_uart_send(reply, sizeof(reply));
+            break;
+        }
         case BH_CMD_DNA_DEFAULT:
             dna_selector_configure(message[2] & BH_DNA_MODE_MASK, message[3], message[4],
                                            (message[2] & BH_DNA_SOFT_SUSPENSION) != 0);

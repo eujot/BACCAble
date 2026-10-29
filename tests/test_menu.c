@@ -15,7 +15,31 @@
 #include "diagnostics/parameter_cache.h"
 #include "diagnostics/parameter_request.h"
 #include "storage/flash_records.h"
+#include "storage/record_store.h"
+#include "storage/ui_layout_store.h"
+#include "vehicle/vehicle_runtime.h"
 #include <assert.h>
+static uint8_t combined_record[SETUP_FLASH_PARAM_BUFFER_SIZE * 2 + VEHICLE_PROFILE_WIRE_SIZE];
+static bool have_combined;
+static bool real_flash;
+static uint8_t flash_pages[3][2][2048];
+static int flash_budget = -1;
+static bool test_erase(void *ctx, unsigned page) {
+    if (flash_budget == 0) return false;
+    if (flash_budget > 0) --flash_budget;
+    memset(((uint8_t (*)[2048])ctx)[page], 0xff, 2048); return true;
+}
+static bool test_program(void *ctx, unsigned page, size_t offset, uint16_t value) {
+    if (flash_budget == 0) return false;
+    if (flash_budget > 0) --flash_budget;
+    uint8_t *dst = ((uint8_t (*)[2048])ctx)[page] + offset;
+    dst[0] &= value; dst[1] &= value >> 8; return true;
+}
+static RecordStorage test_storage(unsigned slot) {
+    assert(slot < 3);
+    return (RecordStorage){.pages = {flash_pages[slot][0], flash_pages[slot][1]},
+        .erase = test_erase, .program = test_program, .context = flash_pages[slot], .page_size = 2048};
+}
 #include <stdio.h>
 
 SettingsState settings_state;
@@ -34,6 +58,7 @@ const char *FW_VERSION = "BACCABLE test";
 static uint32_t now;
 static char screen[DASHBOARD_MESSAGE_MAX_LENGTH + 1];
 static uint8_t screen_packet[UART_SCREEN_BUFFER_SIZE];
+static uint8_t display_token, sent_dna, sent_mirror;
 static unsigned commands, queries, blank_screens;
 static unsigned settings_writes, usb_applies;
 static bool usb_needs_apply;
@@ -61,6 +86,8 @@ uint8_t board_uart_send(const uint8_t *data, size_t size) {
         for (unsigned i = 0; i < DASHBOARD_MESSAGE_MAX_LENGTH; ++i) blank &= screen[i] == ' ';
         blank_screens += blank;
     } else {
+        if (data[1] == BH_CMD_DISPLAY_PROFILE) display_token = data[2];
+        if (data[1] == BHcmdFunctParkMirrorDisabled || data[1] == BHcmdFunctParkMirrorEnabled) sent_mirror = data[1];
         ++commands;
         last_command = size > 1 ? data[1] : 0;
         if (last_command == C2_Bh_cmdSetDriverAids) {
@@ -68,8 +95,7 @@ uint8_t board_uart_send(const uint8_t *data, size_t size) {
             last_driver_rearm = data[4];
         }
         if (data[0] == BhBusID && last_command == BH_CMD_DNA_DEFAULT) {
-            assert(size == 5 && (data[2] & BH_DNA_MODE_MASK) == settings_state.default_drive_mode);
-            assert(!!(data[2] & BH_DNA_SOFT_SUSPENSION) == !!settings_state.default_suspension_softer);
+            assert(size == 5); sent_dna = data[2];
             last_dna_action = data[3]; last_dna_token = data[4];
         }
         if (data[0] == BhBusID && last_command == BH_CMD_IPC_OPTIONS) {
@@ -104,7 +130,9 @@ uint32_t can_forward(const CAN_RxHeaderTypeDef *header, uint8_t *data) {
 static unsigned native_reads;
 float native_parameter_read(uint8_t id) { ++native_reads; return (float)id + 0.5f; }
 bool flash_record_load(unsigned slot, uint16_t type, void *data, size_t size) {
+    if (real_flash) { RecordStorage storage = test_storage(slot); return record_load(&storage, type, data, size); }
     (void)slot;
+    if (type == 0x108 && have_combined) { assert(size == sizeof(combined_record)); memcpy(data, combined_record, size); return true; }
     if (type == 0x101 && size == settings_record_size) {
         memcpy(data, settings_record, size);
         if (size == 80) ++old_settings_reads;
@@ -118,6 +146,7 @@ bool flash_record_load(unsigned slot, uint16_t type, void *data, size_t size) {
     return false;
 }
 bool flash_record_save(unsigned slot, uint16_t type, const void *data, size_t size) {
+    if (real_flash) { RecordStorage storage = test_storage(slot); return !fail_save && record_save(&storage, type, data, size); }
     (void)slot;
     if (type == 0x101) ++settings_writes;
     if (fail_save || type == fail_type)
@@ -126,6 +155,11 @@ bool flash_record_save(unsigned slot, uint16_t type, const void *data, size_t si
         assert(size == sizeof(settings_record));
         memcpy(settings_record, data, size);
         settings_record_size = size;
+    }
+    if (type == 0x108) {
+        assert(size == sizeof(combined_record)); memcpy(combined_record, data, size); have_combined = true;
+        memcpy(settings_record, data, sizeof(settings_record)); settings_record_size = sizeof(settings_record);
+        memcpy(profile_record, (const uint8_t *)data + sizeof(settings_record), sizeof(profile_record)); have_profile = true;
     }
     if (type == 0x107) {
         assert(size == sizeof(profile_record));
@@ -136,6 +170,7 @@ bool flash_record_save(unsigned slot, uint16_t type, const void *data, size_t si
 }
 /* Import a real old settings payload, keep every slot unique, and preserve engine/suspension independently. */
 static void test_settings_migration(void) {
+    real_flash = false; have_combined = false; have_profile = false; settings_load_begin();
     memset(settings_record, 0, sizeof(settings_record));
     settings_record[35] = 1; /* V6 in the old record. */
     settings_record[37] = 3; /* Race. */
@@ -177,8 +212,9 @@ static void test_settings_migration(void) {
     setup_load_from_flash();
     assert(settings_state.gasoline_v6 == 1 && settings_state.default_suspension_softer == 1);
     assert(settings_state.rain_lights_enabled == 1);
-    settings_state.gasoline_v6 = 0;
-    assert(settings_save() == 0);
+    VehicleProfile edited = *vehicle_profile_current();
+    edited.engine = VEHICLE_ENGINE_PETROL20;
+    assert(settings_profile_save(&edited) == 0);
     assert(settings_record[35] == 0 && settings_record[40] == 1);
     assert(setup_read_flash_value(41, 0xffff) == 0 && setup_read_flash_value(41, 2) == 0);
     assert(vehicle_profile_current()->engine == VEHICLE_ENGINE_PETROL20);
@@ -303,6 +339,8 @@ static void test_shared_renderers(void) {
     }
 }
 
+#include "test_vehicle_fixes.c"
+
 int main(void) {
 #if defined(IPC_MY23_IS_INSTALLED)
     const char *suite = DASHBOARD_MESSAGE_MAX_LENGTH == 24 ? "menu-my23-24" : "menu-my23-18";
@@ -312,6 +350,18 @@ int main(void) {
     const char *suite = "menu-18";
 #endif
     const HostTest tests[] = {
+        HOST_TEST(test_split_profile_migration),
+        HOST_TEST(test_cancelled_same_did),
+        HOST_TEST(test_profile_atomic_restart),
+        HOST_TEST(test_profile_editor_failure),
+        HOST_TEST(test_favorite_validation_restart),
+        HOST_TEST(test_favorite_widths),
+        HOST_TEST(test_favorite_policy_sources),
+        HOST_TEST(test_favorite_visible_polling),
+        HOST_TEST(test_profile_effective_options),
+        HOST_TEST(test_runtime_display),
+        HOST_TEST(test_restore_defaults_flow),
+
         HOST_TEST(test_settings_migration),
         HOST_TEST(test_vehicle_editor),
         HOST_TEST(test_vehicle_editor_equipment),

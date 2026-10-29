@@ -4,7 +4,7 @@
 
 /* Advance requested drive-mode, brake and all-wheel-drive changes. */
 void drivetrain_process(void) {
-    if (settings_state.awd_disabler_enabled == 1) {
+    if (settings_state.awd_disabler_enabled == 1 && vehicle_feature_allowed(VEHICLE_FEATURE_AWD_DISABLE)) {
         if (chassis_state.awd_sequence > 0) {
             uint8_t tempDeltaTime = 0;
             if (chassis_state.awd_sequence > 1)

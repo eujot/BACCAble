@@ -9,13 +9,21 @@ static struct {
     uint8_t parameter;
     uint32_t started;
 } request;
+static bool draining;
+static uint32_t drain_started;
 
 /* Discard a pending reading when its screen is no longer relevant. */
-void parameter_request_cancel(void) { request.active = 0; }
+void parameter_request_cancel(void) {
+    if (request.active) { draining = true; drain_started = request.started; }
+    request.active = 0;
+}
 
 /* Ask the vehicle for a single diagnostic source (UDS request_id > 0xff). */
 void parameter_request_begin_id(uint8_t id, uint8_t element) {
     (void)element;
+    if (draining && currentTime - drain_started < 500U) return;
+    draining = false;
+    if (vehicle_parameter_support(id) == VEHICLE_SUPPORT_UNSUPPORTED) return;
     if (request.active && currentTime - request.started < 500)
         return;
     request.active = 0;
