@@ -312,7 +312,7 @@ static void test_temporary_pace_and_lease(void) {
 #include "test_oil_animation.c"
 
 static void test_runtime_legacy_packet_widths(void) {
-    now = 10000; transmitted_count = 0; body_init();
+    now += 10000; transmitted_count = 0; body_init();
     const unsigned widths[] = {24, 18, 24};
     for (unsigned pass = 0; pass < 3; ++pass) {
         uint8_t packet[39]; memset(packet, ' ', sizeof(packet));
@@ -348,7 +348,6 @@ static void test_runtime_legacy_packet_widths(void) {
 
 int main(void) {
     const HostTest tests[] = {
-        HOST_TEST(test_runtime_legacy_packet_widths),
         HOST_TEST(test_oil_animation_steps),
         HOST_TEST(test_oil_animation_both_lines),
         HOST_TEST(test_menu_footer_and_periodic_reassert),
@@ -359,6 +358,8 @@ int main(void) {
         HOST_TEST(test_full_snapshot_and_latest_pending),
         HOST_TEST(test_temporary_pace_and_lease),
         HOST_TEST(test_oil_animation_can_pacing),
+        /* The original cases above share a sequential radio/display fixture. */
+        HOST_TEST(test_runtime_legacy_packet_widths),
     };
     host_tests_run(DASHBOARD_MESSAGE_MAX_LENGTH == 24 ? "body-display-24" : "body-display-18", tests, sizeof(tests) / sizeof(tests[0]));
 }

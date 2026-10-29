@@ -143,3 +143,9 @@ The shared five-second period now passes both scenarios with zero queue errors,
 including capability traffic throughout Rain test. `test_runtime_display` also
 checks the poll boundary and accepts a queued 1500 ms reply: PASS in four menu
 variants with ASan/UBSan. Six selected executions total; no untouched cases run.
+
+PR 96 run 40915444154 passed UART, then exposed fixture contamination in BH
+display tests: the new width test preceded a sequential suite whose first display
+case reads captured frame zero. Keep the original sequence intact and run the
+new case last, advancing its clock instead of resetting time backwards. Selected
+width case passes in both BH compile widths; CI validates the original sequence.

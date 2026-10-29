@@ -14,7 +14,11 @@ every five seconds with a three-second correlated reply window. Mirror freshness
 remains three seconds. EN/PL guides describe pending negotiation/save retries.
 The two updated UART scenarios pass with zero queue errors; the updated runtime
 display case passes in four menu variants (six selected ASan/UBSan executions).
-Hardware acceptance remains open. New PR CI results must confirm the full suite.
+C1 also builds with Arm GNU 15.2.Rel1. Run 40915444154 passed UART and then
+exposed test fixture contamination: the new BH width case preceded a legacy
+sequential suite reading frame zero. It now follows that suite and advances time
+monotonically. The selected width case passes in both BH variants. Hardware
+acceptance remains open. New PR CI results must confirm the full suite.
 
 ## Vehicle UI review corrections completed locally, 2026-10-29
 
