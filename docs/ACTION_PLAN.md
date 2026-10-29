@@ -4,6 +4,15 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## v5-beta-35 release, 2026-10-29
+
+PR [#96](https://github.com/eujot/BACCAble/pull/96) merged the joint vehicle
+profile + individual Readings/Favorites cutover to `master` (`643440f`), plus
+the transactional settings and review corrections. Release notes live in
+[releases/v5-beta-35.md](releases/v5-beta-35.md). Publication details (tag,
+workflow run, asset and size checks) are recorded below after the beta workflow
+publishes the tag.
+
 ## PR 96 CI UART correction, 2026-10-29
 
 Run 40914037083 failed in `test_rain_test_with_shared_uart`: one-second display
