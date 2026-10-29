@@ -6,7 +6,8 @@
 
 ## Vehicle UI review corrections completed locally, 2026-10-29
 
-Baseline `09bc1e7` / reviewed implementation `12aae0c`, same isolated branch
+Fix implementation `ec1665e`; baseline `09bc1e7` / reviewed implementation
+`12aae0c`, same isolated branch
 `docs/vehicle-profile-audit`. All seven blocking review items below and the
 reported confirmation/Restore defaults/suspension-policy gaps are corrected.
 This entry supersedes their open status, not the hardware acceptance boundary.
@@ -64,8 +65,8 @@ measured runtime stack headroom. No hardware flash, vehicle acceptance, push,
 merge or release. Existing user edits: none in this worktree at task start.
 Next: review these corrections, then vehicle display/operation acceptance; the
 broader untouched regression suite requires the owner's test-scope revision.
-CAN dictionary source digests/catalog must track the implementation commit in
-the accompanying provenance commit; source scales/DIDs and research evidence are
+CAN dictionary 2026-10-29.2 source digests and regenerated catalog track
+implementation `ec1665e` in the accompanying provenance commit; source scales/DIDs and research evidence are
 unchanged. The historical full-plan completeness claims are not new acceptance
 claims for unrelated unimplemented editor conveniences.
 
