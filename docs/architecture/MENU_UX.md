@@ -34,6 +34,10 @@ Legacy packets have explicit 18/24 markers after negotiation; MY23 retains its
 16+22 marker. Old peers see only the fallback transport. BH resets pending screen
 fragments on width changes and preserves factory source tracking and saved text.
 C1 queries also report whether mirror work is active before a profile save.
+Queries repeat every 5000 ms to leave shared UART capacity for rain leases,
+status and screens. Token-matched replies have a 3000 ms queue/response window;
+mirror status still expires 3000 ms after receipt, so a blocked save may require
+a retry after the next reply.
 
 The main menu is Favorites, Readings, Actions, Settings, Information, Vehicle.
 Settings contains Features, Favorites and BACCAble IPC. Vehicle is the sole editor

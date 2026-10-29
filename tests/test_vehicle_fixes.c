@@ -195,7 +195,13 @@ static void test_runtime_display(void) {
     assert(vehicle_display_effective().rows == 2);
     p.display_selection = VEHICLE_DISPLAY_LEGACY24;
     assert(settings_profile_save(&p) == 0);
-    now += 1100; vehicle_runtime_process(); vehicle_runtime_reply(display_token, 1, 0);
+    uint8_t previous_token = display_token;
+    now += VEHICLE_DISPLAY_POLL_MS - 1; vehicle_runtime_process();
+    assert(display_token == previous_token);
+    now++; vehicle_runtime_process();
+    assert(display_token != previous_token);
+    now += 1500; /* A queued UART response can take longer than one second. */
+    vehicle_runtime_reply(display_token, 1, 0);
     assert(vehicle_display_effective().widths[0] == 24);
     menu_present("123456789012345678901234");
     assert(screen_packet[1] == LEGACY24_PACKET_MARKER);

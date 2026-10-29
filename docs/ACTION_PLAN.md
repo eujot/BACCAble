@@ -4,6 +4,18 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## PR 96 CI UART correction, 2026-10-29
+
+Run 40914037083 failed in `test_rain_test_with_shared_uart`: one-second display
+capability queries saturated the UART queue during the preceding USB/rain/screen
+scenario. The first BH sample arrived after its deadline. Firmware/lint jobs were
+skipped by dependency, not independently failing. Capability queries now repeat
+every five seconds with a three-second correlated reply window. Mirror freshness
+remains three seconds. EN/PL guides describe pending negotiation/save retries.
+The two updated UART scenarios pass with zero queue errors; the updated runtime
+display case passes in four menu variants (six selected ASan/UBSan executions).
+Hardware acceptance remains open. New PR CI results must confirm the full suite.
+
 ## Vehicle UI review corrections completed locally, 2026-10-29
 
 Fix implementation `ec1665e`; baseline `09bc1e7` / reviewed implementation

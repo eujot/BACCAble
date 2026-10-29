@@ -174,6 +174,9 @@ aktywny i pozwala ponowić próbę. Własne Favorites są zachowane przy zmianie
 Jawny wybór ekranu ma pierwszeństwo przed rokiem. Nowa szerokość działa po
 potwierdzeniu obsługi protokołu przez BH; `Saved; IPC pending` oznacza zapisany
 profil i oczekiwanie przy zachowanym poprzednim działającym przesyłaniu obrazu.
+Zapytania są ponawiane co pięć sekund; poczekaj na kolejne zapytanie i odpowiedź
+przez UART. Jeśli `Mirror status wait` blokuje zapis, ponów próbę po następnej
+odpowiedzi; stan lusterek nadal musi pochodzić z ostatnich trzech sekund.
 Po uruchomieniu legacy korzysta z szerokości kompilacji do zakończenia uzgodnienia.
 Zaktualizuj wszystkie płytki razem. Próby rzeczywistego ekranu pozostają otwarte.
 

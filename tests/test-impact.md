@@ -116,7 +116,7 @@ vehicle_ui_fixes.json. Only these cases execute during this repair.
 - Updated `test_settings_migration`: canonical profile save replaces writable
   legacy engine flags; mock supports the combined transaction record.
 
-- Updated `test_rain_with_usb_and_display`: adds one-second display capability
+- Updated `test_rain_with_usb_and_display`: adds periodic display capability
   commands and a lost capability reply to the real UART/USB/rain scenario.
 - Updated/re-registered `test_exhaust_profile_and_recovery`: preserves GPIO pulse
   timing, verifies equipment rejection and closing an already owned override.
@@ -131,3 +131,15 @@ Final repair validation: 50 selected executions PASS across four menu variants,
 two BH widths, exhaust, UART and pure policy. New/updated cases only.
 Arm GNU 15.2.Rel1: four lints/builds and 16 UI matrix combinations PASS;
 size/identity gates PASS. Hardware and untouched regression suites not executed.
+
+## PR 96 shared UART transition correction
+
+`test_rain_test_with_shared_uart` is updated to validate the page source as well
+as freshness after the preceding capability/USB traffic scenario. Run together
+with the already modified `test_rain_with_usb_and_display`; do not execute the
+untouched retry case or the broader host suite. Reproduced the CI failure at
+4000 ms (BH no reply; 1735 queue errors) with the old one-second query period.
+The shared five-second period now passes both scenarios with zero queue errors,
+including capability traffic throughout Rain test. `test_runtime_display` also
+checks the poll boundary and accepts a queued 1500 ms reply: PASS in four menu
+variants with ASan/UBSan. Six selected executions total; no untouched cases run.

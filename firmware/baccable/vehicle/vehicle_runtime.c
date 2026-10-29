@@ -20,14 +20,13 @@ DisplayProfile vehicle_display_effective(void) { return active_display; }
 bool vehicle_display_negotiated(void) { return supported; }
 void vehicle_runtime_process(void) {
     if (currentTime < TIMING__ALL___SERIAL_IGNORE_WINDOW_MS) return;
-    if (pending && currentTime - sent < 1000U) return;
-    if (sent && currentTime - sent < 1000U) return;
+    if (sent && currentTime - sent < VEHICLE_DISPLAY_POLL_MS) return;
     uint8_t next = token + 1;
     uint8_t command[] = {BhBusID, BH_CMD_DISPLAY_PROFILE, next};
     if (board_uart_send(command, sizeof(command))) { token = next; sent = currentTime; pending = true; }
 }
 void vehicle_runtime_reply(uint8_t response_token, uint8_t capability, uint8_t busy) {
-    if (!pending || response_token != token || currentTime - sent > 1000U) return;
+    if (!pending || response_token != token || currentTime - sent > VEHICLE_DISPLAY_REPLY_MS) return;
     pending = false; replied = currentTime; reply_valid = true; mirror_busy = busy != 0;
     if (capability != 1) return;
     supported = true;

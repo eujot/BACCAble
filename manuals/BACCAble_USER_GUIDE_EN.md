@@ -162,7 +162,10 @@ Custom Favorites are retained across profile changes.
 `Auto` uses MY23 for a known year >=2023, otherwise Legacy 18. Explicit display
 choices override the year. A new width is activated after BH confirms protocol
 support; `Saved; IPC pending` means the profile is saved while the previous working
-transport remains active. At boot legacy uses the compiled fallback width until
+transport remains active. Queries repeat every five seconds; allow time for the
+next query and its UART reply. If `Mirror status wait` blocks a save, retry after
+the next reply; the mirror status freshness limit remains three seconds.
+At boot legacy uses the compiled fallback width until
 negotiation. Update all boards together. Physical screen acceptance is still open.
 
 ## Display symbols and messages
