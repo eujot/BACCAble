@@ -52,7 +52,9 @@ Profile and feature settings share one atomic SETTINGS_RECORD 0x108 payload
 two-page category. Initial conversion appends to an erased 256-byte slot within
 the same reserved pages; both old payloads survive an interrupted conversion.
 Normal combined-record updates alternate pages. Publication follows a successful write; failed edits remain
-isolated. Profile HOLD first opens a consequences review and a second HOLD commits.
+isolated. Profile HOLD commits directly, including while editing a field. Clean Back
+returns immediately; dirty Back from browsing opens the shared save/discard
+prompt. Confirmation locks editing. Busy-operation and atomic-write guards remain.
 
 The external WS281x LED-strip controller is removed; Flash slot 3 stays hidden
 and is normalized to zero on load. Instrument-cluster `Shift light` is separate
@@ -103,19 +105,16 @@ Engine and USB drafts include their companion setting bit.
 | Separate Back after save | Return; it does not save twice |
 | Editor timeout | Discard unfinished draft and return to Favorites |
 
-Favorite slots and Sort order use equivalent isolated drafts in the menu
-controller. Mirror Enabled is staged too. Mirror Store position requires a hold
+Favorite rows use an isolated layout draft in the menu controller. Mirror Enabled is staged too. Mirror Store position requires a hold
 at `Adjust;HOLD=save`/`HOLD STORE`; queue acceptance is still **not** a BH storage
 acknowledgement. Existing action preconditions are checked again on confirmation.
 Except Read BCM faults and Peak hold, actions first show a prompt, then require
 a hold within three seconds. Another click cannot execute that confirmation.
 
-Membership, visibility and page-order editors use isolated MenuPreferences
-drafts and the same direct-hold/Back-confirmation rules. Confirmation locks editing. A
-failed save rolls back live preferences and imported sets while retaining the
-draft. A successful save stays in the editor. Legacy membership/order editors
-are hidden whenever MY23 or atomic sets own live Favorites; before that switch,
-committed legacy edits regenerate imported sets in the same storage transaction.
+Legacy membership, visibility, page-order and sort editors were removed by the
+individual-reading cutover. Favorites now use the UiLayoutRecord draft and
+retain live/saved layout on a failed write. Confirmation locks editing; successful
+save stays in the editor.
 Changed settings and menu preferences are independent storage domains. A failed automatic exit shows
 `× Save failed: RES`; SELECT or HOLD retries the remembered destination, Back cancels the
 exit, and idle never retries silently. Ordinary views idle after 30 s, editors
@@ -130,7 +129,7 @@ visible slots selectable.
 Long generic notices continue onto L2 instead of replacing useful text with a
 static Back footer. A long active title ends with `…`.
 Settings show draft values with `HOLD SAVE`; confirmation shows
-`HOLD SAVE•2X DISCARD` and plain `SAVED` feedback for three seconds. The save
+`HOLD: SAVE` on L1 / `2X: DISCARD` on L2 and plain `SAVED` feedback for three seconds. The save
 event starts with the MY23 title and result instead of first queuing a
 replaceable single-line notice. Every Reading keeps its
 catalog measurements on L1, including multi-value pages; L2 previews the next
@@ -570,3 +569,21 @@ position-lamp pattern is `02 00 80 00`. Older Rain lights firmware generated
 these patterns on its respective buses. The current BH darkness path still
 needs receiver acceptance in the vehicle. The earlier physical observations are not discarded
 or reclassified as missing evidence. See the [focused correction report](../research/20261024-rain-light-polling-correction.md).
+
+## Current profile and draft UX correction
+
+Feature eligibility is reflected in rendering as well as execution. Unknown
+requirements show Configure Vehicle even for a retained enabled preference;
+recovery by clearing that preference remains available. Confirmed unsupported
+features stay hidden. Default-mode cycling skips Race unless policy allows it.
+Suspension shows Set D/Race first outside D/Race and rejects softer saves there.
+Startup LKA names startup behavior separately from Vehicle Lane assist equipment.
+The reading catalog already filters empty ineligible groups and their previews.
+
+Favorite reading/format choices remain pending until format SELECT or a direct
+HOLD. Format Back returns to the reading picker; picker Back cancels the pending
+choice, preserving earlier accepted drafts. HOLD accepts and saves from either
+picker with the same validation/rollback as the item list. All dirty-draft
+prompts share one renderer. Restore defaults keeps its explicit confirmation.
+Mirror capture keeps HOLD STORE on send rejection and never reports SAVED from
+queue acceptance. BACCAble IPC controls are unchanged.

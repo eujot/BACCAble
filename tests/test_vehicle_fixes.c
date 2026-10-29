@@ -56,7 +56,6 @@ static void test_profile_atomic_restart(void) {
 static void test_profile_editor_failure(void) {
     fixes_reset();
     vehicle_editor_begin(); vehicle_editor_select(); vehicle_editor_navigate(1); /* Giulia -> Stelvio */
-    assert(vehicle_editor_save()); /* Open confirmation. */
     fail_save = true;
     assert(!strcmp(vehicle_editor_save(), "Save failed"));
     assert(vehicle_profile_current()->model == VEHICLE_MODEL_GIULIA);
@@ -284,4 +283,166 @@ static void test_split_profile_migration(void) {
         assert(vehicle_profile_current()->model_year == 2024 && settings_state.rain_lights_enabled);
     }
     assert(succeeded);
+}
+
+/* User-facing settings policy and draft regressions for the beta-35 UX correction. */
+static void ux_display(bool my23) {
+    VehicleProfile p = *vehicle_profile_current();
+    p.display_selection = my23 ? VEHICLE_DISPLAY_MY23 : VEHICLE_DISPLAY_LEGACY18;
+    assert(settings_profile_save(&p) == 0);
+    vehicle_runtime_init(); menu_init();
+}
+static bool ux_find_setting(const char *label) {
+    setup_cancel_edit();
+    /* MY23 exposes the setting label even when execution is blocked. */
+    for (unsigned i = 0; i < 42; ++i) {
+        setup_dashboardPageIndex = i;
+        now += 501;
+        if (setup_present_my23() && strstr(screen, label)) return true;
+    }
+    return false;
+}
+static void test_ux_equipment_settings(void) {
+    fixes_reset(); ux_display(true);
+    VehicleProfile p = *vehicle_profile_current();
+    p.equipment[VEHICLE_EQUIPMENT_LANE_ASSIST] = VEHICLE_EQUIPMENT_ABSENT;
+    assert(settings_profile_save(&p) == 0);
+    assert(!ux_find_setting("Startup LKA"));
+    p.equipment[VEHICLE_EQUIPMENT_LANE_ASSIST] = VEHICLE_EQUIPMENT_UNKNOWN;
+    settings_state.lane_assist_disabled = 1; /* Retained preference, blocked execution. */
+    assert(settings_profile_save(&p) == 0);
+    assert(ux_find_setting("Startup LKA"));
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "Configure Vehicle", 17));
+    setup_stage_select(); setup_move_page(1); setup_stage_save();
+    assert(settings_state.lane_assist_disabled == 0); /* Recovery remains available. */
+    p.equipment[VEHICLE_EQUIPMENT_LANE_ASSIST] = VEHICLE_EQUIPMENT_PRESENT;
+    assert(settings_profile_save(&p) == 0);
+    assert(ux_find_setting("Startup LKA"));
+}
+static void test_ux_race_suspension(void) {
+    fixes_reset(); ux_display(true);
+    VehicleProfile p = *vehicle_profile_current();
+    p.equipment[VEHICLE_EQUIPMENT_RACE] = VEHICLE_EQUIPMENT_ABSENT;
+    p.equipment[VEHICLE_EQUIPMENT_SUSPENSION] = VEHICLE_EQUIPMENT_PRESENT;
+    assert(settings_profile_save(&p) == 0);
+    settings_state.default_drive_mode = 3;
+    assert(ux_find_setting("Default mode"));
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "Not on vehicle", 14));
+    setup_stage_select(); setup_move_page(-1); setup_stage_save();
+    assert(settings_state.default_drive_mode == 2); setup_cancel_edit();
+    assert(ux_find_setting("Default mode"));
+    setup_stage_select(); setup_move_page(1); setup_stage_save();
+    assert(settings_state.default_drive_mode == 1); /* D skips unsupported Race to A. */
+    setup_cancel_edit();
+    settings_state.default_drive_mode = 0; settings_state.default_suspension_softer = 1;
+    assert(ux_find_setting("Suspension"));
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "Set D/Race first", 16));
+    setup_stage_select(); setup_move_page(1); setup_stage_save();
+    assert(!settings_state.default_suspension_softer); /* A stale preference can be cleared. */
+    setup_cancel_edit();
+    settings_state.default_drive_mode = 2; assert(ux_find_setting("Suspension"));
+    setup_stage_select(); setup_move_page(1);
+    settings_state.default_drive_mode = 0; setup_stage_save();
+    assert(!settings_state.default_suspension_softer); /* Recheck prerequisites at save. */
+    setup_cancel_edit();
+    p.equipment[VEHICLE_EQUIPMENT_RACE] = VEHICLE_EQUIPMENT_PRESENT;
+    assert(settings_profile_save(&p) == 0);
+    settings_state.default_drive_mode = 2;
+    assert(ux_find_setting("Default mode"));
+    setup_stage_select(); setup_move_page(1); setup_stage_save();
+    assert(settings_state.default_drive_mode == 3);
+}
+static void test_ux_vehicle_direct_save(void) {
+    fixes_reset();
+    vehicle_editor_begin(); assert(!vehicle_editor_back()); /* Clean exit needs no decision. */
+    vehicle_editor_begin(); vehicle_editor_select(); vehicle_editor_navigate(1);
+    fail_save = true; assert(!strcmp(vehicle_editor_save(), "Save failed"));
+    assert(vehicle_profile_current()->model == VEHICLE_MODEL_GIULIA);
+    fail_save = false; assert(!vehicle_editor_save());
+    assert(vehicle_profile_current()->model == VEHICLE_MODEL_STELVIO);
+    assert(!vehicle_editor_back());
+    vehicle_editor_begin(); vehicle_editor_select(); vehicle_editor_navigate(-1);
+    assert(vehicle_editor_back()); assert(vehicle_editor_back());
+    vehicle_editor_navigate(1); vehicle_editor_select(); /* Confirmation locks editing. */
+    assert(!vehicle_editor_back()); vehicle_editor_cancel();
+    assert(vehicle_profile_current()->model == VEHICLE_MODEL_STELVIO);
+}
+static void ux_open_favorite_picker(void) {
+    menu_event(MENU_BACK); /* Favorites -> root. */
+    for (unsigned i = 0; i < 3; ++i) menu_event(MENU_NEXT);
+    menu_event(MENU_SELECT); menu_event(MENU_NEXT); menu_event(MENU_SELECT);
+    menu_event(MENU_SELECT); menu_event(MENU_SELECT); menu_event(MENU_SELECT);
+}
+static void test_ux_favorite_drafts(void) {
+    fixes_reset(); ux_display(true);
+    UiLayoutRecord layout; ui_layout_default(&layout, vehicle_profile_current());
+    uint8_t initial[UI_LAYOUT_RECORD_SIZE]; assert(ui_layout_encode(&layout, initial));
+    assert(flash_record_save(VISIBILITY_RECORD, UI_LAYOUT_RECORD_TYPE, initial, sizeof(initial)));
+    menu_init();
+    ux_open_favorite_picker();
+    menu_event(MENU_NEXT); menu_event(MENU_SELECT); /* Reading -> format, still unaccepted. */
+    menu_event(MENU_BACK); menu_event(MENU_BACK); menu_event(MENU_BACK);
+    assert(strstr(screen, "Row A")); /* No dirty confirmation after cancelling both choices. */
+    menu_event(MENU_SELECT); menu_event(MENU_SELECT); menu_event(MENU_NEXT);
+    for (unsigned i = 0; i <= READING_COUNT && !strstr(screen, "Empty"); ++i) menu_event(MENU_NEXT);
+    assert(strstr(screen, "Empty"));
+    fail_save = true; menu_event(MENU_HOLD); /* Direct picker save must attempt storage. */
+    assert(strstr(screen, "Save failed"));
+    fail_save = false;
+    menu_event(MENU_BACK); /* Dirty decision, split prompt. */
+    assert(!memcmp(screen_packet + 2, "HOLD: SAVE", 10));
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "2X: DISCARD", 11));
+    menu_event(MENU_SELECT); menu_event(MENU_NEXT);
+    assert(!memcmp(screen_packet + 2, "HOLD: SAVE", 10));
+    menu_event(MENU_BACK); assert(strstr(screen, "Row A"));
+    uint8_t retained[UI_LAYOUT_RECORD_SIZE];
+    assert(flash_record_load(VISIBILITY_RECORD, UI_LAYOUT_RECORD_TYPE, retained, sizeof(retained)));
+    assert(!memcmp(initial, retained, sizeof(initial)));
+    menu_event(MENU_SELECT); menu_event(MENU_SELECT);
+    for (unsigned i = 0; i <= READING_COUNT && !strstr(screen, "Empty"); ++i) menu_event(MENU_NEXT);
+    menu_event(MENU_HOLD);
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "SAVED", 5));
+    now += 4000; menu_render();
+    menu_event(MENU_BACK); menu_event(MENU_NEXT); /* Row B has one reading. */
+    menu_event(MENU_SELECT); menu_event(MENU_SELECT);
+    for (unsigned i = 0; i <= READING_COUNT && !strstr(screen, "Oil temp"); ++i) menu_event(MENU_NEXT);
+    assert(strstr(screen, "Oil temp"));
+    menu_event(MENU_SELECT); menu_event(MENU_HOLD); /* Restore original reading from format picker. */
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "SAVED", 5));
+}
+
+static void test_ux_mirror_retry_hint(void) {
+    fixes_reset(); ux_display(true);
+    VehicleProfile p = *vehicle_profile_current();
+    p.equipment[VEHICLE_EQUIPMENT_PARK_MIRROR] = VEHICLE_EQUIPMENT_PRESENT;
+    assert(settings_profile_save(&p) == 0);
+    settings_state.park_mirror = 1;
+    assert(ux_find_setting("Park mirror"));
+    setup_stage_select(); setup_move_page(1); setup_stage_select();
+    uart_busy = true; setup_stage_save();
+    uart_busy = false; now += 501; assert(setup_present_my23());
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "HOLD STORE", 10));
+    setup_cancel_edit();
+}
+
+static void test_ux_reading_groups(void) {
+    for (unsigned diesel = 0; diesel < 2; ++diesel) {
+        fixes_reset(); ux_display(true);
+        VehicleProfile p = *vehicle_profile_current();
+        p.engine = diesel ? VEHICLE_ENGINE_DIESEL22 : VEHICLE_ENGINE_PETROL20;
+        assert(settings_profile_save(&p) == 0); menu_init();
+        menu_event(MENU_BACK); menu_event(MENU_NEXT); menu_event(MENU_SELECT);
+        bool seen_dpf = false;
+        for (unsigned g = 0; g < READING_GROUP_COUNT; ++g) {
+            seen_dpf |= strstr(screen, "Diesel") != NULL;
+            if (!diesel) assert(memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "Diesel / DPF", 12));
+            menu_event(MENU_NEXT);
+        }
+        assert(seen_dpf == !!diesel);
+    }
+    fixes_reset(); ux_display(true); ux_open_favorite_picker();
+    for (unsigned i = 0; i <= READING_COUNT; ++i) {
+        assert(!strstr(screen, "DPF") && !strstr(screen, "AdBlue") && !strstr(screen, "EGR"));
+        menu_event(MENU_NEXT);
+    }
 }

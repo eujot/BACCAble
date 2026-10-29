@@ -4,6 +4,61 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Current Vehicle/Features and save UX correction, 2026-10-30
+
+Fresh `git fetch origin` before implementation and again after validation confirms
+`origin/master` `af1fd72` (beta-35). Work is isolated on
+`fix/current-vehicle-ux`, `/private/tmp/baccable-current-vehicle-ux`. This adapts the
+owner's previous save/discard and engine-group requests to the actual current
+individual-reading/profile implementation; obsolete beta-30-based commits
+`ed5d0f9` / `b6826fa` were not cherry-picked. Current Readings already filters
+empty ineligible groups and previews; new integration coverage confirms it.
+
+- Vehicle HOLD now saves directly, including during field editing, and reports
+  SAVED only after successful atomic persistence. It keeps the selected field.
+  Clean Back from browsing exits immediately; dirty Back opens the same decision
+  screen as Features/Favorites. Confirmation locks editing. Existing busy guards,
+  failed-write rollback/retry, equipment policy, pending display negotiation and
+  retained preferences remain. The redundant consequences-review/second-HOLD
+  flow and truncated `HOLD save Vehicle` title are removed.
+- All draft decision screens, including Restore defaults, share MY23 L1
+  `HOLD: SAVE` / L2 `2X: DISCARD`; legacy uses `Hold save/2x drop`.
+  Favorites reading and format choices stay pending until accepted. Format Back
+  returns to picker; picker Back cancels only that choice. HOLD from either
+  picker accepts and saves with the existing validation, fit and rollback checks.
+  Navigation in the Favorite picker skips profile-ineligible readings. Existing
+  stored IDs and all layouts remain intact until explicitly saved.
+- Default mode skips Race when vehicle policy does not permit it. A retained
+  unavailable Race setting displays Not on vehicle/Configure Vehicle and remains
+  editable for recovery. Suspension explains `Set D/Race first` outside D/Race;
+  soft-setting saves recheck that prerequisite. Stale softer preferences can be
+  cleared. Equipment-dependent settings show a policy reason even when a retained
+  preference is enabled, rather than implying effective operation.
+- Features LKA is named `Startup LKA`, retaining OFF/ON semantics and flash values;
+  Vehicle Lane assist still describes equipment. Confirmed Absent hides the
+  feature; Unknown explains configuration and allows clearing retained intent.
+  Mirror send rejection retains HOLD STORE for retry, distinct from queued
+  acknowledgement. BACCAble IPC controls retain their immediate behavior.
+
+Both user guides and MENU_UX updated; removed stale references to the retired
+membership/order editors in the touched workflow description. No storage format,
+CAN measurement dictionary or actuator protocol change.
+
+Validation: `tests/current_vehicle_ux.json`, 42 scoped Apple Clang ASan/UBSan case
+executions PASS (six new UX cases plus directly related editor/policy and reading
+catalog regressions; four menu/display variants). Tests cover failed writes,
+unchanged saved bytes on discard, confirmation locking, direct picker/format and
+Vehicle saves, clean/dirty returns, LKA tri-state visibility/recovery, Race
+filtering/retained preference, suspension save-time prerequisites, mirror retry,
+and gasoline/diesel group and picker filtering. Impact ledger in
+`tests/test-impact.md`. The untouched broad host/Lab suites were not executed.
+Arm GNU 15.2.Rel1: four standard firmware builds, four-flavor cppcheck, C1's four
+IPC/width matrix builds and four size/identity gates PASS. C1 standard Flash/static
+RAM: 92,996/13,308 B; largest C1 matrix static RAM 13,500 B. Runtime stack and
+vehicle acceptance remain unmeasured. No flash, release, push or merge performed.
+Original checkout remains on its prior task branch with its pre-existing
+untracked captures/releases/research preserved; this worktree started clean.
+
 ## v5-beta-35 release, 2026-10-29
 
 PR [#96](https://github.com/eujot/BACCAble/pull/96) merged the joint vehicle

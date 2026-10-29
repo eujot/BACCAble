@@ -41,8 +41,8 @@ are supported; a menu entry alone does not establish compatibility.
 3. Hold **RES for about 0.9 seconds**, then release. The menu opens in Favorites.
 4. **Double-click RES** to return to the main menu, then open `Vehicle`.
 5. Set `Model`, `Model year`, `Engine`, `Drivetrain`, `Display` and equipment.
-   First HOLD opens the review; up/down lists preferences that would be suppressed.
-   HOLD again saves. BACK from a field returns to browsing; two BACKs from browsing
+   HOLD saves directly. Incompatible saved preferences remain stored, but their
+   operation is blocked by the accepted profile. BACK from a field returns to browsing; two BACKs from dirty browsing
    discard the complete draft. A failed save keeps the old profile and your draft.
 6. Use `Display` to choose `Auto`, `Legacy 18`, `Legacy 24` or `MY23`. Update
    C1/C2/BH together. `Auto` selects MY23 for a known year of 2023 or later.
@@ -78,7 +78,8 @@ normal item step before its group jump.
 Entering an editor shows the saved value without changing it. Hold RES in an
 editor to save directly; no preceding double-click is required. Double-click
 returns one level. With an unchanged setting it returns immediately.
-With a changed draft, the first double-click shows `HOLD SAVE•2X DISCARD` on MY23
+With a changed draft, the first double-click shows `HOLD: SAVE` on line 1 and
+`2X: DISCARD` on line 2 on MY23
 (`Hold save/2x drop` on legacy). Hold RES to persist and apply; the setting stays
 visible with `SAVED` feedback for about three seconds. A separate double-click
 returns. Double-click in
@@ -87,8 +88,9 @@ A failed save keeps the draft and confirmation available for another hold.
 A restart loads committed values only. USB mode changes only after a successful
 explicit save; selecting CAN or merely leaving an unsaved draft does not activate it.
 
-The same draft workflow applies to Features, Favorite slots, mirror Enabled and
-Sort order. There is no Save & Exit item. Live readings stay visible. Other menu
+The same draft workflow applies to Features, Favorites, Vehicle and mirror Enabled.
+Confirmation locks editing: hold saves and double-click discards. BACCAble IPC
+controls keep their immediate behavior. There is no Save & Exit item. Live readings stay visible. Other menu
 views return to Favorites after 30 s without input, or 60 s in editors; unfinished
 drafts are discarded. Active fault work postpones this timeout.
 
@@ -146,8 +148,8 @@ Equipment fields use `Unknown`, `Absent`, `Present`: `Suspension`, `Race`,
 A feature preference never proves that equipment is installed.
 
 An imported installation keeps its previous permissions until Vehicle is explicitly
-saved. Review `OFF: …` entries with up/down before HOLD: the saved preferences
-remain, but incompatible actions and automatic functions are suppressed. Unknown
+saved. HOLD commits directly: saved preferences remain, but incompatible actions
+and automatic functions are suppressed. Unknown
 equipment on a new or confirmed profile cannot authorize a new equipment-dependent
 action. Race and adjustable suspension are independent. AWD requests require Q4.
 Known absent equipment hides its feature option; `Configure Vehicle` explains an
@@ -167,6 +169,15 @@ next query and its UART reply. If `Mirror status wait` blocks a save, retry afte
 the next reply; the mirror status freshness limit remains three seconds.
 At boot legacy uses the compiled fallback width until
 negotiation. Update all boards together. Physical screen acceptance is still open.
+
+Features follow the saved Vehicle profile. Confirmed `Absent` equipment hides
+its dependent setting. `Unknown` keeps it visible with `Configure Vehicle`;
+a retained preference is blocked until the requirement is met. A retained
+preference can still be cleared. `Startup LKA` controls startup behavior; it does
+not declare equipment presence. Race is skipped in Default mode unless allowed.
+Suspension requires D or Race; `Set D/Race first` explains the dependency and
+prevents saving a softer setting for A/N. Rejected mirror storage commands retain
+`HOLD STORE` for retry; `Store: queued` confirms enqueueing only.
 
 ## Display symbols and messages
 
@@ -292,7 +303,12 @@ table layout. Legacy retains the table and splits wide rows into subpages.
 1. Open `Settings → Favorites` and choose `Favorite 1` through `Favorite 6`.
 2. Choose `Row A` or `Row B`, then an item slot.
 3. Choose a reading (or `Empty`) and a format (Auto/Full/Medium/Short).
-4. Hold to save. A first BACK opens confirmation for a dirty draft; a second
+   The picker skips readings that do not apply to the saved Vehicle profile.
+   The reading stays pending until its format is accepted. BACK from format
+   returns to the reading picker; BACK again cancels the pending choice without
+   changing earlier accepted draft edits.
+4. Hold to save directly from the reading picker (Auto format), format picker,
+   item list or row list. A first BACK from the item list opens confirmation for a dirty draft; a second
    BACK discards it. `Duplicate reading`, `Oil bar needs row` or `Too wide: shorten`
    rejects the save and keeps the draft. Choose a shorter format or remove an item.
 
@@ -313,7 +329,7 @@ not newly verified here. Unknown drivetrain shows `?` and `Set drivetrain`.
 Open `Settings → Features`. The tables follow the actual browsing order.
 The group headings below explain stronger up/down jumps; they are not extra
 submenus. Short RES opens the editor at the saved value. Once inside, clicks
-or up/down change on/off and named choices. `LKA` displays `OFF` or `ON`
+or up/down change on/off and named choices. `Startup LKA` displays `OFF` or `ON`
 explicitly; the other switches use their checkbox in the list.
 
 For **Launch Nm**, **Shift RPM** and **Pedal trim**, click to edit and use
@@ -371,7 +387,7 @@ selection still appears immediately.
 | `Virtual ACC` | Off / on | Use a compatible standard cruise-control pad for ACC functions. It requires an ACC-capable, correctly configured vehicle; it does not add radar or ACC capability. |
 | `ACC resume` | OFF / RES / + | Select whether BACCAble sends automatic RES or gentle-up requests while ACC is engaged and holding a stationary car. This can allow the car to resume movement; see [assistance controls](#acc-and-has-controls). |
 | `Virtual HAS` | Off / on | Permit simulated Highway Assist button presses through the action or a double press of the lane button. Requires compatible, configured vehicle assistance equipment. |
-| `LKA` | OFF / ON | **OFF** requests LKA off once at each ignition start. C1 recognizes OFF → RUN on `0x1EF`, including starts without device sleep; cranking does not start a second session. After configuration reaches C2, it waits up to 5 s for LKA ON on `0x547` and a released stalk report, then sends one C2 `0x384` double-click: press, release, press, release, about 100 ms apart. Initial OFF reports are allowed while waiting; no click is sent while LKA is off. A driver press cancels the pending action. **ON** keeps factory behavior and sends no automatic click; it does not forcibly enable LKA. Saving applies this preference at the next ignition start. No later periodic override is sent. Existing `Disable LKA: ON` becomes `LKA: OFF`, preserving the saved intent. Beta 24 was reported to work once after connection, but failed on later ignition cycles; this correction still needs repeated vehicle testing. |
+| `Startup LKA` | OFF / ON | **OFF** requests LKA off once at each ignition start. C1 recognizes OFF → RUN on `0x1EF`, including starts without device sleep; cranking does not start a second session. After configuration reaches C2, it waits up to 5 s for LKA ON on `0x547` and a released stalk report, then sends one C2 `0x384` double-click: press, release, press, release, about 100 ms apart. Initial OFF reports are allowed while waiting; no click is sent while LKA is off. A driver press cancels the pending action. **ON** keeps factory behavior and sends no automatic click; it does not forcibly enable LKA. Saving applies this preference at the next ignition start. No later periodic override is sent. Existing `Disable LKA: ON` becomes `Startup LKA: OFF`, preserving the saved intent. Beta 24 was reported to work once after connection, but failed on later ignition cycles; this correction still needs repeated vehicle testing. |
 
 ### Drivetrain group
 

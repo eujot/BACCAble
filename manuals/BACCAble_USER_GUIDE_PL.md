@@ -47,10 +47,10 @@ jego sterowników. Sama obecność opcji w menu nie oznacza, że samochód ją o
 3. Przytrzymaj **RES przez około 0,9 sekundy** i puść. Otworzą się Favorites.
 4. **Naciśnij RES dwukrotnie**, aby wrócić do menu głównego, i otwórz `Vehicle`.
 5. Ustaw `Model`, `Model year`, `Engine`, `Drivetrain`, `Display` i wyposażenie.
-   Pierwsze przytrzymanie otwiera podgląd skutków; góra/dół pokazuje ustawienia,
-   których działanie zostanie wyłączone. Kolejne przytrzymanie zapisuje profil.
-   BACK z edycji pola wraca do przeglądania; dwa BACK z przeglądania odrzucają cały
-   szkic. Błąd zapisu pozostawia aktywny poprzedni profil i zachowuje szkic.
+   Przytrzymanie zapisuje bezpośrednio. Niezgodne preferencje pozostają zapisane,
+   ale profil blokuje ich wykonywanie. Dwuklik z pola wraca do listy pól;
+   dwuklik ze zmienionej listy pokazuje pytanie, a kolejny odrzuca szkic.
+   Błąd zapisu zachowuje poprzedni profil i edytowane zmiany.
 6. W `Display` wybierz `Auto`, `Legacy 18`, `Legacy 24` albo `MY23`. Zaktualizuj
    razem C1/C2/BH. `Auto` wybiera MY23 dla podanego roku 2023 lub nowszego.
 
@@ -87,7 +87,7 @@ Mocniejsze naciśnięcie może najpierw wykonać zwykły krok, potem zmianę gru
 Wejście do edytora pokazuje zapisaną wartość i samo jej nie zmienia. Przytrzymanie
 RES w edytorze zapisuje bezpośrednio — wcześniejszy dwuklik nie jest wymagany.
 Dwuklik cofa o jeden poziom. Bez zmian wraca od razu. Po zmianie szkicu pierwszy
-dwuklik pokazuje `HOLD SAVE•2X DISCARD` na MY23 albo `Hold save/2x drop` na
+dwuklik pokazuje `HOLD: SAVE` w pierwszej linii i `2X: DISCARD` w drugiej na MY23 albo `Hold save/2x drop` na
 starszym ekranie. Przytrzymanie zapisuje i stosuje zmianę; ustawienie zostaje
 na ekranie z komunikatem `SAVED` przez około trzy sekundy. Osobny dwuklik
 wraca. Dwuklik zamiast
@@ -97,7 +97,9 @@ Po restarcie wczytywane są tylko zapisane wartości. Tryb USB zmienia się dopi
 po udanym jawnym zapisie. Sam wybór CAN lub wyjście z niezapisanego szkicu
 nie włącza tego trybu.
 
-Tak samo edytujesz Features, sloty ulubionych, Enabled lusterek i Sort order.
+Tak samo edytujesz Features, Favorites, Vehicle i Enabled lusterek.
+Ekran decyzji blokuje edycję: przytrzymanie zapisuje, a dwuklik odrzuca. Opcje
+BACCAble IPC zachowują działanie natychmiastowe.
 Nie ma Save & Exit. Bieżące odczyty pozostają widoczne. Pozostałe widoki wracają
 do Favorites po 30 s bezczynności, a edytory po 60 s. Niedokończone szkice są
 odrzucane. Aktywny odczyt lub kasowanie błędów opóźnia automatyczny powrót.
@@ -156,8 +158,8 @@ Pola wyposażenia mają wartości `Unknown`, `Absent`, `Present`: `Suspension`,
 Włączenie ustawienia funkcji nie potwierdza obecności wyposażenia.
 
 Przeniesiona starsza instalacja zachowuje wcześniejsze uprawnienia do jawnego
-zapisu Vehicle. Przed HOLD przejrzyj góra/dół pozycje `OFF: …`: ustawienia pozostają
-zapisane, lecz niezgodne akcje i funkcje automatyczne nie będą wykonywane.
+zapisu Vehicle. Przytrzymanie zapisuje bezpośrednio. Ustawienia pozostają zapisane, lecz
+niezgodne akcje i funkcje automatyczne nie będą wykonywane.
 Nieznane wyposażenie w nowym lub potwierdzonym profilu nie zezwala na rozpoczęcie
 akcji, która go wymaga. Race i regulowane zawieszenie są niezależne. Żądanie AWD
 wymaga Q4. Wyposażenie oznaczone jako nieobecne ukrywa odpowiednią opcję funkcji;
@@ -186,6 +188,16 @@ Starszy profil, zgodnie z wyborem `Display`, wykorzystuje 18 lub 24
 pozycje tekstowe. Nazwa na liście może różnić się od podpisu bieżącego odczytu,
 aby zrobić miejsce na wartości. Na przykład strona `Batt charge BCM` wyświetla
 odczyt podpisany `Batt BCM SOC`.
+
+Features odpowiadają zapisanemu profilowi Vehicle. Potwierdzone `Absent` ukrywa
+zależną opcję. Przy `Unknown` opcja pozostaje widoczna z `Configure Vehicle`;
+zachowana preferencja nie działa, dopóki warunek nie zostanie spełniony. Nadal
+można ją wyłączyć. `Startup LKA` określa zachowanie przy uruchomieniu, a nie
+obecność wyposażenia. Default mode pomija Race, jeśli profil go nie dopuszcza.
+Suspension wymaga D lub Race; `Set D/Race first` wyjaśnia warunek i blokuje zapis
+łagodniejszego ustawienia dla A/N. Po odrzuceniu polecenia zapamiętania lusterek
+`HOLD STORE` wskazuje ponowienie przytrzymaniem; `Store: queued` potwierdza tylko
+przyjęcie do kolejki.
 
 MY23 ma **16 widocznych znaków w pierwszej linii i 22 w drugiej**. Lista
 pokazuje bieżącą pozycję z `›`, a pod nią następną. Edytor pokazuje ustawienie
@@ -306,6 +318,13 @@ naładowania IBS + prądem. Diesel DPF pokazuje zapełnienie nad postępem + tem
 Cooling i benzynowy Performance zachowują układ z tabeli. Legacy zachowuje tabelę,
 a szerokie wiersze dzieli na podstrony.
 
+W edytorze Favorites wybór odczytu pozostaje tymczasowy do zatwierdzenia formatu.
+Lista pomija odczyty niezgodne z zapisanym profilem Vehicle.
+Dwuklik z formatu wraca do wyboru odczytu, a kolejny anuluje bieżący wybór bez
+zmiany wcześniej zatwierdzonych zmian szkicu. Przytrzymanie zapisuje bezpośrednio
+z wyboru odczytu (format Auto), wyboru formatu, listy pozycji lub listy wierszy.
+Pytanie o zapis po dwukliku dotyczy wychodzenia ze zmienionej listy pozycji.
+
 ### Edycja ulubionych
 
 1. Otwórz `Settings → Favorites` i wybierz `Favorite 1`–`Favorite 6`.
@@ -334,7 +353,7 @@ Otwórz `Settings → Features`. Tabele zachowują rzeczywistą kolejność opcj
 Poniższe nagłówki grup wyjaśniają działanie mocniejszych naciśnięć góra/dół — nie
 są dodatkowymi podmenu. Krótkie RES otwiera edytor z zapisaną wartością.
 Dopiero w edytorze kolejne naciśnięcia lub góra/dół zmieniają przełączniki i
-nazwane wartości. `LKA` pokazuje wprost `OFF` lub `ON`; pozostałe przełączniki
+nazwane wartości. `Startup LKA` pokazuje wprost `OFF` lub `ON`; pozostałe przełączniki
 korzystają z symbolu zaznaczenia na liście.
 
 Dla **Launch Nm**, **Shift RPM** i **Pedal trim** krótkie RES rozpoczyna edycję,
@@ -393,7 +412,7 @@ pozycji menu nadal pojawia się od razu.
 | `Virtual ACC` | Wyłączona / włączona | Pozwala obsługiwać ACC zgodnym panelem przycisków zwykłego tempomatu. Samochód musi już mieć potrzebny sprzęt i konfigurację ACC. Funkcja nie zastępuje radaru ani innych brakujących elementów. |
 | `ACC resume` | OFF / RES / + | Wybiera automatyczne wysyłanie RES albo lekkiego naciśnięcia w górę, gdy ACC jest aktywny i utrzymuje zatrzymany samochód. Może to umożliwić ponowne ruszenie. Zobacz [obsługę ACC i HAS](#obsługa-acc-i-has). |
 | `Virtual HAS` | Wyłączona / włączona | Udostępnia symulowane naciśnięcie przycisku Highway Assist przez akcję lub podwójne naciśnięcie przycisku asystenta pasa. Wymaga zgodnego i skonfigurowanego wyposażenia samochodu. |
-| `LKA` | OFF / ON | **OFF** zleca wyłączenie LKA raz przy każdym włączeniu zapłonu. C1 rozpoznaje OFF → RUN w `0x1EF`, także bez uśpienia urządzenia; rozruch nie rozpoczyna drugiej sesji. Po otrzymaniu konfiguracji C2 czeka do 5 s na włączone LKA w `0x547` i puszczony przycisk manetki, potem wysyła jeden dwuklik C2 `0x384`: naciśnięcie, puszczenie, naciśnięcie, puszczenie, co około 100 ms. Początkowe raporty OFF nie kończą oczekiwania; gdy LKA jest wyłączone, dwuklik nie jest wysyłany. Naciśnięcie kierowcy anuluje oczekującą akcję. **ON** pozostawia działanie fabryczne i nie wysyła automatycznego dwukliku; nie wymusza włączenia LKA. Zapisane ustawienie działa od następnego włączenia zapłonu. Później nie ma cyklicznego nadpisywania. Dotychczasowe `Disable LKA: ON` staje się `LKA: OFF`, zachowując intencję zapisanego ustawienia. Użytkownik potwierdził jednorazowe działanie bety 24 po podłączeniu i brak działania po kolejnych cyklach zapłonu; tę poprawkę trzeba jeszcze sprawdzić wielokrotnie w samochodzie. |
+| `Startup LKA` | OFF / ON | **OFF** zleca wyłączenie LKA raz przy każdym włączeniu zapłonu. C1 rozpoznaje OFF → RUN w `0x1EF`, także bez uśpienia urządzenia; rozruch nie rozpoczyna drugiej sesji. Po otrzymaniu konfiguracji C2 czeka do 5 s na włączone LKA w `0x547` i puszczony przycisk manetki, potem wysyła jeden dwuklik C2 `0x384`: naciśnięcie, puszczenie, naciśnięcie, puszczenie, co około 100 ms. Początkowe raporty OFF nie kończą oczekiwania; gdy LKA jest wyłączone, dwuklik nie jest wysyłany. Naciśnięcie kierowcy anuluje oczekującą akcję. **ON** pozostawia działanie fabryczne i nie wysyła automatycznego dwukliku; nie wymusza włączenia LKA. Zapisane ustawienie działa od następnego włączenia zapłonu. Później nie ma cyklicznego nadpisywania. Dotychczasowe `Disable LKA: ON` staje się `Startup LKA: OFF`, zachowując intencję zapisanego ustawienia. Użytkownik potwierdził jednorazowe działanie bety 24 po podłączeniu i brak działania po kolejnych cyklach zapłonu; tę poprawkę trzeba jeszcze sprawdzić wielokrotnie w samochodzie. |
 
 ### Grupa układu napędowego
 

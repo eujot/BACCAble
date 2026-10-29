@@ -149,3 +149,15 @@ display tests: the new width test preceded a sequential suite whose first displa
 case reads captured frame zero. Keep the original sequence intact and run the
 new case last, advancing its clock instead of resetting time backwards. Selected
 width case passes in both BH compile widths; CI validates the original sequence.
+
+## Current vehicle UX
+
+`tests/current_vehicle_ux.json` selects the six new UX cases on four menu
+variants, plus updated Vehicle save/failure/editor cases, the existing effective
+policy case and reading catalog eligibility/list cases. New cases exercise
+Absent/Unknown/Present LKA visibility and retained-preference recovery, Race
+choice filtering, suspension prerequisites, direct Vehicle save/failure/retry,
+clean/dirty Back and confirmation lock, Favorite picker cancellation and direct
+save from reading/format with write failure, split prompts, and mirror retry
+hints. Group/picker coverage verifies gasoline skips diesel-only entries while
+diesel retains its group. Untouched broad host/Lab cases are outside this run.

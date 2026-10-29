@@ -1,0 +1,251 @@
+{
+  "schema": 1,
+  "stage": "current-vehicle-ux",
+  "runs": [
+    {
+      "build_target": "build/test_menu",
+      "variant": "legacy18",
+      "source": "test_menu.c",
+      "cases": [
+        {
+          "name": "test_ux_equipment_settings",
+          "change": "new",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_ux_race_suspension",
+          "change": "new",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_ux_vehicle_direct_save",
+          "change": "new",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_ux_favorite_drafts",
+          "change": "new",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_profile_editor_failure",
+          "change": "update",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_vehicle_editor",
+          "change": "update",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_vehicle_editor_equipment",
+          "change": "update",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_profile_effective_options",
+          "change": "update",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_ux_mirror_retry_hint",
+          "change": "new",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_ux_reading_groups",
+          "change": "new",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        }
+      ]
+    },
+    {
+      "build_target": "build/test_menu_large",
+      "variant": "legacy24",
+      "source": "test_menu.c",
+      "cases": [
+        {
+          "name": "test_ux_equipment_settings",
+          "change": "new",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_ux_race_suspension",
+          "change": "new",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_ux_vehicle_direct_save",
+          "change": "new",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_ux_favorite_drafts",
+          "change": "new",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_profile_editor_failure",
+          "change": "update",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_vehicle_editor",
+          "change": "update",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_vehicle_editor_equipment",
+          "change": "update",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_profile_effective_options",
+          "change": "update",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_ux_mirror_retry_hint",
+          "change": "new",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_ux_reading_groups",
+          "change": "new",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        }
+      ]
+    },
+    {
+      "build_target": "build/test_menu_my23",
+      "variant": "my23",
+      "source": "test_menu.c",
+      "cases": [
+        {
+          "name": "test_ux_equipment_settings",
+          "change": "new",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_ux_race_suspension",
+          "change": "new",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_ux_vehicle_direct_save",
+          "change": "new",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_ux_favorite_drafts",
+          "change": "new",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_profile_editor_failure",
+          "change": "update",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_vehicle_editor",
+          "change": "update",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_vehicle_editor_equipment",
+          "change": "update",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_profile_effective_options",
+          "change": "update",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_ux_mirror_retry_hint",
+          "change": "new",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_ux_reading_groups",
+          "change": "new",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        }
+      ]
+    },
+    {
+      "build_target": "build/test_menu_my23_large",
+      "variant": "my23-large",
+      "source": "test_menu.c",
+      "cases": [
+        {
+          "name": "test_ux_equipment_settings",
+          "change": "new",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_ux_race_suspension",
+          "change": "new",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_ux_vehicle_direct_save",
+          "change": "new",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_ux_favorite_drafts",
+          "change": "new",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_profile_editor_failure",
+          "change": "update",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_vehicle_editor",
+          "change": "update",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_vehicle_editor_equipment",
+          "change": "update",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_profile_effective_options",
+          "change": "update",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_ux_mirror_retry_hint",
+          "change": "new",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_ux_reading_groups",
+          "change": "new",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        }
+      ]
+    },
+    {
+      "build_target": "build/test_reading_catalog",
+      "variant": "legacy18",
+      "source": "test_reading_catalog.c",
+      "cases": [
+        {
+          "name": "test_reading_catalog_list",
+          "change": "update",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        },
+        {
+          "name": "test_reading_catalog_eligibility",
+          "change": "update",
+          "evidence": "test-impact.md#current-vehicle-ux"
+        }
+      ]
+    }
+  ]
+}

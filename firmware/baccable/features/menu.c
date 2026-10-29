@@ -283,7 +283,12 @@ static const char *favorite_pick_label(uint8_t id) {
     return meta ? reading_label_for((ReadingId)id, READING_FORMAT_FULL) : "Empty";
 }
 static uint8_t next_favorite_reading(uint8_t id, int direction) {
-    return wrap(id, READING_COUNT + 1, direction);
+    for (unsigned i = 0; i <= READING_COUNT; ++i) {
+        id = wrap(id, READING_COUNT + 1, direction);
+        if (id == READING_COUNT || vehicle_reading_support_for(vehicle_profile_current(), (ReadingId)id) != VEHICLE_SUPPORT_UNSUPPORTED)
+            return id;
+    }
+    return READING_COUNT;
 }
 
 
@@ -500,6 +505,12 @@ void menu_notice(const char *text) {
                           ? NOTICE_CONFIRM_MS : NOTICE_REQUEST_MS;
     if (dashboard_state.baccable_dashboard_menu_visible)
         menu_present(text);
+}
+
+/* Persistent editors share one decision screen on every display profile. */
+void menu_present_save_prompt(void) {
+    if (menu_my23()) menu_present_view(UI_MODE_CONFIRM, "HOLD: SAVE", "2X: DISCARD");
+    else menu_present("Hold save/2x drop");
 }
 
 void menu_notice_saved(const char *title) {
@@ -909,18 +920,13 @@ void menu_render(void) {
         char value[24];
         const char *v = vehicle_editor_value_label(value, sizeof(value));
         VehicleEditorState st = vehicle_editor_state();
+        if (st == VEHICLE_EDITOR_CONFIRM) { menu_present_save_prompt(); return; }
         if (menu_my23()) {
-            if (st == VEHICLE_EDITOR_CONFIRM)
-                menu_present_view(UI_MODE_CONFIRM, vehicle_editor_field_label(), "HOLD SAVE" MY23_BULLET "2X DISCARD");
-            else
-                menu_present_view(st == VEHICLE_EDITOR_EDIT ? UI_MODE_EDIT : UI_MODE_LIST,
-                                  vehicle_editor_field_label(), v);
+            menu_present_view(st == VEHICLE_EDITOR_EDIT ? UI_MODE_EDIT : UI_MODE_LIST,
+                              vehicle_editor_field_label(), v);
             return;
         }
-        if (st == VEHICLE_EDITOR_CONFIRM)
-            snprintf_(text, sizeof(text), "%s", vehicle_editor_field_label());
-        else
-            snprintf_(text, sizeof(text), "%s %s", vehicle_editor_field_label(), v);
+        snprintf_(text, sizeof(text), "%s %s", vehicle_editor_field_label(), v);
         break;
     }
     case IPC_OPTIONS: {
@@ -933,7 +939,7 @@ void menu_render(void) {
     case SETUP:
         dashboard_send_setup();
         return;
-    case FAV_RESET: menu_present_view(UI_MODE_CONFIRM, "Restore defaults", "HOLD save; BACK no"); return;
+    case FAV_RESET: menu_present_save_prompt(); return;
     case FAV_SETS: {
         if (favorite_set == FAVORITE_SET_COUNT) { menu_present("Restore defaults"); return; }
         char next_favorite[16];
@@ -951,9 +957,8 @@ void menu_render(void) {
         char next[40] = {0};
         favorite_item_text(text, sizeof(text), favorite_slot);
         favorite_item_text(next, sizeof(next), wrap(favorite_slot, FAVORITE_ROW_ITEMS, 1));
-        menu_present_view(favorite_confirm ? UI_MODE_CONFIRM : UI_MODE_LIST, text,
-                          favorite_confirm ? "HOLD SAVE" MY23_BULLET "2X DISCARD" : next);
-        if (favorite_confirm && !menu_my23()) menu_present("Hold save/2x drop");
+        if (favorite_confirm) menu_present_save_prompt();
+        else menu_present_view(UI_MODE_LIST, text, next);
         return;
     }
     case FAV_PICK: {
@@ -1090,7 +1095,7 @@ static bool favorite_draft_dirty(void) {
 /* Cancel one unfinished workflow or return to its parent after persistence. */
 static void back(void) {
     if (view == FAV_RESET) { view = FAV_SETS; return; }
-    if (view == FAV_FORMAT) { view = FAV_ITEMS; return; }
+    if (view == FAV_FORMAT) { view = FAV_PICK; return; }
     if (view == FAV_PICK) { view = FAV_ITEMS; return; }
     if (view == FAV_ITEMS) {
         if (!favorite_confirm && favorite_draft_dirty()) { favorite_confirm = true; return; }
@@ -1154,6 +1159,11 @@ static __attribute__((noinline)) void menu_hold(void) {
     if (view == SETUP) { setup_stage_save(); return; }
     if (view == FUNCTIONS && confirmed_action == actions[function].id && currentTime - confirm_started <= 3000)
         action_run();
+    if (view == FAV_PICK || view == FAV_FORMAT) {
+        favorite_draft.rows[favorite_row][favorite_slot] = (FavoriteItem){(ReadingId)favorite_pick,
+            view == FAV_FORMAT ? (ReadingFormat)favorite_format : READING_FORMAT_AUTO};
+        view = FAV_ITEMS;
+    }
     if (view == FAV_ITEMS || view == FAV_ROWS) {
         FavoriteError error;
         if (!favorite_set_validate(&favorite_draft, &error)) {
@@ -1301,9 +1311,8 @@ void menu_event(MenuEvent event) {
             }
             break;
         case FAV_PICK:
-            favorite_draft.rows[favorite_row][favorite_slot].id = (ReadingId)favorite_pick;
-            favorite_draft.rows[favorite_row][favorite_slot].format = READING_FORMAT_AUTO;
             if (favorite_pick >= READING_COUNT) {
+                favorite_draft.rows[favorite_row][favorite_slot] = FAVORITE_EMPTY_ITEM;
                 view = FAV_ITEMS;
             } else {
                 favorite_format = READING_FORMAT_AUTO;
@@ -1311,7 +1320,7 @@ void menu_event(MenuEvent event) {
             }
             break;
         case FAV_FORMAT:
-            favorite_draft.rows[favorite_row][favorite_slot].format = (ReadingFormat)favorite_format;
+            favorite_draft.rows[favorite_row][favorite_slot] = (FavoriteItem){(ReadingId)favorite_pick, (ReadingFormat)favorite_format};
             view = FAV_ITEMS;
             break;
         case ROOT:
