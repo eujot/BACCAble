@@ -69,9 +69,17 @@ RES and the ACC distance button have the same menu role when CC and ACC are off.
 A click is resolved after the double-click window, so a single click has a short
 intentional delay. Presses shorter than 30 ms are rejected. A third rapid click
 following a double-click is consumed; a deliberate hold immediately after it still works. Scrolling cancels a pending click pair.
-After a gap over 0.3 s in button reports, release the button and try again.
+After a gap over 0.3 s during a held button, release the button and try again.
 Releasing a hold never also clicks. A stronger direction can first register a
 normal item step before its group jump.
+
+After a report gap over 300 ms, a new up/down press is accepted if the last
+report was neutral. A gap during a held button still requires release before
+input resumes. A direct up/down reversal is accepted without an intervening
+neutral report; easing a strong press back to gentle in the same direction does
+not create another click. Gentle hold repeats after 500 ms, then every 180 ms.
+Rapid navigation may skip intermediate displayed screens while retaining the
+recognized steps.
 
 ### Returning, inactivity and saving
 

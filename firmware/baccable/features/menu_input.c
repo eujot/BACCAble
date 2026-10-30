@@ -24,9 +24,14 @@ MenuEvent menu_input_update(MenuInput *input, uint8_t button, bool allowed, uint
     }
     ++input->reports_seen;
     if (input->armed && now - input->last_seen > INPUT_STREAM_TIMEOUT_MS) {
-        input->armed = false; /* A lost release must never become an action. */
-        input->button = 0;
+        /* A neutral last report proves a new directional edge even after idle.
+         * Never resume a stale held button or synthesize RES actions. */
+        bool fresh_direction = input->button == 0x10 &&
+            (button == 0x08 || button == 0x18 || button == 0x00 || button == 0x20);
+        input->armed = fresh_direction;
+        input->button = fresh_direction ? 0x10 : 0;
         input->click_pending = false;
+        input->pair_block = false;
     }
     input->last_seen = now;
     if (button == 0x50)
@@ -67,13 +72,15 @@ MenuEvent menu_input_update(MenuInput *input, uint8_t button, bool allowed, uint
         input->suppress_click = button == 0x90 && input->pair_block && now - input->paired_at <= MENU_DOUBLE_CLICK_MS;
         if (input->pair_block && now - input->paired_at > MENU_DOUBLE_CLICK_MS) input->pair_block = false;
         if (button != 0x90) { input->click_pending = false; input->pair_block = false; }
-        if (button == 0x20 && (previous == 0x18 || previous == 0x10))
+        bool previous_up = previous == 0x08 || previous == 0x00;
+        bool previous_down = previous == 0x18 || previous == 0x20;
+        if (button == 0x20 && (previous == 0x18 || previous == 0x10 || previous_up))
             return MENU_NEXT_GROUP;
-        if (button == 0x00 && (previous == 0x08 || previous == 0x10))
+        if (button == 0x00 && (previous == 0x08 || previous == 0x10 || previous_down))
             return MENU_PREVIOUS_GROUP;
-        if (previous == 0x10 && button == 0x18)
+        if ((previous == 0x10 || previous_up) && button == 0x18)
             return MENU_NEXT;
-        if (previous == 0x10 && button == 0x08)
+        if ((previous == 0x10 || previous_down) && button == 0x08)
             return MENU_PREVIOUS;
         return pending;
     }

@@ -50,7 +50,7 @@ static void release_and_direction_change_reset_delay(void) {
     assert(menu_input_repeat(&input, true, 780) == MENU_NONE);
     assert(menu_input_update(&input, 0x18, true, 800) == MENU_NEXT);
     assert(held(&input, 1000) == MENU_NONE);
-    assert(menu_input_update(&input, 0x08, true, 1100) == MENU_NONE);
+    assert(menu_input_update(&input, 0x08, true, 1100) == MENU_PREVIOUS);
     assert(held(&input, 1300) == MENU_NONE);
     assert(held(&input, 1599) == MENU_NONE);
     assert(held(&input, 1600) == MENU_PREVIOUS);

@@ -78,9 +78,17 @@ Pojedyncze naciśnięcie jest wykonywane po zakończeniu okna dwukliku, więc ma
 krótkie celowe opóźnienie. Naciśnięcia krótsze niż 30 ms są pomijane. Trzecie
 szybkie naciśnięcie po dwukliku nie wykonuje dodatkowej akcji; celowe
 przytrzymanie rozpoczęte zaraz po dwukliku nadal działa. Przewijanie anuluje
-oczekującą parę naciśnięć. Po przerwie ponad 0,3 s w komunikatach o przyciskach
-puść przycisk i spróbuj ponownie. Puszczenie po przytrzymaniu nie wybiera pozycji.
+oczekującą parę naciśnięć. Po przerwie ponad 0,3 s podczas trzymania przycisku
+puść go i spróbuj ponownie. Puszczenie po przytrzymaniu nie wybiera pozycji.
 Mocniejsze naciśnięcie może najpierw wykonać zwykły krok, potem zmianę grupy.
+
+Po przerwie w raportach dłuższej niż 300 ms nowe naciśnięcie góra/dół jest
+przyjmowane, jeśli ostatni raport oznaczał puszczenie przycisku. Przerwa podczas
+trzymania nadal wymaga puszczenia przed wznowieniem sterowania. Bezpośrednia
+zmiana góra/dół jest przyjmowana bez raportu neutralnego pomiędzy nimi; osłabienie
+mocnego nacisku do lekkiego w tym samym kierunku nie dodaje kliknięcia. Lekki
+nacisk powtarza się po 500 ms, następnie co 180 ms. Szybkie przewijanie może
+pomijać ekrany pośrednie, zachowując rozpoznane kroki nawigacji.
 
 ### Powrót, bezczynność i zapisywanie
 

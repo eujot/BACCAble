@@ -1,0 +1,87 @@
+{
+  "schema": 1,
+  "runs": [
+    {
+      "build_target": "build/test_menu",
+      "variant": "legacy18",
+      "source": "test_menu.c",
+      "cases": [
+        {
+          "name": "test_direction_recovery",
+          "change": "new",
+          "evidence": "test-impact.md#steering-input-audit"
+        }
+      ]
+    },
+    {
+      "build_target": "build/test_menu_large",
+      "variant": "legacy24",
+      "source": "test_menu.c",
+      "cases": [
+        {
+          "name": "test_direction_recovery",
+          "change": "new",
+          "evidence": "test-impact.md#steering-input-audit"
+        }
+      ]
+    },
+    {
+      "build_target": "build/test_menu_my23",
+      "variant": "my23",
+      "source": "test_menu.c",
+      "cases": [
+        {
+          "name": "test_direction_recovery",
+          "change": "new",
+          "evidence": "test-impact.md#steering-input-audit"
+        }
+      ]
+    },
+    {
+      "build_target": "build/test_menu_my23_large",
+      "variant": "my23-large",
+      "source": "test_menu.c",
+      "cases": [
+        {
+          "name": "test_direction_recovery",
+          "change": "new",
+          "evidence": "test-impact.md#steering-input-audit"
+        }
+      ]
+    },
+    {
+      "build_target": "build/test_body_display",
+      "variant": "bh18",
+      "source": "test_body_display.c",
+      "cases": [
+        {
+          "name": "test_full_snapshot_and_latest_pending",
+          "change": "update",
+          "evidence": "test-impact.md#steering-input-audit"
+        },
+        {
+          "name": "test_bounded_radio_deferral_and_can_retry",
+          "change": "update",
+          "evidence": "test-impact.md#steering-input-audit"
+        }
+      ]
+    },
+    {
+      "build_target": "build/test_body_display_large",
+      "variant": "bh24",
+      "source": "test_body_display.c",
+      "cases": [
+        {
+          "name": "test_full_snapshot_and_latest_pending",
+          "change": "update",
+          "evidence": "test-impact.md#steering-input-audit"
+        },
+        {
+          "name": "test_bounded_radio_deferral_and_can_retry",
+          "change": "update",
+          "evidence": "test-impact.md#steering-input-audit"
+        }
+      ]
+    }
+  ]
+}

@@ -446,3 +446,42 @@ static void test_ux_reading_groups(void) {
         menu_event(MENU_NEXT);
     }
 }
+
+static void test_direction_recovery(void) {
+    MenuInput rapid = {0}; menu_input_update(&rapid,0x10,true,0);
+    for (unsigned n=0;n<100;++n) {
+        assert(menu_input_update(&rapid,0x18,true,n*40+10)==MENU_NEXT);
+        assert(menu_input_update(&rapid,0x10,true,n*40+20)==MENU_NONE);
+    }
+    const uint8_t buttons[] = {0x08, 0x18, 0x00, 0x20};
+    const MenuEvent events[] = {MENU_PREVIOUS, MENU_NEXT, MENU_PREVIOUS_GROUP, MENU_NEXT_GROUP};
+    for (unsigned i=0; i<4; ++i) {
+        MenuInput input = {0};
+        menu_input_update(&input, 0x10, true, 0);
+        assert(menu_input_update(&input, buttons[i], true, 1000) == events[i]);
+        assert(input.stream_gaps == 1);
+        assert(menu_input_update(&input, buttons[i], true, 1401) == MENU_NONE);
+        assert(!input.armed); /* Stale hold still requires a release. */
+        menu_input_update(&input, 0x10, true, 1420);
+        assert(menu_input_update(&input, buttons[i], true, 1440) == events[i]);
+    }
+    MenuInput input = {0};
+    menu_input_update(&input, 0x10, true, 0);
+    assert(menu_input_update(&input, 0x08, true, 20) == MENU_PREVIOUS);
+    assert(menu_input_update(&input, 0x18, true, 40) == MENU_NEXT);
+    assert(menu_input_update(&input, 0x08, true, 60) == MENU_PREVIOUS);
+    assert(menu_input_update(&input, 0x00, true, 80) == MENU_PREVIOUS_GROUP);
+    assert(menu_input_update(&input, 0x08, true, 100) == MENU_NONE); /* Relaxing pressure is not a new click. */
+    for (unsigned t=120;t<=600;t+=20) menu_input_update(&input,0x08,true,t);
+    assert(menu_input_repeat(&input,true,600)==MENU_PREVIOUS);
+    assert(menu_input_repeat(&input,true,601)==MENU_NONE);
+    menu_input_update(&input,0x08,true,780);
+    assert(menu_input_repeat(&input,true,780)==MENU_PREVIOUS);
+    menu_input_update(&input,0x08,false,800);
+    assert(menu_input_update(&input,0x18,true,820)==MENU_NONE);
+    input=(MenuInput){0}; menu_input_update(&input,0x10,true,0);
+    assert(menu_input_update(&input,0x90,true,1000)==MENU_NONE && !input.armed);
+    assert(menu_input_update(&input,0x90,true,2000)==MENU_NONE);
+    input=(MenuInput){0}; menu_input_update(&input,0x10,true,UINT32_MAX-100);
+    assert(menu_input_update(&input,0x18,true,300)==MENU_NEXT);
+}

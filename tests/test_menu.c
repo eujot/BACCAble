@@ -350,6 +350,7 @@ int main(void) {
     const char *suite = "menu-18";
 #endif
     const HostTest tests[] = {
+        HOST_TEST(test_direction_recovery),
         HOST_TEST(test_ux_reading_groups),
         HOST_TEST(test_ux_mirror_retry_hint),
         HOST_TEST(test_ux_equipment_settings),

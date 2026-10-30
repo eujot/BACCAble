@@ -161,3 +161,12 @@ clean/dirty Back and confirmation lock, Favorite picker cancellation and direct
 save from reading/format with write failure, split prompts, and mirror retry
 hints. Group/picker coverage verifies gasoline skips diesel-only entries while
 diesel retains its group. Untouched broad host/Lab cases are outside this run.
+
+## Steering input audit
+
+`steering_input_audit.json` runs new production-recognizer regressions on four
+menu builds: idle-neutral recovery, all four direction codes, stale held-state
+rearm, direct reversal, strong-to-gentle relaxation, hold repeat boundaries,
+permission loss, RES suppression after a gap and tick wrap. Two existing BH
+screen-stream/retry cases run on both widths to verify final target delivery
+and immutable active frames.

@@ -4,6 +4,29 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Steering input recovery and audit, 2026-10-30
+
+Task branch `fix/steering-input-recovery` starts at current UX `a5e89cd`; fresh
+fetch confirms upstream `af1fd72`. [Audit](research/20261030-steering-input-audit.md)
+covers CAN dispatch, recognizer, menu selection, UART latest-screen queue and BH
+snapshot/retry behavior. Fixed two reproduced input defects: a fresh directional
+press after an idle gap now counts when the last report was neutral; opposite
+direction changes no longer require a neutral report between them. Stale held
+state and RES still require release after a gap. The 300 ms freshness guard,
+500/180 ms repeat, strong-press semantics and CC/ACC permission gates remain.
+
+No confirmed lost recognized step was found in rendering: selection is applied
+before latest-screen coalescing. Missing identical presses without a release
+cannot be reconstructed; physical report loss and end-to-end IPC timing remain
+vehicle checks. Both guides and MENU_UX updated.
+
+Validation: four recognizer menu variants, seven dedicated input-repeat cases,
+and four BH snapshot/retry case executions pass with Apple Clang ASan/UBSan.
+Coverage includes 100 rapid clicks, stale holds, reversals, permission loss,
+RES suppression and tick wrap. Four-flavor cppcheck and standard builds use
+Arm GNU 15.2.Rel1. No flash, release or hardware verification. Original checkout
+untracked files are preserved; prior UX changes remain in this branch ancestry.
+
 ## Current Vehicle/Features and save UX correction, 2026-10-30
 
 Fresh `git fetch origin` before implementation and again after validation confirms

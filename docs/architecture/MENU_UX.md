@@ -74,7 +74,7 @@ CC and ACC must both be disabled, with a fresh released report to arm input.
 | Third rapid click | Short click suppressed for 280 ms after a pair; a continued hold still emits HOLD |
 | Gentle direction | Immediate peer navigation; repeat after 500 ms, then every 180 ms |
 | Strong direction | Functional-group navigation; no repeat |
-| Report gap | Over 300 ms cancels the gesture/pending click; a release rearms input |
+| Report gap | Over 300 ms cancels pending RES clicks and held gestures; neutral-to-direction is a fresh press and stays eligible. Otherwise a release rearms input |
 
 Polling occurs in `menu_process`, so the final click need not wait for another
 button transition. Unsigned elapsed-time comparisons handle tick wrap. Scrolling
@@ -587,3 +587,11 @@ picker with the same validation/rollback as the item list. All dirty-draft
 prompts share one renderer. Restore defaults keeps its explicit confirmation.
 Mirror capture keeps HOLD STORE on send rejection and never reports SAVED from
 queue acceptance. BACCAble IPC controls are unchanged.
+
+## Steering input audit correction, 2026-10-30
+
+Neutral-to-direction after an idle report gap is now accepted. Stale held state
+and RES remain subject to release rearming. Opposite directional edges are
+accepted without a neutral report; same-direction strong-to-gentle relaxation
+does not emit a second click. The 300 ms guard and 500/180 ms repeat times are
+unchanged. See the source audit in ACTION_PLAN for evidence and limitations.
