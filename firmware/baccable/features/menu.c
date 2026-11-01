@@ -117,7 +117,9 @@ static const char *const ipc_paces[] = {"Safe 50ms", "Quick 20ms", "Fast 10ms"};
 /* Allow one complete display transfer between snapshots of rapid navigation. */
 static uint32_t navigation_interval(void) {
     static const uint8_t fragment_ms[] = {50, 20, 10};
-    return (menu_my23() ? DISPLAY_FRAGMENT_COUNT : DISPLAY_LEGACY_FRAGMENT_COUNT) *
+    unsigned fragments = menu_my23() ? DISPLAY_FRAGMENT_COUNT :
+                         (menu_width() + 1U + DISPLAY_FOOTER_LENGTH + 2U) / 3U;
+    return fragments *
            fragment_ms[ipc_pace] + 20U;
 }
 static void ipc_option_text(char *out, size_t size, unsigned option) {
@@ -134,6 +136,7 @@ static bool ipc_options_send(uint8_t pace, uint8_t method) {
 static uint32_t page_changed, last_render, last_query, notice_started;
 static uint32_t navigation_last, navigation_sent;
 static bool navigation_active, navigation_pending;
+static int navigation_direction;
 static bool demo_active;
 static uint8_t demo_step;
 static uint32_t demo_started;
@@ -1404,8 +1407,10 @@ void menu_event(MenuEvent event) {
     }
     if (direction_event) {
         bool burst = navigation_active && currentTime != navigation_last &&
-                     currentTime - navigation_last <= 350U;
+                     currentTime - navigation_last <= 350U &&
+                     direction == navigation_direction;
         navigation_active = true;
+        navigation_direction = direction;
         navigation_last = currentTime;
         if (burst && currentTime - navigation_sent < navigation_interval()) {
             navigation_pending = true;
@@ -1420,17 +1425,30 @@ void menu_event(MenuEvent event) {
 /* Turn eligible steering-wheel button reports into menu gestures. */
 void menu_button(uint8_t button, bool allowed) {
     #ifndef HIDE_DASHBOARD_MENU
+    bool direction_released = allowed && input.armed && button == 0x10 &&
+        (input.button == 0x08 || input.button == 0x18 ||
+         input.button == 0x00 || input.button == 0x20) &&
+        currentTime - input.last_seen <= 300U;
     MenuEvent event = menu_input_update(&input, button, allowed, currentTime);
     bool repeat_allowed = allowed && !save_failed && dashboard_state.baccable_dashboard_menu_visible &&
                           (view == FAVORITES || view == VALUES || view == GROUPS ||
                            view == SETTINGS || view == SETUP || view == IPC_OPTIONS ||
                            view == FAV_SETS || view == FAV_ROWS || view == FAV_ITEMS ||
                            view == FAV_PICK || view == FAV_FORMAT || view == VEHICLE);
-    if (event == MENU_NONE)
+    /* Pace only generated repeats; every physical directional edge still counts. */
+    if (event == MENU_NONE && (!input.repeating ||
+        currentTime - input.repeated_at >= navigation_interval()))
         event = menu_input_repeat(&input, repeat_allowed, currentTime);
     if (allowed && input.armed && button != 0x10)
         last_input = currentTime;
     menu_event(event);
+    /* Publish the final selection without waiting for the quiet-time timer. */
+    if (direction_released && navigation_pending &&
+        dashboard_state.baccable_dashboard_menu_visible) {
+        navigation_pending = false;
+        navigation_sent = currentTime;
+        menu_render();
+    }
     #else
     (void)button;
     (void)allowed;

@@ -4,6 +4,30 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Local navigation display latency improvements, 2026-11-02
+
+Branch `fix/navigation-display-latency` builds on `d13dfc6` (including current UX
+and input recovery). Fresh fetch still confirms origin/master `af1fd72`.
+Implemented the inexpensive improvements before any protocol redesign:
+
+- A fresh directional release flushes the final pending view immediately.
+- Direction reversals bypass navigation burst deferral, including group moves.
+- Only automatic repeats are paced by max(180 ms, estimated display transfer
+  interval); initial delay remains 500 ms and physical edges remain immediate.
+- Legacy timing uses the effective runtime width, matching BH fragment counts.
+
+EN/PL guides and MENU_UX describe the behavior. No changes to RES recognition,
+IPC settings controls, BH active snapshots or the C1–BH protocol. Physical IPC
+visibility is still unacknowledged; the SELECT/HOLD synchronization limitation
+from the prior audit remains. Hardware acceptance must compare rapid taps,
+release, held scrolling and reversal at each display pace.
+
+Validation: test-menu-fast and the full Apple Clang ASan/UBSan host suite pass.
+The new packet-level regression passes on four compiled menu variants with all
+three negotiated display profiles. All four firmware flavors pass cppcheck and ARM builds using Arm GNU
+15.2.Rel1. C1 uses 93,228 bytes Flash and 13,316 bytes static RAM. No flashing or hardware validation. Original checkout untracked
+captures and release directories remain untouched; handoff stays on this branch.
+
 ## Click/display synchronization feasibility, 2026-11-02
 
 Fresh fetch confirms origin/master af1fd72; review uses current UX/input branch

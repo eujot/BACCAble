@@ -72,7 +72,7 @@ CC and ACC must both be disabled, with a fresh released report to arm input.
 | Double-click | Second press starts within 280 ms of the first release; emits `MENU_BACK`, without an earlier SELECT |
 | Hold | 900 ms of continued reports; emits `MENU_HOLD` once, never SELECT on release |
 | Third rapid click | Short click suppressed for 280 ms after a pair; a continued hold still emits HOLD |
-| Gentle direction | Immediate peer navigation; repeat after 500 ms, then every 180 ms |
+| Gentle direction | Immediate peer navigation; repeat after 500 ms, then max(180 ms, estimated display transfer interval) |
 | Strong direction | Functional-group navigation; no repeat |
 | Report gap | Over 300 ms cancels pending RES clicks and held gestures; neutral-to-direction is a fresh press and stays eligible. Otherwise a release rearms input |
 
@@ -593,5 +593,18 @@ queue acceptance. BACCAble IPC controls are unchanged.
 Neutral-to-direction after an idle report gap is now accepted. Stale held state
 and RES remain subject to release rearming. Opposite directional edges are
 accepted without a neutral report; same-direction strong-to-gentle relaxation
-does not emit a second click. The 300 ms guard and 500/180 ms repeat times are
-unchanged. See the source audit in ACTION_PLAN for evidence and limitations.
+does not emit a second click. The 300 ms freshness guard and 500 ms initial repeat delay remain. Subsequent
+repeats now use max(180 ms, estimated display transfer interval). See the source audit in ACTION_PLAN for evidence and limitations.
+
+
+## Navigation display latency, 2026-11-02
+
+The C1 transfer estimate uses the negotiated runtime legacy width, matching BH's
+fragment calculation. A fresh direction-to-neutral report immediately flushes a
+pending view. Reversal bypasses burst coalescing, including group directions.
+Automatic gentle repeats retain the 500 ms initial delay and use the larger of
+180 ms and the transfer estimate thereafter (Quick: 240 ms Legacy 18, 280 ms
+Legacy 24/MY23). Physical edges are never throttled by repeat pacing. Quiet-time
+flush and periodic retry remain fallbacks. BH's immutable active snapshot and
+latest pending slot remain unchanged; no physical presentation acknowledgement
+or SELECT/HOLD barrier is introduced. Vehicle latency acceptance remains open.

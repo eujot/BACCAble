@@ -63,7 +63,7 @@ RES and the ACC distance button have the same menu role when CC and ACC are off.
 | Hold RES for about 0.9 s in an editor | Save the displayed draft directly, including after a save/discard prompt. |
 | Hold RES in a displayed APPLY/STORE prompt | Confirm that action or mirror capture. |
 | Gentle down/up | Next/previous item or change the draft. Lists wrap. |
-| Hold gentle down/up | Repeat after 0.5 s, then every 0.18 s; no repeats in Actions or while reordering a favorite item. |
+| Hold gentle down/up | Repeat after 0.5 s, then at the display transfer interval (minimum 0.18 s); no repeats in Actions or while reordering a favorite item. |
 | Stronger down/up | Jump between functional groups; in a draft, adjust its value. |
 
 A click is resolved after the double-click window, so a single click has a short
@@ -77,9 +77,12 @@ After a report gap over 300 ms, a new up/down press is accepted if the last
 report was neutral. A gap during a held button still requires release before
 input resumes. A direct up/down reversal is accepted without an intervening
 neutral report; easing a strong press back to gentle in the same direction does
-not create another click. Gentle hold repeats after 500 ms, then every 180 ms.
+not create another click. Gentle hold repeats after 500 ms, then at the estimated display transfer interval,
+with a minimum of 180 ms (Quick: 240 ms for Legacy 18, 280 ms for Legacy 24/MY23).
 Rapid navigation may skip intermediate displayed screens while retaining the
-recognized steps.
+recognized steps. Releasing a direction sends any pending final view immediately;
+a direction reversal bypasses the navigation delay. An active BH transmission
+still finishes first; this does not confirm physical IPC presentation.
 
 ### Returning, inactivity and saving
 

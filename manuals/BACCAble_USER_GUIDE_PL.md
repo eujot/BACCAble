@@ -71,7 +71,7 @@ Przy wyłączonych CC i ACC przycisk odstępu ACC działa w menu tak samo jak RE
 | Przytrzymanie RES przez około 0,9 s w edytorze | Zapisuje widoczny szkic bezpośrednio, również po pytaniu o zapis. |
 | Przytrzymanie RES przy widocznym pytaniu APPLY/STORE | Zatwierdza akcję lub zapis pozycji lusterek. |
 | Lekkie dół/góra | Następna/poprzednia pozycja albo zmiana szkicu. Listy zawijają się. |
-| Przytrzymanie lekkiego dół/góra | Powtarza po 0,5 s, następnie co 0,18 s. Bez powtarzania w Actions ani przy przesuwaniu ulubionej strony. |
+| Przytrzymanie lekkiego dół/góra | Powtarza po 0,5 s, następnie w odstępach wynikających z czasu transmisji ekranu (minimum 0,18 s). Bez powtarzania w Actions ani przy przesuwaniu ulubionej strony. |
 | Mocniejsze dół/góra | Zmienia grupę; podczas edycji zmienia wartość szkicu. |
 
 Pojedyncze naciśnięcie jest wykonywane po zakończeniu okna dwukliku, więc ma
@@ -87,8 +87,12 @@ przyjmowane, jeśli ostatni raport oznaczał puszczenie przycisku. Przerwa podcz
 trzymania nadal wymaga puszczenia przed wznowieniem sterowania. Bezpośrednia
 zmiana góra/dół jest przyjmowana bez raportu neutralnego pomiędzy nimi; osłabienie
 mocnego nacisku do lekkiego w tym samym kierunku nie dodaje kliknięcia. Lekki
-nacisk powtarza się po 500 ms, następnie co 180 ms. Szybkie przewijanie może
-pomijać ekrany pośrednie, zachowując rozpoznane kroki nawigacji.
+nacisk powtarza się po 500 ms, następnie w szacowanych odstępach transmisji ekranu,
+nie krótszych niż 180 ms (Quick: 240 ms dla Legacy 18, 280 ms dla Legacy 24/MY23). Szybkie przewijanie może
+pomijać ekrany pośrednie, zachowując rozpoznane kroki nawigacji. Puszczenie kierunku
+natychmiast wysyła oczekujący widok końcowy; zmiana kierunku omija opóźnienie
+nawigacji. Rozpoczęta transmisja BH musi się najpierw zakończyć; nie jest to
+potwierdzenie fizycznego wyświetlenia przez IPC.
 
 ### Powrót, bezczynność i zapisywanie
 

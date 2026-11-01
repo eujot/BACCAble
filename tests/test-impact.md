@@ -170,3 +170,15 @@ rearm, direct reversal, strong-to-gentle relaxation, hold repeat boundaries,
 permission loss, RES suppression after a gap and tick wrap. Two existing BH
 screen-stream/retry cases run on both widths to verify final target delivery
 and immutable active frames.
+
+
+## Navigation display latency
+
+`test_navigation_display_latency` observes outgoing screen packets in all four
+menu builds, negotiating Legacy 18, Legacy 24 and MY23 in each. It checks rapid
+press coalescing, release flush, direct reversal and unchanged initial 500 ms
+repeat followed by the runtime-width Quick boundary (240/280 ms). This catches
+compile-time/runtime-width disagreement in both compiled legacy widths. Existing
+recognizer tests retain coverage of rapid edges, stale reports and permissions.
+Validation uses test-menu-fast and the full native host suite with Apple Clang
+ASan/UBSan; physical IPC timing and SELECT visibility are not asserted.

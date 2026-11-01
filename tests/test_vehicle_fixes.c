@@ -485,3 +485,46 @@ static void test_direction_recovery(void) {
     input=(MenuInput){0}; menu_input_update(&input,0x10,true,UINT32_MAX-100);
     assert(menu_input_update(&input,0x18,true,300)==MENU_NEXT);
 }
+
+/* Observe actual outgoing screen packets, not private scheduling flags. */
+static void test_navigation_display_latency(void) {
+    const uint8_t profiles[] = {VEHICLE_DISPLAY_LEGACY18, VEHICLE_DISPLAY_LEGACY24, VEHICLE_DISPLAY_MY23};
+    for (unsigned profile = 0; profile < 3; ++profile) {
+        fixes_reset();
+        VehicleProfile p = *vehicle_profile_current();
+        p.display_selection = profiles[profile];
+        assert(settings_profile_save(&p) == 0);
+        vehicle_runtime_init(); menu_init();
+        vehicle_runtime_process(); vehicle_runtime_reply(display_token, 1, 0);
+        menu_event(MENU_BACK); /* Root: every step has a different label. */
+        menu_button(0x10, true);
+        now += 10; menu_button(0x18, true);
+        uint8_t first[UART_SCREEN_BUFFER_SIZE]; memcpy(first, screen_packet, sizeof(first));
+        now += 10; menu_button(0x10, true);
+        now += 10; menu_button(0x18, true); /* Logical Actions; still showing Readings. */
+        assert(!memcmp(first, screen_packet, sizeof(first)));
+        now += 10; menu_button(0x10, true); /* Release immediately flushes Actions. */
+        assert(memcmp(first, screen_packet, sizeof(first)));
+        now += 10; menu_button(0x08, true); /* Reversal immediately shows Readings. */
+        assert(!memcmp(first, screen_packet, sizeof(first)));
+        now += 10; menu_button(0x18, true);
+        assert(memcmp(first, screen_packet, sizeof(first)));
+        now += 10; menu_button(0x10, true);
+        now += 10; menu_button(0x18, true); /* Settings */
+        now += 10; menu_button(0x10, true);
+        menu_event(MENU_SELECT);
+        now += 10; menu_button(0x18, true);
+        uint32_t start = now;
+        now = start + 200; menu_button(0x18, true);
+        now = start + 400; menu_button(0x18, true);
+        now = start + 500; menu_button(0x18, true); /* First repeat unchanged. */
+        memcpy(first, screen_packet, sizeof(first));
+        unsigned interval = profile == 0 ? 240 : 280;
+        now = start + 680; menu_button(0x18, true);
+        assert(!memcmp(first, screen_packet, sizeof(first)));
+        now = start + 500 + interval - 1; menu_button(0x18, true);
+        assert(!memcmp(first, screen_packet, sizeof(first)));
+        now++; menu_button(0x18, true);
+        assert(memcmp(first, screen_packet, sizeof(first)));
+    }
+}
