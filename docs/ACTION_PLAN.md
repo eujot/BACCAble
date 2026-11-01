@@ -4,6 +4,25 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Click/display synchronization feasibility, 2026-11-02
+
+Fresh fetch confirms origin/master af1fd72; review uses current UX/input branch
+5c1f6b3. [Source audit and proposal](research/20261102-click-display-synchronization.md)
+identifies logical-selection versus presented-screen divergence: SELECT/HOLD has
+no screen revision fence, while C1 render pacing, pending UART and BH active/latest
+images operate independently. CAN queue acceptance is not transmission or IPC
+presentation. C1 also estimates legacy fragment count from compile-time width
+while BH uses runtime width. No physical loss/latency measurement is claimed.
+
+Recommended follow-up order: per-screen revision and honest BH transmit progress;
+progress-driven coalescing; target-revision SELECT/HOLD barrier with explicit
+cancel/retry semantics; diagnostic counters; then paced/Delta vehicle comparison.
+Preserve every recognized navigation event's effect while bounding screen backlog.
+Do not blindly queue every intermediate frame or treat faster IPC pace as an
+input-loss fix. Details and acceptance cases are in the audit. No additional
+firmware changes or test executions in this review. Handoff committed only on
+review/click-display-sync; original user untracked files remain untouched.
+
 ## Steering input recovery and audit, 2026-10-30
 
 Task branch `fix/steering-input-recovery` starts at current UX `a5e89cd`; fresh
