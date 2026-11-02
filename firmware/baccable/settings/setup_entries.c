@@ -318,7 +318,7 @@ const SetupParam setup_params[] = {
                         settings_state.default_drive_mode, NULL),
     SETUP_ENUM8(SETUP_FLASH_DEFAULT_SUSPENSION, "Suspension", 1, 0,
                         settings_state.default_suspension_softer, NULL),
-    SETUP_TOGGLE(SETUP_FLASH_LANE_ASSIST, "LKA", DEFAULT_LANE_ASSIST,
+    SETUP_TOGGLE(SETUP_FLASH_LANE_ASSIST, "Startup LKA", DEFAULT_LANE_ASSIST,
                         settings_state.lane_assist_disabled),
     SETUP_TOGGLE(SETUP_FLASH_QV_EXHAUST_FLAP, "QV exhaust", DEFAULT_QV_EXHAUST_FLAP,
                  settings_state.qv_exhaust_flap_function_enabled),

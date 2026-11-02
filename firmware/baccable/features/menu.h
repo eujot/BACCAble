@@ -12,6 +12,7 @@ void menu_event(MenuEvent event);
 void menu_render(void);
 void menu_notice(const char *text);
 void menu_notice_saved(const char *title);
+void menu_present_save_prompt(void);
 void menu_present(const char *text);
 void menu_present_view(UiMode mode, const char *first, const char *second);
 void menu_present_lines(const char *first, const char *second);

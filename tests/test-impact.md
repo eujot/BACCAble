@@ -149,3 +149,76 @@ display tests: the new width test preceded a sequential suite whose first displa
 case reads captured frame zero. Keep the original sequence intact and run the
 new case last, advancing its clock instead of resetting time backwards. Selected
 width case passes in both BH compile widths; CI validates the original sequence.
+
+## Current vehicle UX
+
+`tests/current_vehicle_ux.json` selects the six new UX cases on four menu
+variants, plus updated Vehicle save/failure/editor cases, the existing effective
+policy case and reading catalog eligibility/list cases. New cases exercise
+Absent/Unknown/Present LKA visibility and retained-preference recovery, Race
+choice filtering, suspension prerequisites, direct Vehicle save/failure/retry,
+clean/dirty Back and confirmation lock, Favorite picker cancellation and direct
+save from reading/format with write failure, split prompts, and mirror retry
+hints. Group/picker coverage verifies gasoline skips diesel-only entries while
+diesel retains its group. Untouched broad host/Lab cases are outside this run.
+
+## Steering input audit
+
+`steering_input_audit.json` runs new production-recognizer regressions on four
+menu builds: idle-neutral recovery, all four direction codes, stale held-state
+rearm, direct reversal, strong-to-gentle relaxation, hold repeat boundaries,
+permission loss, RES suppression after a gap and tick wrap. Two existing BH
+screen-stream/retry cases run on both widths to verify final target delivery
+and immutable active frames.
+
+
+## Navigation display latency
+
+`test_navigation_display_latency` observes outgoing screen packets in all four
+menu builds, negotiating Legacy 18, Legacy 24 and MY23 in each. It checks rapid
+press coalescing, release flush, direct reversal and unchanged initial 500 ms
+repeat followed by the runtime-width Quick boundary (240/280 ms). This catches
+compile-time/runtime-width disagreement in both compiled legacy widths. Existing
+recognizer tests retain coverage of rapid edges, stale reports and permissions.
+Validation uses test-menu-fast and the full native host suite with Apple Clang
+ASan/UBSan; physical IPC timing and SELECT visibility are not asserted.
+
+
+## Menu ergonomics
+
+Five new production-menu cases run on four compile variants, with negotiated
+Legacy 18/24/MY23 coverage within the editor cases. They verify retained and
+pending formats, default Auto only for changed readings, dirty versus clean idle
+exit, failed-save feedback at 2.5 seconds, Legacy edit markers and complete
+Unknown values for every equipment field, saved Feature values, N and adjacent
+suspension, runtime-width Information, reset cancellation and Favorite 6 preview,
+row-B duplicate validation, numbered empty slots, and action confirmation at
+5 seconds versus rejection after 6 seconds. Packet checks cover list ellipses
+and complete confirmation/retry text using the production renderer. The label
+order test follows the contiguous workshop Actions group. Existing tests still
+cover failed writes/discard and atomic persistence. Full native host suite and
+four-flavor lint/build validation apply; no physical IPC acceptance is claimed.
+
+
+## Reading label clarity
+
+The new reading-layout case verifies OilQ 50%, signed battery current and voltage,
+unique full/medium/short labels across the complete catalog, no percent sign in
+labels, Auto fitting at 16/18/22/24 glyphs, and retained acceleration hyphens.
+Existing Favorite regressions check default MY23 set fit for every engine and
+row rendering across widths, including missing/large values. Information labels
+are exercised through production menu packets on all four compiled variants
+and three runtime display profiles. A source comparison verifies that only
+catalog names changed, not units, precision, IDs, sources or eligibility.
+
+## Native reading semantics
+
+`make test` now runs reading_catalog, reading_layout and favorite_layout suites;
+previously they were only available as scoped targets. It also runs the real
+speed handler through startup while moving, complete attempts, timeouts, report
+gaps and tick wrap. Catalog cases assert all native enum code mappings and reject
+nonfinite/fractional/out-of-range values. Layout cases cover all four timing IDs,
+empty Best sentinels, inclusive limits, RUN/MISS/stale precedence and all display
+widths. Menu packet regressions cover Favorites and direct Readings on three
+runtime profiles in four compile variants. Medium-label collisions exposed by
+the newly included uniqueness test are corrected as Gbox and Int air.

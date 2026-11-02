@@ -32,37 +32,9 @@ static int equipment_slot(VehicleField f) {
 static VehicleProfile draft;
 static VehicleField field;
 static bool editing, confirm;
-static unsigned consequence;
-/* Review saved preferences that will be suppressed, without changing those preferences. */
-static const char *confirmation_label(void) {
-    const struct { VehicleFeature feature; bool enabled; const char *label; } options[] = {
-        {VEHICLE_FEATURE_AWD_DISABLE, settings_state.awd_disabler_enabled, "OFF: AWD action"},
-        {VEHICLE_FEATURE_DEFAULT_RACE, settings_state.default_drive_mode == 3, "OFF: Default Race"},
-        {VEHICLE_FEATURE_SOFT_SUSPENSION, settings_state.default_suspension_softer, "OFF: Suspension"},
-        {VEHICLE_FEATURE_EXHAUST_ACTION, settings_state.qv_exhaust_flap_function_enabled, "OFF: QV exhaust"},
-        {VEHICLE_FEATURE_VIRTUAL_ACC, settings_state.acc_virtual_pad_enabled || settings_state.acc_autostart, "OFF: Virtual ACC"},
-        {VEHICLE_FEATURE_VIRTUAL_HAS, settings_state.has_function_enabled, "OFF: Virtual HAS"},
-        {VEHICLE_FEATURE_LANE_ASSIST, settings_state.lane_assist_disabled, "OFF: LKA"},
-        {VEHICLE_FEATURE_PARK_MIRROR, settings_state.park_mirror, "OFF: Park mirror"},
-        {VEHICLE_FEATURE_DPF_REGEN, settings_state.regeneration_alert_enabled, "OFF: DPF alert"},
-    };
-    VehicleProfile accepted = draft;
-    accepted.confirmed = true; accepted.legacy_permissions = false;
-    unsigned count = 0;
-    for (unsigned i = 0; i < sizeof(options)/sizeof(options[0]); ++i)
-        if (options[i].enabled && !vehicle_feature_allowed_for(&accepted, options[i].feature)) ++count;
-    unsigned selected = consequence % (count + 1);
-    if (!selected) return "HOLD save Vehicle";
-    for (unsigned i = 0; i < sizeof(options)/sizeof(options[0]); ++i)
-        if (options[i].enabled && !vehicle_feature_allowed_for(&accepted, options[i].feature) && --selected == 0)
-            return options[i].label;
-    return "HOLD save Vehicle";
-}
-
 void vehicle_editor_begin(void) {
     draft = *vehicle_profile_current();
     field = VEHICLE_FIELD_MODEL;
-    consequence = 0;
     editing = false;
     confirm = false;
 }
@@ -113,7 +85,7 @@ static void cycle(int direction) {
 }
 
 void vehicle_editor_navigate(int direction) {
-    if (confirm) { consequence = direction < 0 && consequence ? consequence - 1 : consequence + 1; return; }
+    if (confirm) return;
     if (editing) {
         cycle(direction);
     } else if (!confirm) {
@@ -129,6 +101,12 @@ void vehicle_editor_select(void) {
         cycle(1);
 }
 
+bool vehicle_editor_dirty(void) {
+    uint8_t current[VEHICLE_PROFILE_WIRE_SIZE], edited[VEHICLE_PROFILE_WIRE_SIZE];
+    return !vehicle_profile_encode(vehicle_profile_current(), current) ||
+           !vehicle_profile_encode(&draft, edited) || memcmp(current, edited, sizeof(current));
+}
+
 bool vehicle_editor_back(void) {
     if (editing) {
         editing = false;
@@ -136,6 +114,7 @@ bool vehicle_editor_back(void) {
         return true;
     }
     if (!confirm) {
+        if (!vehicle_editor_dirty()) return false;
         confirm = true;
         return true;
     }
@@ -143,7 +122,6 @@ bool vehicle_editor_back(void) {
 }
 
 const char *vehicle_editor_save(void) {
-    if (!confirm) { editing = false; confirm = true; return "Review; HOLD save"; }
     const char *reason = vehicle_profile_busy_reason();
     if (reason) return reason;
     VehicleProfile candidate = draft;
@@ -152,7 +130,8 @@ const char *vehicle_editor_save(void) {
     if (!vehicle_profile_validate(&candidate, NULL)) return "Invalid Vehicle";
     if (settings_profile_save(&candidate)) return "Save failed";
     menu_engine_changed();
-    vehicle_editor_begin();
+    draft = *vehicle_profile_current();
+    editing = confirm = false;
     return NULL;
 }
 
@@ -165,10 +144,10 @@ VehicleEditorState vehicle_editor_state(void) {
 }
 
 const char *vehicle_editor_field_label(void) {
-    if (confirm) return confirmation_label();
+    if (confirm) return "Vehicle";
     static const char *const labels[] = {"Model", "Model year", "Engine", "Drivetrain", "Display",
-                                         "Suspension", "Race", "Exhaust valves", "ACC", "HAS",
-                                         "Lane assist", "Park mirrors", "SCR"};
+                                         "Adaptive susp.", "Race", "Exhaust valves", "ACC", "HAS",
+                                         "Lane assist", "Park mirrors", "AdBlue / SCR"};
     return labels[field];
 }
 

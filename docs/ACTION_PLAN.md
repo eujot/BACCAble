@@ -4,6 +4,236 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## PR 99 review follow-up, 2026-11-02
+
+Reviewed input recovery/repeat pacing, editor drafts/confirmation/save failures,
+native reading states and timer continuity against the combined diff. CI on
+987d271 passed host/Lab tests, lint and all four firmware builds. Found and fixed
+missing host-test dependencies on state headers, which could reuse stale local
+binaries after StatisticsState changes. Restored original JSON ASCII escaping
+so the snapshot repair changes only the two reviewed source hashes (timer
+continuity and input recovery), without unrelated dictionary text churn.
+Validation after this follow-up: full host ASan/UBSan suite and all 82 Lab
+tests pass. No firmware source changes in this follow-up.
+The prior PR-creation reply was incorrect: PR 99 exists and contains all eight
+implementation/documentation/snapshot commits through 987d271. Hardware input,
+IPC and timer acceptance remain outstanding; CI cannot establish those results.
+
+## Reading state semantics correction, 2026-11-02
+
+Branch `fix/reading-state-semantics` starts at `7279201` and retains all preceding
+UX/input fixes. Fresh fetch confirms origin/master is still `af1fd72`.
+The reading-catalog migration `547a478` had dropped legacy timer/enum semantics;
+the later label-only change did not introduce the numeric 60-second placeholder.
+
+- Restore RUN/MISS/seconds for current 0-100 and 100-200 and MISS for empty Best
+  records; retain inclusive 20/40-second limits. Shared Readings/Favorites sample
+  handling gives missing/stale data precedence. Nonfinite values render --.
+- Establish a speed baseline before starting a timer, and cancel active attempts
+  on resumed reports after >1 s gaps before a high-speed frame can save a result.
+  Completed times survive. With no further frames, display freshness still uses
+  the existing cache timeout; this is not a one-second asynchronous watchdog.
+- Restore native gear, sparse DNA, pedal-character, seatbelt-alarm and complete
+  regeneration enum meanings. Reject invalid enum casts. Seatbelt alarm describes
+  acoustic configuration, not fastening; regeneration reserves ten value glyphs.
+- Fix medium-label collisions (Gbox / Gear and Int air / Intake). Both guides and
+  MENU_UX describe the changes; no CAN dictionary or persistence format changes.
+
+Validation: 212 host cases pass under Apple Clang ASan/UBSan, including real
+speed-handler lifecycle/gap/wrap tests, all timer states/limits at four widths,
+all enum mappings and menu packets for three runtime profiles in four variants.
+Reading catalog/layout/Favorite suites now run in the broad `make test` target.
+Correction to the preceding handoff: the earlier broad run did NOT execute those
+scoped suites, so its claim of complete label uniqueness coverage was incorrect.
+The newly enabled test exposed the two medium-label collisions above.
+Menu label checks, all four cppcheck checks and C1/C2/BH/CAN ARM builds pass with
+Arm GNU 15.2.Rel1. C1 Flash/static RAM: 95,120/13,324 B.
+No flash, push, merge or vehicle verification. Hardware acceptance remains for
+actual timing transitions, bus gaps and IPC presentation. Original master retains
+only the pre-existing untracked captures, releases and research note, untouched.
+
+## Reading labels and related menu wording, 2026-11-02
+
+Branch `fix/reading-label-clarity` starts at `54bcef2`; fresh fetch confirms
+origin/master `af1fd72`. Revised 31 reading entries (names only): OilQ removes
+the repeated percent sign; oil, fuel, battery charge sources, regeneration,
+AdBlue, turbo requests and over-rev short names are distinguishable. Voltage
+sensor names omit redundant standalone V, and acceleration ranges retain their
+hyphen. Full/medium/short labels are unique within each format. Metadata source
+comparison confirms unchanged IDs, units, precision, value budgets, groups,
+source mappings and equipment eligibility. No signal dictionary reinterpretation.
+
+Default MY23 layouts still fit: BtI and RPr keep battery/DPF rows within budget.
+Existing custom layouts retain IDs/formats but longer names can require extra
+continuation pages or a shorter format when edited. Information reports explicit
+Button reports / Report gaps / Max input gap / Report age, with complete values
+on both display families. Reviewed Features/Vehicle labels: Launch Nm and Shift
+RPM carry their units only in the label, so no duplicate-unit change is needed.
+EN/PL catalogs and abbreviation guidance are updated, including replacement of
+stale compound battery-page instructions with current individual SOC readings.
+Oil quality is not relabelled as remaining oil life.
+
+Validation: full Apple Clang ASan/UBSan host suite passes, including complete
+catalog uniqueness/Auto-width checks, signed values, default Favorite layouts,
+and Information packets on four compile variants / three runtime profiles.
+All four ARM builds and cppcheck checks pass with Arm GNU 15.2.Rel1; C1 lint
+was repeated after final sensor-label edits. C1 Flash/static RAM: 94,696/13,316 B. No flash, push, merge or vehicle test.
+Original user captures/releases remain untouched; handoff stays on this branch.
+
+## Menu ergonomics corrections, 2026-11-02
+
+Branch `fix/menu-ergonomics` starts at `bc46f06`; fresh upstream fetch confirms
+origin/master `af1fd72`. Implements the approved low-cost audit suggestions
+without protocol or persistence-format refactoring:
+
+- Retain Favorite format for the same reading and Back/re-entry; new readings
+  start at Auto. Dirty editor/layout drafts and pending Favorite choices survive
+  idle; clean editors still return home after 60 s.
+- Legacy Vehicle distinguishes editing with > and preserves complete values.
+  Equipment labels are Adaptive susp. and AdBlue / SCR.
+- Reset explicitly identifies Favorites; Favorite 6 previews Restore defaults.
+  Slots are numbered; empty slots omit Auto; format selection retains context;
+  validation identifies the row and recommends Short for width overflow.
+- MY23 Features shows saved values/busy reasons, including N Factory. Default
+  mode/Suspension are adjacent in drivetrain; Startup LKA is in assistance.
+- Action prompts retain compound effects and multi-ECU clear scope, with a
+  six-second confirmation window. Rain test sits with workshop actions.
+- Save errors use consistent three-second feedback with HOLD retry for editors
+  and RES retry for failed exits. Information shows effective Legacy width.
+- Settings uses Edit favorites; Vehicle precedes Information. Both user guides
+  and MENU_UX match the new labels, order and operating behavior.
+
+Five new host cases execute across four menu variants; production packet checks
+cover Legacy widths and MY23 budgets. Full Apple Clang ASan/UBSan host suite and
+fast menu checks pass. All four firmware flavors pass cppcheck and ARM builds
+with the documented Arm GNU 15.2.Rel1 toolchain.
+C1 standard image currently uses 94,396 bytes Flash / 13,316 bytes static RAM.
+No flashing, push, merge or vehicle acceptance. No new audit document created.
+Original checkout captures/releases remain untouched; all handoff work stays
+on this task branch. Physical IPC presentation and SELECT fencing remain outside
+this local ergonomics change.
+
+## Local navigation display latency improvements, 2026-11-02
+
+Branch `fix/navigation-display-latency` builds on `d13dfc6` (including current UX
+and input recovery). Fresh fetch still confirms origin/master `af1fd72`.
+Implemented the inexpensive improvements before any protocol redesign:
+
+- A fresh directional release flushes the final pending view immediately.
+- Direction reversals bypass navigation burst deferral, including group moves.
+- Only automatic repeats are paced by max(180 ms, estimated display transfer
+  interval); initial delay remains 500 ms and physical edges remain immediate.
+- Legacy timing uses the effective runtime width, matching BH fragment counts.
+
+EN/PL guides and MENU_UX describe the behavior. No changes to RES recognition,
+IPC settings controls, BH active snapshots or the C1–BH protocol. Physical IPC
+visibility is still unacknowledged; the SELECT/HOLD synchronization limitation
+from the prior audit remains. Hardware acceptance must compare rapid taps,
+release, held scrolling and reversal at each display pace.
+
+Validation: test-menu-fast and the full Apple Clang ASan/UBSan host suite pass.
+The new packet-level regression passes on four compiled menu variants with all
+three negotiated display profiles. All four firmware flavors pass cppcheck and ARM builds using Arm GNU
+15.2.Rel1. C1 uses 93,228 bytes Flash and 13,316 bytes static RAM. No flashing or hardware validation. Original checkout untracked
+captures and release directories remain untouched; handoff stays on this branch.
+
+## Click/display synchronization feasibility, 2026-11-02
+
+Fresh fetch confirms origin/master af1fd72; review uses current UX/input branch
+5c1f6b3. [Source audit and proposal](research/20261102-click-display-synchronization.md)
+identifies logical-selection versus presented-screen divergence: SELECT/HOLD has
+no screen revision fence, while C1 render pacing, pending UART and BH active/latest
+images operate independently. CAN queue acceptance is not transmission or IPC
+presentation. C1 also estimates legacy fragment count from compile-time width
+while BH uses runtime width. No physical loss/latency measurement is claimed.
+
+Recommended follow-up order: per-screen revision and honest BH transmit progress;
+progress-driven coalescing; target-revision SELECT/HOLD barrier with explicit
+cancel/retry semantics; diagnostic counters; then paced/Delta vehicle comparison.
+Preserve every recognized navigation event's effect while bounding screen backlog.
+Do not blindly queue every intermediate frame or treat faster IPC pace as an
+input-loss fix. Details and acceptance cases are in the audit. No additional
+firmware changes or test executions in this review. Handoff committed only on
+review/click-display-sync; original user untracked files remain untouched.
+
+## Steering input recovery and audit, 2026-10-30
+
+Task branch `fix/steering-input-recovery` starts at current UX `a5e89cd`; fresh
+fetch confirms upstream `af1fd72`. [Audit](research/20261030-steering-input-audit.md)
+covers CAN dispatch, recognizer, menu selection, UART latest-screen queue and BH
+snapshot/retry behavior. Fixed two reproduced input defects: a fresh directional
+press after an idle gap now counts when the last report was neutral; opposite
+direction changes no longer require a neutral report between them. Stale held
+state and RES still require release after a gap. The 300 ms freshness guard,
+500/180 ms repeat, strong-press semantics and CC/ACC permission gates remain.
+
+No confirmed lost recognized step was found in rendering: selection is applied
+before latest-screen coalescing. Missing identical presses without a release
+cannot be reconstructed; physical report loss and end-to-end IPC timing remain
+vehicle checks. Both guides and MENU_UX updated.
+
+Validation: four recognizer menu variants, seven dedicated input-repeat cases,
+and four BH snapshot/retry case executions pass with Apple Clang ASan/UBSan.
+Coverage includes 100 rapid clicks, stale holds, reversals, permission loss,
+RES suppression and tick wrap. Four-flavor cppcheck and standard builds use
+Arm GNU 15.2.Rel1. No flash, release or hardware verification. Original checkout
+untracked files are preserved; prior UX changes remain in this branch ancestry.
+
+## Current Vehicle/Features and save UX correction, 2026-10-30
+
+Fresh `git fetch origin` before implementation and again after validation confirms
+`origin/master` `af1fd72` (beta-35). Work is isolated on
+`fix/current-vehicle-ux`, `/private/tmp/baccable-current-vehicle-ux`. This adapts the
+owner's previous save/discard and engine-group requests to the actual current
+individual-reading/profile implementation; obsolete beta-30-based commits
+`ed5d0f9` / `b6826fa` were not cherry-picked. Current Readings already filters
+empty ineligible groups and previews; new integration coverage confirms it.
+
+- Vehicle HOLD now saves directly, including during field editing, and reports
+  SAVED only after successful atomic persistence. It keeps the selected field.
+  Clean Back from browsing exits immediately; dirty Back opens the same decision
+  screen as Features/Favorites. Confirmation locks editing. Existing busy guards,
+  failed-write rollback/retry, equipment policy, pending display negotiation and
+  retained preferences remain. The redundant consequences-review/second-HOLD
+  flow and truncated `HOLD save Vehicle` title are removed.
+- All draft decision screens, including Restore defaults, share MY23 L1
+  `HOLD: SAVE` / L2 `2X: DISCARD`; legacy uses `Hold save/2x drop`.
+  Favorites reading and format choices stay pending until accepted. Format Back
+  returns to picker; picker Back cancels only that choice. HOLD from either
+  picker accepts and saves with the existing validation, fit and rollback checks.
+  Navigation in the Favorite picker skips profile-ineligible readings. Existing
+  stored IDs and all layouts remain intact until explicitly saved.
+- Default mode skips Race when vehicle policy does not permit it. A retained
+  unavailable Race setting displays Not on vehicle/Configure Vehicle and remains
+  editable for recovery. Suspension explains `Set D/Race first` outside D/Race;
+  soft-setting saves recheck that prerequisite. Stale softer preferences can be
+  cleared. Equipment-dependent settings show a policy reason even when a retained
+  preference is enabled, rather than implying effective operation.
+- Features LKA is named `Startup LKA`, retaining OFF/ON semantics and flash values;
+  Vehicle Lane assist still describes equipment. Confirmed Absent hides the
+  feature; Unknown explains configuration and allows clearing retained intent.
+  Mirror send rejection retains HOLD STORE for retry, distinct from queued
+  acknowledgement. BACCAble IPC controls retain their immediate behavior.
+
+Both user guides and MENU_UX updated; removed stale references to the retired
+membership/order editors in the touched workflow description. No storage format,
+CAN measurement dictionary or actuator protocol change.
+
+Validation: `tests/current_vehicle_ux.json`, 42 scoped Apple Clang ASan/UBSan case
+executions PASS (six new UX cases plus directly related editor/policy and reading
+catalog regressions; four menu/display variants). Tests cover failed writes,
+unchanged saved bytes on discard, confirmation locking, direct picker/format and
+Vehicle saves, clean/dirty returns, LKA tri-state visibility/recovery, Race
+filtering/retained preference, suspension save-time prerequisites, mirror retry,
+and gasoline/diesel group and picker filtering. Impact ledger in
+`tests/test-impact.md`. The untouched broad host/Lab suites were not executed.
+Arm GNU 15.2.Rel1: four standard firmware builds, four-flavor cppcheck, C1's four
+IPC/width matrix builds and four size/identity gates PASS. C1 standard Flash/static
+RAM: 92,996/13,308 B; largest C1 matrix static RAM 13,500 B. Runtime stack and
+vehicle acceptance remain unmeasured. No flash, release, push or merge performed.
+Original checkout remains on its prior task branch with its pre-existing
+untracked captures/releases/research preserved; this worktree started clean.
+
 ## v5-beta-35 release, 2026-10-29
 
 PR [#96](https://github.com/eujot/BACCAble/pull/96) merged the joint vehicle

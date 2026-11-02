@@ -2,11 +2,15 @@ CC := clang
 FIRMWARE := ../firmware/baccable
 CPPFLAGS := -I$(FIRMWARE)
 CFLAGS := -std=c11 -Wall -Wextra -Werror -g -O1 -fsanitize=address,undefined -fno-omit-frame-pointer
-HEADERS := test_report.h $(shell find stubs $(FIRMWARE)/app $(FIRMWARE)/protocol $(FIRMWARE)/diagnostics $(FIRMWARE)/storage $(FIRMWARE)/features $(FIRMWARE)/vehicle $(FIRMWARE)/transport $(FIRMWARE)/platform $(FIRMWARE)/USB_DEVICE/App $(FIRMWARE)/third_party/printf -name '*.h')
+HEADERS := test_report.h $(shell find stubs $(FIRMWARE)/app $(FIRMWARE)/state $(FIRMWARE)/protocol $(FIRMWARE)/diagnostics $(FIRMWARE)/storage $(FIRMWARE)/features $(FIRMWARE)/vehicle $(FIRMWARE)/transport $(FIRMWARE)/platform $(FIRMWARE)/USB_DEVICE/App $(FIRMWARE)/third_party/printf -name '*.h')
 SOURCES := test_core.c $(FIRMWARE)/protocol/slcan_codec.c $(FIRMWARE)/diagnostics/uds_decode.c \
  $(FIRMWARE)/storage/record_store.c
 
 test: build/test_core build/test_transport build/test_catalog build/test_menu build/test_menu_large build/test_uart_menu build/test_input_repeat build/test_engine_status build/test_exhaust labels
+	./build/test_acceleration
+	./build/test_reading_catalog
+	./build/test_reading_layout
+	./build/test_favorite_layout
 	./build/test_rain_uart
 	./build/test_rain_lights_c1
 	./build/test_rain_lights_c2
@@ -221,8 +225,8 @@ build/test_rain_uart: $(RAIN_UART_SOURCES) $(HEADERS) Makefile
 test: build/test_rain_uart
 
 
-# Scoped vehicle-profile/UI foundation (P0-P7). Built and run only via the
-# test-vehicle-ui target and its manifest; these are not part of the broad "test".
+# Vehicle-profile/UI foundation: reading catalog/format/Favorites also run in
+# the broad suite so semantic regressions cannot hide behind a scoped manifest.
 READING_CATALOG_SOURCES := $(FIRMWARE)/features/reading_catalog.c $(FIRMWARE)/vehicle/vehicle_profile.c
 READING_FORMAT_SOURCES := $(FIRMWARE)/features/reading_format.c $(READING_CATALOG_SOURCES) $(FIRMWARE)/third_party/printf/printf.c
 FAVORITE_LAYOUT_SOURCES := $(FIRMWARE)/features/favorite_layout.c $(READING_FORMAT_SOURCES)
@@ -255,3 +259,11 @@ build/test_ui_layout_store: test_ui_layout_store.c $(UI_LAYOUT_SOURCES) $(HEADER
 .PHONY: test-vehicle-ui
 test-vehicle-ui:
 	python3 run_vehicle_ui_tests.py --manifest $(MANIFEST) --run
+
+# Exercise the real speed-frame producer, including startup and interrupted runs.
+ACCELERATION_SOURCES := test_acceleration.c $(FIRMWARE)/vehicle/telemetry_frames.c $(FIRMWARE)/state/statistics.c $(FIRMWARE)/vehicle/vehicle_profile.c
+build/test_acceleration: $(ACCELERATION_SOURCES) $(HEADERS) Makefile
+	@mkdir -p build
+	$(CC) -Istubs $(CPPFLAGS) $(CFLAGS) -Wno-unused-parameter -DC1_FLAVOR=1 $(ACCELERATION_SOURCES) -lm -o $@
+
+test: build/test_acceleration build/test_reading_catalog build/test_reading_layout build/test_favorite_layout

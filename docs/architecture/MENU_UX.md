@@ -39,8 +39,8 @@ status and screens. Token-matched replies have a 3000 ms queue/response window;
 mirror status still expires 3000 ms after receipt, so a blocked save may require
 a retry after the next reply.
 
-The main menu is Favorites, Readings, Actions, Settings, Information, Vehicle.
-Settings contains Features, Favorites and BACCAble IPC. Vehicle is the sole editor
+The main menu is Favorites, Readings, Actions, Settings, Vehicle, Information.
+Settings contains Features, Edit favorites and BACCAble IPC. Vehicle is the sole editor
 for engine, drivetrain and display; old Flash slots remain serialization adapters.
 Favorites has six two-row sets and a confirmed Restore defaults action. Width
 resolution uses reserved value budgets; rendering and polling share filtered,
@@ -52,7 +52,9 @@ Profile and feature settings share one atomic SETTINGS_RECORD 0x108 payload
 two-page category. Initial conversion appends to an erased 256-byte slot within
 the same reserved pages; both old payloads survive an interrupted conversion.
 Normal combined-record updates alternate pages. Publication follows a successful write; failed edits remain
-isolated. Profile HOLD first opens a consequences review and a second HOLD commits.
+isolated. Profile HOLD commits directly, including while editing a field. Clean Back
+returns immediately; dirty Back from browsing opens the shared save/discard
+prompt. Confirmation locks editing. Busy-operation and atomic-write guards remain.
 
 The external WS281x LED-strip controller is removed; Flash slot 3 stays hidden
 and is normalized to zero on load. Instrument-cluster `Shift light` is separate
@@ -70,9 +72,9 @@ CC and ACC must both be disabled, with a fresh released report to arm input.
 | Double-click | Second press starts within 280 ms of the first release; emits `MENU_BACK`, without an earlier SELECT |
 | Hold | 900 ms of continued reports; emits `MENU_HOLD` once, never SELECT on release |
 | Third rapid click | Short click suppressed for 280 ms after a pair; a continued hold still emits HOLD |
-| Gentle direction | Immediate peer navigation; repeat after 500 ms, then every 180 ms |
+| Gentle direction | Immediate peer navigation; repeat after 500 ms, then max(180 ms, estimated display transfer interval) |
 | Strong direction | Functional-group navigation; no repeat |
-| Report gap | Over 300 ms cancels the gesture/pending click; a release rearms input |
+| Report gap | Over 300 ms cancels pending RES clicks and held gestures; neutral-to-direction is a fresh press and stays eligible. Otherwise a release rearms input |
 
 Polling occurs in `menu_process`, so the final click need not wait for another
 button transition. Unsigned elapsed-time comparisons handle tick wrap. Scrolling
@@ -101,36 +103,33 @@ Engine and USB drafts include their companion setting bit.
 | Confirmation + Back | Discard; return to list with original live setting |
 | Failed save + hold | Retry the same draft; failure never becomes a committed live value |
 | Separate Back after save | Return; it does not save twice |
-| Editor timeout | Discard unfinished draft and return to Favorites |
+| Editor timeout | Clean drafts return to Favorites; changed drafts and pending Favorite choices stay open |
 
-Favorite slots and Sort order use equivalent isolated drafts in the menu
-controller. Mirror Enabled is staged too. Mirror Store position requires a hold
+Favorite rows use an isolated layout draft in the menu controller. Mirror Enabled is staged too. Mirror Store position requires a hold
 at `Adjust;HOLD=save`/`HOLD STORE`; queue acceptance is still **not** a BH storage
 acknowledgement. Existing action preconditions are checked again on confirmation.
-Except Read BCM faults and Peak hold, actions first show a prompt, then require
-a hold within three seconds. Another click cannot execute that confirmation.
+Except Read BCM faults, Peak hold and Rain test, actions first show a prompt, then require
+a hold within six seconds. Another click cannot execute that confirmation.
 
-Membership, visibility and page-order editors use isolated MenuPreferences
-drafts and the same direct-hold/Back-confirmation rules. Confirmation locks editing. A
-failed save rolls back live preferences and imported sets while retaining the
-draft. A successful save stays in the editor. Legacy membership/order editors
-are hidden whenever MY23 or atomic sets own live Favorites; before that switch,
-committed legacy edits regenerate imported sets in the same storage transaction.
+Legacy membership, visibility, page-order and sort editors were removed by the
+individual-reading cutover. Favorites now use the UiLayoutRecord draft and
+retain live/saved layout on a failed write. Confirmation locks editing; successful
+save stays in the editor.
 Changed settings and menu preferences are independent storage domains. A failed automatic exit shows
-`× Save failed: RES`; SELECT or HOLD retries the remembered destination, Back cancels the
+`Save failed` / `RES RETRY / 2X BACK` (Legacy `Fail; RES retry`); SELECT or HOLD retries the remembered destination, Back cancels the
 exit, and idle never retries silently. Ordinary views idle after 30 s, editors
-after 60 s; live readings stay open and active fault work postpones inactivity.
+after 60 s when clean; dirty drafts remain open. Live readings stay open and active fault work postpones inactivity.
 
 ## MY23 view modes and encoding
 
 `features/my23_ui.*` defines LIST, EDIT, CONFIRM, PARAMETER and NOTICE modes.
 Lists, including slot/picker, page-editor and IPC-test views, show `› current`
-above the next item. Slot labels use the catalog page names, with only the two
-visible slots selectable.
+above the next item. Slot labels identify one of four positions in the selected logical row; format
+selection shows its reading and choice. Features browsing shows saved values.
 Long generic notices continue onto L2 instead of replacing useful text with a
 static Back footer. A long active title ends with `…`.
 Settings show draft values with `HOLD SAVE`; confirmation shows
-`HOLD SAVE•2X DISCARD` and plain `SAVED` feedback for three seconds. The save
+`HOLD: SAVE` on L1 / `2X: DISCARD` on L2 and plain `SAVED` feedback for three seconds. The save
 event starts with the MY23 title and result instead of first queuing a
 replaceable single-line notice. Every Reading keeps its
 catalog measurements on L1, including multi-value pages; L2 previews the next
@@ -246,7 +245,7 @@ slots. The physical record keeps five bytes per screen for migration; Slots 3–
 stay stored but inactive. `0xFF` marks an empty slot; Slot 1 is primary. Clearing
 it hides that screen. Assigning an already selected page clears its other slot.
 User edits happen only
-under `Settings → Favorites → Favorite N → Slot N`.
+under `Settings → Edit favorites → Favorite N → Row A/B → Slot N`.
 
 When no saved page/slot preferences exist, initialization seeds the six gasoline
 pairs and enables the slot layout for either IPC profile (diesel retains four
@@ -570,3 +569,98 @@ position-lamp pattern is `02 00 80 00`. Older Rain lights firmware generated
 these patterns on its respective buses. The current BH darkness path still
 needs receiver acceptance in the vehicle. The earlier physical observations are not discarded
 or reclassified as missing evidence. See the [focused correction report](../research/20261024-rain-light-polling-correction.md).
+
+## Current profile and draft UX correction
+
+Feature eligibility is reflected in rendering as well as execution. Unknown
+requirements show Configure Vehicle even for a retained enabled preference;
+recovery by clearing that preference remains available. Confirmed unsupported
+features stay hidden. Default-mode cycling skips Race unless policy allows it.
+Suspension shows Set D/Race first outside D/Race and rejects softer saves there.
+Startup LKA names startup behavior separately from Vehicle Lane assist equipment.
+The reading catalog already filters empty ineligible groups and their previews.
+
+Favorite reading/format choices remain pending until format SELECT or a direct
+HOLD. Format Back returns to the reading picker; picker Back cancels the pending
+choice, preserving earlier accepted drafts. HOLD accepts and saves from either
+picker with the same validation/rollback as the item list. All dirty-draft
+prompts share one renderer. Restore defaults keeps its explicit confirmation.
+Mirror capture keeps HOLD STORE on send rejection and never reports SAVED from
+queue acceptance. BACCAble IPC controls are unchanged.
+
+## Steering input audit correction, 2026-10-30
+
+Neutral-to-direction after an idle report gap is now accepted. Stale held state
+and RES remain subject to release rearming. Opposite directional edges are
+accepted without a neutral report; same-direction strong-to-gentle relaxation
+does not emit a second click. The 300 ms freshness guard and 500 ms initial repeat delay remain. Subsequent
+repeats now use max(180 ms, estimated display transfer interval). See the source audit in ACTION_PLAN for evidence and limitations.
+
+
+## Navigation display latency, 2026-11-02
+
+The C1 transfer estimate uses the negotiated runtime legacy width, matching BH's
+fragment calculation. A fresh direction-to-neutral report immediately flushes a
+pending view. Reversal bypasses burst coalescing, including group directions.
+Automatic gentle repeats retain the 500 ms initial delay and use the larger of
+180 ms and the transfer estimate thereafter (Quick: 240 ms Legacy 18, 280 ms
+Legacy 24/MY23). Physical edges are never throttled by repeat pacing. Quiet-time
+flush and periodic retry remain fallbacks. BH's immutable active snapshot and
+latest pending slot remain unchanged; no physical presentation acknowledgement
+or SELECT/HOLD barrier is introduced. Vehicle latency acceptance remains open.
+
+
+## Local ergonomics corrections, 2026-11-02
+
+Favorite pickers preserve an existing format when the reading is unchanged and
+preserve a pending format across Back/re-entry. Changed readings default to Auto.
+Dirty Features/Vehicle/layout drafts and pending Favorite choices inhibit idle
+exit; clean editors retain 60 s. Slot labels include a position and empty slots
+omit a format. Format screens show the reading and choice. Validation names the
+failing row and recommends Short for overflow. Favorite 6 previews Restore
+defaults; reset has its own target-specific confirmation.
+
+MY23 Features shows saved values (N uses N Factory), with policy/busy reasons
+still taking priority. Legacy Vehicle uses > for edit mode and reserves the
+whole value before shortening labels. Vehicle equipment labels are Adaptive
+susp. and AdBlue / SCR. Main navigation places Vehicle before Information;
+Settings calls its editor Edit favorites. Rain test belongs beside workshop
+actions, startup LKA to assistance, and Default mode/Suspension to drivetrain.
+Action confirmation lasts six seconds and includes compound effects and the
+multi-ECU clear scope. Save errors last three seconds and show the appropriate
+HOLD/RES retry gesture. Information uses effective Legacy width. No protocol,
+Flash format, physical presentation fence or IPC control behavior is changed.
+
+
+## Reading label clarity, 2026-11-02
+
+The individual-reading catalog keeps full/medium/short names unique within each
+format. Unit symbols are emitted with the value; OilQ replaces Oil%, and oil,
+fuel, charge-source, regeneration, AdBlue, turbo request and over-rev abbreviations
+are distinct. Acceleration labels retain their range hyphen. BatV/BtI and RPr
+keep default MY23 rows within the existing budgets. Source IDs, units, precision,
+value budgets and eligibility are unchanged. Existing saved Favorites retain IDs
+and formats; denser custom rows can need more continuation pages. Oil quality
+is not renamed to remaining oil life. Information shows Button reports, Report
+gaps, Max input gap and Report age as label/value fields, preserving whole
+numbers on Legacy. The detailed user-guide catalogs and SOC descriptions use
+current individual readings rather than retired compound pages.
+
+## Native reading state contract
+
+Readings and Favorites share sample freshness and live acceleration state.
+Timers render RUN while active, MISS for empty/out-of-window results (20/40 s),
+and seconds only for valid completed results. Stale/nonfinite data renders --
+before timer-state interpretation. Best records never inherit a running flag.
+The first speed report establishes a baseline; resumption after >1000 ms cancels
+active attempts before evaluating crossings, retaining completed results.
+
+Enum labels consume native decoder codes: gear uses the transmission nibble,
+DNA uses 0/8/16/48, pedal maps are response characters, seatbelt is the alarm
+configuration, and regeneration uses the complete 0..6 mode table. Invalid
+nonintegral or nonfinite codes must not be cast to an enum index. Regeneration
+reserves ten value glyphs for its longest labels.
+
+The standard host test target now includes reading catalog, reading layout,
+Favorite layout and real speed-handler tests. Menu integration tests cover timer
+states in outgoing packets across Legacy 18/24 and MY23 profiles.

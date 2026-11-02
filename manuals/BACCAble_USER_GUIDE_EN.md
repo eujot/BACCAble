@@ -6,7 +6,9 @@ Startup Race and the softer suspension setting were accepted in the car on
 2026-10-24; Rain lights output acceptance is still open. It starts after
 BACCAble has been installed and
 connected to the vehicle. Installation, wiring and firmware flashing are outside
-its scope. Use a matching C1/C2/BH firmware set.
+its scope. Use a matching C1/C2/BH firmware set. This source edition also includes the
+2026-11-02 menu ergonomics changes; those changes have host/build validation,
+not in-vehicle acceptance.
 
 The older [English manual](Baccable_manual_EN.pdf) supplied the original function
 descriptions. Menu paths, controls, labels and operating details below have been
@@ -41,8 +43,8 @@ are supported; a menu entry alone does not establish compatibility.
 3. Hold **RES for about 0.9 seconds**, then release. The menu opens in Favorites.
 4. **Double-click RES** to return to the main menu, then open `Vehicle`.
 5. Set `Model`, `Model year`, `Engine`, `Drivetrain`, `Display` and equipment.
-   First HOLD opens the review; up/down lists preferences that would be suppressed.
-   HOLD again saves. BACK from a field returns to browsing; two BACKs from browsing
+   HOLD saves directly. Incompatible saved preferences remain stored, but their
+   operation is blocked by the accepted profile. BACK from a field returns to browsing; two BACKs from dirty browsing
    discard the complete draft. A failed save keeps the old profile and your draft.
 6. Use `Display` to choose `Auto`, `Legacy 18`, `Legacy 24` or `MY23`. Update
    C1/C2/BH together. `Auto` selects MY23 for a known year of 2023 or later.
@@ -63,22 +65,34 @@ RES and the ACC distance button have the same menu role when CC and ACC are off.
 | Hold RES for about 0.9 s in an editor | Save the displayed draft directly, including after a save/discard prompt. |
 | Hold RES in a displayed APPLY/STORE prompt | Confirm that action or mirror capture. |
 | Gentle down/up | Next/previous item or change the draft. Lists wrap. |
-| Hold gentle down/up | Repeat after 0.5 s, then every 0.18 s; no repeats in Actions or while reordering a favorite item. |
+| Hold gentle down/up | Repeat after 0.5 s, then at the display transfer interval (minimum 0.18 s); no repeats in Actions or while reordering a favorite item. |
 | Stronger down/up | Jump between functional groups; in a draft, adjust its value. |
 
 A click is resolved after the double-click window, so a single click has a short
 intentional delay. Presses shorter than 30 ms are rejected. A third rapid click
 following a double-click is consumed; a deliberate hold immediately after it still works. Scrolling cancels a pending click pair.
-After a gap over 0.3 s in button reports, release the button and try again.
+After a gap over 0.3 s during a held button, release the button and try again.
 Releasing a hold never also clicks. A stronger direction can first register a
 normal item step before its group jump.
+
+After a report gap over 300 ms, a new up/down press is accepted if the last
+report was neutral. A gap during a held button still requires release before
+input resumes. A direct up/down reversal is accepted without an intervening
+neutral report; easing a strong press back to gentle in the same direction does
+not create another click. Gentle hold repeats after 500 ms, then at the estimated display transfer interval,
+with a minimum of 180 ms (Quick: 240 ms for Legacy 18, 280 ms for Legacy 24/MY23).
+Rapid navigation may skip intermediate displayed screens while retaining the
+recognized steps. Releasing a direction sends any pending final view immediately;
+a direction reversal bypasses the navigation delay. An active BH transmission
+still finishes first; this does not confirm physical IPC presentation.
 
 ### Returning, inactivity and saving
 
 Entering an editor shows the saved value without changing it. Hold RES in an
 editor to save directly; no preceding double-click is required. Double-click
 returns one level. With an unchanged setting it returns immediately.
-With a changed draft, the first double-click shows `HOLD SAVE•2X DISCARD` on MY23
+With a changed draft, the first double-click shows `HOLD: SAVE` on line 1 and
+`2X: DISCARD` on line 2 on MY23
 (`Hold save/2x drop` on legacy). Hold RES to persist and apply; the setting stays
 visible with `SAVED` feedback for about three seconds. A separate double-click
 returns. Double-click in
@@ -87,16 +101,18 @@ A failed save keeps the draft and confirmation available for another hold.
 A restart loads committed values only. USB mode changes only after a successful
 explicit save; selecting CAN or merely leaving an unsaved draft does not activate it.
 
-The same draft workflow applies to Features, Favorite slots, mirror Enabled and
-Sort order. There is no Save & Exit item. Live readings stay visible. Other menu
-views return to Favorites after 30 s without input, or 60 s in editors; unfinished
-drafts are discarded. Active fault work postpones this timeout.
+The same draft workflow applies to Features, Favorites, Vehicle and mirror Enabled.
+Confirmation locks editing: hold saves and double-click discards. BACCAble IPC
+controls keep their immediate behavior. There is no Save & Exit item. Live readings stay visible. Other menu
+views return to Favorites after 30 s without input, or 60 s in clean editors.
+Changed Features, Vehicle and Favorite drafts, including a pending reading/format
+choice, stay open until you save or discard them. Active fault work postpones timeout.
 
 The Favorites editor uses the same draft, confirmation, hold-to-save and discard
 rules. Saving stays in the editor; a separate double-click returns to Settings.
-Timeout discards unfinished changes. The selected reading and favorite are
+Timeout does not discard changed drafts. The selected reading and favorite are
 persisted when leaving ordinary views.
-If `× Save failed: RES` appears during
+If `Save failed` / `RES RETRY / 2X BACK` (Legacy: `Fail; RES retry`) appears during
 an exit, click or hold to retry that exit or double-click to cancel it and remain in the
 current view. Waiting does not automatically retry.
 
@@ -122,11 +138,11 @@ Main menu
 │  │     ├─ Enabled
 │  │     ├─ Store position
 │  │     └─ < Back
-│  ├─ Favorites              Favorite 1–6 → Row A/B → item → reading + format
+│  ├─ Edit favorites         Favorite 1–6 → Row A/B → item → reading + format
 │  │  └─ Restore defaults    Confirmed replacement of Favorite layouts only
 │  └─ BACCAble IPC           Temporary refresh experiments
-├─ Information               Versions, input status and Demo
-└─ Vehicle                   Model, year, engine, drivetrain, display, equipment
+├─ Vehicle                   Model, year, engine, drivetrain, display, equipment
+└─ Information               Versions, input status and Demo
 ```
 
 The main menu order is fixed. Readings shows individual measurements organized
@@ -138,16 +154,16 @@ engine-aware defaults are loaded and saved once (the 0x106 UI record).
 
 ## Vehicle profile
 
-`Vehicle` is the last main-menu entry. Engine choices are `Unknown`, `2.0 Petrol`,
+`Vehicle` follows Settings and precedes Information. Engine choices are `Unknown`, `2.0 Petrol`,
 `2.9 Petrol`, `2.2 Diesel`; drivetrain choices are `Unknown`, `RWD`, `Q4`.
 Model is `Unknown`, `Giulia` or `Stelvio`; year is `Unknown` or 2000–2099.
-Equipment fields use `Unknown`, `Absent`, `Present`: `Suspension`, `Race`,
-`Exhaust valves`, `ACC`, `HAS`, `Lane assist`, `Park mirrors`, `SCR`.
+Equipment fields use `Unknown`, `Absent`, `Present`: `Adaptive susp.`, `Race`,
+`Exhaust valves`, `ACC`, `HAS`, `Lane assist`, `Park mirrors`, `AdBlue / SCR`.
 A feature preference never proves that equipment is installed.
 
 An imported installation keeps its previous permissions until Vehicle is explicitly
-saved. Review `OFF: …` entries with up/down before HOLD: the saved preferences
-remain, but incompatible actions and automatic functions are suppressed. Unknown
+saved. HOLD commits directly: saved preferences remain, but incompatible actions
+and automatic functions are suppressed. Unknown
 equipment on a new or confirmed profile cannot authorize a new equipment-dependent
 action. Race and adjustable suspension are independent. AWD requests require Q4.
 Known absent equipment hides its feature option; `Configure Vehicle` explains an
@@ -168,11 +184,24 @@ the next reply; the mirror status freshness limit remains three seconds.
 At boot legacy uses the compiled fallback width until
 negotiation. Update all boards together. Physical screen acceptance is still open.
 
+Features follow the saved Vehicle profile. Confirmed `Absent` equipment hides
+its dependent setting. `Unknown` keeps it visible with `Configure Vehicle`;
+a retained preference is blocked until the requirement is met. A retained
+preference can still be cleared. `Startup LKA` controls startup behavior; it does
+not declare equipment presence. Race is skipped in Default mode unless allowed.
+Suspension requires D or Race; `Set D/Race first` explains the dependency and
+prevents saving a softer setting for A/N. Rejected mirror storage commands retain
+`HOLD STORE` for retry; `Store: queued` confirms enqueueing only.
+
 ## Display symbols and messages
 
 MY23 has **16 visible glyphs in line 1 and 22 in line 2**. A list shows the
 current item with `›` above the next item. Editors show a setting and its draft
-value, with `HOLD SAVE`. Confirmation and saved feedback use the second line.
+value, with `HOLD SAVE`. On Legacy, Vehicle edit mode adds `>` and keeps the
+whole value visible by shortening the field label. Confirmation and saved feedback use the second line.
+Save errors remain for about three seconds: MY23 shows `Save failed` /
+`HOLD: RETRY`; Legacy shows `Fail; HOLD retry`. Correct the cause and hold again.
+Information reports the effective `Legacy 18` / `Legacy 24` width.
 Live Favorites show one row of a Favorite set on each line (MY23), or one row
 subpage on legacy. Readings show one selected measurement.
 `SAVED` confirms a completed settings save; `×` means a local failure.
@@ -278,7 +307,7 @@ Its stored position and format remain unchanged.
 | Oil | Oil level mm + LOW/OK/HIGH | Oil level bar |
 | Engine | Power + boost | Power + torque |
 | Cooling | Coolant | Intercooler inlet + outlet |
-| Battery | Voltage + current | IBS state of charge |
+| Batt voltage | Voltage + current | IBS state of charge |
 | Diesel DPF / Gasoline Performance | DPF load + temp (diesel) / 0–100 (gasoline) | Regen progress (diesel) / Best 0–100 (gasoline) |
 
 MY23 defaults simplify the 16-glyph first row: Warm-up has oil temperature above
@@ -289,17 +318,31 @@ table layout. Legacy retains the table and splits wide rows into subpages.
 
 ### Edit a favorite
 
-1. Open `Settings → Favorites` and choose `Favorite 1` through `Favorite 6`.
+1. Open `Settings → Edit favorites` and choose `Favorite 1` through `Favorite 6`.
 2. Choose `Row A` or `Row B`, then an item slot.
 3. Choose a reading (or `Empty`) and a format (Auto/Full/Medium/Short).
-4. Hold to save. A first BACK opens confirmation for a dirty draft; a second
-   BACK discards it. `Duplicate reading`, `Oil bar needs row` or `Too wide: shorten`
-   rejects the save and keeps the draft. Choose a shorter format or remove an item.
+   The picker skips readings that do not apply to the saved Vehicle profile.
+   The reading stays pending until its format is accepted. BACK from format
+   returns to the reading picker; BACK again cancels the pending choice without
+   changing earlier accepted draft edits.
+4. Hold to save directly from the reading picker (retained format for the same reading,
+   Auto for a different reading), format picker,
+   item list or row list. A first BACK from the item list opens confirmation for a dirty draft; a second
+   BACK discards it. Row-specific `Duplicate reading` / `Oil bar only`, or
+   `Use Short format`, rejects the save and keeps the draft. Choose a shorter format or remove an item.
 
-`Settings → Favorites → Restore defaults` follows `Favorite 6`. SELECT opens
-confirmation, HOLD replaces all six sets, and BACK cancels. Failed writes retain
+`Settings → Edit favorites → Restore defaults` follows `Favorite 6`. SELECT opens
+the `Reset favorites?` / `HOLD RESET / 2X BACK` confirmation (Legacy: `Reset fav? HOLD`).
+HOLD replaces all six sets and BACK cancels. Failed writes retain
 your previous layouts; settings, profile, statistics and mirror calibration are
 preserved.
+
+Slots show their position number; an empty slot is `Slot 2: Empty`, for example.
+The format selector shows the reading and format. Reopening the same reading
+preserves its saved format; Back to the picker and re-entry preserve a pending
+format too. A different reading starts at Auto. The preview after Favorite 6
+correctly announces Restore defaults. Validation identifies row A or B; Legacy
+uses `Row A: duplicate` or `Row A: oil bar only`.
 
 ### Oil level and bar
 
@@ -308,13 +351,30 @@ the bar occupies its row alone. The owner-supplied OK ranges are unchanged:
 2.0 RWD 72–82 mm, 2.0 Q4 67–77 mm, 2.2 RWD 61–65 mm, 2.2 Q4 79–84 mm. They are
 not newly verified here. Unknown drivetrain shows `?` and `Set drivetrain`.
 
+Reading labels keep the unit beside the value, for example `OilQ 50%`,
+`BatV 12.50V` and `BtI -5.2A`. OilT/OilLv/OilSt distinguish oil temperature,
+level and status; OilQ is the ECU oil-quality indicator, not a verified estimate
+of remaining service life. SOCi/SOCe/SOCb distinguish charge reports from IBS,
+ECU and BCM. RPr/RMode are regeneration progress/mode, RDist/RTime its average
+distance/duration, and OvrT/OvrN over-rev time/count. Turbo press req is the
+pressure request (bar); Turbo pct req and Turbo pct retain the existing percentage
+signals without asserting a new physical interpretation. Their short labels are
+TPrR, TPcR and TPct. AdBV/AdBL distinguish AdBlue volume and percentage level.
+FuelT/FRate distinguish fuel temperature/rate; RAgo/RCnt identify distance since
+regeneration and its count. Acceleration labels retain the hyphen, including 100-200. Longer labels can
+require shorter formats or more subpages in dense Favorites; saved IDs and
+formats are retained. Units, decoding and precision have not changed.
+
 ## Settings: Features
 
 Open `Settings → Features`. The tables follow the actual browsing order.
 The group headings below explain stronger up/down jumps; they are not extra
 submenus. Short RES opens the editor at the saved value. Once inside, clicks
-or up/down change on/off and named choices. `LKA` displays `OFF` or `ON`
-explicitly; the other switches use their checkbox in the list.
+or up/down change on/off and named choices. `Startup LKA` displays `OFF` or `ON`
+explicitly. MY23 browsing shows the current setting and its saved value;
+Legacy uses checkboxes for other switches. Default mode N shows `N Factory` on
+MY23 because it leaves factory selection unchanged. `Default mode` and
+`Suspension` are adjacent in the drivetrain group; `Startup LKA` is in assistance.
 
 For **Launch Nm**, **Shift RPM** and **Pedal trim**, click to edit and use
 up/down to adjust. Hold to save directly. Double-click instead to show
@@ -371,21 +431,21 @@ selection still appears immediately.
 | `Virtual ACC` | Off / on | Use a compatible standard cruise-control pad for ACC functions. It requires an ACC-capable, correctly configured vehicle; it does not add radar or ACC capability. |
 | `ACC resume` | OFF / RES / + | Select whether BACCAble sends automatic RES or gentle-up requests while ACC is engaged and holding a stationary car. This can allow the car to resume movement; see [assistance controls](#acc-and-has-controls). |
 | `Virtual HAS` | Off / on | Permit simulated Highway Assist button presses through the action or a double press of the lane button. Requires compatible, configured vehicle assistance equipment. |
-| `LKA` | OFF / ON | **OFF** requests LKA off once at each ignition start. C1 recognizes OFF → RUN on `0x1EF`, including starts without device sleep; cranking does not start a second session. After configuration reaches C2, it waits up to 5 s for LKA ON on `0x547` and a released stalk report, then sends one C2 `0x384` double-click: press, release, press, release, about 100 ms apart. Initial OFF reports are allowed while waiting; no click is sent while LKA is off. A driver press cancels the pending action. **ON** keeps factory behavior and sends no automatic click; it does not forcibly enable LKA. Saving applies this preference at the next ignition start. No later periodic override is sent. Existing `Disable LKA: ON` becomes `LKA: OFF`, preserving the saved intent. Beta 24 was reported to work once after connection, but failed on later ignition cycles; this correction still needs repeated vehicle testing. |
+| `Startup LKA` | OFF / ON | **OFF** requests LKA off once at each ignition start. C1 recognizes OFF → RUN on `0x1EF`, including starts without device sleep; cranking does not start a second session. After configuration reaches C2, it waits up to 5 s for LKA ON on `0x547` and a released stalk report, then sends one C2 `0x384` double-click: press, release, press, release, about 100 ms apart. Initial OFF reports are allowed while waiting; no click is sent while LKA is off. A driver press cancels the pending action. **ON** keeps factory behavior and sends no automatic click; it does not forcibly enable LKA. Saving applies this preference at the next ignition start. No later periodic override is sent. Existing `Disable LKA: ON` becomes `Startup LKA: OFF`, preserving the saved intent. Beta 24 was reported to work once after connection, but failed on later ignition cycles; this correction still needs repeated vehicle testing. |
 
 ### Drivetrain group
 
 | Option | Values | Purpose |
 | --- | --- | --- |
 | `Launch Nm` | 25–600 Nm, step 25 | Reported engine torque at which launch assist requests release of the forced front brakes. It is not a torque limit or a tuning setting. |
-| `Default mode` | A / N / D / Race | At vehicle start-up, BH simulates the recorded DNA selector input on `0x256` (four bytes). For A/D/Race, C1 and BH wait for fresh RPM above 400 for two seconds; the menu shows `Start engine` while C1 waits. `N` leaves factory selection untouched; old saved OFF becomes N without changing stored settings. A/D use 200 ms deflections; Race first reaches D, then holds the D direction for 2.2 s. Held input is refreshed after factory-neutral reports, with a 250 ms fallback refresh for the long hold. Each new press follows a fresh neutral report and waits for an idle CAN transmitter. The actual mode must remain stable for one second before the next gesture. At most three mode gestures are allowed within twelve seconds. The physical selector takes priority, and any pending press is released on cancellation, engine stop or stale data. C1 waits up to 20 s for BH after the engine gate, then checks DNA and CRC-valid transmission reports for five seconds. `Confirmed` requires sustained fresh matching reports; it corroborates reported state, not every subsystem. The actual mode, including an intermediate mode before Race, remains selected. Settings save or ignition OFF cancels; transport resync does not re-arm. Update C1 and BH together. Owner-reported testing on 2026-10-24 accepted the `Race` preset in the car; `A` was not reported separately. |
-| `Suspension` | Stiff / Soft / Mid | Sets the next-start suspension preference: D offers `Stiff` or `Soft`; Race offers `Stiff` or `Mid`. For A/N the softer choice is labelled `Softer` and has no effect. After the actual mode is stable for one second and suspension feedback for 300 ms, BACCAble presses the button for 150 ms only if a change is needed, including when already in D/Race. It waits for fresh feedback after release. One retry is permitted only after at least one second with fresh, continuously unchanged opposite-state feedback and completed earlier CAN transmission. Any observed desired-state reply or missing/unknown feedback prevents that retry. There are at most two presses. `No confirm` can mean suspension was not confirmed even though the DNA mode changed. Manual selector or suspension input cancels the automatic operation. Requires matching C1/BH firmware. Manual D and Race/Mid feedback codes are supported by recordings, including two complete labelled Race cycles on 2026-10-24. Automatic startup replay was accepted in the car on 2026-10-24: the configured `Soft` setting is applied. The feedback-gated retry path was not separately observed. |
 | `ESC/TC control` | Off / on | Permit the ESC/traction-control toggle and supported lane-button gesture. Vehicle configuration must support the function. |
 | `Dyno action` | Off / on | Permit `Toggle Dyno mode`; enabling this preference alone does not enter Dyno. |
 | `Brake action` | Off / on | Permit `Brake override` and `Disable launch`. Enabling this preference alone does not apply the brakes. |
 | `AWD off action` | Off / on | Permit `AWD off request` on an AWD vehicle. Enabling it alone does not send the request. |
 | `Pedal mode` | OFF / Auto / Bypass / A / N / D / R / Hybrid / Kids | Choose the response mode of an installed compatible pedal controller. See [pedal modes](#pedal-controller). |
 | `Pedal trim` | −10 to +10, step 2 | Adjust pedal-map response. This is a map trim, not a percentage increase in engine power. Kids uses its own fixed low trim. |
+| `Default mode` | A / N / D / Race | At vehicle start-up, BH simulates the recorded DNA selector input on `0x256` (four bytes). For A/D/Race, C1 and BH wait for fresh RPM above 400 for two seconds; the menu shows `Start engine` while C1 waits. `N` leaves factory selection untouched; old saved OFF becomes N without changing stored settings. A/D use 200 ms deflections; Race first reaches D, then holds the D direction for 2.2 s. Held input is refreshed after factory-neutral reports, with a 250 ms fallback refresh for the long hold. Each new press follows a fresh neutral report and waits for an idle CAN transmitter. The actual mode must remain stable for one second before the next gesture. At most three mode gestures are allowed within twelve seconds. The physical selector takes priority, and any pending press is released on cancellation, engine stop or stale data. C1 waits up to 20 s for BH after the engine gate, then checks DNA and CRC-valid transmission reports for five seconds. `Confirmed` requires sustained fresh matching reports; it corroborates reported state, not every subsystem. The actual mode, including an intermediate mode before Race, remains selected. Settings save or ignition OFF cancels; transport resync does not re-arm. Update C1 and BH together. Owner-reported testing on 2026-10-24 accepted the `Race` preset in the car; `A` was not reported separately. |
+| `Suspension` | Stiff / Soft / Mid | Sets the next-start suspension preference: D offers `Stiff` or `Soft`; Race offers `Stiff` or `Mid`. For A/N, `Set D/Race first` blocks enabling this preference; an older saved preference can still be cleared. After the actual mode is stable for one second and suspension feedback for 300 ms, BACCAble presses the button for 150 ms only if a change is needed, including when already in D/Race. It waits for fresh feedback after release. One retry is permitted only after at least one second with fresh, continuously unchanged opposite-state feedback and completed earlier CAN transmission. Any observed desired-state reply or missing/unknown feedback prevents that retry. There are at most two presses. `No confirm` can mean suspension was not confirmed even though the DNA mode changed. Manual selector or suspension input cancels the automatic operation. Requires matching C1/BH firmware. Manual D and Race/Mid feedback codes are supported by recordings, including two complete labelled Race cycles on 2026-10-24. Automatic startup replay was accepted in the car on 2026-10-24: the configured `Soft` setting is applied. The feedback-gated retry path was not separately observed. |
 
 ### Device group
 
@@ -563,8 +623,8 @@ Open the main-menu `Actions`. Enable the corresponding permission in Features
 first where required. The table follows the action order; unavailable permissions
 can remove entries from the list.
 
-For actions other than `Read BCM faults` and `Peak hold`, short RES shows a
-confirmation; hold RES **within three seconds** to execute. Moving away
+For actions other than `Read BCM faults`, `Peak hold` and `Rain test`, short RES shows a
+confirmation; hold RES **within six seconds** to execute. Moving away
 or returning cancels the confirmation. Conditions are checked again when the
 action executes.
 
@@ -573,16 +633,16 @@ action executes.
 | `QV exhaust req` | QV exhaust; compatible hardware | Request valve open, or release to factory control. WAIT is not a valve-position acknowledgement. |
 | `Press HAS button` | Virtual HAS | Send the simulated HAS button press. `HAS: Request sent` does not mean HAS engaged. |
 | `Toggle ESC/TC` | ESC/TC control; Dyno inactive | Toggle the custom stability/traction-control request. Confirmation can remain unavailable. |
-| `Toggle Dyno mode` | Dyno action; car stationary long enough; no brake override or inverted ESC state | Request Dyno on/off. Enabling asks `Dyno+ESC? HOLD`. A C2 reply ends the pending board request; verify vehicle state. |
-| `Brake override` | Brake action; launch assist disarmed before changing an existing override; stationary and Dyno active to enable | Request forced front brakes plus launch assist, or request normal braking. See the release procedure above. |
+| `Toggle Dyno mode` | Dyno action; car stationary long enough; no brake override or inverted ESC state | Request Dyno on/off. On MY23, enabling asks `Dyno + ESC?`; disabling asks `Stop Dyno?`. A C2 reply ends the pending board request; verify vehicle state. |
+| `Brake override` | Brake action; launch assist disarmed before changing an existing override; stationary and Dyno active to enable | Request forced front brakes plus launch assist (`Brake + launch?` on MY23), or request normal braking. See the release procedure above. |
 | `Disable launch` | Brake action; launch assist currently armed | Stop torque-triggered brake release. Does not release brake override. |
 | `AWD off request` | AWD off action; stationary to begin | Start repeated AWD-off requests, or explicitly cancel the sequence. No measured drivetrain confirmation. |
+| `Rain test` | No permission required; matching C1/C2/BH firmware | Open two rain-lights diagnostic pages; up/down switches between wiper status and the BH light-responsive sample. In AUTO, SELECT requests dark BH `0x738` copies for at most 30 s from either page; BH stops within 3 s if renewals cease. BACK ends the test. |
 | `Read BCM faults` | BCM fault reader; no DTC clear running | Open the BCM fault-code browser immediately. Reading does not erase codes. |
-| `Clear DTCs` | DTC clear action; no conflicting BCM read/clear | Run a clear request across the configured controllers on the vehicle buses. It is broader than the BCM reader and does not repair the fault. |
+| `Clear DTCs` | DTC clear action; no conflicting BCM read/clear | Run a clear request across the configured controllers on the vehicle buses. The MY23 confirmation `Clear all ECUs?` makes this broader scope explicit; it does not repair the fault. |
 | `Reset best times` | No feature permission required | Clear the saved best acceleration records. Confirmation is required; a completed save reports `Records cleared`. |
 | `Peak hold` | No feature permission required | Immediately toggle numerical maximum hold for the current reading. |
 | `IBS SOC override` | Running engine; explicit confirmation | Toggle a temporary experimental SOC-message override. See the limitations below. |
-| `Rain test` | No permission required; matching C1/C2/BH firmware | Open two rain-lights diagnostic pages; up/down switches between wiper status and the BH light-responsive sample. In AUTO, SELECT requests dark BH `0x738` copies for at most 30 s from either page; BH stops within 3 s if renewals cease. BACK ends the test. |
 
 The first `Rain test` page is unchanged: `Wiper` counts rising wiper phases even
 with `Rain lights` OFF; the first sample after a gap is only a baseline. `A`
@@ -642,6 +702,23 @@ results use seconds. `Best 0-100` and `Best 100-200` retain the best saved resul
 across restarts until reset. These are vehicle-signal timings, not a certified
 external timing measurement.
 
+At startup, a fresh speed report with no completed attempt shows `MISS`; an empty
+Best record also shows `MISS`, never the internal 60/65.535-second placeholders.
+The limits include exactly 20 s / 40 s. Missing or stale live data shows `--`,
+even during a running attempt. These rules apply to both Readings and Favorites.
+The first speed report establishes a baseline, so powering up while moving does
+not create a result. A resumed report after a gap longer than one second cancels
+an ongoing attempt; completed results remain available.
+
+`Seatbelt alarm` reports the acoustic-warning configuration (`ON` / `OFF`),
+not whether a belt is fastened. `Pedal map` displays the controller's reported
+character, such as B, A, N, D, R or `-`; unknown values show `?`.
+`Regen mode` retains the native labels `NONE`, `DPF LO`, `DPF HI`, `NSC De-NOx`,
+`NSC De-SOx`, `SCR HeatUp` and `NONE.`. Its wider value budget can require a
+shorter label or another continuation page in a custom Favorite layout.
+The medium temperature labels `Gbox` and `Int air` distinguish them from
+`Gear` and intake pressure (`Intake`).
+
 ### IBS SOC override
 
 This experimental action **transmits modified battery-sensor reports**. For an
@@ -665,10 +742,13 @@ not toggle their state. The final `Demo` entry starts the menu tour with RES.
 | BH version | Body-controller version. `? BH no reply` means no recent version reply. |
 | `MY23:ON/OFF …ch` | Legacy: MY23 preference and compiled 18/24 width. MY23 instead shows `IPC MY23` and `16 / 22 glyphs`. |
 | `Immobilizer: ON/OFF` | Stored BACCAble immobilizer preference, not an editable menu switch. |
-| `Reports:` | Number of steering-wheel input reports observed by the menu. Useful when diagnosing unresponsive controls. |
-| `Gaps:` | Count of interruptions detected in the input report stream. |
-| `Max gap:…ms` | Longest observed input-report interval in milliseconds. |
-| `Input age:…ms` | Time since the last input report; `--` if none is available. |
+| `Button reports` | Number of steering-wheel input reports observed by the menu. Useful when diagnosing unresponsive controls. |
+| `Report gaps` | Count of interruptions detected in the input report stream. |
+| `Max input gap` | Longest observed input-report interval in milliseconds. |
+| `Report age` | Time since the last input report; `--` if none is available. |
+
+MY23 shows the label above its value; Legacy shortens the label as needed to
+preserve the complete number and milliseconds.
 | `> Demo` | Start a timed tour of the displayed menu and example values. |
 
 C2/BH version replies older than about five seconds are treated as stale. Input
@@ -701,27 +781,26 @@ unsupported ECU requests can remain `--`.
 - **Distance (ECU)** is the diagnostic distance value described in the old manual
   as distance since ECU odometer reset; do not equate it with the cluster's total
   lifetime odometer without validating that ECU's interpretation.
-- **Gear** uses N, R or a gear number; DNA uses A, N, D or R. Missing states can
+- **Gear** uses N, R or a gear number; DNA uses A, N, D or Race. Missing states can
   show `--`/`?`. `Pedal map` uses the external controller's map response.
 
 ### Battery charge: which SOC is being shown?
 
 SOC means state of charge. The firmware exposes several independent sources:
 
-| Page or field | Source and interpretation |
+| Reading | Source and interpretation |
 | --- | --- |
-| `Batt charge BCM` → `Batt BCM SOC` (gasoline) | Body Control Module diagnostic SOC. |
-| `Batt charge / A` (both fuel catalogs) | Engine ECU diagnostic SOC, paired with native battery current. |
-| `Battery charge` (diesel) | Native IBS battery-sensor SOC. |
-| `Battery sources` (both catalogs, advanced) | IBS SOC followed by engine ECU SOC, each in percent. |
-| `Battery IBS raw` | Raw IBS byte 0 and byte 1 as numbers. These are not two percentages. |
-| `IBS raw0/SOC/V`, `IBS raw1/SOC/V` | One raw byte, BCM SOC and BCM voltage. These service pages use the BCM definitions even in the diesel catalog and may be unsupported. |
+| `Charge IBS` (`SOCi`) | Native IBS battery-sensor charge report. |
+| `Charge ECU` (`SOCe`) | Engine ECU diagnostic charge report. |
+| `Charge BCM` (`SOCb`) | Body Control Module diagnostic charge report. |
+| `IBS raw 0`, `IBS raw 1` | Raw IBS byte values; these are not two percentages. |
+| `Batt voltage`, `Batt current` | Separate voltage and current readings. |
 
-`Batt charge / A` can therefore show `--%` while current is present, and
-`Batt charge BCM` can be unavailable while an IBS source is available. Sources
-are not substituted for one another. A missing SOC does not establish an empty
-battery. Use `Battery sources` to compare availability and `Battery V / A` to
-observe voltage/current separately.
+A charge source can show `--` while current or another source remains available.
+Sources are not substituted for one another. Missing SOC does not establish an
+empty battery. Compare the three Charge readings in the Battery group or put
+them together in Favorites. The old compound Battery sources/Battery V / A
+pages have been replaced by individual readings.
 
 The inherited current convention is positive for charging and negative for
 discharging. Voltage alone does not prove charging. Raw IBS pages are for source
@@ -789,11 +868,11 @@ A value the ECU does not answer shows `--`.
 
 | Reading | Unit / meaning | Eligibility |
 | --- | --- | --- |
-| Battery | V | both |
-| Battery A | A | both |
-| Batt IBS | % | both |
-| Batt ECU | % | both |
-| Batt BCM | % | both |
+| Batt voltage | V | both |
+| Batt current | A | both |
+| Charge IBS | % | both |
+| Charge ECU | % | both |
+| Charge BCM | % | both |
 | IBS raw 0 | raw byte | both |
 | IBS raw 1 | raw byte | both |
 
@@ -803,14 +882,14 @@ A value the ECU does not answer shows `--`.
 | --- | --- | --- |
 | DPF load | % | diesel |
 | DPF temp | C | diesel |
-| Regen | % | diesel |
+| Regen progress | % | diesel |
 | Regen mode | phase | diesel |
 | Regen ago | km | diesel |
 | Regen count | count | diesel |
-| Regen avg km | km | diesel |
-| Regen avg min | min | diesel |
-| AdBlue | L | diesel + SCR |
-| AdBlue % | % | diesel + SCR |
+| Regen avg dist | km | diesel |
+| Regen avg time | min | diesel |
+| AdBlue volume | L | diesel + SCR |
+| AdBlue level | % | diesel + SCR |
 
 ### Driving
 
@@ -818,9 +897,9 @@ A value the ECU does not answer shows `--`.
 | --- | --- | --- |
 | Speed | km/h | both |
 | Gear | N / R / gear | both |
-| DNA mode | A / N / D / R | both |
+| DNA mode | A / N / D / Race | both |
 | Pedal map | map letter | both |
-| Seatbelt | ON / OFF | both |
+| Seatbelt alarm | ON / OFF | both |
 | Distance | km | both |
 
 ### Performance
@@ -830,7 +909,7 @@ A value the ECU does not answer shows `--`.
 | 0-100 | s | both |
 | 100-200 | s | both |
 | Best 0-100 | s | both |
-| Best100-200 | s | both |
+| Best 100-200 | s | both |
 
 ### Diagnostics
 
@@ -842,14 +921,14 @@ A value the ECU does not answer shows `--`.
 | Knock | mV | gasoline |
 | Key ID | number | gasoline |
 | Run time | min | both |
-| Over-rev s | s | both |
-| Over-rev n | count | both |
+| Over-rev time | s | both |
+| Over-rev count | count | both |
 | A/C pressure | bar | both |
-| Turbo V | V | gasoline |
-| Intake V | V | diesel |
-| Turbo req bar | bar | diesel |
-| Turbo req % | % | diesel |
-| Turbo % | % | diesel |
+| Turbo sensor | V | gasoline |
+| Intake sensor | V | diesel |
+| Turbo press req | bar | diesel |
+| Turbo pct req | % | diesel |
+| Turbo pct | % | diesel |
 | Boost req | bar | diesel |
 
 ## USB CAN capture and diagnostics
@@ -989,8 +1068,8 @@ commands and bus behavior. Use explicitly save USB mode OFF for ordinary operati
 | A reading or action is missing | Correct vehicle profile; check the action permission in Features. An unsupported saved favorite shows `--` until its profile applies again. |
 | `No favorites` / `No pages` | Add compatible favorites or restore page visibility. Double-click RES still returns. |
 | A value shows `--` | Wait for fresh reports, check ignition/engine conditions and ECU compatibility. USB diagnostics can suspend normal queries. A displayed catalog entry is not a guarantee that the ECU implements it. |
-| `Batt BCM SOC --` or `Batt charge --%` | Compare the independent sources using Battery sources. Do not treat missing SOC as 0%, and do not use IBS override as a repair. |
-| Setting reverts after a restart | Hold RES in the editor to save; a preceding double-click is optional. Resolve `× Save failed: RES`; unsaved RAM changes are not persistent. |
+| `Charge BCM --` or `Charge ECU --` | Compare Charge IBS, Charge ECU and Charge BCM. Do not treat missing SOC as 0%, and do not use IBS override as a repair. |
+| Setting reverts after a restart | Hold RES in the editor to save; a preceding double-click is optional. Resolve `Save failed` / `HOLD: RETRY`; unsaved RAM changes are not persistent. |
 | `! Disabled in setup` | Enable the associated permission under Features, then return. |
 | `! Stop the car`, `! Enable Dyno`, `! Release brake`, `! Reset ESC`, `! Disable launch` | Satisfy the specific action condition. For brakes, use the documented disarm/release sequence. |
 | `! Request pending` | Wait for the outstanding request result; do not assume it was executed or cancelled. |

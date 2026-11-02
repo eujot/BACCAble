@@ -12,7 +12,7 @@
   "firmware_source_commit": "ec1665ef6c346ba7e5914abb083ae8574ca6e6ad",
   "source_sha256": {
     "firmware/baccable/vehicle/display_frames.c": "0d9eca11b5892f835f5ad922e3a866ffbd596fbb6b2f81e3f57401481cf470bc",
-    "firmware/baccable/vehicle/telemetry_frames.c": "70d5bc96710e8b7d23041ed6a273dab750dfe4e51e6ba4e9a9cf4ec3f16d9994",
+    "firmware/baccable/vehicle/telemetry_frames.c": "229ee6b0e99b598566c21d38c79b35a165a2a84ed0c4ad99ad59bcd5d34366a4",
     "firmware/baccable/vehicle/engine_status.c": "ea177ee9394e39f14e1153a578c9312c92824b7b22d69dc4c26b4b821cce8951",
     "firmware/baccable/features/parking.c": "067f724edbb8b993e406f04450a98f25a8ca427e0e754a31b43690522a525a09",
     "firmware/baccable/vehicle/controls_frames.c": "4c4458235589ad089a5208e095eda6fdfa736cb6f51fc72090299b97019fcfbe",
@@ -20,7 +20,7 @@
     "firmware/baccable/vehicle/start_stop_status.c": "cae7578c5e0515316f19d6e8ef0528f0d2a7faa29fa56b59090752c428c3337d",
     "firmware/baccable/vehicle/shift_indicator.c": "2bd1d998325d152c0653b120554e724d1efcbe7e03a09bf03e2453cc626058fd",
     "firmware/baccable/vehicle/steering_controls.c": "2178e95c6250d569d8ee75cd5f9b34ec0ab89cb86dc13d56774d54f23aa4f41c",
-    "firmware/baccable/features/menu_input.c": "9584ff6fa864cf2986a6d58079e798a22740e929f9e82564b32bb4933034d565",
+    "firmware/baccable/features/menu_input.c": "1ad6d32cc84794618e09c8573969401e4b4897502e02e83819a5dbfccaa5342a",
     "firmware/baccable/protocol/checksum.c": "74759417a6edd56e3b230502710a056dc0d0be535b15912bf7250afeedd06946",
     "firmware/baccable/vehicle/lighting_frames.c": "733078f1af48d86ce8d44eed4d506802378915b81950d905a77a7de01b5ccb48",
     "firmware/baccable/vehicle/drive_mode.c": "1d85ce9070e2ffd26dc0da9b377c964597331df7b3ae5a5e2bb930366ff6e27d",

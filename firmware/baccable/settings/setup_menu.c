@@ -169,6 +169,7 @@ static uint8_t setup_group(uint8_t id) {
     case 9:
     case 24:
     case 27:
+    case 39:
         return 2; /* Assistance */
     case 8:
     case 10:
@@ -177,6 +178,8 @@ static uint8_t setup_group(uint8_t id) {
     case 18:
     case 20:
     case 29:
+    case 38:
+    case 41:
         return 3; /* Drivetrain */
     default:
         return 4; /* Device */
@@ -264,9 +267,22 @@ void setup_fill_flash_params(uint16_t *params) {
         params[setup_params[i].flash_index - 1] = setup_get_value(&setup_params[i]);
 }
 
+/* A saved preference can remain stored while its operation is unavailable. */
+static const char *setup_inactive_reason(const SetupParam *param) {
+    const char *policy = vehicle_setting_reason(param->flash_index);
+    if (policy) return policy;
+    if (param->flash_index == 38 && setup_get_value(param) == 3 &&
+        !vehicle_feature_allowed(VEHICLE_FEATURE_DEFAULT_RACE))
+        return vehicle_feature_support(VEHICLE_FEATURE_DEFAULT_RACE) == VEHICLE_SUPPORT_UNSUPPORTED
+                   ? "Not on vehicle" : "Configure Vehicle";
+    if (param->flash_index == 41 && settings_state.default_drive_mode != 2 &&
+        settings_state.default_drive_mode != 3) return "Set D/Race first";
+    return NULL;
+}
+
 /* Refuse permission changes that would hide an active feature or silently reset another one. */
 static const char *setup_unavailable(const SetupParam *param) {
-    const char *policy = vehicle_setting_reason(param->flash_index);
+    const char *policy = setup_inactive_reason(param);
     if (policy && !setup_get_value(param)) return policy;
     if (setup_get_value(param) && menu_setting_busy(param->flash_index))
         return "Request pending";
@@ -332,7 +348,7 @@ static void setup_default_mode_result(char result[24]) {
     unsigned mode = settings_state.default_drive_mode;
     const char *label = modes[mode <= 3 ? mode : 0];
     if (mode == 3 && !(vehicle_display_effective().rows == 2)) label = "R";
-    snprintf_(result, 24, "%s %s", label, drive_mode_check_status());
+    snprintf_(result, 24, "%s %s", label, mode ? drive_mode_check_status() : "Factory");
 }
 
 /* Show the selected setting and its current value. */
@@ -344,12 +360,12 @@ void setup_render_page(uint8_t page_index) {
         char number[24], hint[24];
         const char *value = setup_value_label(staged, stage_value, stage_extra, number);
         snprintf_(hint, sizeof(hint), "%s" MY23_BULLET "HOLD SAVE", value);
+        if (stage_confirm) { menu_present_save_prompt(); return; }
         if ((vehicle_display_effective().rows == 2))
-            menu_present_view(stage_confirm ? UI_MODE_CONFIRM : UI_MODE_EDIT, staged->menu_text, stage_confirm ? "HOLD SAVE" MY23_BULLET "2X DISCARD" : hint);
+            menu_present_view(UI_MODE_EDIT, staged->menu_text, hint);
         else {
             char text[25];
-            if (stage_confirm) snprintf_(text, (vehicle_display_effective().rows == 2 ? sizeof(text) : vehicle_display_effective().widths[0] + 1U), "Hold save/2x drop");
-            else if (staged->entry_type == UI_ENTRY_NUMBER && staged->value_type == SETUP_VALUE_INT8_AS_UINT8)
+            if (staged->entry_type == UI_ENTRY_NUMBER && staged->value_type == SETUP_VALUE_INT8_AS_UINT8)
                 ui_render_signed_number(text, (vehicle_display_effective().rows == 2 ? sizeof(text) : vehicle_display_effective().widths[0] + 1U), staged->menu_text, (int8_t)stage_value, true);
             else if (staged->entry_type == UI_ENTRY_NUMBER)
                 ui_render_number(text, (vehicle_display_effective().rows == 2 ? sizeof(text) : vehicle_display_effective().widths[0] + 1U), staged->menu_text, stage_value, true);
@@ -364,7 +380,12 @@ void setup_render_page(uint8_t page_index) {
         return;
 
     char text[25];
-    const char *reason = setup_unavailable(param);
+    const char *reason = setup_inactive_reason(param);
+    if (reason && vehicle_display_effective().rows == 2) {
+        menu_present_lines(param->menu_text, reason);
+        return;
+    }
+    if (!reason) reason = setup_unavailable(param);
     if (reason)
         ui_render_unavailable(text, (vehicle_display_effective().rows == 2 ? sizeof(text) : vehicle_display_effective().widths[0] + 1U), reason);
     else if (park_menu)
@@ -483,7 +504,8 @@ static void stage_cycle(int direction) {
         static const uint8_t order[] = {1, 0, 2, 3}; /* A, N, D, Race; keep saved encodings. */
         unsigned position = 0;
         while (position < 3 && order[position] != stage_value) ++position;
-        position = (position + (step ? 1 : 3)) % 4;
+        do { position = (position + (step ? 1 : 3)) % 4; }
+        while (order[position] == 3 && !vehicle_feature_allowed(VEHICLE_FEATURE_DEFAULT_RACE));
         stage_value = order[position];
     } else if (staged->entry_type != UI_ENTRY_NUMBER) {
         unsigned choices = staged->max_value + 1;
@@ -491,9 +513,13 @@ static void stage_cycle(int direction) {
     }
 }
 
+bool setup_stage_dirty(void) {
+    return staged && (stage_value != stage_original || stage_extra != stage_original_extra);
+}
+
 bool setup_stage_back(void) {
     if (!staged) return false;
-    if (!stage_confirm && (stage_value != stage_original || stage_extra != stage_original_extra)) {
+    if (!stage_confirm && setup_stage_dirty()) {
         stage_confirm = true;
         return true;
     }
@@ -510,8 +536,11 @@ void setup_stage_save(void) {
     VehicleFeature feature = vehicle_setting_feature(staged->flash_index);
     if ((stage_value && feature != VEHICLE_FEATURE_COUNT && !vehicle_feature_allowed(feature)) ||
         (staged->flash_index == 38 && stage_value == 3 && !vehicle_feature_allowed(VEHICLE_FEATURE_DEFAULT_RACE))) {
-        menu_notice("Configure Vehicle"); return;
+        const char *policy = setup_inactive_reason(staged);
+        menu_notice(policy ? policy : "Configure Vehicle"); return;
     }
+    if (staged->flash_index == 41 && stage_value && settings_state.default_drive_mode != 2 &&
+        settings_state.default_drive_mode != 3) { menu_notice("Set D/Race first"); return; }
     stage_assign(stage_value, stage_extra);
     if (settings_save()) {
         stage_assign(stage_original, stage_original_extra);
@@ -543,18 +572,27 @@ bool setup_present_my23(void) {
     if (park_menu) {
         char text[25];
         setup_park_render(text, (vehicle_display_effective().rows == 2 ? sizeof(text) : vehicle_display_effective().widths[0] + 1U));
-        menu_present_lines(text, park_capture == 1 ? "HOLD STORE" MY23_BULLET "2X BACK" : "CLICK USE" MY23_BULLET "2X BACK");
+        menu_present_lines(text, (park_capture == 1 || park_capture == 3) ? "HOLD STORE" MY23_BULLET "2X BACK" : "CLICK USE" MY23_BULLET "2X BACK");
         return true;
     }
     const SetupParam *current = setup_find_by_page(setup_dashboardPageIndex);
-    const SetupParam *next = setup_find_by_page((setup_dashboardPageIndex + 1) % setup_menu_pages_count());
-    if (current && current->flash_index == 38 && setup_get_value(current)) {
+    const char *reason = current ? setup_inactive_reason(current) : NULL;
+    if (!reason && current) reason = setup_unavailable(current);
+    if (reason) { menu_present_lines(current->menu_text, reason); return true; }
+    if (current && current->flash_index == 38) {
         char result[24];
         setup_default_mode_result(result);
         menu_present_lines(current->menu_text, result);
         return true;
     }
-    menu_present_view(UI_MODE_LIST, current ? current->menu_text : "Features", next ? next->menu_text : "");
+    char number[24];
+    const char *value = current ? setup_value_label(current, setup_get_value(current),
+        stage_companion(current), number) : "";
+    if (current && current->entry_type == UI_ENTRY_SUBMENU) {
+        snprintf_(number, sizeof(number), "%s / RES OPEN", setup_get_value(current) ? "ON" : "OFF");
+        value = number;
+    }
+    menu_present_lines(current ? current->menu_text : "Features", value);
     return true;
 }
 #endif

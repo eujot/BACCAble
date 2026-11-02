@@ -62,12 +62,12 @@ static const ActionEntry actions[] = {
     {ACTION_BRAKE, 2, "Brake override", UI_ENTRY_CONDITIONAL_ACTION},
     {ACTION_LAUNCH, 2, "Disable launch", UI_ENTRY_CONDITIONAL_ACTION},
     {ACTION_AWD, 2, "AWD off request", UI_ENTRY_CONDITIONAL_ACTION},
+    {ACTION_RAIN_TEST, 2, "Rain test", UI_ENTRY_ACTION},
     {ACTION_READ, 3, "Read BCM faults", UI_ENTRY_CONDITIONAL_ACTION},
     {ACTION_CLEAR, 3, "Clear DTCs", UI_ENTRY_CONDITIONAL_ACTION},
     {ACTION_STATS, 3, "Reset best times", UI_ENTRY_ACTION},
     {ACTION_PEAK, 3, "Peak hold", UI_ENTRY_TOGGLE},
-    {ACTION_IBS, 3, "IBS SOC override", UI_ENTRY_CONDITIONAL_ACTION},
-    {ACTION_RAIN_TEST, 2, "Rain test", UI_ENTRY_ACTION}
+    {ACTION_IBS, 3, "IBS SOC override", UI_ENTRY_CONDITIONAL_ACTION}
 };
 typedef enum { REQUEST_NONE, REQUEST_WAIT, REQUEST_SENT, REQUEST_FAILED, REQUEST_TIMEOUT } RequestState;
 typedef struct {
@@ -78,8 +78,8 @@ typedef struct {
 static ActionRequest requests[ACTION_COUNT];
 #define ACTION_TIMEOUT_MS 10000U
 #define INFO_PAGES 10U
-static const char *const roots[] = {"Favorites", "Readings", "Actions", "Settings", "Information", "Vehicle"};
-static const char *const settings[] = {"Features", "Favorites", "BACCAble IPC"};
+static const char *const roots[] = {"Favorites", "Readings", "Actions", "Settings", "Vehicle", "Information"};
+static const char *const settings[] = {"Features", "Edit favorites", "BACCAble IPC"};
 static char peer_versions[2][DASHBOARD_MESSAGE_MAX_LENGTH - 2];
 static uint32_t peer_updated[2];
 static uint8_t peer_seen[2];
@@ -117,7 +117,9 @@ static const char *const ipc_paces[] = {"Safe 50ms", "Quick 20ms", "Fast 10ms"};
 /* Allow one complete display transfer between snapshots of rapid navigation. */
 static uint32_t navigation_interval(void) {
     static const uint8_t fragment_ms[] = {50, 20, 10};
-    return (menu_my23() ? DISPLAY_FRAGMENT_COUNT : DISPLAY_LEGACY_FRAGMENT_COUNT) *
+    unsigned fragments = menu_my23() ? DISPLAY_FRAGMENT_COUNT :
+                         (menu_width() + 1U + DISPLAY_FOOTER_LENGTH + 2U) / 3U;
+    return fragments *
            fragment_ms[ipc_pace] + 20U;
 }
 static void ipc_option_text(char *out, size_t size, unsigned option) {
@@ -134,6 +136,7 @@ static bool ipc_options_send(uint8_t pace, uint8_t method) {
 static uint32_t page_changed, last_render, last_query, notice_started;
 static uint32_t navigation_last, navigation_sent;
 static bool navigation_active, navigation_pending;
+static int navigation_direction;
 static bool demo_active;
 static uint8_t demo_step;
 static uint32_t demo_started;
@@ -150,7 +153,8 @@ static MenuView save_destination;
 #define MENU_IDLE_MS 30000U
 #define EDITOR_IDLE_MS 60000U
 #define NOTICE_CONFIRM_MS 750U
-#define NOTICE_WARNING_MS 1800U
+#define NOTICE_WARNING_MS 3000U
+#define ACTION_CONFIRM_MS 6000U
 #define NOTICE_REQUEST_MS 1200U
 #define NOTICE_SAVED_MS 3000U
 static uint32_t notice_duration;
@@ -180,6 +184,17 @@ static uint8_t next_group(uint8_t current, int direction) {
 static ReadingSample favorite_sample_cache[READING_COUNT];
 static uint8_t auto_reading = READING_COUNT; /* READING_COUNT = none. */
 
+/* The same cache freshness and timer-state interpretation serves Readings and Favorites. */
+static ReadingSample reading_sample(ReadingId id, uint32_t max_age) {
+    const ReadingMeta *meta = reading_lookup(id);
+    uint8_t source = reading_source(meta, vehicle_profile_current());
+    float value = source == READING_NO_SOURCE ? NAN : parameter_cache_get_max_age(source, currentTime, max_age);
+    if (!isfinite(value)) return (ReadingSample){READING_STATE_STALE, 0.0f};
+    bool running = (id == READING_TIME_0_100 && statistics_state.statistics_0_100_started) ||
+                   (id == READING_TIME_100_200 && statistics_state.statistics_100_200_started);
+    return (ReadingSample){running ? READING_STATE_RUNNING : READING_STATE_VALID, value};
+}
+
 /* Resolve a FavoriteSet's item samples for the currently selected profile. */
 static void favorite_fill_samples(const FavoriteSet *set) {
     for (unsigned i = 0; i < READING_COUNT; ++i)
@@ -200,10 +215,7 @@ static void favorite_fill_samples(const FavoriteSet *set) {
             uint8_t source = reading_source(meta, vehicle_profile_current());
             if (source == READING_NO_SOURCE)
                 continue;
-            float value = parameter_cache_get_max_age(source, currentTime, max_age);
-            favorite_sample_cache[item.id] =
-                isfinite(value) ? (ReadingSample){READING_STATE_VALID, value}
-                                : (ReadingSample){READING_STATE_STALE, 0.0f};
+            favorite_sample_cache[item.id] = reading_sample(item.id, max_age);
         }
     }
 }
@@ -249,11 +261,7 @@ static void present_reading(uint8_t id) {
     const ReadingMeta *meta = reading_lookup((ReadingId)id);
     if (!meta)
         return;
-    uint8_t source = reading_source(meta, vehicle_profile_current());
-    float value = source == READING_NO_SOURCE ? NAN
-                                              : parameter_cache_get_max_age(source, currentTime, 3000U);
-    ReadingSample sample = isfinite(value) ? (ReadingSample){READING_STATE_VALID, value}
-                                           : (ReadingSample){READING_STATE_STALE, 0.0f};
+    ReadingSample sample = reading_sample((ReadingId)id, 3000U);
     if (menu_my23()) {
         char value_buf[MY23_L2_VISIBLE + 1];
         reading_format_value((ReadingId)id, &sample, MY23_L2_VISIBLE, value_buf, sizeof(value_buf));
@@ -273,8 +281,9 @@ static const char *favorite_format_name(ReadingFormat format) {
 static void favorite_item_text(char *out, size_t size, unsigned slot) {
     FavoriteItem item = favorite_draft.rows[favorite_row][slot];
     const ReadingMeta *meta = reading_lookup(item.id);
-    snprintf_(out, size, "%s %s", meta ? reading_label_for(item.id, item.format) : "Empty",
-              favorite_format_name(item.format));
+    if (!meta) snprintf_(out, size, "Slot %u: Empty", slot + 1);
+    else snprintf_(out, size, "%u: %s %s", slot + 1, reading_label_for(item.id, item.format),
+                   favorite_format_name(item.format));
 }
 static const char *favorite_pick_label(uint8_t id) {
     if (id >= READING_COUNT)
@@ -283,7 +292,12 @@ static const char *favorite_pick_label(uint8_t id) {
     return meta ? reading_label_for((ReadingId)id, READING_FORMAT_FULL) : "Empty";
 }
 static uint8_t next_favorite_reading(uint8_t id, int direction) {
-    return wrap(id, READING_COUNT + 1, direction);
+    for (unsigned i = 0; i <= READING_COUNT; ++i) {
+        id = wrap(id, READING_COUNT + 1, direction);
+        if (id == READING_COUNT || vehicle_reading_support_for(vehicle_profile_current(), (ReadingId)id) != VEHICLE_SUPPORT_UNSUPPORTED)
+            return id;
+    }
+    return READING_COUNT;
 }
 
 
@@ -488,6 +502,7 @@ void menu_present_reading(const char *text) {
 
 /* Show brief feedback about a selection, action or save result. */
 void menu_notice(const char *text) {
+    if (strstr(text, "Save failed")) text = UI_SYMBOL_FAILURE " Save failed";
     snprintf_(notice_text, sizeof(notice_text), "%s", text);
     notice = notice_text;
     notice_started = currentTime;
@@ -495,11 +510,18 @@ void menu_notice(const char *text) {
     bool toggle = (length >= 4 && !strcmp(text + length - 4, ": ON")) ||
                   (length >= 5 && !strcmp(text + length - 5, ": OFF")) ||
                   ((text[0] == UI_GLYPH_CHECKED || text[0] == UI_GLYPH_UNCHECKED) && text[1] == ' ');
-    notice_duration = (text[0] == UI_SYMBOL_WARNING[0] || text[0] == UI_GLYPH_CROSS) ? NOTICE_WARNING_MS
+    notice_duration = (text[0] == UI_SYMBOL_WARNING[0] || text[0] == UI_GLYPH_CROSS ||
+                       !strncmp(text, "Row ", 4) || !strcmp(text, "Use Short format")) ? NOTICE_WARNING_MS
                       : toggle || !strcmp(text, "Records cleared")
                           ? NOTICE_CONFIRM_MS : NOTICE_REQUEST_MS;
     if (dashboard_state.baccable_dashboard_menu_visible)
         menu_present(text);
+}
+
+/* Persistent editors share one decision screen on every display profile. */
+void menu_present_save_prompt(void) {
+    if (menu_my23()) menu_present_view(UI_MODE_CONFIRM, "HOLD: SAVE", "2X: DISCARD");
+    else menu_present("Hold save/2x drop");
 }
 
 void menu_notice_saved(const char *title) {
@@ -666,6 +688,8 @@ void menu_show_reading(uint8_t reading_id) {
     page_changed = currentTime;
 }
 
+static const char *action_confirmation(MenuAction id);
+
 /* Confirm and request the selected vehicle action when its conditions are met. */
 static void action_run(void) {
     MenuAction id = actions[function].id;
@@ -695,13 +719,13 @@ static void action_run(void) {
         view = RAIN_TEST;
         return;
     }
-    if (confirmed_action != id || currentTime - confirm_started > 3000) {
+    if (confirmed_action != id || currentTime - confirm_started > ACTION_CONFIRM_MS) {
         confirmed_action = id;
         confirm_started = currentTime;
-        menu_notice(id == ACTION_BRAKE && !chassis_state.front_brake_forced ? "Brake+launch? HOLD"
-                    : id == ACTION_DYNO ? "Dyno+ESC? HOLD"
-                    : id == ACTION_AWD && chassis_state.awd_sequence ? "Stop AWD req?HOLD"
-                    : UI_SYMBOL_WARNING " Hold to confirm");
+        char prompt[25];
+        ui_render_value(prompt, menu_my23() ? sizeof(prompt) : menu_width() + 1,
+                        action_confirmation(id), "HOLD");
+        menu_notice(prompt);
         return;
     }
     confirmed_action = 255;
@@ -826,6 +850,20 @@ static void action_render(char *text, size_t capacity, const ActionEntry *entry)
     }
 }
 
+/* Preserve the action target on both displays, including compound operations. */
+static const char *action_confirmation(MenuAction id) {
+    if (id == ACTION_BRAKE && !chassis_state.front_brake_forced) return "Brake + launch?";
+    if (id == ACTION_DYNO) return chassis_state.dyno_mode_enabled_on_master ? "Stop Dyno?" : "Dyno + ESC?";
+    if (id == ACTION_AWD && chassis_state.awd_sequence) return "Stop AWD req?";
+    if (id == ACTION_CLEAR) return "Clear all ECUs?";
+    return actions[function].name;
+}
+
+static void present_save_failure(bool exit_retry) {
+    if (menu_my23()) menu_present_lines("Save failed", exit_retry ? "RES RETRY / 2X BACK" : "HOLD: RETRY");
+    else menu_present(exit_retry ? "Fail; RES retry" : "Fail; HOLD retry");
+}
+
 /* Present the active menu, reading, editor or feedback message. */
 void menu_render(void) {
     if (!dashboard_state.baccable_dashboard_menu_visible)
@@ -838,18 +876,25 @@ void menu_render(void) {
     }
     action_requests_process();
     if (save_failed) {
-        menu_present(UI_SYMBOL_FAILURE " Save failed: RES");
+        present_save_failure(true);
         return;
     }
-    if (view == FUNCTIONS && confirmed_action == actions[function].id && currentTime - confirm_started <= 3000) {
+    if (view == FUNCTIONS && confirmed_action == actions[function].id && currentTime - confirm_started <= ACTION_CONFIRM_MS) {
         if (menu_my23())
-            menu_present_view(UI_MODE_CONFIRM, actions[function].name, "HOLD APPLY" MY23_BULLET "2X BACK");
+            menu_present_view(UI_MODE_CONFIRM, action_confirmation(actions[function].id), "HOLD APPLY" MY23_BULLET "2X BACK");
         else menu_present(notice ? notice : "Hold to confirm");
         return;
     }
     if (notice && currentTime - notice_started < notice_duration) {
         if (menu_my23() && !strcmp(notice, "Saved")) menu_present_view(UI_MODE_NOTICE, notice_label, "SAVED");
-        else menu_present(notice);
+        else if (strstr(notice, "Save failed") &&
+                 (view == VEHICLE || view == SETUP || view == FAV_ITEMS || view == FAV_ROWS || view == FAV_RESET))
+            present_save_failure(false);
+        else if (menu_my23() && !strncmp(notice, "Row ", 4)) {
+            char row[6]; snprintf_(row, sizeof(row), "Row %c", notice[4]);
+            menu_present_lines(row, strstr(notice, "duplicate") ? "Duplicate reading" :
+                strstr(notice, "oil bar") ? "Oil bar only" : "Invalid reading");
+        } else menu_present(notice);
         return;
     }
     notice = NULL;
@@ -909,18 +954,16 @@ void menu_render(void) {
         char value[24];
         const char *v = vehicle_editor_value_label(value, sizeof(value));
         VehicleEditorState st = vehicle_editor_state();
+        if (st == VEHICLE_EDITOR_CONFIRM) { menu_present_save_prompt(); return; }
         if (menu_my23()) {
-            if (st == VEHICLE_EDITOR_CONFIRM)
-                menu_present_view(UI_MODE_CONFIRM, vehicle_editor_field_label(), "HOLD SAVE" MY23_BULLET "2X DISCARD");
-            else
-                menu_present_view(st == VEHICLE_EDITOR_EDIT ? UI_MODE_EDIT : UI_MODE_LIST,
-                                  vehicle_editor_field_label(), v);
+            menu_present_view(st == VEHICLE_EDITOR_EDIT ? UI_MODE_EDIT : UI_MODE_LIST,
+                              vehicle_editor_field_label(), v);
             return;
         }
-        if (st == VEHICLE_EDITOR_CONFIRM)
-            snprintf_(text, sizeof(text), "%s", vehicle_editor_field_label());
-        else
-            snprintf_(text, sizeof(text), "%s %s", vehicle_editor_field_label(), v);
+        if (st == VEHICLE_EDITOR_EDIT) {
+            text[0] = '>'; text[1] = ' ';
+            ui_render_value(text + 2, menu_width() - 1, vehicle_editor_field_label(), v);
+        } else ui_render_value(text, menu_width() + 1, vehicle_editor_field_label(), v);
         break;
     }
     case IPC_OPTIONS: {
@@ -933,12 +976,17 @@ void menu_render(void) {
     case SETUP:
         dashboard_send_setup();
         return;
-    case FAV_RESET: menu_present_view(UI_MODE_CONFIRM, "Restore defaults", "HOLD save; BACK no"); return;
+    case FAV_RESET:
+        if (menu_my23()) menu_present_lines("Reset favorites?", "HOLD RESET / 2X BACK");
+        else menu_present("Reset fav? HOLD");
+        return;
     case FAV_SETS: {
         if (favorite_set == FAVORITE_SET_COUNT) { menu_present("Restore defaults"); return; }
-        char next_favorite[16];
+        char next_favorite[24];
         snprintf_(text, sizeof(text), "Favorite %u", favorite_set + 1);
-        snprintf_(next_favorite, sizeof(next_favorite), "Favorite %u", wrap(favorite_set, FAVORITE_SET_COUNT, 1) + 1);
+        if (favorite_set + 1 == FAVORITE_SET_COUNT)
+            snprintf_(next_favorite, sizeof(next_favorite), "Restore defaults");
+        else snprintf_(next_favorite, sizeof(next_favorite), "Favorite %u", favorite_set + 2);
         menu_present_view(UI_MODE_LIST, text, next_favorite);
         return;
     }
@@ -951,9 +999,8 @@ void menu_render(void) {
         char next[40] = {0};
         favorite_item_text(text, sizeof(text), favorite_slot);
         favorite_item_text(next, sizeof(next), wrap(favorite_slot, FAVORITE_ROW_ITEMS, 1));
-        menu_present_view(favorite_confirm ? UI_MODE_CONFIRM : UI_MODE_LIST, text,
-                          favorite_confirm ? "HOLD SAVE" MY23_BULLET "2X DISCARD" : next);
-        if (favorite_confirm && !menu_my23()) menu_present("Hold save/2x drop");
+        if (favorite_confirm) menu_present_save_prompt();
+        else menu_present_view(UI_MODE_LIST, text, next);
         return;
     }
     case FAV_PICK: {
@@ -964,8 +1011,11 @@ void menu_render(void) {
         return;
     }
     case FAV_FORMAT: {
-        static const char *const formats[] = {"Auto", "Full", "Medium", "Short"};
-        menu_present_view(UI_MODE_LIST, formats[favorite_format], formats[wrap(favorite_format, 4, 1)]);
+        if (menu_my23()) menu_present_lines(favorite_pick_label(favorite_pick), favorite_format_name(favorite_format));
+        else {
+            ui_render_value(text, menu_width() + 1, favorite_pick_label(favorite_pick), favorite_format_name(favorite_format));
+            menu_present(text);
+        }
         return;
     }
     case FAULTS:
@@ -995,19 +1045,21 @@ void menu_render(void) {
             else menu_present_lines("Immobilizer", security_state.immobilizer_enabled ? "ON" : "OFF");
             return;
         }
-        if (info == 5)
-            snprintf_(text, sizeof(text), "Reports:%lu", (unsigned long)input.reports_seen);
-        else if (info == 6)
-            snprintf_(text, sizeof(text), "Gaps:%lu", (unsigned long)input.stream_gaps);
-        else if (info == 7)
-            snprintf_(text, sizeof(text), "Max gap:%lums", (unsigned long)input.max_gap_ms);
-        else if (info == 8)
-            if (input.reports_seen)
-                snprintf_(text, sizeof(text), "Input age:%lums",
-                          (unsigned long)(currentTime - input.last_seen));
-            else
-                snprintf_(text, sizeof(text), "Input age:--");
-        else if (info == 9)
+        if (info >= 5 && info <= 8) {
+            static const char *const labels[] = {"Button reports", "Report gaps", "Max input gap", "Report age"};
+            char value[24];
+            uint32_t number = info == 5 ? input.reports_seen : info == 6 ? input.stream_gaps :
+                              info == 7 ? input.max_gap_ms : currentTime - input.last_seen;
+            if (info == 8 && !input.reports_seen) snprintf_(value, sizeof(value), "--");
+            else snprintf_(value, sizeof(value), info >= 7 ? "%lums" : "%lu", (unsigned long)number);
+            if (menu_my23()) menu_present_lines(labels[info - 5], value);
+            else {
+                ui_render_value(text, menu_width() + 1, labels[info - 5], value);
+                menu_present(text);
+            }
+            return;
+        }
+        if (info == 9)
             ui_render_action(text, sizeof(text), "Demo");
         else if (info == 0)
             ui_render_value(text, sizeof(text), "C1",
@@ -1015,8 +1067,7 @@ void menu_render(void) {
         else if (info == 4)
             ui_render_toggle(text, sizeof(text), "Immobilizer", security_state.immobilizer_enabled);
         else if (info == 3)
-            snprintf_(text, sizeof(text), "MY23:%s %uch",
-                      menu_my23() ? "ON" : "OFF", DASHBOARD_MESSAGE_MAX_LENGTH);
+            snprintf_(text, sizeof(text), "Legacy %u", menu_width());
         else {
             unsigned peer = info - 1;
             if (peer_seen[peer] && currentTime - peer_updated[peer] <= 5000)
@@ -1030,7 +1081,7 @@ void menu_render(void) {
                 return;
             }
             static const char *const next_info[] = {"C1 firmware", "C2 firmware", "BH firmware",
-                "IPC MY23", "Immobilizer", "Reports", "Gaps", "Max gap", "Input age", "Demo"};
+                "IPC MY23", "Immobilizer", "Button reports", "Report gaps", "Max input gap", "Report age", "Demo"};
             menu_present_view(UI_MODE_LIST, text, next_info[(info + 1) % INFO_PAGES]);
             return;
         }
@@ -1057,7 +1108,7 @@ static void persist_exit(void) {
     uint8_t preferences_result = ui_layout_save();
     save_failed = settings_result != 0 || preferences_result != 0;
     if (save_failed) {
-        menu_present(UI_SYMBOL_FAILURE " Save failed: RES");
+        present_save_failure(true);
         return;
     }
     notice = NULL;
@@ -1090,7 +1141,7 @@ static bool favorite_draft_dirty(void) {
 /* Cancel one unfinished workflow or return to its parent after persistence. */
 static void back(void) {
     if (view == FAV_RESET) { view = FAV_SETS; return; }
-    if (view == FAV_FORMAT) { view = FAV_ITEMS; return; }
+    if (view == FAV_FORMAT) { view = FAV_PICK; return; }
     if (view == FAV_PICK) { view = FAV_ITEMS; return; }
     if (view == FAV_ITEMS) {
         if (!favorite_confirm && favorite_draft_dirty()) { favorite_confirm = true; return; }
@@ -1152,15 +1203,31 @@ static __attribute__((noinline)) void menu_hold(void) {
         return;
     }
     if (view == SETUP) { setup_stage_save(); return; }
-    if (view == FUNCTIONS && confirmed_action == actions[function].id && currentTime - confirm_started <= 3000)
+    if (view == FUNCTIONS && confirmed_action == actions[function].id && currentTime - confirm_started <= ACTION_CONFIRM_MS)
         action_run();
+    if (view == FAV_PICK || view == FAV_FORMAT) {
+        favorite_draft.rows[favorite_row][favorite_slot] = (FavoriteItem){(ReadingId)favorite_pick,
+            (ReadingFormat)favorite_format};
+        view = FAV_ITEMS;
+    }
     if (view == FAV_ITEMS || view == FAV_ROWS) {
         FavoriteError error;
         if (!favorite_set_validate(&favorite_draft, &error)) {
-            menu_notice(error == FAVORITE_ERR_DUPLICATE_IN_ROW ? "Duplicate reading" : "Oil bar needs row"); return;
+            unsigned row = 0;
+            for (; row < FAVORITE_ROWS; ++row) {
+                FavoriteSet check = favorite_draft;
+                for (unsigned slot = 0; slot < FAVORITE_ROW_ITEMS; ++slot)
+                    check.rows[1 - row][slot] = FAVORITE_EMPTY_ITEM;
+                FavoriteError row_error;
+                if (!favorite_set_validate(&check, &row_error) && row_error == error) break;
+            }
+            char reason[24];
+            snprintf_(reason, sizeof(reason), error == FAVORITE_ERR_DUPLICATE_IN_ROW ? "Row %c: duplicate" :
+                error == FAVORITE_ERR_BAR_NOT_EXCLUSIVE ? "Row %c: oil bar only" : "Row %c: invalid", row ? 'B' : 'A');
+            menu_notice(reason); return;
         }
         if (!favorite_set_fits(&favorite_draft, vehicle_display_effective())) {
-            menu_notice("Too wide: shorten"); return;
+            menu_notice("Use Short format"); return;
         }
         FavoriteSet original = favorites_layout.sets[favorite_set];
         favorites_layout.sets[favorite_set] = favorite_draft;
@@ -1233,7 +1300,12 @@ void menu_event(MenuEvent event) {
         case FAV_SETS: favorite_set = wrap(favorite_set, FAVORITE_SET_COUNT + 1, direction); break;
         case FAV_ROWS: favorite_row = wrap(favorite_row, FAVORITE_ROWS, direction); break;
         case FAV_ITEMS: if (!favorite_confirm) favorite_slot = wrap(favorite_slot, FAVORITE_ROW_ITEMS, direction); break;
-        case FAV_PICK: favorite_pick = next_favorite_reading(favorite_pick, direction); break;
+        case FAV_PICK: {
+            uint8_t next = next_favorite_reading(favorite_pick, direction);
+            if (next != favorite_pick) favorite_format = READING_FORMAT_AUTO;
+            favorite_pick = next;
+            break;
+        }
         case FAV_FORMAT: favorite_format = wrap(favorite_format, 4, direction); break;
         case ROOT:
             root = wrap(root, sizeof(roots) / sizeof(roots[0]), direction);
@@ -1297,21 +1369,20 @@ void menu_event(MenuEvent event) {
         case FAV_ITEMS:
             if (!favorite_confirm) {
                 favorite_pick = favorite_draft.rows[favorite_row][favorite_slot].id;
+                favorite_format = favorite_draft.rows[favorite_row][favorite_slot].format;
                 view = FAV_PICK;
             }
             break;
         case FAV_PICK:
-            favorite_draft.rows[favorite_row][favorite_slot].id = (ReadingId)favorite_pick;
-            favorite_draft.rows[favorite_row][favorite_slot].format = READING_FORMAT_AUTO;
             if (favorite_pick >= READING_COUNT) {
+                favorite_draft.rows[favorite_row][favorite_slot] = FAVORITE_EMPTY_ITEM;
                 view = FAV_ITEMS;
             } else {
-                favorite_format = READING_FORMAT_AUTO;
                 view = FAV_FORMAT;
             }
             break;
         case FAV_FORMAT:
-            favorite_draft.rows[favorite_row][favorite_slot].format = (ReadingFormat)favorite_format;
+            favorite_draft.rows[favorite_row][favorite_slot] = (FavoriteItem){(ReadingId)favorite_pick, (ReadingFormat)favorite_format};
             view = FAV_ITEMS;
             break;
         case ROOT:
@@ -1328,10 +1399,10 @@ void menu_event(MenuEvent event) {
             case 3:
                 view = SETTINGS;
                 break;
-            case 4:
+            case 5:
                 view = INFO;
                 break;
-            case 5:
+            case 4:
                 view = VEHICLE;
                 vehicle_editor_begin();
                 break;
@@ -1344,7 +1415,7 @@ void menu_event(MenuEvent event) {
         case VALUES:
             break; /* Status pages do not use SELECT as hidden backward navigation. */
         case FUNCTIONS:
-            if (confirmed_action != actions[function].id || currentTime - confirm_started > 3000) action_run();
+            if (confirmed_action != actions[function].id || currentTime - confirm_started > ACTION_CONFIRM_MS) action_run();
             break; /* Confirmation requires the separately labelled hold. */
         case IPC_OPTIONS: {
             uint8_t pace = ipc_pace, method = ipc_method;
@@ -1395,8 +1466,10 @@ void menu_event(MenuEvent event) {
     }
     if (direction_event) {
         bool burst = navigation_active && currentTime != navigation_last &&
-                     currentTime - navigation_last <= 350U;
+                     currentTime - navigation_last <= 350U &&
+                     direction == navigation_direction;
         navigation_active = true;
+        navigation_direction = direction;
         navigation_last = currentTime;
         if (burst && currentTime - navigation_sent < navigation_interval()) {
             navigation_pending = true;
@@ -1411,17 +1484,30 @@ void menu_event(MenuEvent event) {
 /* Turn eligible steering-wheel button reports into menu gestures. */
 void menu_button(uint8_t button, bool allowed) {
     #ifndef HIDE_DASHBOARD_MENU
+    bool direction_released = allowed && input.armed && button == 0x10 &&
+        (input.button == 0x08 || input.button == 0x18 ||
+         input.button == 0x00 || input.button == 0x20) &&
+        currentTime - input.last_seen <= 300U;
     MenuEvent event = menu_input_update(&input, button, allowed, currentTime);
     bool repeat_allowed = allowed && !save_failed && dashboard_state.baccable_dashboard_menu_visible &&
                           (view == FAVORITES || view == VALUES || view == GROUPS ||
                            view == SETTINGS || view == SETUP || view == IPC_OPTIONS ||
                            view == FAV_SETS || view == FAV_ROWS || view == FAV_ITEMS ||
                            view == FAV_PICK || view == FAV_FORMAT || view == VEHICLE);
-    if (event == MENU_NONE)
+    /* Pace only generated repeats; every physical directional edge still counts. */
+    if (event == MENU_NONE && (!input.repeating ||
+        currentTime - input.repeated_at >= navigation_interval()))
         event = menu_input_repeat(&input, repeat_allowed, currentTime);
     if (allowed && input.armed && button != 0x10)
         last_input = currentTime;
     menu_event(event);
+    /* Publish the final selection without waiting for the quiet-time timer. */
+    if (direction_released && navigation_pending &&
+        dashboard_state.baccable_dashboard_menu_visible) {
+        navigation_pending = false;
+        navigation_sent = currentTime;
+        menu_render();
+    }
     #else
     (void)button;
     (void)allowed;
@@ -1465,10 +1551,16 @@ void menu_process(void) {
     bool editor = view == SETTINGS || view == SETUP || view == IPC_OPTIONS ||
                   view == FAV_SETS || view == FAV_ROWS || view == FAV_ITEMS ||
                   view == FAV_PICK || view == FAV_FORMAT || view == FAV_RESET || view == VEHICLE;
+    bool dirty_editor = (view == VEHICLE && vehicle_editor_dirty()) ||
+        (view == SETUP && setup_stage_dirty()) ||
+        ((view == FAV_ROWS || view == FAV_ITEMS || view == FAV_PICK || view == FAV_FORMAT) &&
+         (favorite_draft_dirty() || ((view == FAV_PICK || view == FAV_FORMAT) &&
+          (favorite_pick != favorite_draft.rows[favorite_row][favorite_slot].id ||
+           favorite_format != favorite_draft.rows[favorite_row][favorite_slot].format))));
     /* Reading screens are intentionally persistent; active diagnostics get a fresh grace period. */
     if (fault_reader_busy() || diagnostics_state.clear_faults_request) {
         last_input = currentTime;
-    } else if (view != FAVORITES && view != VALUES && !save_failed &&
+    } else if (view != FAVORITES && view != VALUES && !save_failed && !dirty_editor &&
                currentTime - last_input >= (editor ? EDITOR_IDLE_MS : MENU_IDLE_MS)) {
         if (view == SETUP) {
             setup_cancel_edit();

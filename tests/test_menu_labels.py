@@ -34,12 +34,12 @@ EXPECTED_ACTIONS = (
     "Brake override",
     "Disable launch",
     "AWD off request",
+    "Rain test",
     "Read BCM faults",
     "Clear DTCs",
     "Reset best times",
     "Peak hold",
     "IBS SOC override",
-    "Rain test",
 )
 
 RETIRED_SETUP = (

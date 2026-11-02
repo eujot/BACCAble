@@ -1,6 +1,7 @@
 #include "features/reading_catalog.h"
 #include "diagnostics/parameter_catalog.h"
 #include <stdio.h>
+#include <math.h>
 #include <string.h>
 
 /*
@@ -22,22 +23,22 @@
 
 static const ReadingMeta reading_meta[READING_COUNT] = {
     /* Oil */
-    R(READING_OIL_TEMPERATURE, READING_GROUP_OIL, "Oil temp", "Oil T", "Oil", "C", 0, 4, READING_VALUE_FLOAT, 0, 5, 5, M_ALL),
+    R(READING_OIL_TEMPERATURE, READING_GROUP_OIL, "Oil temp", "Oil temp", "OilT", "C", 0, 4, READING_VALUE_FLOAT, 0, 5, 5, M_ALL),
     R(READING_OIL_PRESSURE, READING_GROUP_OIL, "Oil pressure", "Oil P", "OilP", "bar", 1, 5, READING_VALUE_FLOAT, 0, 0, 0, M_ALL),
-    R(READING_OIL_LEVEL_MM, READING_GROUP_OIL, "Oil level", "Oil mm", "Oil", "mm", 0, 3, READING_VALUE_FLOAT, 0, 89, 64, M_ALL),
-    R(READING_OIL_LEVEL_STATUS, READING_GROUP_OIL, "Oil status", "Oil st", "Oil", NULL, 0, 4, READING_VALUE_OIL_STATUS, READING_ENUM_OIL_STATUS, 89, 64, M_ALL),
+    R(READING_OIL_LEVEL_MM, READING_GROUP_OIL, "Oil level", "Oil level", "OilLv", "mm", 0, 3, READING_VALUE_FLOAT, 0, 89, 64, M_ALL),
+    R(READING_OIL_LEVEL_STATUS, READING_GROUP_OIL, "Oil status", "Oil status", "OilSt", NULL, 0, 4, READING_VALUE_OIL_STATUS, READING_ENUM_OIL_STATUS, 89, 64, M_ALL),
     R(READING_OIL_LEVEL_BAR, READING_GROUP_OIL, "Oil bar", NULL, NULL, NULL, 0, 0, READING_VALUE_OIL_STATUS, READING_ENUM_OIL_STATUS, 89, 64, M_ALL),
-    R(READING_OIL_VOLUME, READING_GROUP_OIL, "Oil volume", "Oil vol", "OilL", "L", 2, 5, READING_VALUE_FLOAT, 0, 28, 28, M_ALL),
-    R(READING_OIL_QUALITY, READING_GROUP_OIL, "Oil quality", "Oil q", "Oil%", "%", 0, 4, READING_VALUE_FLOAT, 0, 31, 63, M_ALL),
+    R(READING_OIL_VOLUME, READING_GROUP_OIL, "Oil volume", "Oil vol", "OilV", "L", 2, 5, READING_VALUE_FLOAT, 0, 28, 28, M_ALL),
+    R(READING_OIL_QUALITY, READING_GROUP_OIL, "Oil quality", "Oil qual", "OilQ", "%", 0, 4, READING_VALUE_FLOAT, 0, 31, 63, M_ALL),
 
     /* Temperatures */
     R(READING_COOLANT_TEMP, READING_GROUP_TEMPERATURES, "Coolant", "Cool", "Cool", "C", 0, 4, READING_VALUE_FLOAT, 0, 42, 68, M_ALL),
-    R(READING_GEARBOX_TEMP, READING_GROUP_TEMPERATURES, "Gearbox", "Gear", "Gbx", "C", 0, 4, READING_VALUE_FLOAT, 0, 33, 33, M_ALL),
+    R(READING_GEARBOX_TEMP, READING_GROUP_TEMPERATURES, "Gearbox", "Gbox", "Gbx", "C", 0, 4, READING_VALUE_FLOAT, 0, 33, 33, M_ALL),
     R(READING_INTERCOOLER_IN, READING_GROUP_TEMPERATURES, "IC inlet", "IC in", "ICi", "C", 0, 4, READING_VALUE_FLOAT, 0, 23, READING_NO_SOURCE, M_GAS),
     R(READING_INTERCOOLER_OUT, READING_GROUP_TEMPERATURES, "IC outlet", "IC out", "ICo", "C", 0, 4, READING_VALUE_FLOAT, 0, 22, READING_NO_SOURCE, M_GAS),
-    R(READING_INTAKE_AIR_TEMP, READING_GROUP_TEMPERATURES, "Intake air", "Intake", "Air", "C", 0, 4, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 88, M_D),
+    R(READING_INTAKE_AIR_TEMP, READING_GROUP_TEMPERATURES, "Intake air", "Int air", "Air", "C", 0, 4, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 88, M_D),
     R(READING_EXHAUST_TEMP, READING_GROUP_TEMPERATURES, "Exhaust", "Exh", "Exh", "C", 0, 5, READING_VALUE_FLOAT, 0, 40, 67, M_ALL),
-    R(READING_FUEL_TEMP, READING_GROUP_TEMPERATURES, "Fuel temp", "Fuel", "Fuel", "C", 0, 4, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 84, M_D),
+    R(READING_FUEL_TEMP, READING_GROUP_TEMPERATURES, "Fuel temp", "Fuel temp", "FuelT", "C", 0, 4, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 84, M_D),
     R(READING_CATALYST_TEMP, READING_GROUP_TEMPERATURES, "Catalyst", "Cat", "Cat", "C", 0, 5, READING_VALUE_FLOAT, 0, 41, READING_NO_SOURCE, M_GAS),
 
     /* Engine */
@@ -57,43 +58,43 @@ static const ReadingMeta reading_meta[READING_COUNT] = {
     R(READING_TURBO_TEMP, READING_GROUP_ENGINE, "Turbo temp", "Turbo", "Tbo", "C", 0, 4, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 78, M_D),
 
     /* Fuel */
-    R(READING_FUEL_RATE, READING_GROUP_FUEL, "Fuel rate", "Fuel", "Fuel", "L/h", 2, 6, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 87, M_D),
+    R(READING_FUEL_RATE, READING_GROUP_FUEL, "Fuel rate", "Fuel rate", "FRate", "L/h", 2, 6, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 87, M_D),
     R(READING_FUEL_PRESSURE, READING_GROUP_FUEL, "Fuel rail", "Rail", "Rail", "bar", 0, 5, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 83, M_D),
 
     /* Battery */
-    R(READING_BATTERY_VOLTAGE, READING_GROUP_BATTERY, "Battery", "Volt", "V", "V", 2, 5, READING_VALUE_FLOAT, 0, 35, 62, M_ALL),
-    R(READING_BATTERY_CURRENT, READING_GROUP_BATTERY, "Battery A", "Current", "A", "A", 1, 6, READING_VALUE_FLOAT, 0, 4, 4, M_ALL),
-    R(READING_BATTERY_SOC_IBS, READING_GROUP_BATTERY, "Batt IBS", "IBS", "IBS", "%", 0, 4, READING_VALUE_FLOAT, 0, 3, 3, M_ALL),
-    R(READING_BATTERY_SOC_ECU, READING_GROUP_BATTERY, "Batt ECU", "ECU", "ECU", "%", 0, 4, READING_VALUE_FLOAT, 0, 21, 21, M_ALL),
-    R(READING_BATTERY_SOC_BCM, READING_GROUP_BATTERY, "Batt BCM", "BCM", "BCM", "%", 0, 4, READING_VALUE_FLOAT, 0, 34, 34, M_ALL),
+    R(READING_BATTERY_VOLTAGE, READING_GROUP_BATTERY, "Batt voltage", "Batt volt", "BatV", "V", 2, 5, READING_VALUE_FLOAT, 0, 35, 62, M_ALL),
+    R(READING_BATTERY_CURRENT, READING_GROUP_BATTERY, "Batt current", "Batt curr", "BtI", "A", 1, 6, READING_VALUE_FLOAT, 0, 4, 4, M_ALL),
+    R(READING_BATTERY_SOC_IBS, READING_GROUP_BATTERY, "Charge IBS", "SOC IBS", "SOCi", "%", 0, 4, READING_VALUE_FLOAT, 0, 3, 3, M_ALL),
+    R(READING_BATTERY_SOC_ECU, READING_GROUP_BATTERY, "Charge ECU", "SOC ECU", "SOCe", "%", 0, 4, READING_VALUE_FLOAT, 0, 21, 21, M_ALL),
+    R(READING_BATTERY_SOC_BCM, READING_GROUP_BATTERY, "Charge BCM", "SOC BCM", "SOCb", "%", 0, 4, READING_VALUE_FLOAT, 0, 34, 34, M_ALL),
     R(READING_IBS_RAW0, READING_GROUP_BATTERY, "IBS raw 0", "IBS B0", "B0", NULL, 0, 4, READING_VALUE_FLOAT, 0, 95, 95, M_ALL),
     R(READING_IBS_RAW1, READING_GROUP_BATTERY, "IBS raw 1", "IBS B1", "B1", NULL, 0, 4, READING_VALUE_FLOAT, 0, 96, 96, M_ALL),
 
     /* Diesel / DPF */
     R(READING_DPF_LOAD, READING_GROUP_DIESEL_DPF, "DPF load", NULL, "DPF", "%", 1, 5, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 55, M_D),
     R(READING_DPF_TEMP, READING_GROUP_DIESEL_DPF, "DPF temp", NULL, "DPFt", "C", 0, 5, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 56, M_D),
-    R(READING_DPF_REGEN_PROGRESS, READING_GROUP_DIESEL_DPF, "Regen", "Regen", "Reg", "%", 0, 4, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 57, M_D),
-    R(READING_DPF_REGEN_MODE, READING_GROUP_DIESEL_DPF, "Regen mode", "Regen", "Reg", NULL, 0, 8, READING_VALUE_ENUM, READING_ENUM_DPF_REGEN, READING_NO_SOURCE, 8, M_D),
-    R(READING_DPF_SINCE_REGEN, READING_GROUP_DIESEL_DPF, "Regen ago", "Since", "Ago", "km", 0, 5, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 58, M_D),
-    R(READING_DPF_REGEN_COUNT, READING_GROUP_DIESEL_DPF, "Regen count", "Count", "Cnt", NULL, 0, 5, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 59, M_D),
-    R(READING_DPF_AVG_INTERVAL, READING_GROUP_DIESEL_DPF, "Regen avg km", "Avg km", "Avg", "km", 0, 5, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 60, M_D),
-    R(READING_DPF_AVG_DURATION, READING_GROUP_DIESEL_DPF, "Regen avg min", "Avg min", "Avg", "min", 0, 4, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 61, M_D),
-    RE(READING_ADBLUE_VOLUME, READING_GROUP_DIESEL_DPF, "AdBlue", "AdBlue", "AdB", "L", 2, 5, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 65, M_D, VEHICLE_EQUIPMENT_SCR),
-    RE(READING_ADBLUE_LEVEL, READING_GROUP_DIESEL_DPF, "AdBlue %", "AdBlue", "AdB", "%", 0, 4, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 66, M_D, VEHICLE_EQUIPMENT_SCR),
+    R(READING_DPF_REGEN_PROGRESS, READING_GROUP_DIESEL_DPF, "Regen progress", "Reg prog", "RPr", "%", 0, 4, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 57, M_D),
+    R(READING_DPF_REGEN_MODE, READING_GROUP_DIESEL_DPF, "Regen mode", "Reg mode", "RMode", NULL, 0, 10, READING_VALUE_ENUM, READING_ENUM_DPF_REGEN, READING_NO_SOURCE, 8, M_D),
+    R(READING_DPF_SINCE_REGEN, READING_GROUP_DIESEL_DPF, "Regen ago", "Regen ago", "RAgo", "km", 0, 5, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 58, M_D),
+    R(READING_DPF_REGEN_COUNT, READING_GROUP_DIESEL_DPF, "Regen count", "Reg count", "RCnt", NULL, 0, 5, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 59, M_D),
+    R(READING_DPF_AVG_INTERVAL, READING_GROUP_DIESEL_DPF, "Regen avg dist", "Reg dist", "RDist", "km", 0, 5, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 60, M_D),
+    R(READING_DPF_AVG_DURATION, READING_GROUP_DIESEL_DPF, "Regen avg time", "Reg time", "RTime", "min", 0, 4, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 61, M_D),
+    RE(READING_ADBLUE_VOLUME, READING_GROUP_DIESEL_DPF, "AdBlue volume", "AdBlue vol", "AdBV", "L", 2, 5, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 65, M_D, VEHICLE_EQUIPMENT_SCR),
+    RE(READING_ADBLUE_LEVEL, READING_GROUP_DIESEL_DPF, "AdBlue level", "AdBlue lvl", "AdBL", "%", 0, 4, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 66, M_D, VEHICLE_EQUIPMENT_SCR),
 
     /* Driving */
     R(READING_SPEED, READING_GROUP_DRIVING, "Speed", NULL, NULL, "km/h", 0, 5, READING_VALUE_FLOAT, 0, 7, 7, M_ALL),
     R(READING_GEAR, READING_GROUP_DRIVING, "Gear", NULL, NULL, NULL, 0, 2, READING_VALUE_ENUM, READING_ENUM_GEAR, 6, 6, M_ALL),
     R(READING_DNA_MODE, READING_GROUP_DRIVING, "DNA mode", "DNA", "DNA", NULL, 0, 5, READING_VALUE_ENUM, READING_ENUM_DNA, 15, 15, M_ALL),
     R(READING_PEDAL_MAP, READING_GROUP_DRIVING, "Pedal map", "Pedal", "Ped", NULL, 0, 6, READING_VALUE_ENUM, READING_ENUM_PEDAL_MAP, 17, 17, M_ALL),
-    R(READING_SEATBELT, READING_GROUP_DRIVING, "Seatbelt", "Belt", "Belt", NULL, 0, 8, READING_VALUE_ENUM, READING_ENUM_SEATBELT, 13, 13, M_ALL),
+    R(READING_SEATBELT, READING_GROUP_DRIVING, "Seatbelt alarm", "Belt alarm", "Belt", NULL, 0, 3, READING_VALUE_ENUM, READING_ENUM_SEATBELT, 13, 13, M_ALL),
     R(READING_DISTANCE, READING_GROUP_DRIVING, "Distance", "Dist", "Dist", "km", 0, 6, READING_VALUE_FLOAT, 0, 27, 85, M_ALL),
 
     /* Performance */
-    R(READING_TIME_0_100, READING_GROUP_PERFORMANCE, "0-100", "0-100", "0100", "s", 2, 5, READING_VALUE_FLOAT, 0, 9, 9, M_ALL),
-    R(READING_TIME_100_200, READING_GROUP_PERFORMANCE, "100-200", "100-200", "1020", "s", 2, 5, READING_VALUE_FLOAT, 0, 10, 10, M_ALL),
-    R(READING_BEST_0_100, READING_GROUP_PERFORMANCE, "Best 0-100", "Best0100", "B0100", "s", 2, 5, READING_VALUE_FLOAT, 0, 11, 11, M_ALL),
-    R(READING_BEST_100_200, READING_GROUP_PERFORMANCE, "Best100-200", "Best1020", "B1020", "s", 2, 5, READING_VALUE_FLOAT, 0, 12, 12, M_ALL),
+    R(READING_TIME_0_100, READING_GROUP_PERFORMANCE, "0-100", "0-100", "0-100", "s", 2, 5, READING_VALUE_FLOAT, 0, 9, 9, M_ALL),
+    R(READING_TIME_100_200, READING_GROUP_PERFORMANCE, "100-200", "100-200", "100-200", "s", 2, 5, READING_VALUE_FLOAT, 0, 10, 10, M_ALL),
+    R(READING_BEST_0_100, READING_GROUP_PERFORMANCE, "Best 0-100", "B 0-100", "B0-100", "s", 2, 5, READING_VALUE_FLOAT, 0, 11, 11, M_ALL),
+    R(READING_BEST_100_200, READING_GROUP_PERFORMANCE, "Best 100-200", "B 100-200", "B100-200", "s", 2, 5, READING_VALUE_FLOAT, 0, 12, 12, M_ALL),
 
     /* Diagnostics */
     R(READING_OIL_TEMP_ECU, READING_GROUP_DIAGNOSTICS, "Oil ECU temp", "Oil ECU", "OECU", "C", 0, 4, READING_VALUE_FLOAT, 0, 30, 30, M_ALL),
@@ -102,14 +103,14 @@ static const ReadingMeta reading_meta[READING_COUNT] = {
     R(READING_KNOCK_SENSOR, READING_GROUP_DIAGNOSTICS, "Knock", "Knock", "Knk", "mV", 1, 6, READING_VALUE_FLOAT, 0, 43, READING_NO_SOURCE, M_GAS),
     R(READING_KEY_ID, READING_GROUP_DIAGNOSTICS, "Key ID", "Key", "Key", NULL, 0, 4, READING_VALUE_FLOAT, 0, 44, READING_NO_SOURCE, M_GAS),
     R(READING_ENGINE_RUN_TIME, READING_GROUP_DIAGNOSTICS, "Run time", "Run", "Run", "min", 0, 5, READING_VALUE_FLOAT, 0, 37, 37, M_ALL),
-    R(READING_OVER_REV_TIME, READING_GROUP_DIAGNOSTICS, "Over-rev s", "Ovr s", "Ovr", "s", 0, 4, READING_VALUE_FLOAT, 0, 38, 38, M_ALL),
-    R(READING_OVER_REV_COUNT, READING_GROUP_DIAGNOSTICS, "Over-rev n", "Ovr n", "Ovr", NULL, 0, 6, READING_VALUE_FLOAT, 0, 39, 39, M_ALL),
+    R(READING_OVER_REV_TIME, READING_GROUP_DIAGNOSTICS, "Over-rev time", "Ovr time", "OvrT", "s", 0, 4, READING_VALUE_FLOAT, 0, 38, 38, M_ALL),
+    R(READING_OVER_REV_COUNT, READING_GROUP_DIAGNOSTICS, "Over-rev count", "Ovr count", "OvrN", NULL, 0, 6, READING_VALUE_FLOAT, 0, 39, 39, M_ALL),
     R(READING_AC_PRESSURE, READING_GROUP_DIAGNOSTICS, "A/C pressure", "A/C", "AC", "bar", 2, 5, READING_VALUE_FLOAT, 0, 36, 86, M_ALL),
-    R(READING_TURBO_SENSOR_V, READING_GROUP_DIAGNOSTICS, "Turbo V", "TurboV", "TboV", "V", 3, 5, READING_VALUE_FLOAT, 0, 26, READING_NO_SOURCE, M_GAS),
-    R(READING_INTAKE_SENSOR_V, READING_GROUP_DIAGNOSTICS, "Intake V", "IntV", "IntV", "V", 3, 5, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 82, M_D),
-    R(READING_TURBO_TARGET_BAR, READING_GROUP_DIAGNOSTICS, "Turbo req bar", "Tbo req", "TboR", "bar", 2, 6, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 76, M_D),
-    R(READING_TURBO_TARGET_PCT, READING_GROUP_DIAGNOSTICS, "Turbo req %", "Tbo req", "TboR", "%", 0, 4, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 77, M_D),
-    R(READING_TURBO_ACTUAL_PCT, READING_GROUP_DIAGNOSTICS, "Turbo %", "Turbo", "Tbo", "%", 0, 4, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 80, M_D),
+    R(READING_TURBO_SENSOR_V, READING_GROUP_DIAGNOSTICS, "Turbo sensor", "Tbo sensor", "TboV", "V", 3, 5, READING_VALUE_FLOAT, 0, 26, READING_NO_SOURCE, M_GAS),
+    R(READING_INTAKE_SENSOR_V, READING_GROUP_DIAGNOSTICS, "Intake sensor", "Int sensor", "IntV", "V", 3, 5, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 82, M_D),
+    R(READING_TURBO_TARGET_BAR, READING_GROUP_DIAGNOSTICS, "Turbo press req", "Tbo press req", "TPrR", "bar", 2, 6, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 76, M_D),
+    R(READING_TURBO_TARGET_PCT, READING_GROUP_DIAGNOSTICS, "Turbo pct req", "Tbo pct req", "TPcR", "%", 0, 4, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 77, M_D),
+    R(READING_TURBO_ACTUAL_PCT, READING_GROUP_DIAGNOSTICS, "Turbo pct", "Tbo pct", "TPct", "%", 0, 4, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 80, M_D),
     R(READING_BOOST_TARGET, READING_GROUP_DIAGNOSTICS, "Boost req", "Boost r", "BstR", "bar", 2, 6, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 81, M_D),
 };
 
@@ -206,10 +207,14 @@ unsigned reading_list(const VehicleProfile *profile, ReadingGroup group, Reading
     return count;
 }
 
-/* Enum/status label lookup. Exact native decode labels are finalized at UI cutover. */
+/* Interpret the raw codes returned by native_parameter_read, not ordinal UI choices. */
 bool reading_enum_label(const ReadingMeta *meta, float value, char *out, size_t size) {
     if (!meta || !out || !size)
         return false;
+    if (!isfinite(value) || value < -1 || value > 255 || value != (float)(int)value) {
+        snprintf(out, size, "?");
+        return true;
+    }
     int v = (int)value;
     if (meta->enum_set == READING_ENUM_OIL_STATUS) {
         const char *label = v == 1 ? "OK" : v == 2 ? "HIGH" : v == -1 ? "LOW" : "?";
@@ -217,28 +222,26 @@ bool reading_enum_label(const ReadingMeta *meta, float value, char *out, size_t 
         return true;
     }
     if (meta->enum_set == READING_ENUM_GEAR) {
-        static const char *const gears[] = {"P", "R", "N", "D", "1", "2", "3", "4", "5", "6", "?"};
+        static const char *const gears[] = {"N", "1", "2", "3", "4", "5", "6", "R", "7", "8", "9"};
         snprintf(out, size, "%s", v >= 0 && v <= 10 ? gears[v] : "?");
         return true;
     }
     if (meta->enum_set == READING_ENUM_DNA) {
-        static const char *const dna[] = {"N", "A", "D", "Race"};
-        snprintf(out, size, "%s", v >= 0 && v < 4 ? dna[v] : "?");
+        snprintf(out, size, "%s", v == 0 ? "N" : v == 8 ? "D" : v == 16 ? "A" : v == 48 ? "Race" : "?");
         return true;
     }
     if (meta->enum_set == READING_ENUM_PEDAL_MAP) {
-        static const char *const maps[] = {"Auto", "Sport", "Track", "Off"};
-        snprintf(out, size, "%s", v >= 0 && v < 4 ? maps[v] : "?");
+        snprintf(out, size, "%c", v >= 32 && v <= 126 ? v : '?');
         return true;
     }
     if (meta->enum_set == READING_ENUM_SEATBELT) {
-        const char *label = v == 0 ? "Fastened" : v == 1 ? "Unfastened" : "?";
+        const char *label = v == 0 ? "ON" : v == 1 ? "OFF" : "?";
         snprintf(out, size, "%s", label);
         return true;
     }
     if (meta->enum_set == READING_ENUM_DPF_REGEN) {
-        static const char *const regen[] = {"Off", "Passive", "Active", "?"};
-        snprintf(out, size, "%s", v >= 0 && v < 3 ? regen[v] : "?");
+        static const char *const regen[] = {"NONE", "DPF LO", "DPF HI", "NSC De-NOx", "NSC De-SOx", "SCR HeatUp", "NONE."};
+        snprintf(out, size, "%s", v >= 0 && v < 7 ? regen[v] : "?");
         return true;
     }
     snprintf(out, size, "?");

@@ -128,7 +128,13 @@ uint32_t can_forward(const CAN_RxHeaderTypeDef *header, uint8_t *data) {
     return HAL_OK;
 }
 static unsigned native_reads;
-float native_parameter_read(uint8_t id) { ++native_reads; return (float)id + 0.5f; }
+float native_parameter_read(uint8_t id) {
+    ++native_reads;
+    if (id == 9) return statistics_state.chronometer_elapsed_time_0_100_km_h;
+    if (id == 10) return statistics_state.chronometer_elapsed_time_100_200_km_h;
+    if (id == 11 || id == 12) return statistics_read_best(id - 10);
+    return (float)id + 0.5f;
+}
 bool flash_record_load(unsigned slot, uint16_t type, void *data, size_t size) {
     if (real_flash) { RecordStorage storage = test_storage(slot); return record_load(&storage, type, data, size); }
     (void)slot;
@@ -230,7 +236,7 @@ static void test_vehicle_editor_equipment(void) {
     vehicle_editor_begin();
     for (unsigned i = 0; i < 5; ++i)
         vehicle_editor_navigate(1);
-    assert(!strcmp(vehicle_editor_field_label(), "Suspension"));
+    assert(!strcmp(vehicle_editor_field_label(), "Adaptive susp."));
 
     char buf[24];
     assert(!strcmp(vehicle_editor_value_label(buf, sizeof(buf)), "Unknown"));
@@ -350,6 +356,21 @@ int main(void) {
     const char *suite = "menu-18";
 #endif
     const HostTest tests[] = {
+        HOST_TEST(test_ergonomics_validation_labels),
+        HOST_TEST(test_ergonomics_favorites),
+        HOST_TEST(test_ergonomics_vehicle_idle),
+        HOST_TEST(test_ergonomics_features_and_info),
+        HOST_TEST(test_ergonomics_action_confirmation),
+        HOST_TEST(test_information_input_labels),
+        HOST_TEST(test_acceleration_menu_states),
+        HOST_TEST(test_direction_recovery),
+        HOST_TEST(test_navigation_display_latency),
+        HOST_TEST(test_ux_reading_groups),
+        HOST_TEST(test_ux_mirror_retry_hint),
+        HOST_TEST(test_ux_equipment_settings),
+        HOST_TEST(test_ux_race_suspension),
+        HOST_TEST(test_ux_vehicle_direct_save),
+        HOST_TEST(test_ux_favorite_drafts),
         HOST_TEST(test_split_profile_migration),
         HOST_TEST(test_cancelled_same_did),
         HOST_TEST(test_profile_atomic_restart),

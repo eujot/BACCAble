@@ -70,6 +70,7 @@ void setup_move_group(int8_t delta);
 bool setup_back(void);
 bool setup_stage_back(void);
 bool setup_stage_active(void);
+bool setup_stage_dirty(void);
 bool setup_present_my23(void);
 void setup_stage_select(void);
 void setup_stage_save(void);
