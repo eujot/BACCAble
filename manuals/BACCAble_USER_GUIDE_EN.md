@@ -307,7 +307,7 @@ Its stored position and format remain unchanged.
 | Oil | Oil level mm + LOW/OK/HIGH | Oil level bar |
 | Engine | Power + boost | Power + torque |
 | Cooling | Coolant | Intercooler inlet + outlet |
-| Battery | Voltage + current | IBS state of charge |
+| Batt voltage | Voltage + current | IBS state of charge |
 | Diesel DPF / Gasoline Performance | DPF load + temp (diesel) / 0–100 (gasoline) | Regen progress (diesel) / Best 0–100 (gasoline) |
 
 MY23 defaults simplify the 16-glyph first row: Warm-up has oil temperature above
@@ -350,6 +350,20 @@ uses `Row A: duplicate` or `Row A: oil bar only`.
 the bar occupies its row alone. The owner-supplied OK ranges are unchanged:
 2.0 RWD 72–82 mm, 2.0 Q4 67–77 mm, 2.2 RWD 61–65 mm, 2.2 Q4 79–84 mm. They are
 not newly verified here. Unknown drivetrain shows `?` and `Set drivetrain`.
+
+Reading labels keep the unit beside the value, for example `OilQ 50%`,
+`BatV 12.50V` and `BtI -5.2A`. OilT/OilLv/OilSt distinguish oil temperature,
+level and status; OilQ is the ECU oil-quality indicator, not a verified estimate
+of remaining service life. SOCi/SOCe/SOCb distinguish charge reports from IBS,
+ECU and BCM. RPr/RMode are regeneration progress/mode, RDist/RTime its average
+distance/duration, and OvrT/OvrN over-rev time/count. Turbo press req is the
+pressure request (bar); Turbo pct req and Turbo pct retain the existing percentage
+signals without asserting a new physical interpretation. Their short labels are
+TPrR, TPcR and TPct. AdBV/AdBL distinguish AdBlue volume and percentage level.
+FuelT/FRate distinguish fuel temperature/rate; RAgo/RCnt identify distance since
+regeneration and its count. Acceleration labels retain the hyphen, including 100-200. Longer labels can
+require shorter formats or more subpages in dense Favorites; saved IDs and
+formats are retained. Units, decoding and precision have not changed.
 
 ## Settings: Features
 
@@ -711,10 +725,13 @@ not toggle their state. The final `Demo` entry starts the menu tour with RES.
 | BH version | Body-controller version. `? BH no reply` means no recent version reply. |
 | `MY23:ON/OFF …ch` | Legacy: MY23 preference and compiled 18/24 width. MY23 instead shows `IPC MY23` and `16 / 22 glyphs`. |
 | `Immobilizer: ON/OFF` | Stored BACCAble immobilizer preference, not an editable menu switch. |
-| `Reports:` | Number of steering-wheel input reports observed by the menu. Useful when diagnosing unresponsive controls. |
-| `Gaps:` | Count of interruptions detected in the input report stream. |
-| `Max gap:…ms` | Longest observed input-report interval in milliseconds. |
-| `Input age:…ms` | Time since the last input report; `--` if none is available. |
+| `Button reports` | Number of steering-wheel input reports observed by the menu. Useful when diagnosing unresponsive controls. |
+| `Report gaps` | Count of interruptions detected in the input report stream. |
+| `Max input gap` | Longest observed input-report interval in milliseconds. |
+| `Report age` | Time since the last input report; `--` if none is available. |
+
+MY23 shows the label above its value; Legacy shortens the label as needed to
+preserve the complete number and milliseconds.
 | `> Demo` | Start a timed tour of the displayed menu and example values. |
 
 C2/BH version replies older than about five seconds are treated as stale. Input
@@ -754,20 +771,19 @@ unsupported ECU requests can remain `--`.
 
 SOC means state of charge. The firmware exposes several independent sources:
 
-| Page or field | Source and interpretation |
+| Reading | Source and interpretation |
 | --- | --- |
-| `Batt charge BCM` → `Batt BCM SOC` (gasoline) | Body Control Module diagnostic SOC. |
-| `Batt charge / A` (both fuel catalogs) | Engine ECU diagnostic SOC, paired with native battery current. |
-| `Battery charge` (diesel) | Native IBS battery-sensor SOC. |
-| `Battery sources` (both catalogs, advanced) | IBS SOC followed by engine ECU SOC, each in percent. |
-| `Battery IBS raw` | Raw IBS byte 0 and byte 1 as numbers. These are not two percentages. |
-| `IBS raw0/SOC/V`, `IBS raw1/SOC/V` | One raw byte, BCM SOC and BCM voltage. These service pages use the BCM definitions even in the diesel catalog and may be unsupported. |
+| `Charge IBS` (`SOCi`) | Native IBS battery-sensor charge report. |
+| `Charge ECU` (`SOCe`) | Engine ECU diagnostic charge report. |
+| `Charge BCM` (`SOCb`) | Body Control Module diagnostic charge report. |
+| `IBS raw 0`, `IBS raw 1` | Raw IBS byte values; these are not two percentages. |
+| `Batt voltage`, `Batt current` | Separate voltage and current readings. |
 
-`Batt charge / A` can therefore show `--%` while current is present, and
-`Batt charge BCM` can be unavailable while an IBS source is available. Sources
-are not substituted for one another. A missing SOC does not establish an empty
-battery. Use `Battery sources` to compare availability and `Battery V / A` to
-observe voltage/current separately.
+A charge source can show `--` while current or another source remains available.
+Sources are not substituted for one another. Missing SOC does not establish an
+empty battery. Compare the three Charge readings in the Battery group or put
+them together in Favorites. The old compound Battery sources/Battery V / A
+pages have been replaced by individual readings.
 
 The inherited current convention is positive for charging and negative for
 discharging. Voltage alone does not prove charging. Raw IBS pages are for source
@@ -835,11 +851,11 @@ A value the ECU does not answer shows `--`.
 
 | Reading | Unit / meaning | Eligibility |
 | --- | --- | --- |
-| Battery | V | both |
-| Battery A | A | both |
-| Batt IBS | % | both |
-| Batt ECU | % | both |
-| Batt BCM | % | both |
+| Batt voltage | V | both |
+| Batt current | A | both |
+| Charge IBS | % | both |
+| Charge ECU | % | both |
+| Charge BCM | % | both |
 | IBS raw 0 | raw byte | both |
 | IBS raw 1 | raw byte | both |
 
@@ -849,14 +865,14 @@ A value the ECU does not answer shows `--`.
 | --- | --- | --- |
 | DPF load | % | diesel |
 | DPF temp | C | diesel |
-| Regen | % | diesel |
+| Regen progress | % | diesel |
 | Regen mode | phase | diesel |
 | Regen ago | km | diesel |
 | Regen count | count | diesel |
-| Regen avg km | km | diesel |
-| Regen avg min | min | diesel |
-| AdBlue | L | diesel + SCR |
-| AdBlue % | % | diesel + SCR |
+| Regen avg dist | km | diesel |
+| Regen avg time | min | diesel |
+| AdBlue volume | L | diesel + SCR |
+| AdBlue level | % | diesel + SCR |
 
 ### Driving
 
@@ -876,7 +892,7 @@ A value the ECU does not answer shows `--`.
 | 0-100 | s | both |
 | 100-200 | s | both |
 | Best 0-100 | s | both |
-| Best100-200 | s | both |
+| Best 100-200 | s | both |
 
 ### Diagnostics
 
@@ -888,14 +904,14 @@ A value the ECU does not answer shows `--`.
 | Knock | mV | gasoline |
 | Key ID | number | gasoline |
 | Run time | min | both |
-| Over-rev s | s | both |
-| Over-rev n | count | both |
+| Over-rev time | s | both |
+| Over-rev count | count | both |
 | A/C pressure | bar | both |
-| Turbo V | V | gasoline |
-| Intake V | V | diesel |
-| Turbo req bar | bar | diesel |
-| Turbo req % | % | diesel |
-| Turbo % | % | diesel |
+| Turbo sensor | V | gasoline |
+| Intake sensor | V | diesel |
+| Turbo press req | bar | diesel |
+| Turbo pct req | % | diesel |
+| Turbo pct | % | diesel |
 | Boost req | bar | diesel |
 
 ## USB CAN capture and diagnostics
@@ -1035,7 +1051,7 @@ commands and bus behavior. Use explicitly save USB mode OFF for ordinary operati
 | A reading or action is missing | Correct vehicle profile; check the action permission in Features. An unsupported saved favorite shows `--` until its profile applies again. |
 | `No favorites` / `No pages` | Add compatible favorites or restore page visibility. Double-click RES still returns. |
 | A value shows `--` | Wait for fresh reports, check ignition/engine conditions and ECU compatibility. USB diagnostics can suspend normal queries. A displayed catalog entry is not a guarantee that the ECU implements it. |
-| `Batt BCM SOC --` or `Batt charge --%` | Compare the independent sources using Battery sources. Do not treat missing SOC as 0%, and do not use IBS override as a repair. |
+| `Charge BCM --` or `Charge ECU --` | Compare Charge IBS, Charge ECU and Charge BCM. Do not treat missing SOC as 0%, and do not use IBS override as a repair. |
 | Setting reverts after a restart | Hold RES in the editor to save; a preceding double-click is optional. Resolve `Save failed` / `HOLD: RETRY`; unsaved RAM changes are not persistent. |
 | `! Disabled in setup` | Enable the associated permission under Features, then return. |
 | `! Stop the car`, `! Enable Dyno`, `! Release brake`, `! Reset ESC`, `! Disable launch` | Satisfy the specific action condition. For brakes, use the documented disarm/release sequence. |

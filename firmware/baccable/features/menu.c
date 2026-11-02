@@ -1041,19 +1041,21 @@ void menu_render(void) {
             else menu_present_lines("Immobilizer", security_state.immobilizer_enabled ? "ON" : "OFF");
             return;
         }
-        if (info == 5)
-            snprintf_(text, sizeof(text), "Reports:%lu", (unsigned long)input.reports_seen);
-        else if (info == 6)
-            snprintf_(text, sizeof(text), "Gaps:%lu", (unsigned long)input.stream_gaps);
-        else if (info == 7)
-            snprintf_(text, sizeof(text), "Max gap:%lums", (unsigned long)input.max_gap_ms);
-        else if (info == 8)
-            if (input.reports_seen)
-                snprintf_(text, sizeof(text), "Input age:%lums",
-                          (unsigned long)(currentTime - input.last_seen));
-            else
-                snprintf_(text, sizeof(text), "Input age:--");
-        else if (info == 9)
+        if (info >= 5 && info <= 8) {
+            static const char *const labels[] = {"Button reports", "Report gaps", "Max input gap", "Report age"};
+            char value[24];
+            uint32_t number = info == 5 ? input.reports_seen : info == 6 ? input.stream_gaps :
+                              info == 7 ? input.max_gap_ms : currentTime - input.last_seen;
+            if (info == 8 && !input.reports_seen) snprintf_(value, sizeof(value), "--");
+            else snprintf_(value, sizeof(value), info >= 7 ? "%lums" : "%lu", (unsigned long)number);
+            if (menu_my23()) menu_present_lines(labels[info - 5], value);
+            else {
+                ui_render_value(text, menu_width() + 1, labels[info - 5], value);
+                menu_present(text);
+            }
+            return;
+        }
+        if (info == 9)
             ui_render_action(text, sizeof(text), "Demo");
         else if (info == 0)
             ui_render_value(text, sizeof(text), "C1",
@@ -1075,7 +1077,7 @@ void menu_render(void) {
                 return;
             }
             static const char *const next_info[] = {"C1 firmware", "C2 firmware", "BH firmware",
-                "IPC MY23", "Immobilizer", "Reports", "Gaps", "Max gap", "Input age", "Demo"};
+                "IPC MY23", "Immobilizer", "Button reports", "Report gaps", "Max input gap", "Report age", "Demo"};
             menu_present_view(UI_MODE_LIST, text, next_info[(info + 1) % INFO_PAGES]);
             return;
         }

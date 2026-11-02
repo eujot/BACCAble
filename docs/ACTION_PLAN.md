@@ -4,6 +4,34 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Reading labels and related menu wording, 2026-11-02
+
+Branch `fix/reading-label-clarity` starts at `54bcef2`; fresh fetch confirms
+origin/master `af1fd72`. Revised 31 reading entries (names only): OilQ removes
+the repeated percent sign; oil, fuel, battery charge sources, regeneration,
+AdBlue, turbo requests and over-rev short names are distinguishable. Voltage
+sensor names omit redundant standalone V, and acceleration ranges retain their
+hyphen. Full/medium/short labels are unique within each format. Metadata source
+comparison confirms unchanged IDs, units, precision, value budgets, groups,
+source mappings and equipment eligibility. No signal dictionary reinterpretation.
+
+Default MY23 layouts still fit: BtI and RPr keep battery/DPF rows within budget.
+Existing custom layouts retain IDs/formats but longer names can require extra
+continuation pages or a shorter format when edited. Information reports explicit
+Button reports / Report gaps / Max input gap / Report age, with complete values
+on both display families. Reviewed Features/Vehicle labels: Launch Nm and Shift
+RPM carry their units only in the label, so no duplicate-unit change is needed.
+EN/PL catalogs and abbreviation guidance are updated, including replacement of
+stale compound battery-page instructions with current individual SOC readings.
+Oil quality is not relabelled as remaining oil life.
+
+Validation: full Apple Clang ASan/UBSan host suite passes, including complete
+catalog uniqueness/Auto-width checks, signed values, default Favorite layouts,
+and Information packets on four compile variants / three runtime profiles.
+All four ARM builds and cppcheck checks pass with Arm GNU 15.2.Rel1; C1 lint
+was repeated after final sensor-label edits. C1 Flash/static RAM: 94,696/13,316 B. No flash, push, merge or vehicle test.
+Original user captures/releases remain untouched; handoff stays on this branch.
+
 ## Menu ergonomics corrections, 2026-11-02
 
 Branch `fix/menu-ergonomics` starts at `bc46f06`; fresh upstream fetch confirms

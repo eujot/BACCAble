@@ -630,3 +630,18 @@ Action confirmation lasts six seconds and includes compound effects and the
 multi-ECU clear scope. Save errors last three seconds and show the appropriate
 HOLD/RES retry gesture. Information uses effective Legacy width. No protocol,
 Flash format, physical presentation fence or IPC control behavior is changed.
+
+
+## Reading label clarity, 2026-11-02
+
+The individual-reading catalog keeps full/medium/short names unique within each
+format. Unit symbols are emitted with the value; OilQ replaces Oil%, and oil,
+fuel, charge-source, regeneration, AdBlue, turbo request and over-rev abbreviations
+are distinct. Acceleration labels retain their range hyphen. BatV/BtI and RPr
+keep default MY23 rows within the existing budgets. Source IDs, units, precision,
+value budgets and eligibility are unchanged. Existing saved Favorites retain IDs
+and formats; denser custom rows can need more continuation pages. Oil quality
+is not renamed to remaining oil life. Information shows Button reports, Report
+gaps, Max input gap and Report age as label/value fields, preserving whole
+numbers on Legacy. The detailed user-guide catalogs and SOC descriptions use
+current individual readings rather than retired compound pages.

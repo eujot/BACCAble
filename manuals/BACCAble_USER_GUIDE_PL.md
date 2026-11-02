@@ -323,7 +323,7 @@ nie pasuje do profilu. Jej zapisane miejsce i format pozostają zachowane.
 | Oil | Oil level mm + LOW/OK/HIGH | Oil level bar |
 | Engine | Power + boost | Power + torque |
 | Cooling | Coolant | Intercooler inlet + outlet |
-| Battery | Voltage + current | IBS state of charge |
+| Batt voltage | Voltage + current | IBS state of charge |
 | Diesel DPF / Gasoline Performance | DPF load + temp (diesel) / 0–100 (benzyna) | Regen progress (diesel) / Best 0–100 (benzyna) |
 
 Domyślne zestawy MY23 upraszczają pierwszą linię do 16 znaków: Warm-up pokazuje
@@ -376,6 +376,20 @@ całą wartość. Błędy zapisu pozostają przez około trzy sekundy: MY23 poka
 `Save failed` / `HOLD: RETRY`, a Legacy `Fail; HOLD retry`. Po usunięciu przyczyny
 przytrzymaj ponownie. Information pokazuje rzeczywistą szerokość `Legacy 18` lub
 `Legacy 24`.
+
+Jednostka odczytu pozostaje przy wartości, np. `OilQ 50%`, `BatV 12.50V`
+i `BtI -5.2A`. OilT/OilLv/OilSt odróżniają temperaturę, poziom i stan oleju;
+OilQ to wskaźnik jakości oleju z ECU, a nie potwierdzona ocena czasu do wymiany.
+SOCi/SOCe/SOCb odróżniają poziom naładowania raportowany przez IBS, ECU i BCM.
+RPr/RMode oznaczają postęp/tryb regeneracji, RDist/RTime jej średni dystans/czas,
+a OvrT/OvrN czas/liczbę przekroczeń obrotów. Turbo press req to żądanie ciśnienia
+(bar); Turbo pct req i Turbo pct zachowują dotychczasowe sygnały procentowe bez
+przypisywania im nowej interpretacji fizycznej. Ich skróty to TPrR, TPcR i TPct.
+AdBV/AdBL odróżniają objętość AdBlue od poziomu procentowego. FuelT/FRate oznaczają
+temperaturę paliwa i tempo jego zużycia; RAgo/RCnt dystans od regeneracji i jej liczbę. Nazwy pomiarów
+przyspieszenia zachowują łącznik, również 100-200. Dłuższe nazwy mogą wymagać
+krótszych formatów lub większej liczby podstron w gęstych Favorites; zapisane ID
+i formaty pozostają zachowane. Jednostki, przeliczenia i precyzja są bez zmian.
 
 ## Ustawienia: Features
 
@@ -760,10 +774,13 @@ pokaz po naciśnięciu RES.
 | Wersja BH | Wersja kontrolera nadwozia. `? BH no reply` oznacza brak aktualnej odpowiedzi z wersją. |
 | `MY23:ON/OFF …ch` | Starszy profil: ustawienie MY23 i szerokość 18/24 znaki. MY23 pokazuje `IPC MY23` oraz `16 / 22 glyphs`. |
 | `Immobilizer: ON/OFF` | Zapisane ustawienie immobilizera BACCAble. Nie można go przełączyć na tej stronie. |
-| `Reports:` | Liczba komunikatów o przyciskach kierownicy odebranych przez menu. Pomaga sprawdzić, dlaczego przyciski nie reagują. |
-| `Gaps:` | Liczba wykrytych przerw w docieraniu komunikatów o przyciskach. |
-| `Max gap:…ms` | Najdłuższy zaobserwowany odstęp między komunikatami o przyciskach, w milisekundach. |
-| `Input age:…ms` | Czas od ostatniego komunikatu o przyciskach. `--` oznacza, że nie ma takiego odczytu. |
+| `Button reports` | Liczba komunikatów o przyciskach kierownicy odebranych przez menu. Pomaga sprawdzić, dlaczego przyciski nie reagują. |
+| `Report gaps` | Liczba wykrytych przerw w docieraniu komunikatów o przyciskach. |
+| `Max input gap` | Najdłuższy zaobserwowany odstęp między komunikatami o przyciskach, w milisekundach. |
+| `Report age` | Czas od ostatniego komunikatu o przyciskach. `--` oznacza, że nie ma takiego odczytu. |
+
+MY23 pokazuje nazwę nad wartością; Legacy w razie potrzeby skraca nazwę,
+zachowując całą liczbę i jednostkę milisekund.
 | `> Demo` | Uruchamia pokaz menu i przykładowych wartości. |
 
 Odpowiedzi z wersją C2/BH starsze niż około pięć sekund są uznawane za nieaktualne.
@@ -808,20 +825,19 @@ nieobsługiwane zapytania do sterownika ECU mogą stale dawać `--`.
 SOC oznacza stopień naładowania akumulatora. Oprogramowanie udostępnia kilka
 niezależnych źródeł tej wartości:
 
-| Strona lub pole | Źródło i znaczenie |
+| Odczyt | Źródło i znaczenie |
 | --- | --- |
-| `Batt charge BCM` → `Batt BCM SOC` (benzyna) | Diagnostyczny odczyt SOC ze sterownika nadwozia BCM. |
-| `Batt charge / A` (benzyna i diesel) | Diagnostyczny SOC ze sterownika silnika, obok prądu akumulatora odczytanego ze zwykłych komunikatów CAN. |
-| `Battery charge` (diesel) | SOC ze zwykłego komunikatu czujnika akumulatora IBS. |
-| `Battery sources` (oba katalogi, strona zaawansowana) | Najpierw SOC z IBS, potem SOC ze sterownika silnika. Obie wartości są w procentach. |
-| `Battery IBS raw` | Surowe bajty 0 i 1 komunikatu IBS pokazane jako liczby. To nie są dwa odczyty procentowe. |
-| `IBS raw0/SOC/V`, `IBS raw1/SOC/V` | Jeden surowy bajt, SOC z BCM i napięcie z BCM. Te strony serwisowe korzystają z definicji BCM także w katalogu diesla; mogą nie być obsługiwane. |
+| `Charge IBS` (`SOCi`) | Poziom naładowania ze zwykłego komunikatu czujnika IBS. |
+| `Charge ECU` (`SOCe`) | Diagnostyczny odczyt naładowania ze sterownika silnika. |
+| `Charge BCM` (`SOCb`) | Diagnostyczny odczyt naładowania ze sterownika nadwozia. |
+| `IBS raw 0`, `IBS raw 1` | Surowe wartości bajtów IBS; nie są to dwa procenty. |
+| `Batt voltage`, `Batt current` | Osobne odczyty napięcia i prądu. |
 
-Dlatego `Batt charge / A` może pokazywać `--%` mimo obecnego odczytu prądu,
-a `Batt charge BCM` może być niedostępny, mimo że działa SOC z IBS.
-Urządzenie nie zastępuje automatycznie jednego źródła drugim. Brak SOC nie
-oznacza rozładowanego akumulatora. Użyj `Battery sources`, aby porównać
-dostępność źródeł, oraz `Battery V / A`, aby osobno obserwować napięcie i prąd.
+Źródło naładowania może pokazywać `--`, mimo że prąd lub inne źródło jest dostępne.
+Urządzenie nie zastępuje automatycznie źródeł. Brak SOC nie oznacza rozładowanego
+akumulatora. Porównaj trzy odczyty Charge w grupie Battery albo zestaw je w
+Favorites. Stare strony łączone Battery sources/Battery V / A zastąpiły pojedyncze
+odczyty.
 
 Zgodnie z przyjętą konwencją dodatni prąd oznacza ładowanie, a ujemny —
 rozładowywanie. Samo napięcie nie dowodzi ładowania. Strony z surowymi bajtami IBS
@@ -889,11 +905,11 @@ Wartość, na którą ECU nie odpowiada, pokazuje `--`.
 
 | Odczyt | Jednostka / znaczenie | Dostępność |
 | --- | --- | --- |
-| Battery | V | wszystkie |
-| Battery A | A | wszystkie |
-| Batt IBS | % | wszystkie |
-| Batt ECU | % | wszystkie |
-| Batt BCM | % | wszystkie |
+| Batt voltage | V | wszystkie |
+| Batt current | A | wszystkie |
+| Charge IBS | % | wszystkie |
+| Charge ECU | % | wszystkie |
+| Charge BCM | % | wszystkie |
 | IBS raw 0 | surowy bajt | wszystkie |
 | IBS raw 1 | surowy bajt | wszystkie |
 
@@ -903,14 +919,14 @@ Wartość, na którą ECU nie odpowiada, pokazuje `--`.
 | --- | --- | --- |
 | DPF load | % | diesel |
 | DPF temp | C | diesel |
-| Regen | % | diesel |
+| Regen progress | % | diesel |
 | Regen mode | faza | diesel |
 | Regen ago | km | diesel |
 | Regen count | liczba | diesel |
-| Regen avg km | km | diesel |
-| Regen avg min | min | diesel |
-| AdBlue | L | diesel + SCR |
-| AdBlue % | % | diesel + SCR |
+| Regen avg dist | km | diesel |
+| Regen avg time | min | diesel |
+| AdBlue volume | L | diesel + SCR |
+| AdBlue level | % | diesel + SCR |
 
 ### Driving
 
@@ -930,7 +946,7 @@ Wartość, na którą ECU nie odpowiada, pokazuje `--`.
 | 0-100 | s | wszystkie |
 | 100-200 | s | wszystkie |
 | Best 0-100 | s | wszystkie |
-| Best100-200 | s | wszystkie |
+| Best 100-200 | s | wszystkie |
 
 ### Diagnostics
 
@@ -942,14 +958,14 @@ Wartość, na którą ECU nie odpowiada, pokazuje `--`.
 | Knock | mV | benzyna |
 | Key ID | liczba | benzyna |
 | Run time | min | wszystkie |
-| Over-rev s | s | wszystkie |
-| Over-rev n | liczba | wszystkie |
+| Over-rev time | s | wszystkie |
+| Over-rev count | liczba | wszystkie |
 | A/C pressure | bar | wszystkie |
-| Turbo V | V | benzyna |
-| Intake V | V | diesel |
-| Turbo req bar | bar | diesel |
-| Turbo req % | % | diesel |
-| Turbo % | % | diesel |
+| Turbo sensor | V | benzyna |
+| Intake sensor | V | diesel |
+| Turbo press req | bar | diesel |
+| Turbo pct req | % | diesel |
+| Turbo pct | % | diesel |
 | Boost req | bar | diesel |
 
 ## Przechwytywanie CAN i diagnostyka przez USB
@@ -1100,7 +1116,7 @@ Po zakończeniu używaj USB mode OFF do zwykłej pracy.
 | Brakuje odczytu lub akcji | Sprawdź profil pojazdu oraz ustawienie udostępniające akcję w Features. Nieobsługiwane zapisane ulubione pokazuje `--`, dopóki jego profil znów nie zacznie obowiązywać. |
 | `No favorites` / `No pages` | Dodaj zgodne ulubione lub przywróć widoczność stron. Dwuklik RES nadal pozwala wrócić. |
 | Odczyt pokazuje `--` | Poczekaj na aktualne dane, sprawdź stan zapłonu/silnika i obsługę przez ECU. Diagnostyka USB może wstrzymywać zwykłe zapytania. Obecność strony nie gwarantuje, że sterownik obsługuje jej parametr. |
-| `Batt BCM SOC --` lub `Batt charge --%` | Porównaj niezależne źródła na Battery sources. Nie traktuj braku SOC jak 0% i nie używaj IBS override jako naprawy odczytu. |
+| `Charge BCM --` lub `Charge ECU --` | Porównaj Charge IBS, Charge ECU i Charge BCM. Nie traktuj braku SOC jak 0% i nie używaj IBS override jako naprawy odczytu. |
 | Ustawienie wraca do poprzedniej wartości po restarcie | Przytrzymaj RES w edytorze, aby zapisać; wcześniejszy dwuklik jest opcjonalny. Rozwiąż problem `Save failed` / `HOLD: RETRY`. Zmiany pozostawione tylko w pamięci roboczej nie są trwałe. |
 | `! Disabled in setup` | Włącz odpowiednie ustawienie w Features i wróć. |
 | `! Stop the car`, `! Enable Dyno`, `! Release brake`, `! Reset ESC`, `! Disable launch` | Spełnij wskazany warunek: zatrzymaj auto, włącz Dyno, zwolnij wymuszone hamowanie, przywróć normalny stan ESC albo wyłącz wspomaganie startu. Przy hamulcach stosuj opisaną procedurę wyłączenia wspomagania i zwolnienia. |

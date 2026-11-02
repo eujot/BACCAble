@@ -355,6 +355,7 @@ int main(void) {
         HOST_TEST(test_ergonomics_vehicle_idle),
         HOST_TEST(test_ergonomics_features_and_info),
         HOST_TEST(test_ergonomics_action_confirmation),
+        HOST_TEST(test_information_input_labels),
         HOST_TEST(test_direction_recovery),
         HOST_TEST(test_navigation_display_latency),
         HOST_TEST(test_ux_reading_groups),

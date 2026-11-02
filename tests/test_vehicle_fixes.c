@@ -102,7 +102,10 @@ static void test_favorite_widths(void) {
             FavoriteLayout layout; favorite_layout_default(&layout, &p);
             DisplayProfile d = vehicle_display_profile_for(&p);
             for (unsigned s = 0; s < 6; ++s) {
-                if (d.rows == 2) assert(favorite_set_fits(&layout.sets[s], d));
+                if (d.rows == 2) {
+                    if (!favorite_set_fits(&layout.sets[s], d)) fprintf(stderr, "Default fit: engine=%u set=%u\n", engine, s);
+                    assert(favorite_set_fits(&layout.sets[s], d));
+                }
                 for (unsigned r = 0; r < 2; ++r) {
                     unsigned width = d.widths[d.rows == 2 ? r : 0];
                     FavoriteItem part[4];
@@ -717,4 +720,17 @@ static void test_ergonomics_validation_labels(void) {
             assert(!memcmp(screen_packet + 2, titles[i], strlen(titles[i])));
             assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, hints[j], strlen(hints[j])));
         }
+}
+
+
+static void test_information_input_labels(void) {
+    for (uint8_t display = VEHICLE_DISPLAY_LEGACY18; display <= VEHICLE_DISPLAY_MY23; ++display) {
+        ergonomics_reset(display); ergonomics_root(5);
+        for (unsigned i = 0; i < 5; ++i) menu_event(MENU_NEXT);
+        assert(ergonomics_has("Button reports"));
+        menu_event(MENU_NEXT); assert(ergonomics_has("Report gaps"));
+        menu_event(MENU_NEXT); assert(ergonomics_has("Max input gap"));
+        menu_event(MENU_NEXT); assert(ergonomics_has("Report age"));
+        assert(ergonomics_has("--"));
+    }
 }

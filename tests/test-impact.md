@@ -198,3 +198,15 @@ and complete confirmation/retry text using the production renderer. The label
 order test follows the contiguous workshop Actions group. Existing tests still
 cover failed writes/discard and atomic persistence. Full native host suite and
 four-flavor lint/build validation apply; no physical IPC acceptance is claimed.
+
+
+## Reading label clarity
+
+The new reading-layout case verifies OilQ 50%, signed battery current and voltage,
+unique full/medium/short labels across the complete catalog, no percent sign in
+labels, Auto fitting at 16/18/22/24 glyphs, and retained acceleration hyphens.
+Existing Favorite regressions check default MY23 set fit for every engine and
+row rendering across widths, including missing/large values. Information labels
+are exercised through production menu packets on all four compiled variants
+and three runtime display profiles. A source comparison verifies that only
+catalog names changed, not units, precision, IDs, sources or eligibility.

@@ -131,9 +131,38 @@ static void test_reading_oil_bar(void) {
     puts("PASS: oil bar renders a full-width bracket with marker and off-scale arrows");
 }
 
+static void test_reading_clear_labels(void) {
+    char out[64];
+    ReadingSample sample = {READING_STATE_VALID, 50};
+    assert(reading_format_line(READING_OIL_QUALITY, &sample, READING_FORMAT_SHORT, 16, out, sizeof(out)) == READING_FIT_OK);
+    assert(!strcmp(out, "OilQ 50%"));
+    sample.value = -5.2f;
+    reading_format_line(READING_BATTERY_CURRENT, &sample, READING_FORMAT_SHORT, 16, out, sizeof(out));
+    assert(!strcmp(out, "BtI -5.2A"));
+    sample.value = 12.5f;
+    reading_format_line(READING_BATTERY_VOLTAGE, &sample, READING_FORMAT_SHORT, 16, out, sizeof(out));
+    assert(!strcmp(out, "BatV 12.50V"));
+    const unsigned widths[] = {16, 18, 22, 24};
+    for (ReadingId id = 0; id < READING_COUNT; ++id) {
+        for (ReadingFormat format = READING_FORMAT_FULL; format <= READING_FORMAT_SHORT; ++format) {
+            const char *label = reading_label_for(id, format);
+            assert(!strchr(label, '%')); /* Unit belongs to the value. */
+            for (ReadingId other = id + 1; other < READING_COUNT; ++other)
+                assert(strcmp(label, reading_label_for(other, format)));
+        }
+        for (unsigned w = 0; w < sizeof(widths)/sizeof(widths[0]); ++w) {
+            sample.value = 50;
+            assert(reading_format_line(id, &sample, READING_FORMAT_AUTO, widths[w], out, sizeof(out)) == READING_FIT_OK);
+            assert(reading_glyph_count(out) <= widths[w]);
+        }
+    }
+    assert(!strcmp(reading_label_for(READING_TIME_100_200, READING_FORMAT_SHORT), "100-200"));
+}
+
 int main(void) {
     const char *suite = "reading-layout";
     const HostTest tests[] = {
+        HOST_TEST(test_reading_clear_labels),
         HOST_TEST(test_reading_glyph_count),
         HOST_TEST(test_reading_missing_never_zero),
         HOST_TEST(test_reading_numeric_format),
