@@ -12,7 +12,7 @@
   "firmware_source_commit": "ec1665ef6c346ba7e5914abb083ae8574ca6e6ad",
   "source_sha256": {
     "firmware/baccable/vehicle/display_frames.c": "0d9eca11b5892f835f5ad922e3a866ffbd596fbb6b2f81e3f57401481cf470bc",
-    "firmware/baccable/vehicle/telemetry_frames.c": "70d5bc96710e8b7d23041ed6a273dab750dfe4e51e6ba4e9a9cf4ec3f16d9994",
+    "firmware/baccable/vehicle/telemetry_frames.c": "229ee6b0e99b598566c21d38c79b35a165a2a84ed0c4ad99ad59bcd5d34366a4",
     "firmware/baccable/vehicle/engine_status.c": "ea177ee9394e39f14e1153a578c9312c92824b7b22d69dc4c26b4b821cce8951",
     "firmware/baccable/features/parking.c": "067f724edbb8b993e406f04450a98f25a8ca427e0e754a31b43690522a525a09",
     "firmware/baccable/vehicle/controls_frames.c": "4c4458235589ad089a5208e095eda6fdfa736cb6f51fc72090299b97019fcfbe",
@@ -20,7 +20,7 @@
     "firmware/baccable/vehicle/start_stop_status.c": "cae7578c5e0515316f19d6e8ef0528f0d2a7faa29fa56b59090752c428c3337d",
     "firmware/baccable/vehicle/shift_indicator.c": "2bd1d998325d152c0653b120554e724d1efcbe7e03a09bf03e2453cc626058fd",
     "firmware/baccable/vehicle/steering_controls.c": "2178e95c6250d569d8ee75cd5f9b34ec0ab89cb86dc13d56774d54f23aa4f41c",
-    "firmware/baccable/features/menu_input.c": "9584ff6fa864cf2986a6d58079e798a22740e929f9e82564b32bb4933034d565",
+    "firmware/baccable/features/menu_input.c": "1ad6d32cc84794618e09c8573969401e4b4897502e02e83819a5dbfccaa5342a",
     "firmware/baccable/protocol/checksum.c": "74759417a6edd56e3b230502710a056dc0d0be535b15912bf7250afeedd06946",
     "firmware/baccable/vehicle/lighting_frames.c": "733078f1af48d86ce8d44eed4d506802378915b81950d905a77a7de01b5ccb48",
     "firmware/baccable/vehicle/drive_mode.c": "1d85ce9070e2ffd26dc0da9b377c964597331df7b3ae5a5e2bb930366ff6e27d",
@@ -284,7 +284,7 @@
             "0": "Released",
             "1": "Pressed"
           },
-          "note": "18 D pulses alternate suspension calibration in 20261010-111025Z; an additional N pulse has no calibration change. Source ECU and replay acceptance are not established. See docs/research/20261024-startup-audit.md. New labelled matrix: 12 button pulses, four N/A controls without calibration change, four D toggles and four Race toggles. Eight changes follow the input by 25\u201345 ms on BH. docs/research/20261024-three-session-audit.md",
+          "note": "18 D pulses alternate suspension calibration in 20261010-111025Z; an additional N pulse has no calibration change. Source ECU and replay acceptance are not established. See docs/research/20261024-startup-audit.md. New labelled matrix: 12 button pulses, four N/A controls without calibration change, four D toggles and four Race toggles. Eight changes follow the input by 25–45 ms on BH. docs/research/20261024-three-session-audit.md",
           "capture_evidence": [
             {
               "session": "20261024-113104Z",
@@ -435,7 +435,7 @@
           "scale": 1,
           "offset": 0,
           "origin": "capture",
-          "note": "Supported mode-dependent raw code: D (b0&0x7C=0x20) 1=Stiff, 0=Soft; Race (0x04) 2=Stiff, 1=Mid. The labelled 20261024-113104Z matrix repeats both softer-to-firm pairs twice and supersedes the Mid=1 inference. Entry briefly carries the prior level for 24\u201336 ms, so require settled mode/level; N/A=0 is not a Soft command. Unknown combinations remain raw. Manual input/report evidence establishes the layout. Owner-reported vehicle acceptance on 2026-10-24 for the beta-30 source: the configured Race default selects Race and the configured softer suspension setting is applied in the car. This confirms the injected BH 0x256 gestures and the 150 ms suspension pulse. The feedback-gated retry path itself was not separately observed, and no capture or trace accompanies the report. docs/research/20261024-three-session-audit.md",
+          "note": "Supported mode-dependent raw code: D (b0&0x7C=0x20) 1=Stiff, 0=Soft; Race (0x04) 2=Stiff, 1=Mid. The labelled 20261024-113104Z matrix repeats both softer-to-firm pairs twice and supersedes the Mid=1 inference. Entry briefly carries the prior level for 24–36 ms, so require settled mode/level; N/A=0 is not a Soft command. Unknown combinations remain raw. Manual input/report evidence establishes the layout. Owner-reported vehicle acceptance on 2026-10-24 for the beta-30 source: the configured Race default selects Race and the configured softer suspension setting is applied in the car. This confirms the injected BH 0x256 gestures and the 150 ms suspension pulse. The feedback-gated retry path itself was not separately observed, and no capture or trace accompanies the report. docs/research/20261024-three-session-audit.md",
           "historical_note": "D: 1=Stiff after mode entry, 0=Soft after button press, supported by repeated toggles and owner description. Race: 2=Stiff after entry; Mid=1 is a firmware inference requiring a labelled Race-button capture. Unknown values remain raw. See docs/research/20261024-startup-audit.md.",
           "capture_evidence": [
             {
@@ -1201,7 +1201,7 @@
               ]
             }
           },
-          "note": "Supported AUTO-mode indication, independent of dipped-beam activation. In 20261010-104325Z events 61\u201366 it toggles with AUTO selection while b1.6 stays clear; it stays set throughout all three automatic lamp cycles on 20261024-105643Z. Supersedes interpreting the legacy auto_low_beam_report name as lamps ON. docs/research/20261024-rain-lights-correlation.md",
+          "note": "Supported AUTO-mode indication, independent of dipped-beam activation. In 20261010-104325Z events 61–66 it toggles with AUTO selection while b1.6 stays clear; it stays set throughout all three automatic lamp cycles on 20261024-105643Z. Supersedes interpreting the legacy auto_low_beam_report name as lamps ON. docs/research/20261024-rain-lights-correlation.md",
           "historical_name": "auto_low_beam_report",
           "historical_note": "Historical lamp-state interpretation. Agreement with an automatic-headlights marker does not establish selector mode or sensor state.",
           "enum": {
@@ -1313,7 +1313,7 @@
           "scale": 1,
           "offset": 0,
           "origin": "capture",
-          "note": "Supported by three manual ON/OFF pairs (20261010-104325Z events 73\u201378) and three covered/uncovered AUTO cycles (20261024-105643Z events 2\u20135, 14\u201317, 26\u201329). Reported/requested lamp state; passive capture does not prove an injectable command or physical feedback. docs/research/20261024-rain-lights-correlation.md",
+          "note": "Supported by three manual ON/OFF pairs (20261010-104325Z events 73–78) and three covered/uncovered AUTO cycles (20261024-105643Z events 2–5, 14–17, 26–29). Reported/requested lamp state; passive capture does not prove an injectable command or physical feedback. docs/research/20261024-rain-lights-correlation.md",
           "enum": {
             "0": "Off",
             "1": "On"
@@ -8261,7 +8261,7 @@
           "scale": 1,
           "offset": 0,
           "origin": "capture",
-          "note": "Supported by three manual ON/OFF pairs (20261010-104325Z events 73\u201378) and three covered/uncovered AUTO cycles (20261024-105643Z events 2\u20135, 14\u201317, 26\u201329). Reported/requested lamp state; passive capture does not prove an injectable command or physical feedback. docs/research/20261024-rain-lights-correlation.md",
+          "note": "Supported by three manual ON/OFF pairs (20261010-104325Z events 73–78) and three covered/uncovered AUTO cycles (20261024-105643Z events 2–5, 14–17, 26–29). Reported/requested lamp state; passive capture does not prove an injectable command or physical feedback. docs/research/20261024-rain-lights-correlation.md",
           "enum": {
             "0": "Off",
             "1": "On"
@@ -8280,7 +8280,7 @@
           "scale": 1,
           "offset": 0,
           "origin": "capture",
-          "note": "Supported AUTO-mode indication, independent of dipped-beam activation. In 20261010-104325Z events 61\u201366 it toggles with AUTO selection while b1.6 stays clear; it stays set throughout all three automatic lamp cycles on 20261024-105643Z. Supersedes interpreting the legacy auto_low_beam_report name as lamps ON. docs/research/20261024-rain-lights-correlation.md",
+          "note": "Supported AUTO-mode indication, independent of dipped-beam activation. In 20261010-104325Z events 61–66 it toggles with AUTO selection while b1.6 stays clear; it stays set throughout all three automatic lamp cycles on 20261024-105643Z. Supersedes interpreting the legacy auto_low_beam_report name as lamps ON. docs/research/20261024-rain-lights-correlation.md",
           "enum": {
             "0": "Not AUTO",
             "1": "AUTO"
@@ -8882,7 +8882,7 @@
           ]
         }
       ],
-      "note": "A periodic report at about 20 ms; physical ECU identity and actuation role remain unverified. Calibration associations are supported by the labelled manual matrix, with no engine stop (fresh C1 RPM 797\u2013974).",
+      "note": "A periodic report at about 20 ms; physical ECU identity and actuation role remain unverified. Calibration associations are supported by the labelled manual matrix, with no engine stop (fresh C1 RPM 797–974).",
       "observations": [
         {
           "session": "20260926-181705Z",
@@ -9019,7 +9019,7 @@
           ]
         }
       ],
-      "note": "A periodic report at about 20 ms; physical ECU identity and actuation role remain unverified. Calibration associations are supported by the labelled manual matrix, with no engine stop (fresh C1 RPM 797\u2013974).",
+      "note": "A periodic report at about 20 ms; physical ECU identity and actuation role remain unverified. Calibration associations are supported by the labelled manual matrix, with no engine stop (fresh C1 RPM 797–974).",
       "observations": [
         {
           "session": "20260926-181818Z",
@@ -11423,7 +11423,7 @@
       "role": "BH",
       "topic": "DNA-RELATED-25A-001",
       "source": "docs/research/20261023-dna-selector.md",
-      "status": "supported: Byte 1 is the damper setting and is relative to the drive mode. Entering a mode resets it: D=0x10 hard, Race=0x20 hard, N/A=0x00. The console button then sets D=0x00 (soft) or Race=0x10 (mid) and a second press returns to the mode default; 8/8 presses in 20261024-113104Z, with C1/C2 0x384 byte 6 bit 7 and C1/C2 0x1FC byte 0 mirroring the softened state. The same value 0x10 therefore means D hard and Race mid, so decode it together with the mode. Mode entry carries the previous damper level for 24\u201336 ms, so settle before decoding; returning from Race to N passes through D as a real intermediate mode. The startup preference injects the rotary direction instead of rewriting this report, and the car applies the configured softer setting."
+      "status": "supported: Byte 1 is the damper setting and is relative to the drive mode. Entering a mode resets it: D=0x10 hard, Race=0x20 hard, N/A=0x00. The console button then sets D=0x00 (soft) or Race=0x10 (mid) and a second press returns to the mode default; 8/8 presses in 20261024-113104Z, with C1/C2 0x384 byte 6 bit 7 and C1/C2 0x1FC byte 0 mirroring the softened state. The same value 0x10 therefore means D hard and Race mid, so decode it together with the mode. Mode entry carries the previous damper level for 24–36 ms, so settle before decoding; returning from Race to N passes through D as a real intermediate mode. The startup preference injects the rotary direction instead of rewriting this report, and the car applies the configured softer setting."
     },
     {
       "can_id": "0x73C",
@@ -16193,8 +16193,8 @@
       "status": "derived_not_independent"
     },
     {
-      "label": "Cofnij ostro\u017cnie kilka metr\u00f3w i zatrzymaj",
-      "title": "Cofnij ostro\u017cnie kilka metr\u00f3w i zatrzymaj",
+      "label": "Cofnij ostrożnie kilka metrów i zatrzymaj",
+      "title": "Cofnij ostrożnie kilka metrów i zatrzymaj",
       "group": "Recorded non-catalog events",
       "candidate_signals": [],
       "observed_events": [
@@ -16217,8 +16217,8 @@
       "status": "unresolved"
     },
     {
-      "label": "Naci\u015bnij ponownie, aby wy\u0142\u0105czy\u0107 tempomat",
-      "title": "Naci\u015bnij ponownie, aby wy\u0142\u0105czy\u0107 tempomat",
+      "label": "Naciśnij ponownie, aby wyłączyć tempomat",
+      "title": "Naciśnij ponownie, aby wyłączyć tempomat",
       "group": "Recorded non-catalog events",
       "candidate_signals": [],
       "observed_events": [
@@ -16241,8 +16241,8 @@
       "status": "unresolved"
     },
     {
-      "label": "Naci\u015bnij przycisk tempomatu (CC) \u2014 stan gotowo\u015bci",
-      "title": "Naci\u015bnij przycisk tempomatu (CC) \u2014 stan gotowo\u015bci",
+      "label": "Naciśnij przycisk tempomatu (CC) — stan gotowości",
+      "title": "Naciśnij przycisk tempomatu (CC) — stan gotowości",
       "group": "Recorded non-catalog events",
       "candidate_signals": [],
       "observed_events": [
@@ -16265,8 +16265,8 @@
       "status": "unresolved"
     },
     {
-      "label": "Odmra\u017canie przedniej szyby WY\u0141.",
-      "title": "Odmra\u017canie przedniej szyby WY\u0141.",
+      "label": "Odmrażanie przedniej szyby WYŁ.",
+      "title": "Odmrażanie przedniej szyby WYŁ.",
       "group": "Recorded non-catalog events",
       "candidate_signals": [],
       "observed_events": [
@@ -16289,8 +16289,8 @@
       "status": "unresolved"
     },
     {
-      "label": "Odmra\u017canie tylnej szyby WY\u0141.",
-      "title": "Odmra\u017canie tylnej szyby WY\u0141.",
+      "label": "Odmrażanie tylnej szyby WYŁ.",
+      "title": "Odmrażanie tylnej szyby WYŁ.",
       "group": "Recorded non-catalog events",
       "candidate_signals": [],
       "observed_events": [
@@ -16313,8 +16313,8 @@
       "status": "unresolved"
     },
     {
-      "label": "Poczekaj na powr\u00f3t do stanu spoczynku",
-      "title": "Poczekaj na powr\u00f3t do stanu spoczynku",
+      "label": "Poczekaj na powrót do stanu spoczynku",
+      "title": "Poczekaj na powrót do stanu spoczynku",
       "group": "Recorded non-catalog events",
       "candidate_signals": [],
       "observed_events": [
@@ -16337,8 +16337,8 @@
       "status": "unresolved"
     },
     {
-      "label": "Pu\u015b\u0107 hamulec i pozw\u00f3l pojazdowi pe\u0142zn\u0105\u0107 do przodu",
-      "title": "Pu\u015b\u0107 hamulec i pozw\u00f3l pojazdowi pe\u0142zn\u0105\u0107 do przodu",
+      "label": "Puść hamulec i pozwól pojazdowi pełznąć do przodu",
+      "title": "Puść hamulec i pozwól pojazdowi pełznąć do przodu",
       "group": "Recorded non-catalog events",
       "candidate_signals": [],
       "observed_events": [
@@ -16361,8 +16361,8 @@
       "status": "unresolved"
     },
     {
-      "label": "Pu\u015b\u0107 i poczekaj, a\u017c wycieraczki si\u0119 zatrzymaj\u0105",
-      "title": "Pu\u015b\u0107 i poczekaj, a\u017c wycieraczki si\u0119 zatrzymaj\u0105",
+      "label": "Puść i poczekaj, aż wycieraczki się zatrzymają",
+      "title": "Puść i poczekaj, aż wycieraczki się zatrzymają",
       "group": "Recorded non-catalog events",
       "candidate_signals": [],
       "observed_events": [
@@ -16385,8 +16385,8 @@
       "status": "unresolved"
     },
     {
-      "label": "Recyrkulacja WY\u0141.",
-      "title": "Recyrkulacja WY\u0141.",
+      "label": "Recyrkulacja WYŁ.",
+      "title": "Recyrkulacja WYŁ.",
       "group": "Recorded non-catalog events",
       "candidate_signals": [],
       "observed_events": [
@@ -16409,8 +16409,8 @@
       "status": "unresolved"
     },
     {
-      "label": "W A naci\u015bnij przycisk zawieszenia \u2014 nic si\u0119 nie zmienia (kontrola)",
-      "title": "W A naci\u015bnij przycisk zawieszenia \u2014 nic si\u0119 nie zmienia (kontrola)",
+      "label": "W A naciśnij przycisk zawieszenia — nic się nie zmienia (kontrola)",
+      "title": "W A naciśnij przycisk zawieszenia — nic się nie zmienia (kontrola)",
       "group": "Recorded non-catalog events",
       "candidate_signals": [],
       "observed_events": [
@@ -16428,8 +16428,8 @@
       "status": "unresolved"
     },
     {
-      "label": "W N naci\u015bnij przycisk zawieszenia \u2014 nic si\u0119 nie zmienia (kontrola)",
-      "title": "W N naci\u015bnij przycisk zawieszenia \u2014 nic si\u0119 nie zmienia (kontrola)",
+      "label": "W N naciśnij przycisk zawieszenia — nic się nie zmienia (kontrola)",
+      "title": "W N naciśnij przycisk zawieszenia — nic się nie zmienia (kontrola)",
       "group": "Recorded non-catalog events",
       "candidate_signals": [],
       "observed_events": [
@@ -16447,8 +16447,8 @@
       "status": "unresolved"
     },
     {
-      "label": "Wr\u00f3\u0107 d\u017awigni\u0105 do trybu automatycznego",
-      "title": "Wr\u00f3\u0107 d\u017awigni\u0105 do trybu automatycznego",
+      "label": "Wróć dźwignią do trybu automatycznego",
+      "title": "Wróć dźwignią do trybu automatycznego",
       "group": "Recorded non-catalog events",
       "candidate_signals": [],
       "observed_events": [
@@ -16471,8 +16471,8 @@
       "status": "unresolved"
     },
     {
-      "label": "Wybierz bieg P, aby kamera znikn\u0119\u0142a",
-      "title": "Wybierz bieg P, aby kamera znikn\u0119\u0142a",
+      "label": "Wybierz bieg P, aby kamera zniknęła",
+      "title": "Wybierz bieg P, aby kamera zniknęła",
       "group": "Recorded non-catalog events",
       "candidate_signals": [],
       "observed_events": [
@@ -16495,8 +16495,8 @@
       "status": "unresolved"
     },
     {
-      "label": "Zamknij drzwi, aby ostrze\u017cenie znikn\u0119\u0142o",
-      "title": "Zamknij drzwi, aby ostrze\u017cenie znikn\u0119\u0142o",
+      "label": "Zamknij drzwi, aby ostrzeżenie zniknęło",
+      "title": "Zamknij drzwi, aby ostrzeżenie zniknęło",
       "group": "Recorded non-catalog events",
       "candidate_signals": [],
       "observed_events": [
@@ -16519,8 +16519,8 @@
       "status": "unresolved"
     },
     {
-      "label": "Zamknij klapk\u0119 wlewu paliwa",
-      "title": "Zamknij klapk\u0119 wlewu paliwa",
+      "label": "Zamknij klapkę wlewu paliwa",
+      "title": "Zamknij klapkę wlewu paliwa",
       "group": "Recorded non-catalog events",
       "candidate_signals": [],
       "observed_events": [
@@ -16543,8 +16543,8 @@
       "status": "unresolved"
     },
     {
-      "label": "Zamknij klap\u0119 baga\u017cnika",
-      "title": "Zamknij klap\u0119 baga\u017cnika",
+      "label": "Zamknij klapę bagażnika",
+      "title": "Zamknij klapę bagażnika",
       "group": "Recorded non-catalog events",
       "candidate_signals": [],
       "observed_events": [
@@ -16567,8 +16567,8 @@
       "status": "unresolved"
     },
     {
-      "label": "Zamknij mask\u0119",
-      "title": "Zamknij mask\u0119",
+      "label": "Zamknij maskę",
+      "title": "Zamknij maskę",
       "group": "Recorded non-catalog events",
       "candidate_signals": [],
       "observed_events": [
@@ -16639,8 +16639,8 @@
       "status": "unresolved"
     },
     {
-      "label": "Zwolnij peda\u0142 hamulca",
-      "title": "Zwolnij peda\u0142 hamulca",
+      "label": "Zwolnij pedał hamulca",
+      "title": "Zwolnij pedał hamulca",
       "group": "Recorded non-catalog events",
       "candidate_signals": [],
       "observed_events": [
