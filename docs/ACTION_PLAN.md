@@ -4,6 +4,21 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## PR 99 review follow-up, 2026-11-02
+
+Reviewed input recovery/repeat pacing, editor drafts/confirmation/save failures,
+native reading states and timer continuity against the combined diff. CI on
+987d271 passed host/Lab tests, lint and all four firmware builds. Found and fixed
+missing host-test dependencies on state headers, which could reuse stale local
+binaries after StatisticsState changes. Restored original JSON ASCII escaping
+so the snapshot repair changes only the two reviewed source hashes (timer
+continuity and input recovery), without unrelated dictionary text churn.
+Validation after this follow-up: full host ASan/UBSan suite and all 82 Lab
+tests pass. No firmware source changes in this follow-up.
+The prior PR-creation reply was incorrect: PR 99 exists and contains all eight
+implementation/documentation/snapshot commits through 987d271. Hardware input,
+IPC and timer acceptance remain outstanding; CI cannot establish those results.
+
 ## Reading state semantics correction, 2026-11-02
 
 Branch `fix/reading-state-semantics` starts at `7279201` and retains all preceding
