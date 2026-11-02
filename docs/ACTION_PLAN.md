@@ -4,6 +4,39 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Menu ergonomics corrections, 2026-11-02
+
+Branch `fix/menu-ergonomics` starts at `bc46f06`; fresh upstream fetch confirms
+origin/master `af1fd72`. Implements the approved low-cost audit suggestions
+without protocol or persistence-format refactoring:
+
+- Retain Favorite format for the same reading and Back/re-entry; new readings
+  start at Auto. Dirty editor/layout drafts and pending Favorite choices survive
+  idle; clean editors still return home after 60 s.
+- Legacy Vehicle distinguishes editing with > and preserves complete values.
+  Equipment labels are Adaptive susp. and AdBlue / SCR.
+- Reset explicitly identifies Favorites; Favorite 6 previews Restore defaults.
+  Slots are numbered; empty slots omit Auto; format selection retains context;
+  validation identifies the row and recommends Short for width overflow.
+- MY23 Features shows saved values/busy reasons, including N Factory. Default
+  mode/Suspension are adjacent in drivetrain; Startup LKA is in assistance.
+- Action prompts retain compound effects and multi-ECU clear scope, with a
+  six-second confirmation window. Rain test sits with workshop actions.
+- Save errors use consistent three-second feedback with HOLD retry for editors
+  and RES retry for failed exits. Information shows effective Legacy width.
+- Settings uses Edit favorites; Vehicle precedes Information. Both user guides
+  and MENU_UX match the new labels, order and operating behavior.
+
+Five new host cases execute across four menu variants; production packet checks
+cover Legacy widths and MY23 budgets. Full Apple Clang ASan/UBSan host suite and
+fast menu checks pass. All four firmware flavors pass cppcheck and ARM builds
+with the documented Arm GNU 15.2.Rel1 toolchain.
+C1 standard image currently uses 94,396 bytes Flash / 13,316 bytes static RAM.
+No flashing, push, merge or vehicle acceptance. No new audit document created.
+Original checkout captures/releases remain untouched; all handoff work stays
+on this task branch. Physical IPC presentation and SELECT fencing remain outside
+this local ergonomics change.
+
 ## Local navigation display latency improvements, 2026-11-02
 
 Branch `fix/navigation-display-latency` builds on `d13dfc6` (including current UX

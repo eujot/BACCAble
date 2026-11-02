@@ -39,8 +39,8 @@ status and screens. Token-matched replies have a 3000 ms queue/response window;
 mirror status still expires 3000 ms after receipt, so a blocked save may require
 a retry after the next reply.
 
-The main menu is Favorites, Readings, Actions, Settings, Information, Vehicle.
-Settings contains Features, Favorites and BACCAble IPC. Vehicle is the sole editor
+The main menu is Favorites, Readings, Actions, Settings, Vehicle, Information.
+Settings contains Features, Edit favorites and BACCAble IPC. Vehicle is the sole editor
 for engine, drivetrain and display; old Flash slots remain serialization adapters.
 Favorites has six two-row sets and a confirmed Restore defaults action. Width
 resolution uses reserved value budgets; rendering and polling share filtered,
@@ -103,29 +103,29 @@ Engine and USB drafts include their companion setting bit.
 | Confirmation + Back | Discard; return to list with original live setting |
 | Failed save + hold | Retry the same draft; failure never becomes a committed live value |
 | Separate Back after save | Return; it does not save twice |
-| Editor timeout | Discard unfinished draft and return to Favorites |
+| Editor timeout | Clean drafts return to Favorites; changed drafts and pending Favorite choices stay open |
 
 Favorite rows use an isolated layout draft in the menu controller. Mirror Enabled is staged too. Mirror Store position requires a hold
 at `Adjust;HOLD=save`/`HOLD STORE`; queue acceptance is still **not** a BH storage
 acknowledgement. Existing action preconditions are checked again on confirmation.
-Except Read BCM faults and Peak hold, actions first show a prompt, then require
-a hold within three seconds. Another click cannot execute that confirmation.
+Except Read BCM faults, Peak hold and Rain test, actions first show a prompt, then require
+a hold within six seconds. Another click cannot execute that confirmation.
 
 Legacy membership, visibility, page-order and sort editors were removed by the
 individual-reading cutover. Favorites now use the UiLayoutRecord draft and
 retain live/saved layout on a failed write. Confirmation locks editing; successful
 save stays in the editor.
 Changed settings and menu preferences are independent storage domains. A failed automatic exit shows
-`× Save failed: RES`; SELECT or HOLD retries the remembered destination, Back cancels the
+`Save failed` / `RES RETRY / 2X BACK` (Legacy `Fail; RES retry`); SELECT or HOLD retries the remembered destination, Back cancels the
 exit, and idle never retries silently. Ordinary views idle after 30 s, editors
-after 60 s; live readings stay open and active fault work postpones inactivity.
+after 60 s when clean; dirty drafts remain open. Live readings stay open and active fault work postpones inactivity.
 
 ## MY23 view modes and encoding
 
 `features/my23_ui.*` defines LIST, EDIT, CONFIRM, PARAMETER and NOTICE modes.
 Lists, including slot/picker, page-editor and IPC-test views, show `› current`
-above the next item. Slot labels use the catalog page names, with only the two
-visible slots selectable.
+above the next item. Slot labels identify one of four positions in the selected logical row; format
+selection shows its reading and choice. Features browsing shows saved values.
 Long generic notices continue onto L2 instead of replacing useful text with a
 static Back footer. A long active title ends with `…`.
 Settings show draft values with `HOLD SAVE`; confirmation shows
@@ -245,7 +245,7 @@ slots. The physical record keeps five bytes per screen for migration; Slots 3–
 stay stored but inactive. `0xFF` marks an empty slot; Slot 1 is primary. Clearing
 it hides that screen. Assigning an already selected page clears its other slot.
 User edits happen only
-under `Settings → Favorites → Favorite N → Slot N`.
+under `Settings → Edit favorites → Favorite N → Row A/B → Slot N`.
 
 When no saved page/slot preferences exist, initialization seeds the six gasoline
 pairs and enables the slot layout for either IPC profile (diesel retains four
@@ -608,3 +608,25 @@ Legacy 24/MY23). Physical edges are never throttled by repeat pacing. Quiet-time
 flush and periodic retry remain fallbacks. BH's immutable active snapshot and
 latest pending slot remain unchanged; no physical presentation acknowledgement
 or SELECT/HOLD barrier is introduced. Vehicle latency acceptance remains open.
+
+
+## Local ergonomics corrections, 2026-11-02
+
+Favorite pickers preserve an existing format when the reading is unchanged and
+preserve a pending format across Back/re-entry. Changed readings default to Auto.
+Dirty Features/Vehicle/layout drafts and pending Favorite choices inhibit idle
+exit; clean editors retain 60 s. Slot labels include a position and empty slots
+omit a format. Format screens show the reading and choice. Validation names the
+failing row and recommends Short for overflow. Favorite 6 previews Restore
+defaults; reset has its own target-specific confirmation.
+
+MY23 Features shows saved values (N uses N Factory), with policy/busy reasons
+still taking priority. Legacy Vehicle uses > for edit mode and reserves the
+whole value before shortening labels. Vehicle equipment labels are Adaptive
+susp. and AdBlue / SCR. Main navigation places Vehicle before Information;
+Settings calls its editor Edit favorites. Rain test belongs beside workshop
+actions, startup LKA to assistance, and Default mode/Suspension to drivetrain.
+Action confirmation lasts six seconds and includes compound effects and the
+multi-ECU clear scope. Save errors last three seconds and show the appropriate
+HOLD/RES retry gesture. Information uses effective Legacy width. No protocol,
+Flash format, physical presentation fence or IPC control behavior is changed.

@@ -182,3 +182,19 @@ compile-time/runtime-width disagreement in both compiled legacy widths. Existing
 recognizer tests retain coverage of rapid edges, stale reports and permissions.
 Validation uses test-menu-fast and the full native host suite with Apple Clang
 ASan/UBSan; physical IPC timing and SELECT visibility are not asserted.
+
+
+## Menu ergonomics
+
+Five new production-menu cases run on four compile variants, with negotiated
+Legacy 18/24/MY23 coverage within the editor cases. They verify retained and
+pending formats, default Auto only for changed readings, dirty versus clean idle
+exit, failed-save feedback at 2.5 seconds, Legacy edit markers and complete
+Unknown values for every equipment field, saved Feature values, N and adjacent
+suspension, runtime-width Information, reset cancellation and Favorite 6 preview,
+row-B duplicate validation, numbered empty slots, and action confirmation at
+5 seconds versus rejection after 6 seconds. Packet checks cover list ellipses
+and complete confirmation/retry text using the production renderer. The label
+order test follows the contiguous workshop Actions group. Existing tests still
+cover failed writes/discard and atomic persistence. Full native host suite and
+four-flavor lint/build validation apply; no physical IPC acceptance is claimed.

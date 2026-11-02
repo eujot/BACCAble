@@ -8,7 +8,9 @@ potwierdzenie działania świateł z funkcji Rain lights nadal jest otwarte.
 Instrukcja dotyczy urządzenia już zamontowanego
 i podłączonego do samochodu. Nie obejmuje montażu, okablowania ani wgrywania
 oprogramowania. Kontrolery C1, C2 i BH powinny mieć pasujący do siebie zestaw
-oprogramowania z tego samego wydania.
+oprogramowania z tego samego wydania. Ta wersja obejmuje też poprawki ergonomii
+menu z 2 listopada 2026. Sprawdzono je testami hosta i kompilacją, bez
+potwierdzenia działania w samochodzie.
 
 To polskie tłumaczenie [aktualnej instrukcji angielskiej](BACCAble_USER_GUIDE_EN.md).
 Nazwy opcji, odczytów i komunikatów pozostawiono po angielsku, tak jak na
@@ -113,13 +115,14 @@ Tak samo edytujesz Features, Favorites, Vehicle i Enabled lusterek.
 Ekran decyzji blokuje edycję: przytrzymanie zapisuje, a dwuklik odrzuca. Opcje
 BACCAble IPC zachowują działanie natychmiastowe.
 Nie ma Save & Exit. Bieżące odczyty pozostają widoczne. Pozostałe widoki wracają
-do Favorites po 30 s bezczynności, a edytory po 60 s. Niedokończone szkice są
-odrzucane. Aktywny odczyt lub kasowanie błędów opóźnia automatyczny powrót.
+do Favorites po 30 s bezczynności, a edytory bez zmian po 60 s. Zmienione szkice
+Features, Vehicle i Favorites, również oczekujący wybór odczytu lub formatu,
+pozostają otwarte do zapisu albo odrzucenia. Aktywna diagnostyka opóźnia powrót.
 
 Edytor Favorites ma takie same szkice, potwierdzenie, zapis przytrzymaniem
 i odrzucanie. Zapis zostawia Cię w edytorze; osobny dwuklik wraca do Settings.
-Bezczynność odrzuca niezapisane zmiany. Wybrany odczyt i ulubione są zapisywane
-przy wyjściu ze zwykłych widoków. Przy `× Save failed: RES` krótkie RES lub przytrzymanie ponawia
+Bezczynność nie odrzuca zmienionych szkiców. Wybrany odczyt i ulubione są zapisywane
+przy wyjściu ze zwykłych widoków. Przy `Save failed` / `RES RETRY / 2X BACK` (Legacy: `Fail; RES retry`) krótkie RES lub przytrzymanie ponawia
 zapis i wyjście, a dwuklik anuluje próbę wyjścia i zostawia bieżący widok.
 Samo czekanie nie ponawia zapisu.
 
@@ -145,11 +148,11 @@ Menu główne
 │  │     ├─ Enabled
 │  │     ├─ Store position
 │  │     └─ < Back
-│  ├─ Favorites              Favorite 1–6 → Row A/B → pozycja → odczyt + format
+│  ├─ Edit favorites         Favorite 1–6 → Row A/B → pozycja → odczyt + format
 │  │  └─ Restore defaults    Potwierdzane przywrócenie tylko układów Favorites
 │  └─ BACCAble IPC           Tymczasowe eksperymenty z odświeżaniem
-├─ Information               Wersje, stan wejścia i Demo
-└─ Vehicle                   Model, rok, silnik, napęd, ekran i wyposażenie
+├─ Vehicle                   Model, rok, silnik, napęd, ekran i wyposażenie
+└─ Information               Wersje, stan wejścia i Demo
 ```
 
 Kolejność menu głównego jest stała. Readings pokazuje pojedyncze pomiary
@@ -162,11 +165,11 @@ uruchomieniu ładowane są domyślne zestawy zależne od silnika i zapisywane ra
 
 ## Profil pojazdu
 
-`Vehicle` jest ostatnią pozycją menu głównego. `Engine` ma opcje `Unknown`,
+`Vehicle` znajduje się po Settings, przed Information. `Engine` ma opcje `Unknown`,
 `2.0 Petrol`, `2.9 Petrol`, `2.2 Diesel`; `Drivetrain`: `Unknown`, `RWD`, `Q4`.
 `Model` to `Unknown`, `Giulia` albo `Stelvio`; rok to `Unknown` lub 2000–2099.
-Pola wyposażenia mają wartości `Unknown`, `Absent`, `Present`: `Suspension`,
-`Race`, `Exhaust valves`, `ACC`, `HAS`, `Lane assist`, `Park mirrors`, `SCR`.
+Pola wyposażenia mają wartości `Unknown`, `Absent`, `Present`: `Adaptive susp.`,
+`Race`, `Exhaust valves`, `ACC`, `HAS`, `Lane assist`, `Park mirrors`, `AdBlue / SCR`.
 Włączenie ustawienia funkcji nie potwierdza obecności wyposażenia.
 
 Przeniesiona starsza instalacja zachowuje wcześniejsze uprawnienia do jawnego
@@ -334,23 +337,32 @@ W edytorze Favorites wybór odczytu pozostaje tymczasowy do zatwierdzenia format
 Lista pomija odczyty niezgodne z zapisanym profilem Vehicle.
 Dwuklik z formatu wraca do wyboru odczytu, a kolejny anuluje bieżący wybór bez
 zmiany wcześniej zatwierdzonych zmian szkicu. Przytrzymanie zapisuje bezpośrednio
-z wyboru odczytu (format Auto), wyboru formatu, listy pozycji lub listy wierszy.
+z wyboru odczytu (zachowany format dla tego samego odczytu, Auto dla innego), wyboru formatu, listy pozycji lub listy wierszy.
 Pytanie o zapis po dwukliku dotyczy wychodzenia ze zmienionej listy pozycji.
 
 ### Edycja ulubionych
 
-1. Otwórz `Settings → Favorites` i wybierz `Favorite 1`–`Favorite 6`.
-2. Wybierz `Row A` lub `Row B`, a następnie pozycję.
-3. Wybierz odczyt (albo `Empty`) i format (Auto/Full/Medium/Short).
-4. Przytrzymaj, aby zapisać. Pierwszy BACK otwiera pytanie o zapis zmienionego
-   szkicu, a drugi go odrzuca. `Duplicate reading`, `Oil bar needs row` lub
-   `Too wide: shorten` odrzuca zapis i zachowuje szkic. Wybierz krótszy format
-   albo usuń pozycję.
+1. Otwórz `Settings → Edit favorites` i wybierz `Favorite 1`–`Favorite 6`.
+2. Wybierz `Row A` lub `Row B`, następnie numerowaną pozycję, np. `Slot 2: Empty`.
+3. Wybierz odczyt (albo `Empty`) i format Auto/Full/Medium/Short. Selektor pomija
+   odczyty nieobsługiwane przez zapisany profil Vehicle. Ekran formatu
+   pokazuje odczyt i format. Ponowne otwarcie tego samego odczytu zachowuje format;
+   wybór innego zaczyna od Auto. Back z formatu wraca do wyboru odczytu, zachowując
+   oczekujący format. Kolejny Back anuluje ten wybór bez zmieniania wcześniejszych
+   zaakceptowanych zmian szkicu.
+4. HOLD z wyboru odczytu, formatu, listy pozycji lub wierszy zapisuje bezpośrednio.
+   W selektorze odczytu ten sam odczyt zachowuje format, a inny otrzymuje Auto.
+   Pierwszy BACK z listy pozycji pokazuje decyzję dla zmienionego szkicu, drugi go
+   odrzuca. `Duplicate reading` lub `Oil bar only` wskazuje problem i wiersz A/B;
+   Legacy pokazuje np. `Row A: duplicate` lub `Row A: oil bar only`.
+   `Use Short format` sugeruje krótszy format; można też usunąć pozycję.
+   Odrzucenie zapisu zachowuje szkic.
 
-`Settings → Favorites → Restore defaults` znajduje się za `Favorite 6`.
-SELECT otwiera potwierdzenie, HOLD zastępuje wszystkie sześć zestawów, BACK anuluje.
-Błąd zapisu zachowuje poprzednie układy. Ustawienia, profil, statystyki i kalibracja
-lusterek pozostają zachowane.
+`Settings → Edit favorites → Restore defaults` znajduje się za `Favorite 6`;
+podgląd następnej pozycji również pokazuje Restore defaults. SELECT otwiera
+`Reset favorites?` / `HOLD RESET / 2X BACK` (Legacy: `Reset fav? HOLD`). HOLD
+zastępuje wszystkie sześć zestawów, BACK anuluje. Błąd zapisu zachowuje poprzednie
+układy. Ustawienia, profil, statystyki i kalibracja lusterek pozostają zachowane.
 
 ### Poziom oleju i pasek
 
@@ -359,14 +371,23 @@ zajmuje cały wiersz sam. Zakresy OK podane przez właściciela są bez zmian: 2
 72–82 mm, 2.0 Q4 67–77 mm, 2.2 RWD 61–65 mm, 2.2 Q4 79–84 mm. Nie są one tutaj
 na nowo weryfikowane. Nieznany napęd pokazuje `?` i `Set drivetrain`.
 
+Na Legacy edycję Vehicle oznacza `>`; nazwa pola jest skracana tak, aby zachować
+całą wartość. Błędy zapisu pozostają przez około trzy sekundy: MY23 pokazuje
+`Save failed` / `HOLD: RETRY`, a Legacy `Fail; HOLD retry`. Po usunięciu przyczyny
+przytrzymaj ponownie. Information pokazuje rzeczywistą szerokość `Legacy 18` lub
+`Legacy 24`.
+
 ## Ustawienia: Features
 
-Otwórz `Settings → Features`. Tabele zachowują rzeczywistą kolejność opcji.
+Otwórz `Settings → Features`. Na MY23 lista pokazuje ustawienie i jego zapisaną
+wartość. Default mode N pokazuje `N Factory`, bo pozostawia wybór fabryczny.
+`Default mode` i `Suspension` są obok siebie w grupie napędu; `Startup LKA`
+znajduje się w grupie wspomagania. Tabele zachowują rzeczywistą kolejność opcji.
 Poniższe nagłówki grup wyjaśniają działanie mocniejszych naciśnięć góra/dół — nie
 są dodatkowymi podmenu. Krótkie RES otwiera edytor z zapisaną wartością.
 Dopiero w edytorze kolejne naciśnięcia lub góra/dół zmieniają przełączniki i
 nazwane wartości. `Startup LKA` pokazuje wprost `OFF` lub `ON`; pozostałe przełączniki
-korzystają z symbolu zaznaczenia na liście.
+na Legacy korzystają z symbolu zaznaczenia na liście; na MY23 pokazują ON/OFF.
 
 Dla **Launch Nm**, **Shift RPM** i **Pedal trim** krótkie RES rozpoczyna edycję,
 a góra/dół zmienia szkic. Przytrzymanie zapisuje bezpośrednio. Dwuklik otwiera
@@ -431,14 +452,14 @@ pozycji menu nadal pojawia się od razu.
 | Opcja | Wartości | Do czego służy |
 | --- | --- | --- |
 | `Launch Nm` | 25–600 Nm, co 25 | Wartość momentu obrotowego zgłaszanego przez silnik, przy której wspomaganie startu wysyła polecenie zwolnienia wymuszonych przednich hamulców. To nie jest ograniczenie momentu ani ustawienie tuningu. |
-| `Default mode` | A / N / D / Race | Przy uruchomieniu auta BH symuluje sygnał pokrętła DNA w czterobajtowej ramce `0x256`. Dla A/D/Race C1 i BH czekają na świeże raporty obrotów powyżej 400 RPM przez dwie sekundy; podczas oczekiwania menu pokazuje `Start engine`. `N` pozostawia fabryczny wybór bez ingerencji; wcześniejsze zapisane OFF staje się N bez zmiany ustawień. A/D używają wychyleń po 200 ms. Race najpierw przechodzi do D, następnie przytrzymuje kierunek D przez 2,2 s. Stan naciśnięcia jest odświeżany po fabrycznych raportach neutralnych, a podczas długiego przytrzymania także po 250 ms bez powtórzenia. Nowe naciśnięcie następuje po świeżym raporcie neutralnym i opróżnieniu nadajnika CAN. Rzeczywisty tryb musi być stabilny przez sekundę przed kolejnym gestem. Obowiązuje limit trzech gestów zmiany trybu w ciągu dwunastu sekund. Fizyczne pokrętło ma pierwszeństwo, a rozpoczęte wirtualne naciśnięcie jest zwalniane po anulowaniu, zatrzymaniu silnika lub utracie aktualnych danych. Po bramce uruchomienia C1 czeka do 20 s na BH, a potem sprawdza raporty DNA i skrzyni przez pięć sekund. `Confirmed` potwierdza świeże raporty stanu, nie działanie każdego układu. Zapis ustawień lub wyłączenie zapłonu anuluje próbę; ponowna synchronizacja łącza jej nie uzbraja. Zaktualizuj C1 i BH razem. Test w samochodzie z 24 października 2026 potwierdził działanie ustawienia `Race`; tryb `A` nie został zgłoszony osobno. |
-| `Suspension` | Stiff / Soft / Mid | Ustawia zawieszenie przy następnym uruchomieniu: dla D dostępne jest `Stiff` lub `Soft`, a dla Race `Stiff` lub `Mid`. Dla A/N łagodniejszy wybór ma etykietę `Softer` i nie działa. Po sekundzie stabilnego rzeczywistego trybu i 300 ms stabilnego raportu zawieszenia BACCAble naciska przycisk na 150 ms tylko wtedy, gdy potrzebna jest zmiana, również gdy auto jest już w D/Race. Czeka na świeży raport po zwolnieniu. Jedna ponowna próba jest dozwolona dopiero po co najmniej sekundzie, przy świeżych, niezmiennych raportach przeciwnego stanu oraz zakończeniu wcześniejszej transmisji CAN. Choćby chwilowe zgłoszenie stanu docelowego albo brak/nieznana odpowiedź wykluczają tę ponowną próbę. Łącznie mogą być najwyżej dwa naciśnięcia. `No confirm` może oznaczać brak potwierdzenia zawieszenia, mimo że tryb DNA się zmienił. Ręczne użycie pokrętła lub przycisku zawieszenia przerywa automat. Wymaga zgodnego firmware C1/BH. Kody raportów po ręcznym wyborze D i Race/Mid są potwierdzone nagraniami, w tym dwoma pełnymi, opisanymi cyklami Race z 24 października 2026. Automatyczne ustawianie po uruchomieniu zostało potwierdzone w samochodzie 24 października 2026: zapisane ustawienie `Soft` jest stosowane. Ścieżka ponownej próby po nieprzyjętym impulsie nie została sprawdzona osobno. |
 | `ESC/TC control` | Wyłączona / włączona | Udostępnia przełączanie kontroli stabilności i trakcji oraz obsługiwany skrót przyciskiem asystenta pasa. Samochód musi mieć odpowiednią konfigurację. |
 | `Dyno action` | Wyłączona / włączona | Udostępnia `Toggle Dyno mode`. Samo włączenie tego ustawienia nie uruchamia trybu Dyno. |
 | `Brake action` | Wyłączona / włączona | Udostępnia `Brake override` i `Disable launch`. Samo włączenie ustawienia nie uruchamia hamulców. |
 | `AWD off action` | Wyłączona / włączona | Udostępnia `AWD off request` w samochodzie z napędem AWD. Samo włączenie nie wysyła polecenia wyłączenia napędu. |
 | `Pedal mode` | OFF / Auto / Bypass / A / N / D / R / Hybrid / Kids | Wybiera sposób reakcji zgodnego, dodatkowego kontrolera pedału przyspieszenia. Zobacz [kontroler pedału](#kontroler-pedału-przyspieszenia). |
 | `Pedal trim` | Od −10 do +10, co 2 | Koryguje reakcję wybranej mapy pedału. Nie oznacza procentowej zmiany mocy silnika. Tryb Kids ma własną, stałą niską korektę. |
+| `Default mode` | A / N / D / Race | Przy uruchomieniu auta BH symuluje sygnał pokrętła DNA w czterobajtowej ramce `0x256`. Dla A/D/Race C1 i BH czekają na świeże raporty obrotów powyżej 400 RPM przez dwie sekundy; podczas oczekiwania menu pokazuje `Start engine`. `N` pozostawia fabryczny wybór bez ingerencji; wcześniejsze zapisane OFF staje się N bez zmiany ustawień. A/D używają wychyleń po 200 ms. Race najpierw przechodzi do D, następnie przytrzymuje kierunek D przez 2,2 s. Stan naciśnięcia jest odświeżany po fabrycznych raportach neutralnych, a podczas długiego przytrzymania także po 250 ms bez powtórzenia. Nowe naciśnięcie następuje po świeżym raporcie neutralnym i opróżnieniu nadajnika CAN. Rzeczywisty tryb musi być stabilny przez sekundę przed kolejnym gestem. Obowiązuje limit trzech gestów zmiany trybu w ciągu dwunastu sekund. Fizyczne pokrętło ma pierwszeństwo, a rozpoczęte wirtualne naciśnięcie jest zwalniane po anulowaniu, zatrzymaniu silnika lub utracie aktualnych danych. Po bramce uruchomienia C1 czeka do 20 s na BH, a potem sprawdza raporty DNA i skrzyni przez pięć sekund. `Confirmed` potwierdza świeże raporty stanu, nie działanie każdego układu. Zapis ustawień lub wyłączenie zapłonu anuluje próbę; ponowna synchronizacja łącza jej nie uzbraja. Zaktualizuj C1 i BH razem. Test w samochodzie z 24 października 2026 potwierdził działanie ustawienia `Race`; tryb `A` nie został zgłoszony osobno. |
+| `Suspension` | Stiff / Soft / Mid | Ustawia zawieszenie przy następnym uruchomieniu: dla D dostępne jest `Stiff` lub `Soft`, a dla Race `Stiff` lub `Mid`. Dla A/N komunikat `Set D/Race first` blokuje włączenie tej preferencji; wcześniej zapisaną preferencję nadal można wyłączyć. Po sekundzie stabilnego rzeczywistego trybu i 300 ms stabilnego raportu zawieszenia BACCAble naciska przycisk na 150 ms tylko wtedy, gdy potrzebna jest zmiana, również gdy auto jest już w D/Race. Czeka na świeży raport po zwolnieniu. Jedna ponowna próba jest dozwolona dopiero po co najmniej sekundzie, przy świeżych, niezmiennych raportach przeciwnego stanu oraz zakończeniu wcześniejszej transmisji CAN. Choćby chwilowe zgłoszenie stanu docelowego albo brak/nieznana odpowiedź wykluczają tę ponowną próbę. Łącznie mogą być najwyżej dwa naciśnięcia. `No confirm` może oznaczać brak potwierdzenia zawieszenia, mimo że tryb DNA się zmienił. Ręczne użycie pokrętła lub przycisku zawieszenia przerywa automat. Wymaga zgodnego firmware C1/BH. Kody raportów po ręcznym wyborze D i Race/Mid są potwierdzone nagraniami, w tym dwoma pełnymi, opisanymi cyklami Race z 24 października 2026. Automatyczne ustawianie po uruchomieniu zostało potwierdzone w samochodzie 24 października 2026: zapisane ustawienie `Soft` jest stosowane. Ścieżka ponownej próby po nieprzyjętym impulsie nie została sprawdzona osobno. |
 
 ### Grupa urządzenia
 
@@ -625,8 +646,8 @@ Otwórz `Actions` w menu głównym. Jeśli akcja wymaga udostępnienia, najpierw
 jej ustawienie w Features. Tabela zachowuje kolejność akcji. Pozycje, których
 ustawienia są wyłączone, mogą być pominięte na liście.
 
-Z wyjątkiem `Read BCM faults` i `Peak hold` krótkie RES najpierw wyświetla
-potwierdzenie. Aby wykonać akcję, przytrzymaj RES **w ciągu trzech sekund**.
+Z wyjątkiem `Read BCM faults`, `Peak hold` i `Rain test` krótkie RES najpierw wyświetla
+potwierdzenie. Aby wykonać akcję, przytrzymaj RES **w ciągu sześciu sekund**.
 Przejście do innej pozycji lub powrót anuluje potwierdzenie. Przy wykonaniu
 urządzenie ponownie sprawdza wymagane warunki.
 
@@ -635,16 +656,16 @@ urządzenie ponownie sprawdza wymagane warunki.
 | `QV exhaust req` | QV exhaust; zgodny sprzęt | Wysyła polecenie otwarcia klap lub przywrócenia fabrycznego sterowania. WAIT nie potwierdza położenia klap. |
 | `Press HAS button` | Virtual HAS | Wysyła symulowane naciśnięcie przycisku HAS. `HAS: Request sent` nie oznacza, że HAS się włączył. |
 | `Toggle ESC/TC` | ESC/TC control; Dyno nieaktywny | Przełącza polecenie zmiany działania stabilizacji i kontroli trakcji. Potwierdzenie może pozostać niedostępne. |
-| `Toggle Dyno mode` | Dyno action; odpowiednio długi postój; brak wymuszonego hamowania i zmienionego stanu ESC | Wysyła polecenie włączenia/wyłączenia Dyno. Przy włączaniu pojawia się `Dyno+ESC? HOLD`. Odpowiedź C2 kończy oczekiwanie na kontroler; sprawdź stan samochodu. |
-| `Brake override` | Brake action; przed zmianą istniejącego wymuszenia trzeba wyłączyć wspomaganie startu; do włączenia wymagane są postój i aktywny Dyno | Wysyła polecenie wymuszenia przednich hamulców ze wspomaganiem startu albo przywrócenia normalnej pracy hamulców. Zobacz opisaną wyżej procedurę zwalniania. |
+| `Toggle Dyno mode` | Dyno action; odpowiednio długi postój; brak wymuszonego hamowania i zmienionego stanu ESC | Wysyła polecenie włączenia/wyłączenia Dyno. Na MY23 przy włączaniu pojawia się `Dyno + ESC?`, a przy wyłączaniu `Stop Dyno?`. Odpowiedź C2 kończy oczekiwanie na kontroler; sprawdź stan samochodu. |
+| `Brake override` | Brake action; przed zmianą istniejącego wymuszenia trzeba wyłączyć wspomaganie startu; do włączenia wymagane są postój i aktywny Dyno | Wysyła polecenie wymuszenia przednich hamulców ze wspomaganiem startu (`Brake + launch?` na MY23) albo przywrócenia normalnej pracy hamulców. Zobacz opisaną wyżej procedurę zwalniania. |
 | `Disable launch` | Brake action; wspomaganie startu uzbrojone | Wyłącza zwolnienie hamulców wyzwalane momentem obrotowym. Nie zwalnia wymuszonego hamowania. |
 | `AWD off request` | AWD off action; postój przy uruchamianiu | Rozpoczyna powtarzanie polecenia wyłączenia AWD albo anuluje jego wysyłanie. Nie daje pomiarowego potwierdzenia stanu napędu. |
+| `Rain test` | Nie wymaga osobnego ustawienia; zgodny firmware C1/C2/BH | Otwiera dwie strony diagnostyki świateł deszczowych; góra/dół przełącza między wycieraczkami a odczytem sygnału światła z BH. W AUTO przycisk SELECT żąda ciemnych kopii BH `0x738` przez maksymalnie 30 s; BH kończy wymuszenie po 3 s bez ponowienia. BACK kończy test. |
 | `Read BCM faults` | BCM fault reader; kasowanie DTC nie trwa | Od razu otwiera odczyt i przeglądanie błędów BCM. Nie kasuje kodów. |
-| `Clear DTCs` | DTC clear action; brak równoczesnego odczytu BCM lub kasowania | Wysyła polecenia kasowania błędów do skonfigurowanych sterowników na magistralach samochodu. Zakres jest szerszy niż odczyt BCM. Nie usuwa przyczyny usterki. |
+| `Clear DTCs` | DTC clear action; brak równoczesnego odczytu BCM lub kasowania | Wysyła polecenia kasowania błędów do skonfigurowanych sterowników na magistralach samochodu. Zakres jest szerszy niż odczyt BCM. Nie usuwa przyczyny usterki.  Na MY23 potwierdzenie `Clear all ECUs?` przypomina o szerszym zakresie niż odczyt BCM. |
 | `Reset best times` | Nie wymaga osobnego ustawienia w Features | Kasuje zapisane najlepsze czasy przyspieszenia. Wymaga potwierdzenia; udany zapis kończy komunikat `Records cleared`. |
 | `Peak hold` | Nie wymaga osobnego ustawienia w Features | Od razu włącza/wyłącza pokazywanie najwyższych wartości liczbowych dla bieżącej strony. |
 | `IBS SOC override` | Pracujący silnik; potwierdzenie | Włącza/wyłącza tymczasowe, eksperymentalne podmienianie SOC w komunikatach. Ograniczenia opisano niżej. |
-| `Rain test` | Nie wymaga osobnego ustawienia; zgodny firmware C1/C2/BH | Otwiera dwie strony diagnostyki świateł deszczowych; góra/dół przełącza między wycieraczkami a odczytem sygnału światła z BH. W AUTO przycisk SELECT żąda ciemnych kopii BH `0x738` przez maksymalnie 30 s; BH kończy wymuszenie po 3 s bez ponowienia. BACK kończy test. |
 
 Pierwsza strona `Rain test` działa jak dotąd: `Wiper` liczy zbocza ruchu
 wycieraczek także przy wyłączonym `Rain lights`; pierwsza próbka po przerwie
@@ -1080,7 +1101,7 @@ Po zakończeniu używaj USB mode OFF do zwykłej pracy.
 | `No favorites` / `No pages` | Dodaj zgodne ulubione lub przywróć widoczność stron. Dwuklik RES nadal pozwala wrócić. |
 | Odczyt pokazuje `--` | Poczekaj na aktualne dane, sprawdź stan zapłonu/silnika i obsługę przez ECU. Diagnostyka USB może wstrzymywać zwykłe zapytania. Obecność strony nie gwarantuje, że sterownik obsługuje jej parametr. |
 | `Batt BCM SOC --` lub `Batt charge --%` | Porównaj niezależne źródła na Battery sources. Nie traktuj braku SOC jak 0% i nie używaj IBS override jako naprawy odczytu. |
-| Ustawienie wraca do poprzedniej wartości po restarcie | Przytrzymaj RES w edytorze, aby zapisać; wcześniejszy dwuklik jest opcjonalny. Rozwiąż problem `× Save failed: RES`. Zmiany pozostawione tylko w pamięci roboczej nie są trwałe. |
+| Ustawienie wraca do poprzedniej wartości po restarcie | Przytrzymaj RES w edytorze, aby zapisać; wcześniejszy dwuklik jest opcjonalny. Rozwiąż problem `Save failed` / `HOLD: RETRY`. Zmiany pozostawione tylko w pamięci roboczej nie są trwałe. |
 | `! Disabled in setup` | Włącz odpowiednie ustawienie w Features i wróć. |
 | `! Stop the car`, `! Enable Dyno`, `! Release brake`, `! Reset ESC`, `! Disable launch` | Spełnij wskazany warunek: zatrzymaj auto, włącz Dyno, zwolnij wymuszone hamowanie, przywróć normalny stan ESC albo wyłącz wspomaganie startu. Przy hamulcach stosuj opisaną procedurę wyłączenia wspomagania i zwolnienia. |
 | `! Request pending` | Poczekaj na wynik oczekującego polecenia. Nie zakładaj, że już wykonano je albo anulowano. |

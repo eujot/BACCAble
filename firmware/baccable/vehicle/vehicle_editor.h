@@ -17,6 +17,7 @@ void vehicle_editor_begin(void);   /* Load the current profile into an isolated 
 void vehicle_editor_cancel(void);  /* Discard the draft. */
 void vehicle_editor_navigate(int direction);
 void vehicle_editor_select(void);
+bool vehicle_editor_dirty(void);
 bool vehicle_editor_back(void);    /* Returns false when the editor should close. */
 const char *vehicle_editor_save(void);    /* NULL on success, otherwise an error message; retains failed draft. */
 

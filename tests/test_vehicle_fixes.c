@@ -528,3 +528,193 @@ static void test_navigation_display_latency(void) {
         assert(memcmp(first, screen_packet, sizeof(first)));
     }
 }
+
+static void ergonomics_reset(uint8_t display) {
+    fixes_reset();
+    VehicleProfile p = *vehicle_profile_current(); p.display_selection = display;
+    assert(settings_profile_save(&p) == 0);
+    UiLayoutRecord layout; ui_layout_default(&layout, &p);
+    favorite_set_clear(&layout.favorites.sets[0]);
+    layout.favorites.sets[0].rows[0][0] = (FavoriteItem){READING_OIL_TEMPERATURE, READING_FORMAT_SHORT};
+    uint8_t wire[UI_LAYOUT_RECORD_SIZE]; assert(ui_layout_encode(&layout, wire));
+    assert(flash_record_save(VISIBILITY_RECORD, UI_LAYOUT_RECORD_TYPE, wire, sizeof(wire)));
+    vehicle_runtime_init(); menu_init();
+    vehicle_runtime_process(); vehicle_runtime_reply(display_token, 1, 0);
+}
+static bool ergonomics_has(const char *label) {
+    char text[MY23_PACKET_SIZE + 1];
+    memcpy(text, screen_packet + 2, MY23_PACKET_SIZE - 1);
+    text[MY23_PACKET_SIZE - 1] = 0;
+    return strstr(text, label) != NULL;
+}
+static void ergonomics_root(unsigned entry) {
+    menu_event(MENU_BACK);
+    for (unsigned i = 0; i < entry; ++i) menu_event(MENU_NEXT);
+    menu_event(MENU_SELECT);
+}
+static ReadingFormat ergonomics_saved_format(void) {
+    uint8_t wire[UI_LAYOUT_RECORD_SIZE]; UiLayoutRecord layout;
+    assert(flash_record_load(VISIBILITY_RECORD, UI_LAYOUT_RECORD_TYPE, wire, sizeof(wire)));
+    assert(ui_layout_decode(wire, &layout));
+    return layout.favorites.sets[0].rows[0][0].format;
+}
+static void test_ergonomics_favorites(void) {
+    for (uint8_t display = VEHICLE_DISPLAY_LEGACY18; display <= VEHICLE_DISPLAY_MY23; ++display) {
+        ergonomics_reset(display); ux_open_favorite_picker();
+        menu_event(MENU_SELECT);
+        assert(ergonomics_has("Short"));
+        menu_event(MENU_PREVIOUS); /* Medium draft. */
+        menu_event(MENU_BACK); menu_event(MENU_SELECT);
+        assert(ergonomics_has("Medium"));
+        now += 61000; menu_process();
+        assert(!menu_parameters_active() && ergonomics_has("Medium"));
+        assert(ergonomics_saved_format() == READING_FORMAT_SHORT);
+        menu_event(MENU_HOLD);
+        assert(ergonomics_saved_format() == READING_FORMAT_MEDIUM);
+        now += 3100; menu_render();
+        menu_event(MENU_SELECT); menu_event(MENU_HOLD); /* Same reading from picker keeps format. */
+        assert(ergonomics_saved_format() == READING_FORMAT_MEDIUM);
+        now += 3100; menu_render();
+        menu_event(MENU_SELECT); menu_event(MENU_NEXT); menu_event(MENU_SELECT);
+        assert(ergonomics_has("Auto")); /* Only a new reading defaults to Auto. */
+        menu_event(MENU_BACK); menu_event(MENU_BACK);
+        assert(ergonomics_saved_format() == READING_FORMAT_MEDIUM);
+
+        ergonomics_reset(display); ergonomics_root(3);
+        menu_event(MENU_NEXT); menu_event(MENU_SELECT);
+        for (unsigned i = 0; i < 5; ++i) menu_event(MENU_NEXT);
+        if (display == VEHICLE_DISPLAY_MY23)
+            assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "Restore defaults", 16));
+        menu_event(MENU_NEXT); menu_event(MENU_SELECT);
+        assert(ergonomics_has(display == VEHICLE_DISPLAY_MY23 ? "Reset favorites?" : "Reset fav? HOLD"));
+        menu_event(MENU_BACK);
+        assert(ergonomics_saved_format() == READING_FORMAT_SHORT);
+    }
+}
+static void test_ergonomics_vehicle_idle(void) {
+    for (uint8_t display = VEHICLE_DISPLAY_LEGACY18; display <= VEHICLE_DISPLAY_MY23; ++display) {
+        ergonomics_reset(display); ergonomics_root(4);
+        assert(ergonomics_has("Giulia"));
+        menu_event(MENU_SELECT);
+        if (display != VEHICLE_DISPLAY_MY23) assert(screen_packet[2] == '>');
+        menu_event(MENU_NEXT);
+        assert(vehicle_editor_dirty());
+        now += 61000; menu_process();
+        assert(!menu_parameters_active() && ergonomics_has("Stelvio"));
+        assert(vehicle_profile_current()->model == VEHICLE_MODEL_GIULIA);
+        fail_save = true; menu_event(MENU_HOLD);
+        now += 2500; menu_render();
+        assert(ergonomics_has(display == VEHICLE_DISPLAY_MY23 ? "HOLD: RETRY" : "HOLD retry"));
+        fail_save = false; menu_event(MENU_HOLD);
+        assert(vehicle_profile_current()->model == VEHICLE_MODEL_STELVIO);
+        now += 61000; menu_process();
+        assert(menu_parameters_active()); /* Clean drafts still time out. */
+
+        ergonomics_reset(display); ergonomics_root(4);
+        /* All equipment values must survive the Legacy label budget. */
+        for (unsigned field = 0; field < 13; ++field) {
+            if (field >= 5) {
+                assert(ergonomics_has("Unknown"));
+                menu_event(MENU_SELECT);
+                assert(ergonomics_has("Unknown"));
+                if (display != VEHICLE_DISPLAY_MY23) assert(screen_packet[2] == '>');
+                menu_event(MENU_BACK);
+            }
+            menu_event(MENU_NEXT);
+        }
+    }
+}
+static void test_ergonomics_features_and_info(void) {
+    ergonomics_reset(VEHICLE_DISPLAY_MY23); ergonomics_root(3); menu_event(MENU_SELECT);
+    assert(ux_find_setting("Shift light"));
+    assert(ergonomics_has(settings_state.shift_indicator_enabled ? "ON" : "OFF"));
+    uint8_t original = settings_state.shift_indicator_enabled;
+    menu_event(MENU_SELECT); menu_event(MENU_NEXT);
+    now += 61000; menu_process();
+    assert(setup_stage_dirty() && !menu_parameters_active());
+    assert(settings_state.shift_indicator_enabled == original);
+    menu_event(MENU_HOLD);
+    assert(settings_state.shift_indicator_enabled != original);
+    now += 61000; menu_process(); assert(menu_parameters_active());
+    ergonomics_reset(VEHICLE_DISPLAY_MY23);
+    assert(ux_find_setting("Default mode"));
+    assert(screen_packet[2 + MY23_L1_VISIBLE] == 'N');
+    setup_move_page(1);
+    /* Suspension is policy-filtered with an unknown vehicle; verify with known equipment. */
+    VehicleProfile p = *vehicle_profile_current();
+    p.equipment[VEHICLE_EQUIPMENT_SUSPENSION] = VEHICLE_EQUIPMENT_PRESENT;
+    assert(settings_profile_save(&p) == 0);
+    assert(ux_find_setting("Default mode")); setup_move_page(1); setup_present_my23();
+    assert(ergonomics_has("Suspension"));
+    for (uint8_t display = VEHICLE_DISPLAY_LEGACY18; display <= VEHICLE_DISPLAY_LEGACY24; ++display) {
+        ergonomics_reset(display); ergonomics_root(5);
+        for (unsigned i = 0; i < 3; ++i) menu_event(MENU_NEXT);
+        assert(ergonomics_has(display == VEHICLE_DISPLAY_LEGACY18 ? "Legacy 18" : "Legacy 24"));
+    }
+}
+static void test_ergonomics_action_confirmation(void) {
+    ergonomics_reset(VEHICLE_DISPLAY_MY23);
+    settings_state.clear_faults_enabled = 1;
+    ergonomics_root(2);
+    for (unsigned i = 0; i < 13 && !ergonomics_has("Clear DTCs"); ++i) menu_event(MENU_NEXT);
+    /* A preview may contain the target; advance until it is the current row. */
+    if (memcmp(screen_packet + 4, "Clear DTCs", 10)) menu_event(MENU_NEXT);
+    assert(!memcmp(screen_packet + 4, "Clear DTCs", 10));
+    menu_event(MENU_SELECT);
+    assert(ergonomics_has("Clear all ECUs?"));
+    now += 5000; menu_render();
+    assert(ergonomics_has("Clear all ECUs?"));
+    menu_event(MENU_HOLD);
+    assert(diagnostics_state.clear_faults_request == 255);
+    diagnostics_state.clear_faults_request = 0;
+
+    ergonomics_reset(VEHICLE_DISPLAY_MY23); settings_state.clear_faults_enabled = 1;
+    ergonomics_root(2);
+    for (unsigned i = 0; i < 13 && memcmp(screen_packet + 4, "Clear DTCs", 10); ++i) menu_event(MENU_NEXT);
+    menu_event(MENU_SELECT); now += 6001; menu_event(MENU_HOLD);
+    assert(!diagnostics_state.clear_faults_request);
+}
+
+static void test_ergonomics_validation_labels(void) {
+    for (uint8_t display = VEHICLE_DISPLAY_LEGACY18; display <= VEHICLE_DISPLAY_MY23; ++display) {
+        ergonomics_reset(display);
+        UiLayoutRecord layout; ui_layout_default(&layout, vehicle_profile_current());
+        favorite_set_clear(&layout.favorites.sets[0]);
+        layout.favorites.sets[0].rows[1][0] = (FavoriteItem){READING_OIL_TEMPERATURE, READING_FORMAT_SHORT};
+        uint8_t wire[UI_LAYOUT_RECORD_SIZE]; assert(ui_layout_encode(&layout, wire));
+        assert(flash_record_save(VISIBILITY_RECORD, UI_LAYOUT_RECORD_TYPE, wire, sizeof(wire)));
+        menu_init(); vehicle_runtime_process(); vehicle_runtime_reply(display_token, 1, 0);
+        ergonomics_root(3); menu_event(MENU_NEXT); menu_event(MENU_SELECT);
+        menu_event(MENU_SELECT); menu_event(MENU_NEXT); menu_event(MENU_SELECT); /* Row B. */
+        menu_event(MENU_NEXT);
+        assert(ergonomics_has("Slot 2: Empty"));
+        menu_event(MENU_SELECT);
+        menu_event(MENU_NEXT); /* Empty wraps to Oil temp; do not match the next-row preview. */
+        menu_event(MENU_HOLD);
+        assert(ergonomics_has("Row B"));
+        assert(ergonomics_has(display == VEHICLE_DISPLAY_MY23 ? "Duplicate reading" : "duplicate"));
+        now += 2500; menu_render(); assert(ergonomics_has("Row B"));
+    }
+    /* Exercise production packet encoding with every action label and full prompts.
+     * List ellipses are intentional; confirmation and error text must fit in full. */
+    const char *labels[] = {"QV exhaust req", "Press HAS button", "Toggle ESC/TC", "Toggle Dyno mode",
+        "Brake override", "Disable launch", "AWD off request", "Rain test", "Read BCM faults",
+        "Clear DTCs", "Reset best times", "Peak hold", "IBS SOC override", "Edit favorites"};
+    ergonomics_reset(VEHICLE_DISPLAY_MY23);
+    for (unsigned i = 0; i < sizeof(labels)/sizeof(labels[0]); ++i) {
+        now += 501; menu_present_view(UI_MODE_LIST, labels[i], "next");
+        unsigned n = strlen(labels[i]);
+        assert(!memcmp(screen_packet + 4, labels[i], n > 14 ? 13 : n));
+        if (n > 14) assert(screen_packet[1 + MY23_L1_VISIBLE] == 0x87);
+        assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "next", 4));
+    }
+    const char *titles[] = {"Reset favorites?", "Brake + launch?", "Dyno + ESC?", "Clear all ECUs?", "Save failed"};
+    const char *hints[] = {"HOLD RESET / 2X BACK", "HOLD APPLY / 2X BACK", "HOLD: RETRY", "RES RETRY / 2X BACK"};
+    for (unsigned i = 0; i < sizeof(titles)/sizeof(titles[0]); ++i)
+        for (unsigned j = 0; j < sizeof(hints)/sizeof(hints[0]); ++j) {
+            assert(strlen(titles[i]) <= MY23_L1_VISIBLE && strlen(hints[j]) <= MY23_L2_VISIBLE);
+            menu_present_view(UI_MODE_CONFIRM, titles[i], hints[j]);
+            assert(!memcmp(screen_packet + 2, titles[i], strlen(titles[i])));
+            assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, hints[j], strlen(hints[j])));
+        }
+}

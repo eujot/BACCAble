@@ -230,7 +230,7 @@ static void test_vehicle_editor_equipment(void) {
     vehicle_editor_begin();
     for (unsigned i = 0; i < 5; ++i)
         vehicle_editor_navigate(1);
-    assert(!strcmp(vehicle_editor_field_label(), "Suspension"));
+    assert(!strcmp(vehicle_editor_field_label(), "Adaptive susp."));
 
     char buf[24];
     assert(!strcmp(vehicle_editor_value_label(buf, sizeof(buf)), "Unknown"));
@@ -350,6 +350,11 @@ int main(void) {
     const char *suite = "menu-18";
 #endif
     const HostTest tests[] = {
+        HOST_TEST(test_ergonomics_validation_labels),
+        HOST_TEST(test_ergonomics_favorites),
+        HOST_TEST(test_ergonomics_vehicle_idle),
+        HOST_TEST(test_ergonomics_features_and_info),
+        HOST_TEST(test_ergonomics_action_confirmation),
         HOST_TEST(test_direction_recovery),
         HOST_TEST(test_navigation_display_latency),
         HOST_TEST(test_ux_reading_groups),

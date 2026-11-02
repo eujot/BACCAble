@@ -169,6 +169,7 @@ static uint8_t setup_group(uint8_t id) {
     case 9:
     case 24:
     case 27:
+    case 39:
         return 2; /* Assistance */
     case 8:
     case 10:
@@ -177,6 +178,8 @@ static uint8_t setup_group(uint8_t id) {
     case 18:
     case 20:
     case 29:
+    case 38:
+    case 41:
         return 3; /* Drivetrain */
     default:
         return 4; /* Device */
@@ -345,7 +348,7 @@ static void setup_default_mode_result(char result[24]) {
     unsigned mode = settings_state.default_drive_mode;
     const char *label = modes[mode <= 3 ? mode : 0];
     if (mode == 3 && !(vehicle_display_effective().rows == 2)) label = "R";
-    snprintf_(result, 24, "%s %s", label, drive_mode_check_status());
+    snprintf_(result, 24, "%s %s", label, mode ? drive_mode_check_status() : "Factory");
 }
 
 /* Show the selected setting and its current value. */
@@ -510,9 +513,13 @@ static void stage_cycle(int direction) {
     }
 }
 
+bool setup_stage_dirty(void) {
+    return staged && (stage_value != stage_original || stage_extra != stage_original_extra);
+}
+
 bool setup_stage_back(void) {
     if (!staged) return false;
-    if (!stage_confirm && (stage_value != stage_original || stage_extra != stage_original_extra)) {
+    if (!stage_confirm && setup_stage_dirty()) {
         stage_confirm = true;
         return true;
     }
@@ -569,16 +576,23 @@ bool setup_present_my23(void) {
         return true;
     }
     const SetupParam *current = setup_find_by_page(setup_dashboardPageIndex);
-    const SetupParam *next = setup_find_by_page((setup_dashboardPageIndex + 1) % setup_menu_pages_count());
     const char *reason = current ? setup_inactive_reason(current) : NULL;
+    if (!reason && current) reason = setup_unavailable(current);
     if (reason) { menu_present_lines(current->menu_text, reason); return true; }
-    if (current && current->flash_index == 38 && setup_get_value(current)) {
+    if (current && current->flash_index == 38) {
         char result[24];
         setup_default_mode_result(result);
         menu_present_lines(current->menu_text, result);
         return true;
     }
-    menu_present_view(UI_MODE_LIST, current ? current->menu_text : "Features", next ? next->menu_text : "");
+    char number[24];
+    const char *value = current ? setup_value_label(current, setup_get_value(current),
+        stage_companion(current), number) : "";
+    if (current && current->entry_type == UI_ENTRY_SUBMENU) {
+        snprintf_(number, sizeof(number), "%s / RES OPEN", setup_get_value(current) ? "ON" : "OFF");
+        value = number;
+    }
+    menu_present_lines(current ? current->menu_text : "Features", value);
     return true;
 }
 #endif

@@ -101,6 +101,12 @@ void vehicle_editor_select(void) {
         cycle(1);
 }
 
+bool vehicle_editor_dirty(void) {
+    uint8_t current[VEHICLE_PROFILE_WIRE_SIZE], edited[VEHICLE_PROFILE_WIRE_SIZE];
+    return !vehicle_profile_encode(vehicle_profile_current(), current) ||
+           !vehicle_profile_encode(&draft, edited) || memcmp(current, edited, sizeof(current));
+}
+
 bool vehicle_editor_back(void) {
     if (editing) {
         editing = false;
@@ -108,9 +114,7 @@ bool vehicle_editor_back(void) {
         return true;
     }
     if (!confirm) {
-        uint8_t current[VEHICLE_PROFILE_WIRE_SIZE], edited[VEHICLE_PROFILE_WIRE_SIZE];
-        if (vehicle_profile_encode(vehicle_profile_current(), current) &&
-            vehicle_profile_encode(&draft, edited) && !memcmp(current, edited, sizeof(current))) return false;
+        if (!vehicle_editor_dirty()) return false;
         confirm = true;
         return true;
     }
@@ -142,8 +146,8 @@ VehicleEditorState vehicle_editor_state(void) {
 const char *vehicle_editor_field_label(void) {
     if (confirm) return "Vehicle";
     static const char *const labels[] = {"Model", "Model year", "Engine", "Drivetrain", "Display",
-                                         "Suspension", "Race", "Exhaust valves", "ACC", "HAS",
-                                         "Lane assist", "Park mirrors", "SCR"};
+                                         "Adaptive susp.", "Race", "Exhaust valves", "ACC", "HAS",
+                                         "Lane assist", "Park mirrors", "AdBlue / SCR"};
     return labels[field];
 }
 
