@@ -128,7 +128,13 @@ uint32_t can_forward(const CAN_RxHeaderTypeDef *header, uint8_t *data) {
     return HAL_OK;
 }
 static unsigned native_reads;
-float native_parameter_read(uint8_t id) { ++native_reads; return (float)id + 0.5f; }
+float native_parameter_read(uint8_t id) {
+    ++native_reads;
+    if (id == 9) return statistics_state.chronometer_elapsed_time_0_100_km_h;
+    if (id == 10) return statistics_state.chronometer_elapsed_time_100_200_km_h;
+    if (id == 11 || id == 12) return statistics_read_best(id - 10);
+    return (float)id + 0.5f;
+}
 bool flash_record_load(unsigned slot, uint16_t type, void *data, size_t size) {
     if (real_flash) { RecordStorage storage = test_storage(slot); return record_load(&storage, type, data, size); }
     (void)slot;
@@ -356,6 +362,7 @@ int main(void) {
         HOST_TEST(test_ergonomics_features_and_info),
         HOST_TEST(test_ergonomics_action_confirmation),
         HOST_TEST(test_information_input_labels),
+        HOST_TEST(test_acceleration_menu_states),
         HOST_TEST(test_direction_recovery),
         HOST_TEST(test_navigation_display_latency),
         HOST_TEST(test_ux_reading_groups),

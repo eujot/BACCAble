@@ -4,6 +4,39 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Reading state semantics correction, 2026-11-02
+
+Branch `fix/reading-state-semantics` starts at `7279201` and retains all preceding
+UX/input fixes. Fresh fetch confirms origin/master is still `af1fd72`.
+The reading-catalog migration `547a478` had dropped legacy timer/enum semantics;
+the later label-only change did not introduce the numeric 60-second placeholder.
+
+- Restore RUN/MISS/seconds for current 0-100 and 100-200 and MISS for empty Best
+  records; retain inclusive 20/40-second limits. Shared Readings/Favorites sample
+  handling gives missing/stale data precedence. Nonfinite values render --.
+- Establish a speed baseline before starting a timer, and cancel active attempts
+  on resumed reports after >1 s gaps before a high-speed frame can save a result.
+  Completed times survive. With no further frames, display freshness still uses
+  the existing cache timeout; this is not a one-second asynchronous watchdog.
+- Restore native gear, sparse DNA, pedal-character, seatbelt-alarm and complete
+  regeneration enum meanings. Reject invalid enum casts. Seatbelt alarm describes
+  acoustic configuration, not fastening; regeneration reserves ten value glyphs.
+- Fix medium-label collisions (Gbox / Gear and Int air / Intake). Both guides and
+  MENU_UX describe the changes; no CAN dictionary or persistence format changes.
+
+Validation: 212 host cases pass under Apple Clang ASan/UBSan, including real
+speed-handler lifecycle/gap/wrap tests, all timer states/limits at four widths,
+all enum mappings and menu packets for three runtime profiles in four variants.
+Reading catalog/layout/Favorite suites now run in the broad `make test` target.
+Correction to the preceding handoff: the earlier broad run did NOT execute those
+scoped suites, so its claim of complete label uniqueness coverage was incorrect.
+The newly enabled test exposed the two medium-label collisions above.
+Menu label checks, all four cppcheck checks and C1/C2/BH/CAN ARM builds pass with
+Arm GNU 15.2.Rel1. C1 Flash/static RAM: 95,120/13,324 B.
+No flash, push, merge or vehicle verification. Hardware acceptance remains for
+actual timing transitions, bus gaps and IPC presentation. Original master retains
+only the pre-existing untracked captures, releases and research note, untouched.
+
 ## Reading labels and related menu wording, 2026-11-02
 
 Branch `fix/reading-label-clarity` starts at `54bcef2`; fresh fetch confirms

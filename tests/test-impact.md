@@ -210,3 +210,15 @@ row rendering across widths, including missing/large values. Information labels
 are exercised through production menu packets on all four compiled variants
 and three runtime display profiles. A source comparison verifies that only
 catalog names changed, not units, precision, IDs, sources or eligibility.
+
+## Native reading semantics
+
+`make test` now runs reading_catalog, reading_layout and favorite_layout suites;
+previously they were only available as scoped targets. It also runs the real
+speed handler through startup while moving, complete attempts, timeouts, report
+gaps and tick wrap. Catalog cases assert all native enum code mappings and reject
+nonfinite/fractional/out-of-range values. Layout cases cover all four timing IDs,
+empty Best sentinels, inclusive limits, RUN/MISS/stale precedence and all display
+widths. Menu packet regressions cover Favorites and direct Readings on three
+runtime profiles in four compile variants. Medium-label collisions exposed by
+the newly included uniqueness test are corrected as Gbox and Int air.

@@ -11,7 +11,7 @@ typedef enum {
     READING_FIT_EMPTY,
 } ReadingFit;
 
-typedef enum { READING_STATE_MISSING = 0, READING_STATE_STALE, READING_STATE_VALID } ReadingState;
+typedef enum { READING_STATE_MISSING = 0, READING_STATE_STALE, READING_STATE_VALID, READING_STATE_RUNNING } ReadingState;
 
 typedef struct {
     ReadingState state;

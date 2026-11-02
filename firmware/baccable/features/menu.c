@@ -184,6 +184,17 @@ static uint8_t next_group(uint8_t current, int direction) {
 static ReadingSample favorite_sample_cache[READING_COUNT];
 static uint8_t auto_reading = READING_COUNT; /* READING_COUNT = none. */
 
+/* The same cache freshness and timer-state interpretation serves Readings and Favorites. */
+static ReadingSample reading_sample(ReadingId id, uint32_t max_age) {
+    const ReadingMeta *meta = reading_lookup(id);
+    uint8_t source = reading_source(meta, vehicle_profile_current());
+    float value = source == READING_NO_SOURCE ? NAN : parameter_cache_get_max_age(source, currentTime, max_age);
+    if (!isfinite(value)) return (ReadingSample){READING_STATE_STALE, 0.0f};
+    bool running = (id == READING_TIME_0_100 && statistics_state.statistics_0_100_started) ||
+                   (id == READING_TIME_100_200 && statistics_state.statistics_100_200_started);
+    return (ReadingSample){running ? READING_STATE_RUNNING : READING_STATE_VALID, value};
+}
+
 /* Resolve a FavoriteSet's item samples for the currently selected profile. */
 static void favorite_fill_samples(const FavoriteSet *set) {
     for (unsigned i = 0; i < READING_COUNT; ++i)
@@ -204,10 +215,7 @@ static void favorite_fill_samples(const FavoriteSet *set) {
             uint8_t source = reading_source(meta, vehicle_profile_current());
             if (source == READING_NO_SOURCE)
                 continue;
-            float value = parameter_cache_get_max_age(source, currentTime, max_age);
-            favorite_sample_cache[item.id] =
-                isfinite(value) ? (ReadingSample){READING_STATE_VALID, value}
-                                : (ReadingSample){READING_STATE_STALE, 0.0f};
+            favorite_sample_cache[item.id] = reading_sample(item.id, max_age);
         }
     }
 }
@@ -253,11 +261,7 @@ static void present_reading(uint8_t id) {
     const ReadingMeta *meta = reading_lookup((ReadingId)id);
     if (!meta)
         return;
-    uint8_t source = reading_source(meta, vehicle_profile_current());
-    float value = source == READING_NO_SOURCE ? NAN
-                                              : parameter_cache_get_max_age(source, currentTime, 3000U);
-    ReadingSample sample = isfinite(value) ? (ReadingSample){READING_STATE_VALID, value}
-                                           : (ReadingSample){READING_STATE_STALE, 0.0f};
+    ReadingSample sample = reading_sample((ReadingId)id, 3000U);
     if (menu_my23()) {
         char value_buf[MY23_L2_VISIBLE + 1];
         reading_format_value((ReadingId)id, &sample, MY23_L2_VISIBLE, value_buf, sizeof(value_buf));

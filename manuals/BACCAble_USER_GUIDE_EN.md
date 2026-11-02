@@ -702,6 +702,23 @@ results use seconds. `Best 0-100` and `Best 100-200` retain the best saved resul
 across restarts until reset. These are vehicle-signal timings, not a certified
 external timing measurement.
 
+At startup, a fresh speed report with no completed attempt shows `MISS`; an empty
+Best record also shows `MISS`, never the internal 60/65.535-second placeholders.
+The limits include exactly 20 s / 40 s. Missing or stale live data shows `--`,
+even during a running attempt. These rules apply to both Readings and Favorites.
+The first speed report establishes a baseline, so powering up while moving does
+not create a result. A resumed report after a gap longer than one second cancels
+an ongoing attempt; completed results remain available.
+
+`Seatbelt alarm` reports the acoustic-warning configuration (`ON` / `OFF`),
+not whether a belt is fastened. `Pedal map` displays the controller's reported
+character, such as B, A, N, D, R or `-`; unknown values show `?`.
+`Regen mode` retains the native labels `NONE`, `DPF LO`, `DPF HI`, `NSC De-NOx`,
+`NSC De-SOx`, `SCR HeatUp` and `NONE.`. Its wider value budget can require a
+shorter label or another continuation page in a custom Favorite layout.
+The medium temperature labels `Gbox` and `Int air` distinguish them from
+`Gear` and intake pressure (`Intake`).
+
 ### IBS SOC override
 
 This experimental action **transmits modified battery-sensor reports**. For an
@@ -764,7 +781,7 @@ unsupported ECU requests can remain `--`.
 - **Distance (ECU)** is the diagnostic distance value described in the old manual
   as distance since ECU odometer reset; do not equate it with the cluster's total
   lifetime odometer without validating that ECU's interpretation.
-- **Gear** uses N, R or a gear number; DNA uses A, N, D or R. Missing states can
+- **Gear** uses N, R or a gear number; DNA uses A, N, D or Race. Missing states can
   show `--`/`?`. `Pedal map` uses the external controller's map response.
 
 ### Battery charge: which SOC is being shown?
@@ -880,9 +897,9 @@ A value the ECU does not answer shows `--`.
 | --- | --- | --- |
 | Speed | km/h | both |
 | Gear | N / R / gear | both |
-| DNA mode | A / N / D / R | both |
+| DNA mode | A / N / D / Race | both |
 | Pedal map | map letter | both |
-| Seatbelt | ON / OFF | both |
+| Seatbelt alarm | ON / OFF | both |
 | Distance | km | both |
 
 ### Performance

@@ -645,3 +645,22 @@ is not renamed to remaining oil life. Information shows Button reports, Report
 gaps, Max input gap and Report age as label/value fields, preserving whole
 numbers on Legacy. The detailed user-guide catalogs and SOC descriptions use
 current individual readings rather than retired compound pages.
+
+## Native reading state contract
+
+Readings and Favorites share sample freshness and live acceleration state.
+Timers render RUN while active, MISS for empty/out-of-window results (20/40 s),
+and seconds only for valid completed results. Stale/nonfinite data renders --
+before timer-state interpretation. Best records never inherit a running flag.
+The first speed report establishes a baseline; resumption after >1000 ms cancels
+active attempts before evaluating crossings, retaining completed results.
+
+Enum labels consume native decoder codes: gear uses the transmission nibble,
+DNA uses 0/8/16/48, pedal maps are response characters, seatbelt is the alarm
+configuration, and regeneration uses the complete 0..6 mode table. Invalid
+nonintegral or nonfinite codes must not be cast to an enum index. Regeneration
+reserves ten value glyphs for its longest labels.
+
+The standard host test target now includes reading catalog, reading layout,
+Favorite layout and real speed-handler tests. Menu integration tests cover timer
+states in outgoing packets across Legacy 18/24 and MY23 profiles.

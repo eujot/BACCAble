@@ -7,6 +7,9 @@ static void fixes_reset(void) {
     memset(&comfort_state, 0, sizeof(comfort_state));
     memset(&mirrors_state, 0, sizeof(mirrors_state));
     memset(&runtime_state, 0, sizeof(runtime_state));
+    memset(&statistics_state, 0, sizeof(statistics_state));
+    statistics_state.chronometer_elapsed_time_0_100_km_h = 60;
+    statistics_state.chronometer_elapsed_time_100_200_km_h = 60;
     now = 20000; queries = 0; uart_busy = false; query_fail = false;
     setup_load_from_flash();
     VehicleProfile p = *vehicle_profile_current();
@@ -732,5 +735,33 @@ static void test_information_input_labels(void) {
         menu_event(MENU_NEXT); assert(ergonomics_has("Max input gap"));
         menu_event(MENU_NEXT); assert(ergonomics_has("Report age"));
         assert(ergonomics_has("--"));
+    }
+}
+
+static void test_acceleration_menu_states(void) {
+    for (uint8_t display = VEHICLE_DISPLAY_LEGACY18; display <= VEHICLE_DISPLAY_MY23; ++display) {
+        ergonomics_reset(display);
+        UiLayoutRecord layout; ui_layout_default(&layout, vehicle_profile_current());
+        favorite_set_clear(&layout.favorites.sets[0]);
+        layout.favorites.sets[0].rows[0][0] = (FavoriteItem){READING_TIME_0_100, READING_FORMAT_SHORT};
+        uint8_t wire[UI_LAYOUT_RECORD_SIZE]; assert(ui_layout_encode(&layout, wire));
+        assert(flash_record_save(VISIBILITY_RECORD, UI_LAYOUT_RECORD_TYPE, wire, sizeof(wire)));
+        menu_init(); vehicle_runtime_process(); vehicle_runtime_reply(display_token, 1, 0);
+        parameter_cache_observe(0x101, 3); menu_render();
+        assert(ergonomics_has("MISS") && !ergonomics_has("60.00"));
+        statistics_state.chronometer_elapsed_time_0_100_km_h = 1.23f;
+        statistics_state.statistics_0_100_started = 1;
+        parameter_cache_observe(0x101, 3); menu_render();
+        assert(ergonomics_has("RUN"));
+        statistics_state.statistics_0_100_started = 0;
+        statistics_state.chronometer_elapsed_time_0_100_km_h = 6.42f;
+        parameter_cache_observe(0x101, 3); menu_render();
+        assert(ergonomics_has("6.42s"));
+        menu_show_reading(READING_TIME_0_100); menu_render();
+        assert(ergonomics_has("6.42s"));
+        statistics_state.statistics_0_100_started = 1;
+        menu_render(); assert(ergonomics_has("RUN"));
+        now += 3001; menu_render();
+        assert(ergonomics_has("--") && !ergonomics_has("RUN"));
     }
 }

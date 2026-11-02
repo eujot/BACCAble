@@ -50,9 +50,24 @@ ReadingFormat reading_auto_format(ReadingId id, unsigned width) {
 static bool render_value(const ReadingMeta *meta, const ReadingSample *sample, char *scratch, size_t size) {
     if (!meta || !sample || !scratch || !size)
         return false;
-    if (sample->state != READING_STATE_VALID) {
+    if ((sample->state != READING_STATE_VALID && sample->state != READING_STATE_RUNNING) ||
+        !isfinite(sample->value)) {
         snprintf(scratch, size, "--");
         return true;
+    }
+    bool time_0_100 = meta->id == READING_TIME_0_100 || meta->id == READING_BEST_0_100;
+    bool time_100_200 = meta->id == READING_TIME_100_200 || meta->id == READING_BEST_100_200;
+    if (time_0_100 || time_100_200) {
+        float limit = time_0_100 ? 20.0f : 40.0f;
+        if (sample->value <= 0 || sample->value > limit) {
+            snprintf(scratch, size, "MISS");
+            return true;
+        }
+        if (sample->state == READING_STATE_RUNNING &&
+            (meta->id == READING_TIME_0_100 || meta->id == READING_TIME_100_200)) {
+            snprintf(scratch, size, "RUN");
+            return true;
+        }
     }
     if (meta->value_type == READING_VALUE_OIL_STATUS) {
         int status = 0; /* unknown */

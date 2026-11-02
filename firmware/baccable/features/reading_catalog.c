@@ -1,6 +1,7 @@
 #include "features/reading_catalog.h"
 #include "diagnostics/parameter_catalog.h"
 #include <stdio.h>
+#include <math.h>
 #include <string.h>
 
 /*
@@ -32,10 +33,10 @@ static const ReadingMeta reading_meta[READING_COUNT] = {
 
     /* Temperatures */
     R(READING_COOLANT_TEMP, READING_GROUP_TEMPERATURES, "Coolant", "Cool", "Cool", "C", 0, 4, READING_VALUE_FLOAT, 0, 42, 68, M_ALL),
-    R(READING_GEARBOX_TEMP, READING_GROUP_TEMPERATURES, "Gearbox", "Gear", "Gbx", "C", 0, 4, READING_VALUE_FLOAT, 0, 33, 33, M_ALL),
+    R(READING_GEARBOX_TEMP, READING_GROUP_TEMPERATURES, "Gearbox", "Gbox", "Gbx", "C", 0, 4, READING_VALUE_FLOAT, 0, 33, 33, M_ALL),
     R(READING_INTERCOOLER_IN, READING_GROUP_TEMPERATURES, "IC inlet", "IC in", "ICi", "C", 0, 4, READING_VALUE_FLOAT, 0, 23, READING_NO_SOURCE, M_GAS),
     R(READING_INTERCOOLER_OUT, READING_GROUP_TEMPERATURES, "IC outlet", "IC out", "ICo", "C", 0, 4, READING_VALUE_FLOAT, 0, 22, READING_NO_SOURCE, M_GAS),
-    R(READING_INTAKE_AIR_TEMP, READING_GROUP_TEMPERATURES, "Intake air", "Intake", "Air", "C", 0, 4, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 88, M_D),
+    R(READING_INTAKE_AIR_TEMP, READING_GROUP_TEMPERATURES, "Intake air", "Int air", "Air", "C", 0, 4, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 88, M_D),
     R(READING_EXHAUST_TEMP, READING_GROUP_TEMPERATURES, "Exhaust", "Exh", "Exh", "C", 0, 5, READING_VALUE_FLOAT, 0, 40, 67, M_ALL),
     R(READING_FUEL_TEMP, READING_GROUP_TEMPERATURES, "Fuel temp", "Fuel temp", "FuelT", "C", 0, 4, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 84, M_D),
     R(READING_CATALYST_TEMP, READING_GROUP_TEMPERATURES, "Catalyst", "Cat", "Cat", "C", 0, 5, READING_VALUE_FLOAT, 0, 41, READING_NO_SOURCE, M_GAS),
@@ -73,7 +74,7 @@ static const ReadingMeta reading_meta[READING_COUNT] = {
     R(READING_DPF_LOAD, READING_GROUP_DIESEL_DPF, "DPF load", NULL, "DPF", "%", 1, 5, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 55, M_D),
     R(READING_DPF_TEMP, READING_GROUP_DIESEL_DPF, "DPF temp", NULL, "DPFt", "C", 0, 5, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 56, M_D),
     R(READING_DPF_REGEN_PROGRESS, READING_GROUP_DIESEL_DPF, "Regen progress", "Reg prog", "RPr", "%", 0, 4, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 57, M_D),
-    R(READING_DPF_REGEN_MODE, READING_GROUP_DIESEL_DPF, "Regen mode", "Reg mode", "RMode", NULL, 0, 8, READING_VALUE_ENUM, READING_ENUM_DPF_REGEN, READING_NO_SOURCE, 8, M_D),
+    R(READING_DPF_REGEN_MODE, READING_GROUP_DIESEL_DPF, "Regen mode", "Reg mode", "RMode", NULL, 0, 10, READING_VALUE_ENUM, READING_ENUM_DPF_REGEN, READING_NO_SOURCE, 8, M_D),
     R(READING_DPF_SINCE_REGEN, READING_GROUP_DIESEL_DPF, "Regen ago", "Regen ago", "RAgo", "km", 0, 5, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 58, M_D),
     R(READING_DPF_REGEN_COUNT, READING_GROUP_DIESEL_DPF, "Regen count", "Reg count", "RCnt", NULL, 0, 5, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 59, M_D),
     R(READING_DPF_AVG_INTERVAL, READING_GROUP_DIESEL_DPF, "Regen avg dist", "Reg dist", "RDist", "km", 0, 5, READING_VALUE_FLOAT, 0, READING_NO_SOURCE, 60, M_D),
@@ -86,7 +87,7 @@ static const ReadingMeta reading_meta[READING_COUNT] = {
     R(READING_GEAR, READING_GROUP_DRIVING, "Gear", NULL, NULL, NULL, 0, 2, READING_VALUE_ENUM, READING_ENUM_GEAR, 6, 6, M_ALL),
     R(READING_DNA_MODE, READING_GROUP_DRIVING, "DNA mode", "DNA", "DNA", NULL, 0, 5, READING_VALUE_ENUM, READING_ENUM_DNA, 15, 15, M_ALL),
     R(READING_PEDAL_MAP, READING_GROUP_DRIVING, "Pedal map", "Pedal", "Ped", NULL, 0, 6, READING_VALUE_ENUM, READING_ENUM_PEDAL_MAP, 17, 17, M_ALL),
-    R(READING_SEATBELT, READING_GROUP_DRIVING, "Seatbelt", "Belt", "Belt", NULL, 0, 8, READING_VALUE_ENUM, READING_ENUM_SEATBELT, 13, 13, M_ALL),
+    R(READING_SEATBELT, READING_GROUP_DRIVING, "Seatbelt alarm", "Belt alarm", "Belt", NULL, 0, 3, READING_VALUE_ENUM, READING_ENUM_SEATBELT, 13, 13, M_ALL),
     R(READING_DISTANCE, READING_GROUP_DRIVING, "Distance", "Dist", "Dist", "km", 0, 6, READING_VALUE_FLOAT, 0, 27, 85, M_ALL),
 
     /* Performance */
@@ -206,10 +207,14 @@ unsigned reading_list(const VehicleProfile *profile, ReadingGroup group, Reading
     return count;
 }
 
-/* Enum/status label lookup. Exact native decode labels are finalized at UI cutover. */
+/* Interpret the raw codes returned by native_parameter_read, not ordinal UI choices. */
 bool reading_enum_label(const ReadingMeta *meta, float value, char *out, size_t size) {
     if (!meta || !out || !size)
         return false;
+    if (!isfinite(value) || value < -1 || value > 255 || value != (float)(int)value) {
+        snprintf(out, size, "?");
+        return true;
+    }
     int v = (int)value;
     if (meta->enum_set == READING_ENUM_OIL_STATUS) {
         const char *label = v == 1 ? "OK" : v == 2 ? "HIGH" : v == -1 ? "LOW" : "?";
@@ -217,28 +222,26 @@ bool reading_enum_label(const ReadingMeta *meta, float value, char *out, size_t 
         return true;
     }
     if (meta->enum_set == READING_ENUM_GEAR) {
-        static const char *const gears[] = {"P", "R", "N", "D", "1", "2", "3", "4", "5", "6", "?"};
+        static const char *const gears[] = {"N", "1", "2", "3", "4", "5", "6", "R", "7", "8", "9"};
         snprintf(out, size, "%s", v >= 0 && v <= 10 ? gears[v] : "?");
         return true;
     }
     if (meta->enum_set == READING_ENUM_DNA) {
-        static const char *const dna[] = {"N", "A", "D", "Race"};
-        snprintf(out, size, "%s", v >= 0 && v < 4 ? dna[v] : "?");
+        snprintf(out, size, "%s", v == 0 ? "N" : v == 8 ? "D" : v == 16 ? "A" : v == 48 ? "Race" : "?");
         return true;
     }
     if (meta->enum_set == READING_ENUM_PEDAL_MAP) {
-        static const char *const maps[] = {"Auto", "Sport", "Track", "Off"};
-        snprintf(out, size, "%s", v >= 0 && v < 4 ? maps[v] : "?");
+        snprintf(out, size, "%c", v >= 32 && v <= 126 ? v : '?');
         return true;
     }
     if (meta->enum_set == READING_ENUM_SEATBELT) {
-        const char *label = v == 0 ? "Fastened" : v == 1 ? "Unfastened" : "?";
+        const char *label = v == 0 ? "ON" : v == 1 ? "OFF" : "?";
         snprintf(out, size, "%s", label);
         return true;
     }
     if (meta->enum_set == READING_ENUM_DPF_REGEN) {
-        static const char *const regen[] = {"Off", "Passive", "Active", "?"};
-        snprintf(out, size, "%s", v >= 0 && v < 3 ? regen[v] : "?");
+        static const char *const regen[] = {"NONE", "DPF LO", "DPF HI", "NSC De-NOx", "NSC De-SOx", "SCR HeatUp", "NONE."};
+        snprintf(out, size, "%s", v >= 0 && v < 7 ? regen[v] : "?");
         return true;
     }
     snprintf(out, size, "?");

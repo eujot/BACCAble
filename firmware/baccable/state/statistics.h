@@ -12,6 +12,8 @@ typedef struct {
 #endif
 
     float previous_speed_km_h;
+    uint32_t speed_report_at;
+    uint8_t speed_report_seen;
 
     uint32_t statistics_0_100_start_time;
 

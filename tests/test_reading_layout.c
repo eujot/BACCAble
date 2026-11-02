@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 void _putchar(char c) { (void)c; }
 
 static void test_reading_glyph_count(void) {
@@ -159,9 +160,42 @@ static void test_reading_clear_labels(void) {
     assert(!strcmp(reading_label_for(READING_TIME_100_200, READING_FORMAT_SHORT), "100-200"));
 }
 
+static void test_acceleration_reading_states(void) {
+    const ReadingId ids[] = {READING_TIME_0_100,READING_TIME_100_200,READING_BEST_0_100,READING_BEST_100_200};
+    const unsigned widths[] = {16,18,22,24};
+    char out[64];
+    for (unsigned i=0;i<4;++i) for (unsigned w=0;w<4;++w) {
+        float limit = (i%2) ? 40 : 20;
+        const float invalid[] = {60,65.535f,0,-1,limit+.01f};
+        for (unsigned v=0;v<sizeof(invalid)/sizeof(invalid[0]);++v) {
+            ReadingSample s={READING_STATE_VALID,invalid[v]};
+            reading_format_value(ids[i],&s,widths[w],out,sizeof(out)); assert(!strcmp(out,"MISS"));
+            reading_format_line(ids[i],&s,READING_FORMAT_AUTO,widths[w],out,sizeof(out));
+            assert(strstr(out,"MISS") && !strstr(out,"MISSs"));
+        }
+        ReadingSample s={READING_STATE_VALID,6.42f};
+        reading_format_value(ids[i],&s,widths[w],out,sizeof(out)); assert(!strcmp(out,"6.42s"));
+        s.value=limit;
+        reading_format_value(ids[i],&s,widths[w],out,sizeof(out));
+        assert(!strcmp(out,i%2 ? "40.00s" : "20.00s"));
+        s.state=READING_STATE_RUNNING;
+        reading_format_value(ids[i],&s,widths[w],out,sizeof(out));
+        assert(i<2 ? !strcmp(out,"RUN") : !strcmp(out,i%2 ? "40.00s" : "20.00s"));
+        s.state=READING_STATE_STALE;
+        reading_format_value(ids[i],&s,widths[w],out,sizeof(out)); assert(!strcmp(out,"--"));
+    }
+    const float invalid[] = {NAN,INFINITY,-INFINITY};
+    for (ReadingId id=0;id<READING_COUNT;++id) for (unsigned i=0;i<3;++i) {
+        ReadingSample s={READING_STATE_VALID,invalid[i]};
+        reading_format_value(id,&s,24,out,sizeof(out));
+        assert(strstr(out,"--") && !strstr(out,"nan") && !strstr(out,"inf"));
+    }
+}
+
 int main(void) {
     const char *suite = "reading-layout";
     const HostTest tests[] = {
+        HOST_TEST(test_acceleration_reading_states),
         HOST_TEST(test_reading_clear_labels),
         HOST_TEST(test_reading_glyph_count),
         HOST_TEST(test_reading_missing_never_zero),

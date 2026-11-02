@@ -56,8 +56,22 @@ void vehicle_handle_vehicle_speed(const CAN_RxHeaderTypeDef *rx_header, uint8_t 
             runtime_state.car_steady_counter = 0; // reset counter
         }
 
+        /* A first/stale speed report is a baseline, never evidence of a launch.
+         * Cancel interrupted runs before a resumed high-speed frame can save one. */
+        bool speed_continuous = statistics_state.speed_report_seen &&
+                                currentTime - statistics_state.speed_report_at <= 1000U;
+        statistics_state.speed_report_seen = 1;
+        statistics_state.speed_report_at = currentTime;
+        if (!speed_continuous) {
+            if (statistics_state.statistics_0_100_started)
+                statistics_state.chronometer_elapsed_time_0_100_km_h = 60;
+            if (statistics_state.statistics_100_200_started)
+                statistics_state.chronometer_elapsed_time_100_200_km_h = 60;
+            statistics_state.statistics_0_100_started = 0;
+            statistics_state.statistics_100_200_started = 0;
+        }
         // Execute Statistics
-        if ((statistics_state.previous_speed_km_h < 0.0625) &&
+        if (speed_continuous && (statistics_state.previous_speed_km_h < 0.0625) &&
             (telemetry_state.current_speed_km_h >= 0.0625)) { // we started. Let's count the time
             statistics_state.statistics_0_100_start_time = currentTime - 10;
             statistics_state.statistics_0_100_started = 1;
@@ -77,7 +91,7 @@ void vehicle_handle_vehicle_speed(const CAN_RxHeaderTypeDef *rx_header, uint8_t 
             }
         }
 
-        if ((statistics_state.previous_speed_km_h <= 100.0) &&
+        if (speed_continuous && (statistics_state.previous_speed_km_h <= 100.0) &&
             (telemetry_state.current_speed_km_h > 100.0)) { // we started. Let's count the time
             statistics_state.statistics_100_200_start_time = currentTime - 10;
             statistics_state.statistics_100_200_started = 1;

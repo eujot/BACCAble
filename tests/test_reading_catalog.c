@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 static void test_reading_catalog_unique_and_ordered(void) {
     assert(reading_count() == READING_COUNT);
@@ -97,7 +98,7 @@ static void test_reading_catalog_enum_labels(void) {
     char buf[16];
     const ReadingMeta *gear = reading_lookup(READING_GEAR);
     assert(reading_enum_label(gear, 3, buf, sizeof(buf)));
-    assert(!strcmp(buf, "D"));
+    assert(!strcmp(buf, "3"));
     const ReadingMeta *status = reading_lookup(READING_OIL_LEVEL_STATUS);
     assert(reading_enum_label(status, 1, buf, sizeof(buf)));
     assert(!strcmp(buf, "OK"));
@@ -106,9 +107,44 @@ static void test_reading_catalog_enum_labels(void) {
     puts("PASS: enum/status labels are bounded and deterministic");
 }
 
+static void test_native_enum_contract(void) {
+    const char *gear[] = {"N", "1", "2", "3", "4", "5", "6", "R", "7", "8", "9"};
+    const char *regen[] = {"NONE", "DPF LO", "DPF HI", "NSC De-NOx", "NSC De-SOx", "SCR HeatUp", "NONE."};
+    char out[24];
+    for (unsigned i=0; i<11; ++i) {
+        reading_enum_label(reading_lookup(READING_GEAR), i, out, sizeof(out));
+        assert(!strcmp(out, gear[i]));
+    }
+    for (unsigned i=0; i<7; ++i) {
+        reading_enum_label(reading_lookup(READING_DPF_REGEN_MODE), i, out, sizeof(out));
+        assert(!strcmp(out, regen[i]));
+    }
+    const unsigned dna[] = {0,8,16,48};
+    const char *dna_names[] = {"N","D","A","Race"};
+    for (unsigned i=0; i<4; ++i) {
+        reading_enum_label(reading_lookup(READING_DNA_MODE), dna[i], out, sizeof(out));
+        assert(!strcmp(out, dna_names[i]));
+    }
+    const char *maps = "BANDR-?";
+    for (const char *c=maps; *c; ++c) {
+        reading_enum_label(reading_lookup(READING_PEDAL_MAP), *c, out, sizeof(out));
+        assert(out[0] == *c && out[1] == 0);
+    }
+    reading_enum_label(reading_lookup(READING_SEATBELT), 0, out, sizeof(out)); assert(!strcmp(out,"ON"));
+    reading_enum_label(reading_lookup(READING_SEATBELT), 1, out, sizeof(out)); assert(!strcmp(out,"OFF"));
+    const float invalid[] = {NAN, INFINITY, -INFINITY, 1e30f, -1e30f, 0.5f, 255};
+    const ReadingId enums[] = {READING_GEAR,READING_DNA_MODE,READING_PEDAL_MAP,READING_SEATBELT,READING_DPF_REGEN_MODE};
+    for (unsigned i=0;i<sizeof(enums)/sizeof(enums[0]);++i)
+        for (unsigned j=0;j<sizeof(invalid)/sizeof(invalid[0]);++j) {
+            reading_enum_label(reading_lookup(enums[i]), invalid[j], out, sizeof(out));
+            assert(!strcmp(out,"?"));
+        }
+}
+
 int main(void) {
     const char *suite = "reading-catalog";
     const HostTest tests[] = {
+        HOST_TEST(test_native_enum_contract),
         HOST_TEST(test_reading_catalog_unique_and_ordered),
         HOST_TEST(test_reading_catalog_sources),
         HOST_TEST(test_reading_catalog_eligibility),

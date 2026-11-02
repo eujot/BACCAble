@@ -749,6 +749,23 @@ próbę, a `MISS` — brak poprawnego wyniku w przewidzianym czasie, odpowiednio
 uruchomieniu, aż do ich skasowania. To pomiar na podstawie sygnałów samochodu,
 a nie certyfikowany pomiar zewnętrznym przyrządem.
 
+Po uruchomieniu świeży raport prędkości bez ukończonej próby daje `MISS`;
+pusty rekord Best również pokazuje `MISS`, zamiast wewnętrznych wartości
+60/65,535 sekundy. Limity obejmują dokładnie 20 s / 40 s. Brak aktualnych danych
+pokazuje `--`, również podczas trwającej próby. Zasady są wspólne dla Readings
+i Favorites. Pierwszy raport prędkości ustala punkt odniesienia, więc włączenie
+urządzenia podczas jazdy nie tworzy wyniku. Wznowienie raportów po przerwie
+dłuższej niż sekunda anuluje trwającą próbę; ukończone wyniki pozostają dostępne.
+
+`Seatbelt alarm` pokazuje konfigurację ostrzeżenia dźwiękowego (`ON` / `OFF`),
+a nie zapięcie pasa. `Pedal map` wyświetla znak zgłoszony przez sterownik,
+np. B, A, N, D, R lub `-`; nieznane wartości pokazuje jako `?`.
+`Regen mode` zachowuje opisy `NONE`, `DPF LO`, `DPF HI`, `NSC De-NOx`,
+`NSC De-SOx`, `SCR HeatUp` i `NONE.`. Większe pole wartości może wymagać
+krótszej etykiety lub dodatkowej podstrony we własnym układzie Favorites.
+Średnie etykiety temperatur `Gbox` i `Int air` odróżniają je od biegu
+(`Gear`) i ciśnienia dolotu (`Intake`).
+
 ### IBS SOC override
 
 Ta eksperymentalna akcja **wysyła zmienione komunikaty czujnika akumulatora**.
@@ -816,7 +833,7 @@ nieobsługiwane zapytania do sterownika ECU mogą stale dawać `--`.
 - **Distance (ECU)** to odczyt diagnostyczny opisany w starej instrukcji jako
   dystans od wyzerowania licznika ECU. Bez sprawdzenia interpretacji danego
   sterownika nie utożsamiaj go z całkowitym przebiegiem na zestawie wskaźników.
-- **Gear** pokazuje N, R lub numer biegu; DNA pokazuje A, N, D lub R.
+- **Gear** pokazuje N, R lub numer biegu; DNA pokazuje A, N, D lub Race.
   Brak rozpoznanego stanu może dawać `--`/`?`. `Pedal map` korzysta z odpowiedzi
   zewnętrznego kontrolera pedału.
 
@@ -934,9 +951,9 @@ Wartość, na którą ECU nie odpowiada, pokazuje `--`.
 | --- | --- | --- |
 | Speed | km/h | wszystkie |
 | Gear | N / R / bieg | wszystkie |
-| DNA mode | A / N / D / R | wszystkie |
+| DNA mode | A / N / D / Race | wszystkie |
 | Pedal map | litera mapy | wszystkie |
-| Seatbelt | ON / OFF | wszystkie |
+| Seatbelt alarm | ON / OFF | wszystkie |
 | Distance | km | wszystkie |
 
 ### Performance
