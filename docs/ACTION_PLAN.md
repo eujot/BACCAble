@@ -3943,3 +3943,12 @@ After each task, update its status and baseline with actual evidence. Record:
 installed boards/flags; hardware result or UNKNOWN; next remaining step`.
 Keep superseded decisions here briefly so later agents do not revive them.
 New task lists belong here, while stable technical details belong in the guides.
+
+## v5-beta-37 release notes, 2026-11-03
+
+Prepared [v5-beta-37 notes](releases/v5-beta-37.md) on `docs/v5-beta-37-release`
+from merged master `0111ccb` (PR #100). Notes cover the two-second Demo tour,
+review corrections to query pacing/Feature previews/hidden Actions, and FM/DAB
+source tracking. PR #100 CI passed before release preparation; no board was
+flashed. Create the beta tag/release from the fully merged master only after the
+release workflow succeeds. Vehicle Demo and visible icon acceptance remain open.
