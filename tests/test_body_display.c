@@ -159,7 +159,7 @@ static void test_bounded_radio_deferral_and_can_retry(void) {
 }
 
 static void test_my23_fixed_fields_and_unicode_under_each_source(void) {
-    const uint8_t sources[] = {0x06, 0x09, 0x21};
+    const uint8_t sources[] = {0x06, 0x09, 0x21, 0x0A, 0x02};
     const uint8_t radio[6] = {'R', 'a', 'd', 'i', 'o', ' '};
     for (unsigned source = 0; source < sizeof(sources); ++source) {
         factory_text(sources[source], 1, radio);
@@ -346,6 +346,35 @@ static void test_runtime_legacy_packet_widths(void) {
     assert(transmitted[first][3] == 'R' && transmitted[first+1][7] == '!');
 }
 
+static void test_fm_dab_source_refresh_and_short_text(void) {
+    const uint8_t sources[] = {0x0A, 0x02, 0x06, 0x21};
+    const uint8_t station[] = "Radio NUTA  ";
+    for (unsigned i = 0; i < sizeof(sources); ++i) {
+        factory_text(sources[i], 3, station);
+        submit("Favorites");
+        unsigned first = transmitted_count;
+        advance(1800);
+        assert(transmitted_count > first);
+        for (unsigned n = first; n < transmitted_count; ++n)
+            assert(code(transmitted[n]) == sources[i]);
+    }
+    /* Captured DAB 00 02 00 2D 00 00 00 00: one complete fragment. */
+    const uint8_t short_text[8] = {0, 2, 0, '-', 0, 0, 0, 0};
+    body_display_factory_frame(short_text, 8);
+    unsigned first = transmitted_count;
+    advance(1200);
+    assert(transmitted_count > first);
+    for (unsigned n = first; n < transmitted_count; ++n) assert(code(transmitted[n]) == 2);
+    const uint8_t unknown[8] = {0, 0x11, 0, ' ', 0, 0, 0, 0};
+    body_display_factory_frame(unknown, 8);
+    advance(500);
+    assert(code(transmitted[transmitted_count - 1]) == 2);
+    /* A truncated FM transfer must not replace the complete DAB context. */
+    body_display_factory_frame((const uint8_t[]){0, 0x0A}, 2);
+    advance(500);
+    assert(code(transmitted[transmitted_count - 1]) == 2);
+}
+
 int main(void) {
     const HostTest tests[] = {
         HOST_TEST(test_oil_animation_steps),
@@ -360,6 +389,7 @@ int main(void) {
         HOST_TEST(test_oil_animation_can_pacing),
         /* The original cases above share a sequential radio/display fixture. */
         HOST_TEST(test_runtime_legacy_packet_widths),
+        HOST_TEST(test_fm_dab_source_refresh_and_short_text),
     };
     host_tests_run(DASHBOARD_MESSAGE_MAX_LENGTH == 24 ? "body-display-24" : "body-display-18", tests, sizeof(tests) / sizeof(tests[0]));
 }

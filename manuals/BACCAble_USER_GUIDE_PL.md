@@ -224,11 +224,13 @@ Starszy profil zachowuje pierwszą linię 18/24 znaki i podpis `BACCAble beta`.
 Obsługa przycisków i szkiców jest taka sama, a pytania mieszczą się w jednej linii.
 
 BH używa ostatniego zaobserwowanego kompletnego źródła tekstu multimediów,
-np. USB lub CarPlay, zamiast wymuszać Bluetooth. Powtarza całe menu mniej więcej
+w tym FM, DAB, USB i CarPlay, zamiast wymuszać Bluetooth. Powtarza całe menu mniej więcej
 co sekundę i zaczyna ponownie po ustaniu tekstu radia. Zamknięcie przywraca
 ostatni kompletny tekst radia. Oba pola MY23 są osobno czyszczone i dopełniane,
 więc skrócenie tytułu nie przesuwa drugiej linii ani nie zostawia starych znaków.
 Czytelność, wyrównanie i odzyskiwanie ekranu po radiu wymagają próby w samochodzie.
+
+Śledzenie źródła FM/DAB przyjmuje kompletne teksty jedno- i wieloramkowe. Nieznane konteksty i niekompletne transfery zachowują poprzednie źródło. Stabilność ikony źródła wymaga jeszcze sprawdzenia na IPC w samochodzie.
 
 Pierwsze naciśnięcie góra/dół odświeża menu od razu. Przy szybkim naciskaniu
 każde naciśnięcie zmienia wybór, lecz ekran może pominąć pośrednie pozycje i po

@@ -4,6 +4,18 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## FM/DAB display source correction, 2026-11-03
+
+Branch fix/fm-dab-display-source includes owner-confirmed source labels and audit.
+body.c now accepts FM 0x0A and DAB 0x02, including complete single-frame text.
+Existing complete/in-order/DLC guards remain; controls and unknown codes do not
+replace the saved source. Display tests cover source transitions and subsequent
+menu reassertions on legacy widths and MY23, short DAB, unknown and truncated
+frames. Both display test binaries pass ASan/UBSan; 26 knowledge tests and the
+BH ARM build also pass (Arm GNU 15.2.Rel1). Source hash and readable
+catalog refreshed; both user guides updated. Visible IPC icon acceptance remains
+outstanding. Demo changes are retained separately on feat/live-menu-demo.
+
 ## Factory audio source gap audit, 2026-11-03
 
 Branch research/audio-source-gaps audits master 047cbf8 without modifying firmware. Source labels were subsequently updated

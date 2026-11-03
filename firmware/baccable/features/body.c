@@ -61,8 +61,8 @@ static bool nonblank(const uint8_t *text, unsigned length) {
 }
 
 static bool audio_text_code(uint8_t info_code) {
-    /* Vehicle media inputs and the observed CarPlay text context. */
-    return (info_code >= 0x05 && info_code <= 0x09) || info_code == 0x21;
+    /* FM/DAB confirmed by the owner against captured station-text contexts. */
+    return info_code == 0x02 || (info_code >= 0x05 && info_code <= 0x0A) || info_code == 0x21;
 }
 
 static void release_display(void) {
@@ -149,7 +149,7 @@ void body_display_factory_frame(const uint8_t data[8], uint8_t dlc) {
         factory_restore = false; /* The radio has taken over the display itself. */
 
     /* Only complete text transfers select a source or replace the saved radio text. */
-    if (dlc != 8 || !total_frame || !audio_text_code(info_code) ||
+    if (dlc != 8 || !audio_text_code(info_code) ||
         total_frame >= DISPLAY_FACTORY_MAX_FRAMES) {
         factory_collecting = false;
         return;

@@ -208,12 +208,14 @@ subpage on legacy. Readings show one selected measurement.
 The legacy profile retains its 18/24-character first line and `BACCAble beta`
 footer. It uses the same button and draft rules, with single-line prompts.
 
-BH uses the last complete media-text source it observed, such as USB or CarPlay,
+BH uses the last complete media-text source it observed, including FM, DAB, USB and CarPlay,
 rather than forcing Bluetooth. It resends the full overlay about once per second
 and restarts after radio text settles. Closing restores the last complete radio
 text. Both MY23 fields are cleared and padded independently, so shorter titles
 cannot shift the second line or leave old characters. Physical readability,
 alignment and radio takeover still require the vehicle acceptance test.
+
+FM/DAB source tracking accepts complete single-fragment text as well as multi-fragment transfers. Unknown contexts and incomplete transfers retain the preceding source. Visible source-icon stability still requires an IPC vehicle test.
 
 The first up/down click updates the menu immediately. During rapid clicks,
 every click changes the selection, but the display may skip intermediate

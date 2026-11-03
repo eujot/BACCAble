@@ -35,7 +35,7 @@
     "firmware/baccable/diagnostics/parameter_catalog.c": "402be417bbb1abe6f644edfa70ac81bae75f1565cc3e3f72ae001616d6fe3f36",
     "firmware/baccable/diagnostics/parameter_cache.c": "f8a4418ddb715498c04dad012d480bc53d2aab79300f8d471c6bb6380b4477fe",
     "docs/architecture/REFERENCE_SIGNALS.md": "fb8188e6938df5e74e23682b02e065f79db95c059e0999d2b325d07a9c94e6cf",
-    "firmware/baccable/features/body.c": "5ed0d3ee3d07d84ea508c19f90a502bba81f7fb9393cfe3123eecdfb5de9e83c",
+    "firmware/baccable/features/body.c": "dfac7b4cb6cd0af6cc61640201ee00719f6e22a2a959da34a68185fc8fd18279",
     "firmware/baccable/features/my23_ui.c": "6e5c772adfe061fc10c37e84908886858ac483b45b97aae207d6c2bb4b3814f2",
     "firmware/baccable/features/display_stream.c": "fc58c7270c56c0295d364a5ff0333a5e6b22174c935a9b9b377f54147a15e3dd",
     "firmware/baccable/features/oil_bar_animation.c": "6cc953261ef3a50fccecbd80f13639e98d477acb14e6a7210b43b6fe57cd6d6a",

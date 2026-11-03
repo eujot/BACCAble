@@ -327,7 +327,7 @@ not peer acknowledgments.
 
 Factory text uses the existing 100 ms complete-message guard/250 ms incomplete-message
 settle fallback and bounded deferral. Source codes are learned only from complete
-media messages (0x05–0x09 and observed CarPlay context 0x21); no extra audio-source
+media messages (FM 0x0A, DAB 0x02, 0x05–0x09 and observed CarPlay context 0x21); no extra audio-source
 selection is injected. Closing restores the last complete radio text when known.
 USB CAN does not suspend the menu;
 ELM processing can own diagnostics. Race-mask ownership is unchanged.
@@ -664,3 +664,6 @@ reserves ten value glyphs for its longest labels.
 The standard host test target now includes reading catalog, reading layout,
 Favorite layout and real speed-handler tests. Menu integration tests cover timer
 states in outgoing packets across Legacy 18/24 and MY23 profiles.
+
+Complete single-fragment audio text (last index zero) also updates the saved
+source and factory text. Unknown/control codes remain excluded.
