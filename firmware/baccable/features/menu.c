@@ -137,9 +137,10 @@ static uint32_t page_changed, last_render, last_query, notice_started;
 static uint32_t navigation_last, navigation_sent;
 static bool navigation_active, navigation_pending;
 static int navigation_direction;
-static bool demo_active;
-static uint8_t demo_step;
+static bool demo_active, demo_readings;
+static uint16_t demo_step;
 static uint32_t demo_started;
+static uint8_t demo_sources[8], demo_source_count, demo_source_index;
 static const char *notice;
 static const char *notice_label = "Settings";
 static char notice_text[24 + 1];
@@ -611,7 +612,7 @@ void menu_init(void) {
 /* Check whether a visible screen currently needs vehicle readings. */
 bool menu_parameters_active(void) {
     return dashboard_state.baccable_dashboard_menu_visible &&
-           (((view == VALUES || view == FAVORITES) && list_count) ||
+           ((demo_active && demo_readings) || ((view == VALUES || view == FAVORITES) && list_count) ||
             (view == VALUES && auto_reading < READING_COUNT));
 }
 
@@ -1185,6 +1186,120 @@ static void back(void) {
     parameter_request_cancel();
 }
 
+/* Read-only tour over production pages. All navigation indices are restored. */
+bool menu_demo_page(uint16_t step, bool render) {
+    if (render) { demo_readings = false; demo_source_count = 0; }
+    if (step < 6) {
+        if (render) menu_present_view(UI_MODE_LIST, roots[step], roots[(step + 1) % 6]);
+        return true;
+    }
+    step -= 6;
+    for (unsigned cell = 0; cell < FAVORITE_SET_COUNT * 8; ++cell) {
+        if (menu_my23() && (cell % 8) >= 4) continue;
+        FavoriteSet visible; favorite_visible(cell, &visible);
+        if (!favorite_row_item_count(visible.rows[0]) && !favorite_row_item_count(visible.rows[1])) continue;
+        if (step) { --step; continue; }
+        if (render) {
+            demo_readings = true;
+            demo_source_count = favorite_uds_sources(&visible, demo_sources);
+            present_favorite_layout(cell);
+        }
+        return true;
+    }
+    for (ReadingId id = 0; id < READING_COUNT; ++id) {
+        if (vehicle_reading_support_for(vehicle_profile_current(), id) == VEHICLE_SUPPORT_UNSUPPORTED) continue;
+        if (step) { --step; continue; }
+        if (render) {
+            demo_readings = true;
+            uint8_t source = reading_source(reading_lookup(id), vehicle_profile_current());
+            if (source < PARAMETER_DEFINITION_COUNT && parameter_definitions[source].request_id > 0xff) {
+                demo_sources[0] = source; demo_source_count = 1;
+            }
+            present_reading(id);
+        }
+        return true;
+    }
+    if (step < 13U * 3U) {
+        if (render) {
+            vehicle_editor_begin();
+            for (unsigned i = 0; i < step / 3; ++i) vehicle_editor_navigate(1);
+            if (step % 3) vehicle_editor_select();
+            if (step % 3 == 2) vehicle_editor_navigate(1);
+            char value[24], text[25];
+            const char *label = vehicle_editor_value_label(value, sizeof(value));
+            if (menu_my23()) menu_present_view(step % 3 ? UI_MODE_EDIT : UI_MODE_LIST, vehicle_editor_field_label(), label);
+            else {
+                bool edit = step % 3 != 0;
+                if (edit) { text[0] = '>'; text[1] = ' '; }
+                ui_render_value(text + (edit ? 2 : 0), menu_width() + 1 - (edit ? 2 : 0), vehicle_editor_field_label(), label);
+                menu_present(text);
+            }
+            vehicle_editor_cancel();
+        }
+        return true;
+    }
+    step -= 13U * 3U;
+    /* Show the settings entry points with their actual labels. */
+    if (step < 3) {
+        if (render) menu_present_view(UI_MODE_LIST, settings[step], settings[(step + 1) % 3]);
+        return true;
+    }
+    step -= 3;
+    for (unsigned page = 0; page < setup_menu_pages_count(); ++page) {
+        unsigned phases = setup_demo_phases(page);
+        if (step < phases) {
+            if (render) setup_demo_preview(page, step);
+            return true;
+        }
+        step -= phases;
+    }
+    if (step < FAVORITE_SET_COUNT * 9U + 1U) {
+        if (render) {
+            unsigned set = step / 9, phase = step % 9;
+            MenuView old_view = view;
+            FavoriteSet old_draft = favorite_draft;
+            uint8_t old_set = favorite_set, old_row = favorite_row, old_slot = favorite_slot;
+            uint8_t old_pick = favorite_pick, old_format = favorite_format;
+            bool old_confirm = favorite_confirm;
+            if (set >= FAVORITE_SET_COUNT) view = FAV_RESET;
+            else {
+                favorite_set = set; favorite_draft = favorites_layout.sets[set];
+                favorite_row = phase >= 5 ? 1 : 0; favorite_slot = 0; favorite_confirm = false;
+                favorite_pick = favorite_draft.rows[favorite_row][0].id;
+                favorite_format = favorite_draft.rows[favorite_row][0].format;
+                view = phase == 0 ? FAV_SETS : phase == 1 || phase == 5 ? FAV_ROWS :
+                       phase == 2 || phase == 6 ? FAV_ITEMS : phase == 3 || phase == 7 ? FAV_PICK : FAV_FORMAT;
+            }
+            demo_active = false; menu_render(); demo_active = true;
+            view = old_view; favorite_draft = old_draft; favorite_set = old_set;
+            favorite_row = old_row; favorite_slot = old_slot; favorite_pick = old_pick;
+            favorite_format = old_format; favorite_confirm = old_confirm;
+        }
+        return true;
+    }
+    step -= FAVORITE_SET_COUNT * 9U + 1U;
+    MenuView saved_view = view;
+    uint8_t saved_function = function, saved_info = info, saved_option = ipc_option;
+    bool found = false;
+    for (unsigned action = 0; action < ACTION_COUNT; ++action) {
+        if (!available(actions[action].id)) continue;
+        if (step) { --step; continue; }
+        view = FUNCTIONS; function = action; found = true;
+        break;
+    }
+    if (!found) {
+        if (step < 3) { view = IPC_OPTIONS; ipc_option = step; found = true; }
+        else if ((step -= 3) < INFO_PAGES - 1) { view = INFO; info = step; found = true; }
+    }
+    if (render && found) {
+        demo_active = false;
+        menu_render();
+        demo_active = true;
+    }
+    view = saved_view; function = saved_function; info = saved_info; ipc_option = saved_option;
+    return found;
+}
+
 /* Apply one navigation gesture to the currently visible menu. */
 /* Keep editor save handling outside the navigation switch on the small C1 target. */
 static __attribute__((noinline)) void menu_hold(void) {
@@ -1247,6 +1362,7 @@ void menu_event(MenuEvent event) {
     if (demo_active) {
         if (event == MENU_BACK) {
             demo_active = false;
+            parameter_request_cancel();
             last_input = currentTime;
             menu_render();
         }
@@ -1460,6 +1576,7 @@ void menu_event(MenuEvent event) {
                 demo_active = true;
                 demo_step = 0;
                 demo_started = currentTime;
+                demo_source_count = demo_source_index = 0;
             }
             break;
         }
@@ -1535,17 +1652,30 @@ void menu_process(void) {
     }
     if (demo_active) {
         uint16_t duration;
+        bool changed = false;
         while ((duration = menu_demo_duration(demo_step)) &&
                currentTime - demo_started >= duration) {
             demo_started += duration;
+            parameter_request_cancel();
             ++demo_step;
+            demo_source_count = demo_source_index = 0;
+            changed = true;
         }
         if (!duration) {
             demo_active = false;
+            parameter_request_cancel();
             last_input = currentTime;
         }
-        if (!demo_active || currentTime - last_render >= 100U)
+        if (changed || !demo_active || currentTime - last_render >= 100U)
             menu_render();
+        /* Rendering, including ECU reply redraws, must never trigger a query. */
+        if (demo_active && demo_source_count && !diagnostics_state.clear_faults_request &&
+            currentTime - demo_started >= 150U && currentTime - last_query >= 500U) {
+            demo_source_index %= demo_source_count;
+            parameter_request_begin_id(demo_sources[demo_source_index], 255);
+            demo_source_index = (demo_source_index + 1) % demo_source_count;
+            last_query = currentTime;
+        }
         return;
     }
     bool editor = view == SETTINGS || view == SETUP || view == IPC_OPTIONS ||

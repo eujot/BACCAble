@@ -4,6 +4,84 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## PR 100 review corrections, 2026-11-03
+
+On feat/demo-and-audio-source-fixes; fresh fetch confirms origin/master 047cbf8.
+Demo no longer sends UDS requests from rendering or ECU reply callbacks. Its
+process loop enforces 150 ms settling, 500 ms spacing and the clear-DTC guard,
+rotates Favorite sources, and resets the cursor/cancels requests on page changes.
+Feature previews share pure draft transitions with real navigation: DNA order
+and Race policy, USB companion mode, and clamped numeric values. Prerequisite
+messages remain visible, including disabled mirror capture. Hidden Actions are
+removed from the tour index instead of resolving repeatedly to the next action.
+Both user guides and MENU_UX are updated.
+
+Validation: full Apple Clang ASan/UBSan host suite passes, including real-time
+Demo processing with accepted ECU replies, clear-DTC inhibition, exit, query-free
+rendering, visible-action counts and Feature choice/limit checks in four menu
+variants. All four ARM builds and cppcheck pass with Arm GNU 15.2.Rel1.
+Vehicle confirmation of timing/readability and source icons remains outstanding.
+Pre-existing untracked captures, release folders and research note are untouched.
+
+## Combined post-beta-36 PR, 2026-11-03
+
+Branch feat/demo-and-audio-source-fixes combines feat/live-menu-demo (including
+2000 ms pacing) with fix/fm-dab-display-source and its source-context evidence.
+Base origin/master remains 047cbf8 after fresh fetch. Documentation conflicts
+were resolved by preserving both feature descriptions and EN/PL guide updates.
+Validation after integration: complete host ASan/UBSan suite and all 82 Lab
+tests pass. The existing beta-36 release notes are included for repository continuity; the
+published beta-36 firmware does not contain these subsequent changes.
+
+## FM/DAB display source correction, 2026-11-03
+
+Branch fix/fm-dab-display-source includes owner-confirmed source labels and audit.
+body.c now accepts FM 0x0A and DAB 0x02, including complete single-frame text.
+Existing complete/in-order/DLC guards remain; controls and unknown codes do not
+replace the saved source. Display tests cover source transitions and subsequent
+menu reassertions on legacy widths and MY23, short DAB, unknown and truncated
+frames. Both display test binaries pass ASan/UBSan; 26 knowledge tests and the
+BH ARM build also pass (Arm GNU 15.2.Rel1). Source hash and readable
+catalog refreshed; both user guides updated. Visible IPC icon acceptance remains
+outstanding. Demo changes are retained separately on feat/live-menu-demo.
+
+## Factory audio source gap audit, 2026-11-03
+
+Branch research/audio-source-gaps audits master 047cbf8 without modifying firmware. Source labels were subsequently updated
+from owner confirmation. Scanned every available sessions/*/session.sqlite3 read-only,
+matching BH 0x090/DLC 8 and reconstructing ordered UTF-16BE text transfers.
+Current body.c accepts only 0x05..0x09 and 0x21, and rejects last-index zero.
+Missing observed station-text contexts: 0x0A (Radio MEGA, two complete transfers
+in 20261010-104325Z; Radio NUTA, two in 20261024-113644Z), and 0x02 (ESKA2,
+EskaROCK in 20261010-111025Z; > ESKA < in 20261024-113644Z). The latter also
+has single-fragment '-' and '0.0' placeholders; adding its code alone cannot
+handle these because of the !total_frame guard. Contexts 0x11/0x12/0x13 carry
+single spaces in 20261024-113644Z and remain unidentified. 0x01/0x0F are controls,
+not candidates for indiscriminate audio-text acceptance. Initial station-name inference suggested 0x0A might be DAB; this was incorrect.
+Owner confirmation on 2026-11-03 establishes 0x0A=FM and 0x02=DAB.
+Dictionary source-context labels and readable catalog now retain this provenance.
+The same low-six-bit code is reused in outgoing menu frames, explaining possible
+source-icon changes when unrecognized factory traffic interrupts the menu.
+No screenshot or recorded TX proves the actual visible icon. All three relevant
+sessions are complete but have BH losses (8186 / 437 / 26230 respectively);
+last session also has saturated C1/C2 loss counters. No negative absence claim
+is made for sources not observed. Demo work remains on feat/live-menu-demo.
+
+## Live menu demonstration, 2026-11-03
+
+Branch feat/live-menu-demo starts from merged master 047cbf8. Replaces hard-coded
+example slides with two-second runtime-profile previews, live supported readings,
+saved Favorite pages, Vehicle and Feature local edits and menu/editor surfaces.
+User-requested pacing update: one Demo mode, exactly 2000 ms per screen.
+Preview code never calls save/action/calibration handlers. Normal UDS reading
+requests are allowed and cancelled on exit. RES double-click exits to Information.
+Validation: full Apple Clang ASan/UBSan host suite passes, including complete
+tour traversal and unchanged settings/profile/Flash/action counters across three
+runtime profiles and four builds. All four ARM builds and cppcheck pass with
+Arm GNU 15.2.Rel1; final C1 rebuilt after adding parking submenu previews.
+Both guides describe live versus simulated values. Hardware acceptance remains
+open for readability and IPC pacing. Release notes branch and user files retained.
+
 ## PR 99 review follow-up, 2026-11-02
 
 Reviewed input recovery/repeat pacing, editor drafts/confirmation/save failures,

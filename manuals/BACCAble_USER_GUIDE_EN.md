@@ -208,12 +208,14 @@ subpage on legacy. Readings show one selected measurement.
 The legacy profile retains its 18/24-character first line and `BACCAble beta`
 footer. It uses the same button and draft rules, with single-line prompts.
 
-BH uses the last complete media-text source it observed, such as USB or CarPlay,
+BH uses the last complete media-text source it observed, including FM, DAB, USB and CarPlay,
 rather than forcing Bluetooth. It resends the full overlay about once per second
 and restarts after radio text settles. Closing restores the last complete radio
 text. Both MY23 fields are cleared and padded independently, so shorter titles
 cannot shift the second line or leave old characters. Physical readability,
 alignment and radio takeover still require the vehicle acceptance test.
+
+FM/DAB source tracking accepts complete single-fragment text as well as multi-fragment transfers. Unknown contexts and incomplete transfers retain the preceding source. Visible source-icon stability still requires an IPC vehicle test.
 
 The first up/down click updates the menu immediately. During rapid clicks,
 every click changes the selection, but the display may skip intermediate
@@ -749,19 +751,26 @@ not toggle their state. The final `Demo` entry starts the menu tour with RES.
 
 MY23 shows the label above its value; Legacy shortens the label as needed to
 preserve the complete number and milliseconds.
-| `> Demo` | Start a timed tour of the displayed menu and example values. |
+| `> Demo` | Start a quick menu tour with live readings and simulated edits. |
 
 C2/BH version replies older than about five seconds are treated as stale. Input
 counters describe menu controls, **not CAN capture frame counts**.
 
-Select `Information → Demo` to start the tour. It displays Favorites, Readings,
-Actions and Features in a fixed sequence, including example oil and temperature
-readings and apparent changes to Rain lights, Default mode and Suspension. These
-are presentation examples: Demo does not change settings, write Flash or send
-vehicle actions. A double-click of RES ends the tour and returns to Information;
-other clicks do not operate the displayed items. The tour also returns to
-Information automatically after its final screen. Values such as `77 mm` and
-`2500 rpm` are examples, not current vehicle measurements.
+Select `Information → Demo` for a quick presentation (two seconds per step).
+The tour uses the current runtime display profile and production reading,
+Favorite and menu renderers. It visits supported readings, saved Favorite pages,
+Vehicle fields, visible Features, Favorite editor screens, Actions, IPC options
+and Information. Values come from the vehicle; unavailable data remains `--`.
+Vehicle and Feature edits show the saved value, edit entry and a local changed
+value. All changes are previews: no settings writes, action execution or mirror
+calibration is performed. Feature previews respect available choices, numeric
+limits and prerequisite messages; hidden Actions are skipped. Normal reading
+queries may be sent to obtain live data, no more often than every 500 ms and
+only after a screen has been visible for 150 ms. Replies only refresh the value;
+DTC clearing suspends Demo queries.
+Double-click RES to return to Information; other controls do not operate the
+preview. The tour returns automatically after the final screen.
+
 
 
 ## Reading the measurements

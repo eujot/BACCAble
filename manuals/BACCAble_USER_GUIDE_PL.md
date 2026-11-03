@@ -224,11 +224,13 @@ Starszy profil zachowuje pierwszą linię 18/24 znaki i podpis `BACCAble beta`.
 Obsługa przycisków i szkiców jest taka sama, a pytania mieszczą się w jednej linii.
 
 BH używa ostatniego zaobserwowanego kompletnego źródła tekstu multimediów,
-np. USB lub CarPlay, zamiast wymuszać Bluetooth. Powtarza całe menu mniej więcej
+w tym FM, DAB, USB i CarPlay, zamiast wymuszać Bluetooth. Powtarza całe menu mniej więcej
 co sekundę i zaczyna ponownie po ustaniu tekstu radia. Zamknięcie przywraca
 ostatni kompletny tekst radia. Oba pola MY23 są osobno czyszczone i dopełniane,
 więc skrócenie tytułu nie przesuwa drugiej linii ani nie zostawia starych znaków.
 Czytelność, wyrównanie i odzyskiwanie ekranu po radiu wymagają próby w samochodzie.
+
+Śledzenie źródła FM/DAB przyjmuje kompletne teksty jedno- i wieloramkowe. Nieznane konteksty i niekompletne transfery zachowują poprzednie źródło. Stabilność ikony źródła wymaga jeszcze sprawdzenia na IPC w samochodzie.
 
 Pierwsze naciśnięcie góra/dół odświeża menu od razu. Przy szybkim naciskaniu
 każde naciśnięcie zmienia wybór, lecz ekran może pominąć pośrednie pozycje i po
@@ -798,20 +800,27 @@ pokaz po naciśnięciu RES.
 
 MY23 pokazuje nazwę nad wartością; Legacy w razie potrzeby skraca nazwę,
 zachowując całą liczbę i jednostkę milisekund.
-| `> Demo` | Uruchamia pokaz menu i przykładowych wartości. |
+| `> Demo` | Uruchamia szybki pokaz menu, bieżących odczytów i pozornej edycji. |
 
 Odpowiedzi z wersją C2/BH starsze niż około pięć sekund są uznawane za nieaktualne.
 Liczniki dotyczą obsługi menu, **nie liczby ramek zapisanych podczas przechwytywania
 CAN**.
 
-Wybierz `Information → Demo`, aby uruchomić pokaz. Urządzenie przejdzie kolejno
-przez Favorites, Readings, Actions i Features. Pokaże przykładowe odczyty oleju
-i temperatur oraz pozorną zmianę Rain lights, Default mode i Suspension. Są to
-tylko przykłady na ekranie: pokaz nie zmienia ustawień, nie zapisuje Flash ani
-nie wysyła poleceń do samochodu. Dwuklik RES kończy pokaz i wraca do Information;
-pozostałe naciśnięcia nie obsługują wyświetlanych pozycji. Po ostatnim ekranie
-powrót następuje automatycznie. Wartości takie jak `77 mm` i `2500 rpm` nie są
-bieżącymi pomiarami samochodu.
+Wybierz `Information → Demo`, aby rozpocząć szybki pokaz (dwie sekundy na krok).
+Pokaz korzysta z bieżącego profilu wyświetlacza i tych samych rendererów co
+zwykłe odczyty, Favorites i menu. Pokazuje obsługiwane odczyty, zapisane strony
+Favorites, pola Vehicle, widoczne Features, ekrany edytora Favorites, Actions,
+opcje IPC oraz Information. Wartości pochodzą z samochodu; brak danych daje `--`.
+Edycja Vehicle i Features pokazuje zapisaną wartość, wejście w edycję i lokalną
+zmianę wartości. Zmiany są podglądem: pokaz nie zapisuje ustawień, nie wykonuje
+akcji ani kalibracji lusterek. Podgląd Features uwzględnia dostępne wartości,
+zakresy liczbowe i komunikaty o wymaganiach; ukryte Actions są pomijane. Pokaz
+może wysyłać zwykłe zapytania o odczyty, nie częściej niż co 500 ms i dopiero
+po 150 ms wyświetlania ekranu. Odpowiedź odświeża tylko wartość;
+kasowanie DTC wstrzymuje zapytania Demo.
+Dwuklik RES wraca do Information; pozostałe przyciski nie obsługują podglądu.
+Po ostatnim ekranie powrót następuje automatycznie.
+
 
 
 ## Jak rozumieć odczyty

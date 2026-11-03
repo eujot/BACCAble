@@ -327,7 +327,7 @@ not peer acknowledgments.
 
 Factory text uses the existing 100 ms complete-message guard/250 ms incomplete-message
 settle fallback and bounded deferral. Source codes are learned only from complete
-media messages (0x05–0x09 and observed CarPlay context 0x21); no extra audio-source
+media messages (FM 0x0A, DAB 0x02, 0x05–0x09 and observed CarPlay context 0x21); no extra audio-source
 selection is injected. Closing restores the last complete radio text when known.
 USB CAN does not suspend the menu;
 ELM processing can own diagnostics. Race-mask ownership is unchanged.
@@ -664,3 +664,22 @@ reserves ten value glyphs for its longest labels.
 The standard host test target now includes reading catalog, reading layout,
 Favorite layout and real speed-handler tests. Menu integration tests cover timer
 states in outgoing packets across Legacy 18/24 and MY23 profiles.
+
+Complete single-fragment audio text (last index zero) also updates the saved
+source and factory text. Unknown/control codes remain excluded.
+
+## Live demonstration
+
+Information Demo resolves two-second read-only previews against the saved vehicle
+profile. Reading and Favorite renderers consume real cache samples; UDS polling
+and reply acceptance remain enabled during those preview screens. Feature values
+are formatted from local copies and Vehicle previews use only the isolated draft.
+Action/save/calibration handlers are never invoked by the tour. Preview navigation
+indices are restored, and requests are cancelled on step changes and RES Back.
+
+Demo polling runs only in menu_process, with a 150 ms screen settling time,
+a 500 ms query interval, round-robin Favorite sources and the clear-DTC guard.
+Reply-triggered rendering does not transmit requests. Step changes reset the
+source cursor and cancel pending requests. Feature previews share pure draft
+transitions with real edits (including DNA/USB choices and numeric clamping),
+retain prerequisite messages and skip hidden Action entries before indexing.

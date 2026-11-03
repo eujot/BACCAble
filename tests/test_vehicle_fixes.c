@@ -765,3 +765,135 @@ static void test_acceleration_menu_states(void) {
         assert(ergonomics_has("--") && !ergonomics_has("RUN"));
     }
 }
+
+static void test_demo_live_tour(void) {
+    for (uint8_t display = VEHICLE_DISPLAY_LEGACY18; display <= VEHICLE_DISPLAY_MY23; ++display) {
+        ergonomics_reset(display);
+        SettingsState original = settings_state;
+        VehicleProfile profile = *vehicle_profile_current();
+        uint8_t flash_before[sizeof(flash_pages)]; memcpy(flash_before, flash_pages, sizeof(flash_pages));
+        unsigned commands_before = commands, queries_before = queries;
+        unsigned step = 0;
+        for (; step < 1000 && menu_demo_duration(step); ++step) {
+            assert(menu_demo_duration(step) == 2000);
+            menu_demo_render(step);
+        }
+        assert(step > READING_COUNT && step < 1000);
+        assert(!memcmp(&original, &settings_state, sizeof(original)));
+        assert(!memcmp(&profile, vehicle_profile_current(), sizeof(profile)));
+        assert(!memcmp(flash_before, flash_pages, sizeof(flash_pages)));
+        assert(commands == commands_before && queries == queries_before);
+        menu_event(MENU_BACK);
+    }
+}
+
+/* Exercise real Demo scheduling and ECU reply redraws, not just slide rendering. */
+static void test_demo_query_pacing(void) {
+    ergonomics_reset(VEHICLE_DISPLAY_MY23);
+    diagnostics_state.clear_faults_request = 0;
+    parameter_request_cancel();
+    now += 1000;
+    ergonomics_root(5);
+    for (unsigned i = 0; i < 9; ++i) menu_event(MENU_NEXT);
+    menu_event(MENU_SELECT);
+    uint32_t start = now, last = 0;
+    unsigned replies = 0;
+    for (unsigned tick = 0; tick < 2000; ++tick) {
+        now = start + tick * 50;
+        unsigned before = queries;
+        /* Clear-DTC activity inhibits live preview queries too. */
+        diagnostics_state.clear_faults_request = tick >= 300 && tick < 340;
+        menu_process();
+        if (diagnostics_state.clear_faults_request) assert(queries == before);
+        if (queries == before) continue;
+        assert(queries == before + 1);
+        assert(!last || now - last >= 500);
+        assert((now - start) % 2000 >= 150);
+        last = now;
+        const ParameterDefinition *source = NULL;
+        for (unsigned id = 0; id < PARAMETER_DEFINITION_COUNT; ++id) {
+            const ParameterDefinition *candidate = &parameter_definitions[id];
+            if (candidate->request_id == query_ecu &&
+                query_payload[2] == (uint8_t)(candidate->request_data >> 16) &&
+                query_payload[3] == (uint8_t)(candidate->request_data >> 24)) {
+                source = candidate; break;
+            }
+        }
+        assert(source);
+        CAN_RxHeaderTypeDef header = {.IDE = CAN_ID_EXT, .RTR = CAN_RTR_DATA,
+            .ExtId = source->response_id, .DLC = 8};
+        uint8_t reply[8] = {7, 0x62, source->request_data >> 16, source->request_data >> 24, 0, 0, 0, 0};
+        before = queries;
+        parameter_cache_reset();
+        parameter_request_receive(&header, reply);
+        bool accepted = false;
+        for (unsigned id = 0; id < PARAMETER_DEFINITION_COUNT; ++id)
+            if (parameter_definitions[id].request_id == query_ecu &&
+                isfinite(parameter_cache_get(id, now))) accepted = true;
+        assert(accepted);
+        menu_render();
+        assert(queries == before);
+        ++replies;
+    }
+    assert(replies > 5);
+    diagnostics_state.clear_faults_request = 0;
+    menu_event(MENU_BACK);
+    unsigned before = queries;
+    now += 1000; menu_process();
+    assert(queries == before);
+}
+
+static unsigned demo_length(void) {
+    unsigned steps = 0;
+    while (menu_demo_duration(steps)) { ++steps; assert(steps < 1000); }
+    return steps;
+}
+static void test_demo_visible_actions(void) {
+    ergonomics_reset(VEHICLE_DISPLAY_MY23);
+    settings_state.read_faults_enabled = 0;
+    unsigned hidden = demo_length();
+    settings_state.read_faults_enabled = 1;
+    assert(demo_length() == hidden + 1);
+    settings_state.read_faults_enabled = 0;
+    assert(demo_length() == hidden);
+}
+
+static unsigned demo_feature_page(const char *name) {
+    for (unsigned page = 0; page < setup_menu_pages_count(); ++page) {
+        setup_demo_preview(page, 0);
+        if (ergonomics_has(name)) return page;
+    }
+    assert(!"Feature missing from demo");
+    return 0;
+}
+static void test_demo_feature_rules(void) {
+    ergonomics_reset(VEHICLE_DISPLAY_MY23);
+    VehicleProfile p = *vehicle_profile_current();
+    p.equipment[VEHICLE_EQUIPMENT_RACE] = VEHICLE_EQUIPMENT_ABSENT;
+    assert(settings_profile_save(&p) == 0);
+    settings_state.default_drive_mode = 2;
+    unsigned page = demo_feature_page("Default mode");
+    setup_demo_preview(page, 2);
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "A ", 2));
+    assert(settings_state.default_drive_mode == 2);
+    settings_state.default_drive_mode = 1;
+    setup_demo_preview(page, 2);
+    assert(!memcmp(screen_packet + 2 + MY23_L1_VISIBLE, "N ", 2));
+    settings_state.usb_sniffer = 1;
+    settings_state.usb_elm327 = 0;
+    page = demo_feature_page("USB");
+    setup_demo_preview(page, 2);
+#ifdef ACT_AS_ELM327
+    assert(ergonomics_has("ELM327"));
+#else
+    assert(ergonomics_has("OFF"));
+#endif
+    assert(settings_state.usb_sniffer == 1 && !settings_state.usb_elm327);
+    const SetupParam *param = setup_find_by_flash_index(18);
+    settings_state.launch_torque_threshold = param->maximum;
+    page = demo_feature_page("Launch Nm");
+    setup_demo_preview(page, 2);
+    char number[16]; snprintf(number, sizeof(number), "%u", param->maximum);
+    assert(ergonomics_has(number));
+    assert(settings_state.launch_torque_threshold == param->maximum);
+}
