@@ -7,8 +7,9 @@
 ## Live menu demonstration, 2026-11-03
 
 Branch feat/live-menu-demo starts from merged master 047cbf8. Replaces hard-coded
-example slides with six-second runtime-profile previews, live supported readings,
+example slides with two-second runtime-profile previews, live supported readings,
 saved Favorite pages, Vehicle and Feature local edits and menu/editor surfaces.
+User-requested pacing update: one Demo mode, exactly 2000 ms per screen.
 Preview code never calls save/action/calibration handlers. Normal UDS reading
 requests are allowed and cancelled on exit. RES double-click exits to Information.
 Validation: full Apple Clang ASan/UBSan host suite passes, including complete

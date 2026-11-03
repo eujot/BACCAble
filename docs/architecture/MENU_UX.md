@@ -667,7 +667,7 @@ states in outgoing packets across Legacy 18/24 and MY23 profiles.
 
 ## Live demonstration
 
-Information Demo resolves six-second read-only previews against the saved vehicle
+Information Demo resolves two-second read-only previews against the saved vehicle
 profile. Reading and Favorite renderers consume real cache samples; UDS polling
 and reply acceptance remain enabled during those preview screens. Feature values
 are formatted from local copies and Vehicle previews use only the isolated draft.

@@ -749,12 +749,12 @@ not toggle their state. The final `Demo` entry starts the menu tour with RES.
 
 MY23 shows the label above its value; Legacy shortens the label as needed to
 preserve the complete number and milliseconds.
-| `> Demo` | Start a slow menu tour with live readings and simulated edits. |
+| `> Demo` | Start a quick menu tour with live readings and simulated edits. |
 
 C2/BH version replies older than about five seconds are treated as stale. Input
 counters describe menu controls, **not CAN capture frame counts**.
 
-Select `Information → Demo` for a slow presentation (six seconds per step).
+Select `Information → Demo` for a quick presentation (two seconds per step).
 The tour uses the current runtime display profile and production reading,
 Favorite and menu renderers. It visits supported readings, saved Favorite pages,
 Vehicle fields, visible Features, Favorite editor screens, Actions, IPC options

@@ -775,7 +775,7 @@ static void test_demo_live_tour(void) {
         unsigned commands_before = commands;
         unsigned step = 0;
         for (; step < 1000 && menu_demo_duration(step); ++step) {
-            assert(menu_demo_duration(step) >= 6000);
+            assert(menu_demo_duration(step) == 2000);
             menu_demo_render(step);
         }
         assert(step > READING_COUNT && step < 1000);

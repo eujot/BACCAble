@@ -798,13 +798,13 @@ pokaz po naciśnięciu RES.
 
 MY23 pokazuje nazwę nad wartością; Legacy w razie potrzeby skraca nazwę,
 zachowując całą liczbę i jednostkę milisekund.
-| `> Demo` | Uruchamia powolny pokaz menu, bieżących odczytów i pozornej edycji. |
+| `> Demo` | Uruchamia szybki pokaz menu, bieżących odczytów i pozornej edycji. |
 
 Odpowiedzi z wersją C2/BH starsze niż około pięć sekund są uznawane za nieaktualne.
 Liczniki dotyczą obsługi menu, **nie liczby ramek zapisanych podczas przechwytywania
 CAN**.
 
-Wybierz `Information → Demo`, aby rozpocząć powolny pokaz (sześć sekund na krok).
+Wybierz `Information → Demo`, aby rozpocząć szybki pokaz (dwie sekundy na krok).
 Pokaz korzysta z bieżącego profilu wyświetlacza i tych samych rendererów co
 zwykłe odczyty, Favorites i menu. Pokazuje obsługiwane odczyty, zapisane strony
 Favorites, pola Vehicle, widoczne Features, ekrany edytora Favorites, Actions,
