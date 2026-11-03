@@ -763,7 +763,11 @@ Vehicle fields, visible Features, Favorite editor screens, Actions, IPC options
 and Information. Values come from the vehicle; unavailable data remains `--`.
 Vehicle and Feature edits show the saved value, edit entry and a local changed
 value. All changes are previews: no settings writes, action execution or mirror
-calibration is performed. Normal reading queries may be sent to obtain live data.
+calibration is performed. Feature previews respect available choices, numeric
+limits and prerequisite messages; hidden Actions are skipped. Normal reading
+queries may be sent to obtain live data, no more often than every 500 ms and
+only after a screen has been visible for 150 ms. Replies only refresh the value;
+DTC clearing suspends Demo queries.
 Double-click RES to return to Information; other controls do not operate the
 preview. The tour returns automatically after the final screen.
 

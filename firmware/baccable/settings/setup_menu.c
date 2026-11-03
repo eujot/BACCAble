@@ -29,6 +29,8 @@ static uint16_t stage_value, stage_original;
 static uint8_t stage_extra, stage_original_extra;
 static bool stage_confirm;
 static void stage_cycle(int direction);
+static void setup_next_value(const SetupParam *param, uint16_t *value, uint8_t *extra,
+                             uint16_t original, uint8_t original_extra, int direction);
 static bool park_menu;
 static uint8_t park_page;
 static const struct {
@@ -349,28 +351,28 @@ void setup_demo_preview(uint8_t page, unsigned phase) {
     if (!param) return;
     if (phase >= 3) {
         const char *label = phase == 3 ? "Enabled" : phase == 4 ? "Store position" : "Back";
+        const char *hint = phase == 3 ? (settings_state.park_mirror ? "ON" : "OFF") :
+                           phase == 4 ? (!vehicle_feature_allowed(VEHICLE_FEATURE_PARK_MIRROR) ? "Configure Vehicle" :
+                                         !settings_state.park_mirror ? "Enable mirror" : "HOLD STORE") : "RES BACK";
         char text[25];
         if (vehicle_display_effective().rows == 2)
-            menu_present_lines(label, phase == 3 ? (settings_state.park_mirror ? "ON" : "OFF") : phase == 4 ? "HOLD STORE" : "RES BACK");
+            menu_present_lines(label, hint);
         else {
             ui_render_value(text, vehicle_display_effective().widths[0] + 1U, label,
-                phase == 3 ? (settings_state.park_mirror ? "ON" : "OFF") : phase == 4 ? "HOLD" : "RES");
+                hint);
             menu_present(text);
         }
         return;
     }
     uint16_t value = setup_get_value(param);
     uint8_t extra = stage_companion(param);
-    if (phase == 2) {
-        if (param->entry_type == UI_ENTRY_NUMBER) {
-            int next = param->value_type == SETUP_VALUE_INT8_AS_UINT8 ? (int8_t)value : value;
-            next += param->step;
-            if (next > param->maximum) next = param->minimum;
-            value = param->value_type == SETUP_VALUE_INT8_AS_UINT8 ? (uint8_t)next : next;
-        } else value = value >= param->max_value ? 0 : value + 1;
-    }
+    const char *reason = setup_inactive_reason(param);
+    if (!reason) reason = setup_unavailable(param);
+    if (phase == 2 && !reason && param->entry_type != UI_ENTRY_SUBMENU)
+        setup_next_value(param, &value, &extra, value, extra, 1);
     char number[24], text[25];
-    const char *label = setup_value_label(param, value, extra, number);
+    const char *label = reason ? reason : setup_value_label(param, value, extra, number);
+    if (reason) phase = 0;
     if (vehicle_display_effective().rows == 2)
         menu_present_view(phase ? UI_MODE_EDIT : UI_MODE_LIST, param->menu_text, label);
     else {
@@ -458,11 +460,7 @@ void setup_render_page(uint8_t page_index) {
 void setup_move_page(int8_t delta) {
     if (staged) {
         if (stage_confirm) return;
-        if (staged->entry_type == UI_ENTRY_NUMBER) {
-            int value = (staged->value_type == SETUP_VALUE_INT8_AS_UINT8 ? (int8_t)stage_value : stage_value) + delta * staged->step;
-            stage_value = (uint16_t)(value < staged->minimum ? staged->minimum : value > staged->maximum ? staged->maximum : value);
-            if (staged->value_type == SETUP_VALUE_INT8_AS_UINT8) stage_value = (uint8_t)stage_value;
-        } else stage_cycle(delta);
+        setup_next_value(staged, &stage_value, &stage_extra, stage_original, stage_original_extra, delta);
         return;
     }
     if (park_menu) {
@@ -527,33 +525,44 @@ void setup_stage_select(void) {
     }
     stage_cycle(1);
 }
-static void stage_cycle(int direction) {
+/* Pure draft transition shared by actual navigation and demonstration. */
+static void setup_next_value(const SetupParam *param, uint16_t *value, uint8_t *extra,
+                             uint16_t original, uint8_t original_extra, int direction) {
     unsigned step = direction > 0 ? 1 : 0;
-    if (staged->flash_index == 34) {
+    if (param->entry_type == UI_ENTRY_NUMBER) {
+        int next = (param->value_type == SETUP_VALUE_INT8_AS_UINT8 ? (int8_t)*value : *value) + direction * param->step;
+        *value = (uint16_t)(next < param->minimum ? param->minimum : next > param->maximum ? param->maximum : next);
+        if (param->value_type == SETUP_VALUE_INT8_AS_UINT8) *value = (uint8_t)*value;
+    } else if (param->flash_index == 34) {
 #ifdef ACT_AS_ELM327
         unsigned choices = 3;
 #else
         unsigned choices = 2;
 #endif
-        unsigned mode = stage_value ? 1 : stage_extra ? 2 : 0;
+        unsigned mode = (*value) ? 1 : (*extra) ? 2 : 0;
         mode = (mode + choices + (step ? 1 : choices - 1)) % choices;
-        stage_value = mode == 1; stage_extra = mode == 2;
-    } else if (staged->flash_index == 16) {
-        unsigned mode = stage_value ? 2 : stage_extra ? 1 : 0;
+        (*value) = mode == 1; (*extra) = mode == 2;
+    } else if (param->flash_index == 16) {
+        unsigned mode = (*value) ? 2 : (*extra) ? 1 : 0;
         mode = (mode + (step ? 1 : 2)) % 3;
-        stage_value = mode == 2;
-        stage_extra = mode == 1 || (mode == 2 && (stage_original ? stage_original_extra : 1));
-    } else if (staged->flash_index == 38) {
+        (*value) = mode == 2;
+        (*extra) = mode == 1 || (mode == 2 && (original ? original_extra : 1));
+    } else if (param->flash_index == 38) {
         static const uint8_t order[] = {1, 0, 2, 3}; /* A, N, D, Race; keep saved encodings. */
         unsigned position = 0;
-        while (position < 3 && order[position] != stage_value) ++position;
+        while (position < 3 && order[position] != (*value)) ++position;
         do { position = (position + (step ? 1 : 3)) % 4; }
         while (order[position] == 3 && !vehicle_feature_allowed(VEHICLE_FEATURE_DEFAULT_RACE));
-        stage_value = order[position];
-    } else if (staged->entry_type != UI_ENTRY_NUMBER) {
-        unsigned choices = staged->max_value + 1;
-        stage_value = (stage_value + choices + (step ? 1 : choices - 1)) % choices;
+        (*value) = order[position];
+    } else if (param->entry_type != UI_ENTRY_NUMBER) {
+        unsigned choices = param->max_value + 1;
+        (*value) = ((*value) + choices + (step ? 1 : choices - 1)) % choices;
     }
+}
+static void stage_cycle(int direction) {
+    /* SELECT cycles choices; numeric edits remain directional only. */
+    if (staged->entry_type != UI_ENTRY_NUMBER)
+        setup_next_value(staged, &stage_value, &stage_extra, stage_original, stage_original_extra, direction);
 }
 
 bool setup_stage_dirty(void) {

@@ -140,6 +140,7 @@ static int navigation_direction;
 static bool demo_active, demo_readings;
 static uint16_t demo_step;
 static uint32_t demo_started;
+static uint8_t demo_sources[8], demo_source_count, demo_source_index;
 static const char *notice;
 static const char *notice_label = "Settings";
 static char notice_text[24 + 1];
@@ -1187,7 +1188,7 @@ static void back(void) {
 
 /* Read-only tour over production pages. All navigation indices are restored. */
 bool menu_demo_page(uint16_t step, bool render) {
-    if (render) demo_readings = false;
+    if (render) { demo_readings = false; demo_source_count = 0; }
     if (step < 6) {
         if (render) menu_present_view(UI_MODE_LIST, roots[step], roots[(step + 1) % 6]);
         return true;
@@ -1200,8 +1201,7 @@ bool menu_demo_page(uint16_t step, bool render) {
         if (step) { --step; continue; }
         if (render) {
             demo_readings = true;
-            uint8_t ids[8]; unsigned total = favorite_uds_sources(&visible, ids);
-            if (total) parameter_request_begin_id(ids[(currentTime / 600U) % total], 255);
+            demo_source_count = favorite_uds_sources(&visible, demo_sources);
             present_favorite_layout(cell);
         }
         return true;
@@ -1212,7 +1212,9 @@ bool menu_demo_page(uint16_t step, bool render) {
         if (render) {
             demo_readings = true;
             uint8_t source = reading_source(reading_lookup(id), vehicle_profile_current());
-            if (source != READING_NO_SOURCE) parameter_request_begin_id(source, 255);
+            if (source < PARAMETER_DEFINITION_COUNT && parameter_definitions[source].request_id > 0xff) {
+                demo_sources[0] = source; demo_source_count = 1;
+            }
             present_reading(id);
         }
         return true;
@@ -1278,22 +1280,24 @@ bool menu_demo_page(uint16_t step, bool render) {
     step -= FAVORITE_SET_COUNT * 9U + 1U;
     MenuView saved_view = view;
     uint8_t saved_function = function, saved_info = info, saved_option = ipc_option;
-    bool available = true;
-    if (step < sizeof(actions) / sizeof(actions[0])) {
-        view = FUNCTIONS; function = step;
-    } else {
-        step -= sizeof(actions) / sizeof(actions[0]);
-        if (step < 3) { view = IPC_OPTIONS; ipc_option = step; }
-        else if ((step -= 3) < INFO_PAGES - 1) { view = INFO; info = step; }
-        else available = false;
+    bool found = false;
+    for (unsigned action = 0; action < ACTION_COUNT; ++action) {
+        if (!available(actions[action].id)) continue;
+        if (step) { --step; continue; }
+        view = FUNCTIONS; function = action; found = true;
+        break;
     }
-    if (render && available) {
+    if (!found) {
+        if (step < 3) { view = IPC_OPTIONS; ipc_option = step; found = true; }
+        else if ((step -= 3) < INFO_PAGES - 1) { view = INFO; info = step; found = true; }
+    }
+    if (render && found) {
         demo_active = false;
         menu_render();
         demo_active = true;
     }
     view = saved_view; function = saved_function; info = saved_info; ipc_option = saved_option;
-    return available;
+    return found;
 }
 
 /* Apply one navigation gesture to the currently visible menu. */
@@ -1572,6 +1576,7 @@ void menu_event(MenuEvent event) {
                 demo_active = true;
                 demo_step = 0;
                 demo_started = currentTime;
+                demo_source_count = demo_source_index = 0;
             }
             break;
         }
@@ -1647,19 +1652,30 @@ void menu_process(void) {
     }
     if (demo_active) {
         uint16_t duration;
+        bool changed = false;
         while ((duration = menu_demo_duration(demo_step)) &&
                currentTime - demo_started >= duration) {
             demo_started += duration;
             parameter_request_cancel();
             ++demo_step;
+            demo_source_count = demo_source_index = 0;
+            changed = true;
         }
         if (!duration) {
             demo_active = false;
             parameter_request_cancel();
             last_input = currentTime;
         }
-        if (!demo_active || currentTime - last_render >= 100U)
+        if (changed || !demo_active || currentTime - last_render >= 100U)
             menu_render();
+        /* Rendering, including ECU reply redraws, must never trigger a query. */
+        if (demo_active && demo_source_count && !diagnostics_state.clear_faults_request &&
+            currentTime - demo_started >= 150U && currentTime - last_query >= 500U) {
+            demo_source_index %= demo_source_count;
+            parameter_request_begin_id(demo_sources[demo_source_index], 255);
+            demo_source_index = (demo_source_index + 1) % demo_source_count;
+            last_query = currentTime;
+        }
         return;
     }
     bool editor = view == SETTINGS || view == SETUP || view == IPC_OPTIONS ||

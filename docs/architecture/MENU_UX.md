@@ -676,3 +676,10 @@ and reply acceptance remain enabled during those preview screens. Feature values
 are formatted from local copies and Vehicle previews use only the isolated draft.
 Action/save/calibration handlers are never invoked by the tour. Preview navigation
 indices are restored, and requests are cancelled on step changes and RES Back.
+
+Demo polling runs only in menu_process, with a 150 ms screen settling time,
+a 500 ms query interval, round-robin Favorite sources and the clear-DTC guard.
+Reply-triggered rendering does not transmit requests. Step changes reset the
+source cursor and cancel pending requests. Feature previews share pure draft
+transitions with real edits (including DNA/USB choices and numeric clamping),
+retain prerequisite messages and skip hidden Action entries before indexing.

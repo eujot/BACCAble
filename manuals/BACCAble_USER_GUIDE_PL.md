@@ -813,7 +813,11 @@ Favorites, pola Vehicle, widoczne Features, ekrany edytora Favorites, Actions,
 opcje IPC oraz Information. Wartości pochodzą z samochodu; brak danych daje `--`.
 Edycja Vehicle i Features pokazuje zapisaną wartość, wejście w edycję i lokalną
 zmianę wartości. Zmiany są podglądem: pokaz nie zapisuje ustawień, nie wykonuje
-akcji ani kalibracji lusterek. Może wysyłać zwykłe zapytania o bieżące odczyty.
+akcji ani kalibracji lusterek. Podgląd Features uwzględnia dostępne wartości,
+zakresy liczbowe i komunikaty o wymaganiach; ukryte Actions są pomijane. Pokaz
+może wysyłać zwykłe zapytania o odczyty, nie częściej niż co 500 ms i dopiero
+po 150 ms wyświetlania ekranu. Odpowiedź odświeża tylko wartość;
+kasowanie DTC wstrzymuje zapytania Demo.
 Dwuklik RES wraca do Information; pozostałe przyciski nie obsługują podglądu.
 Po ostatnim ekranie powrót następuje automatycznie.
 

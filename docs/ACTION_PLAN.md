@@ -4,6 +4,25 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## PR 100 review corrections, 2026-11-03
+
+On feat/demo-and-audio-source-fixes; fresh fetch confirms origin/master 047cbf8.
+Demo no longer sends UDS requests from rendering or ECU reply callbacks. Its
+process loop enforces 150 ms settling, 500 ms spacing and the clear-DTC guard,
+rotates Favorite sources, and resets the cursor/cancels requests on page changes.
+Feature previews share pure draft transitions with real navigation: DNA order
+and Race policy, USB companion mode, and clamped numeric values. Prerequisite
+messages remain visible, including disabled mirror capture. Hidden Actions are
+removed from the tour index instead of resolving repeatedly to the next action.
+Both user guides and MENU_UX are updated.
+
+Validation: full Apple Clang ASan/UBSan host suite passes, including real-time
+Demo processing with accepted ECU replies, clear-DTC inhibition, exit, query-free
+rendering, visible-action counts and Feature choice/limit checks in four menu
+variants. All four ARM builds and cppcheck pass with Arm GNU 15.2.Rel1.
+Vehicle confirmation of timing/readability and source icons remains outstanding.
+Pre-existing untracked captures, release folders and research note are untouched.
+
 ## Combined post-beta-36 PR, 2026-11-03
 
 Branch feat/demo-and-audio-source-fixes combines feat/live-menu-demo (including
