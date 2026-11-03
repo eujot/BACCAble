@@ -798,20 +798,23 @@ pokaz po naciśnięciu RES.
 
 MY23 pokazuje nazwę nad wartością; Legacy w razie potrzeby skraca nazwę,
 zachowując całą liczbę i jednostkę milisekund.
-| `> Demo` | Uruchamia pokaz menu i przykładowych wartości. |
+| `> Demo` | Uruchamia powolny pokaz menu, bieżących odczytów i pozornej edycji. |
 
 Odpowiedzi z wersją C2/BH starsze niż około pięć sekund są uznawane za nieaktualne.
 Liczniki dotyczą obsługi menu, **nie liczby ramek zapisanych podczas przechwytywania
 CAN**.
 
-Wybierz `Information → Demo`, aby uruchomić pokaz. Urządzenie przejdzie kolejno
-przez Favorites, Readings, Actions i Features. Pokaże przykładowe odczyty oleju
-i temperatur oraz pozorną zmianę Rain lights, Default mode i Suspension. Są to
-tylko przykłady na ekranie: pokaz nie zmienia ustawień, nie zapisuje Flash ani
-nie wysyła poleceń do samochodu. Dwuklik RES kończy pokaz i wraca do Information;
-pozostałe naciśnięcia nie obsługują wyświetlanych pozycji. Po ostatnim ekranie
-powrót następuje automatycznie. Wartości takie jak `77 mm` i `2500 rpm` nie są
-bieżącymi pomiarami samochodu.
+Wybierz `Information → Demo`, aby rozpocząć powolny pokaz (sześć sekund na krok).
+Pokaz korzysta z bieżącego profilu wyświetlacza i tych samych rendererów co
+zwykłe odczyty, Favorites i menu. Pokazuje obsługiwane odczyty, zapisane strony
+Favorites, pola Vehicle, widoczne Features, ekrany edytora Favorites, Actions,
+opcje IPC oraz Information. Wartości pochodzą z samochodu; brak danych daje `--`.
+Edycja Vehicle i Features pokazuje zapisaną wartość, wejście w edycję i lokalną
+zmianę wartości. Zmiany są podglądem: pokaz nie zapisuje ustawień, nie wykonuje
+akcji ani kalibracji lusterek. Może wysyłać zwykłe zapytania o bieżące odczyty.
+Dwuklik RES wraca do Information; pozostałe przyciski nie obsługują podglądu.
+Po ostatnim ekranie powrót następuje automatycznie.
+
 
 
 ## Jak rozumieć odczyty

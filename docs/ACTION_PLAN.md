@@ -4,6 +4,20 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Live menu demonstration, 2026-11-03
+
+Branch feat/live-menu-demo starts from merged master 047cbf8. Replaces hard-coded
+example slides with six-second runtime-profile previews, live supported readings,
+saved Favorite pages, Vehicle and Feature local edits and menu/editor surfaces.
+Preview code never calls save/action/calibration handlers. Normal UDS reading
+requests are allowed and cancelled on exit. RES double-click exits to Information.
+Validation: full Apple Clang ASan/UBSan host suite passes, including complete
+tour traversal and unchanged settings/profile/Flash/action counters across three
+runtime profiles and four builds. All four ARM builds and cppcheck pass with
+Arm GNU 15.2.Rel1; final C1 rebuilt after adding parking submenu previews.
+Both guides describe live versus simulated values. Hardware acceptance remains
+open for readability and IPC pacing. Release notes branch and user files retained.
+
 ## PR 99 review follow-up, 2026-11-02
 
 Reviewed input recovery/repeat pacing, editor drafts/confirmation/save failures,
