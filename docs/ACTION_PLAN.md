@@ -4,6 +4,28 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Factory audio source gap audit, 2026-11-03
+
+Branch research/audio-source-gaps audits master 047cbf8 without modifying firmware
+or source labels. Scanned every available sessions/*/session.sqlite3 read-only,
+matching BH 0x090/DLC 8 and reconstructing ordered UTF-16BE text transfers.
+Current body.c accepts only 0x05..0x09 and 0x21, and rejects last-index zero.
+Missing observed station-text contexts: 0x0A (Radio MEGA, two complete transfers
+in 20261010-104325Z; Radio NUTA, two in 20261024-113644Z), and 0x02 (ESKA2,
+EskaROCK in 20261010-111025Z; > ESKA < in 20261024-113644Z). The latter also
+has single-fragment '-' and '0.0' placeholders; adding its code alone cannot
+handle these because of the !total_frame guard. Contexts 0x11/0x12/0x13 carry
+single spaces in 20261024-113644Z and remain unidentified. 0x01/0x0F are controls,
+not candidates for indiscriminate audio-text acceptance. Station names make
+0x0A a DAB candidate, but scenario markers only say audio_source_changed and
+do not independently label DAB versus FM. Retain that uncertainty.
+The same low-six-bit code is reused in outgoing menu frames, explaining possible
+source-icon changes when unrecognized factory traffic interrupts the menu.
+No screenshot or recorded TX proves the actual visible icon. All three relevant
+sessions are complete but have BH losses (8186 / 437 / 26230 respectively);
+last session also has saturated C1/C2 loss counters. No negative absence claim
+is made for sources not observed. Demo work remains on feat/live-menu-demo.
+
 ## PR 99 review follow-up, 2026-11-02
 
 Reviewed input recovery/repeat pacing, editor drafts/confirmation/save failures,
