@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "dictionary_version": "2026-10-29.2",
+  "dictionary_version": "2026-11-03.1",
   "vehicle": {
     "model": "Alfa Romeo Giulia (owner-reported)",
     "model_year": null,
@@ -198,6 +198,14 @@
         "0x21": {
           "label": "CarPlay",
           "provenance": "owner observation and current menu source test; observed in 20260926-182645Z"
+        },
+        "0x0A": {
+          "label": "FM",
+          "provenance": "Owner confirmation on 2026-11-03: 0x0A is FM. Captured Radio MEGA in 20261010-104325Z and Radio NUTA in 20261024-113644Z; scenario markers alone did not identify the band."
+        },
+        "0x02": {
+          "label": "DAB",
+          "provenance": "Owner confirmation on 2026-11-03: 0x02 is DAB. Captured ESKA2 and EskaROCK in 20261010-111025Z and > ESKA < in 20261024-113644Z; includes single-frame placeholders."
         }
       },
       "observations": [

@@ -6,8 +6,8 @@
 
 ## Factory audio source gap audit, 2026-11-03
 
-Branch research/audio-source-gaps audits master 047cbf8 without modifying firmware
-or source labels. Scanned every available sessions/*/session.sqlite3 read-only,
+Branch research/audio-source-gaps audits master 047cbf8 without modifying firmware. Source labels were subsequently updated
+from owner confirmation. Scanned every available sessions/*/session.sqlite3 read-only,
 matching BH 0x090/DLC 8 and reconstructing ordered UTF-16BE text transfers.
 Current body.c accepts only 0x05..0x09 and 0x21, and rejects last-index zero.
 Missing observed station-text contexts: 0x0A (Radio MEGA, two complete transfers
@@ -16,9 +16,9 @@ EskaROCK in 20261010-111025Z; > ESKA < in 20261024-113644Z). The latter also
 has single-fragment '-' and '0.0' placeholders; adding its code alone cannot
 handle these because of the !total_frame guard. Contexts 0x11/0x12/0x13 carry
 single spaces in 20261024-113644Z and remain unidentified. 0x01/0x0F are controls,
-not candidates for indiscriminate audio-text acceptance. Station names make
-0x0A a DAB candidate, but scenario markers only say audio_source_changed and
-do not independently label DAB versus FM. Retain that uncertainty.
+not candidates for indiscriminate audio-text acceptance. Initial station-name inference suggested 0x0A might be DAB; this was incorrect.
+Owner confirmation on 2026-11-03 establishes 0x0A=FM and 0x02=DAB.
+Dictionary source-context labels and readable catalog now retain this provenance.
 The same low-six-bit code is reused in outgoing menu frames, explaining possible
 source-icon changes when unrecognized factory traffic interrupts the menu.
 No screenshot or recorded TX proves the actual visible icon. All three relevant
