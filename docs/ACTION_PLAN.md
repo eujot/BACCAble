@@ -4,6 +4,16 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Combined post-beta-36 PR, 2026-11-03
+
+Branch feat/demo-and-audio-source-fixes combines feat/live-menu-demo (including
+2000 ms pacing) with fix/fm-dab-display-source and its source-context evidence.
+Base origin/master remains 047cbf8 after fresh fetch. Documentation conflicts
+were resolved by preserving both feature descriptions and EN/PL guide updates.
+Validation after integration: complete host ASan/UBSan suite and all 82 Lab
+tests pass. The existing beta-36 release notes are included for repository continuity; the
+published beta-36 firmware does not contain these subsequent changes.
+
 ## FM/DAB display source correction, 2026-11-03
 
 Branch fix/fm-dab-display-source includes owner-confirmed source labels and audit.
@@ -37,6 +47,21 @@ No screenshot or recorded TX proves the actual visible icon. All three relevant
 sessions are complete but have BH losses (8186 / 437 / 26230 respectively);
 last session also has saturated C1/C2 loss counters. No negative absence claim
 is made for sources not observed. Demo work remains on feat/live-menu-demo.
+
+## Live menu demonstration, 2026-11-03
+
+Branch feat/live-menu-demo starts from merged master 047cbf8. Replaces hard-coded
+example slides with two-second runtime-profile previews, live supported readings,
+saved Favorite pages, Vehicle and Feature local edits and menu/editor surfaces.
+User-requested pacing update: one Demo mode, exactly 2000 ms per screen.
+Preview code never calls save/action/calibration handlers. Normal UDS reading
+requests are allowed and cancelled on exit. RES double-click exits to Information.
+Validation: full Apple Clang ASan/UBSan host suite passes, including complete
+tour traversal and unchanged settings/profile/Flash/action counters across three
+runtime profiles and four builds. All four ARM builds and cppcheck pass with
+Arm GNU 15.2.Rel1; final C1 rebuilt after adding parking submenu previews.
+Both guides describe live versus simulated values. Hardware acceptance remains
+open for readability and IPC pacing. Release notes branch and user files retained.
 
 ## PR 99 review follow-up, 2026-11-02
 

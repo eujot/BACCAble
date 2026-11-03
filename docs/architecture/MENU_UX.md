@@ -667,3 +667,12 @@ states in outgoing packets across Legacy 18/24 and MY23 profiles.
 
 Complete single-fragment audio text (last index zero) also updates the saved
 source and factory text. Unknown/control codes remain excluded.
+
+## Live demonstration
+
+Information Demo resolves two-second read-only previews against the saved vehicle
+profile. Reading and Favorite renderers consume real cache samples; UDS polling
+and reply acceptance remain enabled during those preview screens. Feature values
+are formatted from local copies and Vehicle previews use only the isolated draft.
+Action/save/calibration handlers are never invoked by the tour. Preview navigation
+indices are restored, and requests are cancelled on step changes and RES Back.

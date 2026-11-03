@@ -134,7 +134,7 @@ static uint8_t setup_param_is_visible(const SetupParam *param) {
 }
 
 /* Count the available feature settings, without synthetic navigation entries. */
-static uint8_t setup_menu_pages_count(void) {
+uint8_t setup_menu_pages_count(void) {
     uint8_t count = 0;
     for (uint8_t i = 0; i < setup_params_count; i++)
         if (setup_param_is_visible(&setup_params[i]))
@@ -340,6 +340,49 @@ static const char *setup_value_label(const SetupParam *param, uint16_t value, ui
         else snprintf_(number, 24, "%u %s%s", value, param->flash_index == 25 ? "lock" : "unlock", value > 1 ? "s" : "");
     } else snprintf_(number, 24, param->value_type == SETUP_VALUE_INT8_AS_UINT8 ? "%+d" : "%d", param->value_type == SETUP_VALUE_INT8_AS_UINT8 ? (int8_t)value : (int)value);
     return label;
+}
+
+/* Preview a local value using the production choice labels. No assignment or save. */
+static uint8_t stage_companion(const SetupParam *param);
+void setup_demo_preview(uint8_t page, unsigned phase) {
+    const SetupParam *param = setup_find_by_page(page);
+    if (!param) return;
+    if (phase >= 3) {
+        const char *label = phase == 3 ? "Enabled" : phase == 4 ? "Store position" : "Back";
+        char text[25];
+        if (vehicle_display_effective().rows == 2)
+            menu_present_lines(label, phase == 3 ? (settings_state.park_mirror ? "ON" : "OFF") : phase == 4 ? "HOLD STORE" : "RES BACK");
+        else {
+            ui_render_value(text, vehicle_display_effective().widths[0] + 1U, label,
+                phase == 3 ? (settings_state.park_mirror ? "ON" : "OFF") : phase == 4 ? "HOLD" : "RES");
+            menu_present(text);
+        }
+        return;
+    }
+    uint16_t value = setup_get_value(param);
+    uint8_t extra = stage_companion(param);
+    if (phase == 2) {
+        if (param->entry_type == UI_ENTRY_NUMBER) {
+            int next = param->value_type == SETUP_VALUE_INT8_AS_UINT8 ? (int8_t)value : value;
+            next += param->step;
+            if (next > param->maximum) next = param->minimum;
+            value = param->value_type == SETUP_VALUE_INT8_AS_UINT8 ? (uint8_t)next : next;
+        } else value = value >= param->max_value ? 0 : value + 1;
+    }
+    char number[24], text[25];
+    const char *label = setup_value_label(param, value, extra, number);
+    if (vehicle_display_effective().rows == 2)
+        menu_present_view(phase ? UI_MODE_EDIT : UI_MODE_LIST, param->menu_text, label);
+    else {
+        if (phase) { text[0] = '>'; text[1] = ' '; }
+        ui_render_value(text + (phase ? 2 : 0), vehicle_display_effective().widths[0] + 1U - (phase ? 2 : 0), param->menu_text, label);
+        menu_present(text);
+    }
+}
+
+unsigned setup_demo_phases(uint8_t page) {
+    const SetupParam *param = setup_find_by_page(page);
+    return param && param->entry_type == UI_ENTRY_SUBMENU ? 6U : 3U;
 }
 
 /* Show the saved target and the result of the current ignition's mode check. */

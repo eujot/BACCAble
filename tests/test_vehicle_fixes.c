@@ -765,3 +765,24 @@ static void test_acceleration_menu_states(void) {
         assert(ergonomics_has("--") && !ergonomics_has("RUN"));
     }
 }
+
+static void test_demo_live_tour(void) {
+    for (uint8_t display = VEHICLE_DISPLAY_LEGACY18; display <= VEHICLE_DISPLAY_MY23; ++display) {
+        ergonomics_reset(display);
+        SettingsState original = settings_state;
+        VehicleProfile profile = *vehicle_profile_current();
+        uint8_t flash_before[sizeof(flash_pages)]; memcpy(flash_before, flash_pages, sizeof(flash_pages));
+        unsigned commands_before = commands;
+        unsigned step = 0;
+        for (; step < 1000 && menu_demo_duration(step); ++step) {
+            assert(menu_demo_duration(step) == 2000);
+            menu_demo_render(step);
+        }
+        assert(step > READING_COUNT && step < 1000);
+        assert(!memcmp(&original, &settings_state, sizeof(original)));
+        assert(!memcmp(&profile, vehicle_profile_current(), sizeof(profile)));
+        assert(!memcmp(flash_before, flash_pages, sizeof(flash_pages)));
+        assert(commands == commands_before);
+        menu_event(MENU_BACK);
+    }
+}
