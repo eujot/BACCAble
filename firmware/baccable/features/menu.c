@@ -1,4 +1,5 @@
 #include "features/menu.h"
+#include "features/battery_history.h"
 #include "features/body.h"
 #include "features/ui_entry.h"
 #include "features/my23_ui.h"
@@ -30,7 +31,7 @@ typedef enum {
     INFO,
     IPC_OPTIONS,
     FAV_SETS, FAV_ROWS, FAV_ITEMS, FAV_PICK, FAV_FORMAT,
-    FAULTS, RAIN_TEST, VEHICLE, FAV_RESET
+    FAULTS, RAIN_TEST, VEHICLE, FAV_RESET, HISTORY_LIST, HISTORY_VALUES
 } MenuView;
 typedef enum {
     ACTION_READ,
@@ -108,7 +109,7 @@ static MenuView view = FAVORITES;
 static uint8_t root, group = 1, function, setting, info;
 static ReadingId list[READING_COUNT];
 static uint8_t list_count, selection;
-static uint8_t setup_last, fault_index;
+static uint8_t setup_last, fault_index, history_session, history_sample;
 /* Experimental display options never enter settings_state or Flash records. */
 static uint8_t ipc_option, ipc_pace, ipc_method;
 static uint32_t ipc_options_sent;
@@ -612,7 +613,8 @@ void menu_init(void) {
 /* Check whether a visible screen currently needs vehicle readings. */
 bool menu_parameters_active(void) {
     return dashboard_state.baccable_dashboard_menu_visible &&
-           ((demo_active && demo_readings) || ((view == VALUES || view == FAVORITES) && list_count) ||
+           ((demo_active && demo_readings) || ((view == VALUES || view == FAVORITES) && list_count &&
+             (view != VALUES || list[selection] < READING_COUNT)) ||
             (view == VALUES && auto_reading < READING_COUNT));
 }
 
@@ -632,7 +634,7 @@ static void select_page(void) {
         page_changed = currentTime;
         return;
     }
-    ui_layout.last_reading = (ReadingId)index;
+    if (index < READING_COUNT) ui_layout.last_reading = (ReadingId)index;
     parameter_request_cancel();
     parameter_peak_reset();
     selected_parameter_element = 0;
@@ -664,6 +666,7 @@ static void build_pages(uint16_t selected) {
         return;
     }
     list_count = (uint8_t)reading_list(vehicle_profile_current(), (ReadingGroup)group, list, READING_COUNT);
+    if (group == READING_GROUP_BATTERY && list_count < READING_COUNT) list[list_count++] = READING_COUNT;
     selection = 0;
     for (unsigned i = 0; i < list_count; ++i)
         if ((uint16_t)list[i] == selected) selection = i;
@@ -923,9 +926,52 @@ void menu_render(void) {
         if (!list_count) { menu_present("No favorites"); return; }
         present_favorite_layout(list[selection]);
         return;
+    case HISTORY_LIST: {
+        unsigned n = history_store_count();
+        if (!n) { menu_present(battery_history_error() ? "History unavailable" : "No history"); return; }
+        if (history_session >= n) history_session = 0;
+        char label[24], summary[24];
+        unsigned ago = history_session;
+        if (battery_history_current()) {
+            if (!ago) snprintf_(label, sizeof(label), "Current start");
+            else if (ago == 1) snprintf_(label, sizeof(label), "Last start");
+            else snprintf_(label, sizeof(label), "%u starts ago", ago);
+        } else if (!ago) snprintf_(label, sizeof(label), "Last start");
+        else snprintf_(label, sizeof(label), "%u start%s ago", ago, ago == 1 ? "" : "s");
+        snprintf_(summary, sizeof(summary), "%u samples%s", history_store_samples(history_session),
+                  battery_history_error() ? " / error" : "");
+        if (menu_my23()) menu_present_view(UI_MODE_LIST, label, summary);
+        else {
+            char line[25];
+            snprintf_(line, sizeof(line), "%s %u%s", label, history_store_samples(history_session),
+                      battery_history_error() ? "!" : "");
+            menu_present(line);
+        }
+        return;
+    }
+    case HISTORY_VALUES: {
+        unsigned n = history_store_samples(history_session);
+        if (!n) { menu_present("No samples"); return; }
+        if (history_sample >= n) history_sample = 0;
+        HistorySample sample;
+        if (!history_store_read(history_session, n - 1 - history_sample, &sample)) { menu_present("No samples"); return; }
+        char soc[8], voltage[12], first[24], second[24];
+        if (sample.soc == 255) snprintf_(soc, sizeof(soc), "--");
+        else snprintf_(soc, sizeof(soc), "%u", sample.soc);
+        if (sample.voltage == HISTORY_MISSING) snprintf_(voltage, sizeof(voltage), "--");
+        else { unsigned tenths = (sample.voltage + 50U) / 100U;
+            snprintf_(voltage, sizeof(voltage), "%u.%u", tenths / 10, tenths % 10); }
+        if (menu_my23()) {
+            snprintf_(first, sizeof(first), "+%02u:%02u SOC %s%%", sample.minute / 60, sample.minute % 60, soc);
+            snprintf_(second, sizeof(second), "Battery %s V", voltage);
+            menu_present_lines(first, second);
+        } else { snprintf_(first, sizeof(first), "%um %s%% %sV", sample.minute, soc, voltage); menu_present(first); }
+        return;
+    }
     case VALUES:
         if (auto_reading < READING_COUNT) { present_reading(auto_reading); return; }
         if (!list_count) { menu_present("No readings"); return; }
+        if (list[selection] == READING_COUNT) { menu_present_view(UI_MODE_LIST, "History", "Battery history"); return; }
         present_reading((uint8_t)list[selection]);
         return;
     case FUNCTIONS: {
@@ -1141,6 +1187,8 @@ static bool favorite_draft_dirty(void) {
 
 /* Cancel one unfinished workflow or return to its parent after persistence. */
 static void back(void) {
+    if (view == HISTORY_VALUES) { view = HISTORY_LIST; return; }
+    if (view == HISTORY_LIST) { view = VALUES; return; }
     if (view == FAV_RESET) { view = FAV_SETS; return; }
     if (view == FAV_FORMAT) { view = FAV_PICK; return; }
     if (view == FAV_PICK) { view = FAV_ITEMS; return; }
@@ -1219,6 +1267,18 @@ bool menu_demo_page(uint16_t step, bool render) {
         }
         return true;
     }
+    if (step < 2) {
+        if (render) {
+            MenuView old_view = view;
+            uint8_t old_session = history_session, old_sample = history_sample;
+            history_session = history_sample = 0;
+            view = step ? HISTORY_VALUES : HISTORY_LIST;
+            demo_active = false; menu_render(); demo_active = true;
+            view = old_view; history_session = old_session; history_sample = old_sample;
+        }
+        return true;
+    }
+    step -= 2;
     if (step < 13U * 3U) {
         if (render) {
             vehicle_editor_begin();
@@ -1438,6 +1498,12 @@ void menu_event(MenuEvent event) {
         case SETTINGS:
             setting = setting_move(setting, direction);
             break;
+        case HISTORY_LIST:
+            history_session = wrap(history_session, history_store_count(), direction); history_sample = 0;
+            break;
+        case HISTORY_VALUES:
+            history_sample = wrap(history_sample, history_store_samples(history_session), direction);
+            break;
         case FAULTS:
             fault_index = wrap(fault_index, fault_reader_count(), direction);
             break;
@@ -1527,9 +1593,17 @@ void menu_event(MenuEvent event) {
         case GROUPS:
             open_pages(false);
             break;
+        case HISTORY_LIST:
+            if (history_store_count()) { history_sample = 0; view = HISTORY_VALUES; }
+            break;
+        case HISTORY_VALUES:
         case FAVORITES:
+            break;
         case VALUES:
-            break; /* Status pages do not use SELECT as hidden backward navigation. */
+            if (auto_reading >= READING_COUNT && list_count && list[selection] == READING_COUNT) {
+                history_session = history_sample = 0; view = HISTORY_LIST; parameter_request_cancel();
+            }
+            break;
         case FUNCTIONS:
             if (confirmed_action != actions[function].id || currentTime - confirm_started > ACTION_CONFIRM_MS) action_run();
             break; /* Confirmation requires the separately labelled hold. */
@@ -1690,7 +1764,7 @@ void menu_process(void) {
     /* Reading screens are intentionally persistent; active diagnostics get a fresh grace period. */
     if (fault_reader_busy() || diagnostics_state.clear_faults_request) {
         last_input = currentTime;
-    } else if (view != FAVORITES && view != VALUES && !save_failed && !dirty_editor &&
+    } else if (view != FAVORITES && view != VALUES && view != HISTORY_LIST && view != HISTORY_VALUES && !save_failed && !dirty_editor &&
                currentTime - last_input >= (editor ? EDITOR_IDLE_MS : MENU_IDLE_MS)) {
         if (view == SETUP) {
             setup_cancel_edit();
@@ -1706,6 +1780,8 @@ void menu_process(void) {
     if (auto_reading >= READING_COUNT && menu_parameters_active() && settings_state.rotate_readings &&
         currentTime - page_changed >= 5000) {
         selection = wrap(selection, list_count, 1);
+        if (view == VALUES && list[selection] == READING_COUNT)
+            selection = wrap(selection, list_count, 1);
         select_page();
     }
     if (view == VALUES && auto_reading < READING_COUNT &&

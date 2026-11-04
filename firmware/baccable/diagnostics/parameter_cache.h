@@ -7,6 +7,7 @@ void parameter_peak_enable(bool enabled);
 bool parameter_peak_enabled(void);
 void parameter_cache_reset(void);
 void parameter_cache_put(uint8_t id, float value, uint32_t now);
+float parameter_cache_get_live(uint8_t id, uint32_t now);
 float parameter_cache_get(uint8_t id, uint32_t now);
 float parameter_cache_get_max_age(uint8_t id, uint32_t now, uint32_t max_age);
 void parameter_cache_observe(uint32_t id, uint8_t length);

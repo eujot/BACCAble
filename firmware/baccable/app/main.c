@@ -1,4 +1,5 @@
 #include "features/dna_selector.h"
+#include "features/battery_history.h"
 #include "app/main.h"
 #include "usb_device.h"
 #include "stm32f0xx_it.h"
@@ -19,6 +20,7 @@ static void application_init(void) {
     can_init();
 #if defined(BACCABLE_C1)
     powertrain_init();
+    battery_history_init();
 #endif
     uart_init();
 #if defined(BACCABLE_BH) || defined(BACCABLE_C2)
@@ -67,6 +69,8 @@ static void receive_can_frames(void) {
         rain_lights_frame(&header, data);
     #if defined(BACCABLE_C1)
         ibs_override_observe(&header, data);
+        if (header.IDE == CAN_ID_STD && header.RTR == CAN_RTR_DATA && header.StdId == 0x1ef && header.DLC == 8)
+            battery_history_ignition(data[0] & 15, currentTime);
         if (header.IDE == CAN_ID_STD && header.RTR == CAN_RTR_DATA && header.StdId == 0x41a &&
             header.DLC >= 2) {
             parameter_cache_put(95, data[0], currentTime);
@@ -138,6 +142,7 @@ int main(void) {
         rain_lights_process();
 #if defined(BACCABLE_C1)
         pedal_uart_process();
+        battery_history_process();
         powertrain_process();
         ibs_override_process();
 #elif defined(BACCABLE_C2)

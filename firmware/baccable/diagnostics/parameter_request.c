@@ -6,6 +6,7 @@
 #if defined(BACCABLE_C1)
 static struct {
     uint8_t active;
+    bool background;
     uint8_t parameter;
     uint32_t started;
 } request;
@@ -19,8 +20,7 @@ void parameter_request_cancel(void) {
 }
 
 /* Ask the vehicle for a single diagnostic source (UDS request_id > 0xff). */
-void parameter_request_begin_id(uint8_t id, uint8_t element) {
-    (void)element;
+static void begin(uint8_t id, bool background) {
     if (draining && currentTime - drain_started < 500U) return;
     draining = false;
     if (vehicle_parameter_support(id) == VEHICLE_SUPPORT_UNSUPPORTED) return;
@@ -41,15 +41,19 @@ void parameter_request_begin_id(uint8_t id, uint8_t element) {
         return;
     request.parameter = id;
     request.started = currentTime;
+    request.background = background;
     request.active = 1;
 }
+
+void parameter_request_begin_id(uint8_t id, uint8_t element) { (void)element; begin(id, false); }
+void parameter_request_begin_background(uint8_t id) { begin(id, true); }
 
 /* Accept a matching diagnostic reply and update the shared cache. */
 void parameter_request_receive(const CAN_RxHeaderTypeDef *header, const uint8_t *data) {
     if (!request.active)
         return;
-    if (currentTime - request.started > 500 || !dashboard_state.baccable_dashboard_menu_visible ||
-        !menu_parameters_active()) {
+    if (currentTime - request.started > 500 || (!request.background &&
+        (!dashboard_state.baccable_dashboard_menu_visible || !menu_parameters_active()))) {
         request.active = 0;
         return;
     }
@@ -62,6 +66,6 @@ void parameter_request_receive(const CAN_RxHeaderTypeDef *header, const uint8_t 
         return;
     parameter_cache_put(request.parameter, value, currentTime);
     request.active = 0;
-    menu_render();
+    if (!request.background) menu_render();
 }
 #endif

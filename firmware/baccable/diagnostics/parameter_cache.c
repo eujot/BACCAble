@@ -47,6 +47,11 @@ void parameter_cache_put(uint8_t id, float value, uint32_t now) {
 }
 
 /* Return the latest usable reading, or mark it unavailable when it is stale. */
+float parameter_cache_get_live(uint8_t id, uint32_t now) {
+    if (id >= PARAMETER_DEFINITION_COUNT || !(valid[id / 8] & (1U << (id % 8))) || now - updated[id] > 3000U)
+        return NAN;
+    return values[id];
+}
 float parameter_cache_get(uint8_t id, uint32_t now) {
     return parameter_cache_get_max_age(id, now, 3000U);
 }

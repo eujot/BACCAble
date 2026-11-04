@@ -7,7 +7,11 @@
 #define STORAGE_FLASH_END 0x08020000U
 #define STORAGE_RECORDS_START 0x0801d000U
 #if defined(BACCABLE_C1)
-    #define USB_FLASH_START_ADDRESS 0x08018000U
+    #define HISTORY_FLASH_START 0x0801a000U
+    #define USB_FLASH_START_ADDRESS STORAGE_RECORDS_START
+    #ifdef ENABLE_USB_MASS_STORAGE
+        #error "C1 Flash is reserved for battery history; mass storage is unavailable"
+    #endif
 #else
     #define USB_FLASH_START_ADDRESS 0x08010000U
 #endif
@@ -16,6 +20,10 @@
 #define STORAGE_SECTOR_COUNT (TOTAL_USB_DEVICE_SIZE / STORAGE_SECTOR_SIZE)
 /* Check that a file-storage request stays within the reserved disk area. */
 static inline bool storage_sector_range(uint32_t sector, uint32_t count) {
+#if defined(BACCABLE_C1)
+    (void)sector; (void)count; return false;
+#else
     return count > 0 && sector < STORAGE_SECTOR_COUNT && count <= STORAGE_SECTOR_COUNT - sector;
+#endif
 }
 #endif
