@@ -4,6 +4,33 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Battery history memory feasibility, 2026-11-04
+
+Branch feat/battery-history, master baseline 6f7fa6d. User scope: SOC IBS and
+Readings voltage, first valid sample then every ten minutes, last ten engine
+starts, up to twelve hours per session, menu access in Battery; no CSV or RTC.
+History implementation is still outstanding.
+
+Isolated C1 size experiments with Arm GNU 15.2.Rel1 and VERSION=memory-audit:
+- Baseline Flash 95,944 B, static RAM 13,340 B; code budget 98,304 B leaves 2,360 B.
+- Stubbed Demo page resolver: Flash 94,248 B (saves 1,696 B), RAM 13,324 B.
+- Disabled ACT_AS_ELM327: Flash 86,556 B (saves 9,388 B), RAM 12,340 B.
+- Disabling exponential/long-long printf adds no savings; already disabled by config.
+These are size probes, not functional feature-removal patches or hardware tests.
+Experiment sources/builds reside in /private/tmp/baccable-memory-audit;
+production firmware on the task branch is unchanged.
+
+A compact proposed 8-byte sample needs 5,840 B for 10 x 73 samples, excluding
+session metadata, torn-write handling and page reclamation. Avoid a full RAM copy.
+An alternative to removing features is increasing C1 program allocation from
+96 to 104 KiB, leaving 12 KiB between code and existing settings at 0x0801d000.
+This would give 10,552 B code headroom, but requires coordinated linker/storage/
+budget changes and explicit exclusion or redesign of C1 optional mass storage
+(the documented FAT minimum is 16 KiB). History must not share writable disk
+sectors. Physical 128 KiB Flash verification and existing settings addresses remain
+mandatory. A completed implementation/build is still needed to prove final fit;
+RAM headroom includes the runtime stack requirement, not just logger state.
+
 ## PR 100 review corrections, 2026-11-03
 
 On feat/demo-and-audio-source-fixes; fresh fetch confirms origin/master 047cbf8.
