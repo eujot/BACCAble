@@ -127,6 +127,7 @@ Main menu
 │  ├─ Engine
 │  ├─ Fuel
 │  ├─ Battery
+│  │  └─ History
 │  ├─ Diesel / DPF
 │  ├─ Driving
 │  ├─ Performance
@@ -940,14 +941,44 @@ A value the ECU does not answer shows `--`.
 | Turbo pct | % | diesel |
 | Boost req | bar | diesel |
 
+## Battery history
+
+Open `Readings → Battery → History`, after the individual battery readings.
+The device retains the last ten engine-start sessions in C1 Flash. A session
+begins after RUN ignition and two seconds of fresh RPM above 400; automatic
+Start/Stop does not split a session. Ignition OFF or device sleep ends it.
+A reboot starts a new recording after the next confirmed running condition.
+
+The first sample waits for a fresh SOC IBS or battery-voltage observation.
+Further samples are collected at ten-minute offsets from the detected engine
+start, for up to twelve hours (at most 73 samples). Samples use live values,
+independent of Peak hold and whether Readings is open. A short, bounded diagnostic
+request obtains the same voltage source used by Readings. DTC operations defer
+these requests; unavailable fields show `--`. SOC during IBS override is omitted.
+Diagnostic USB operation can leave gaps; missed intervals are not backfilled.
+
+Up/down selects `Current start`, `Last start` or an older start. Short RES opens
+its latest sample; up/down browses samples. Double-click RES returns to sessions,
+then to History. MY23 shows `+00:30 SOC 72%` and `Battery 14.2 V`; Legacy uses
+`30m 72% 14.2V`. The time is elapsed since the detected start, not a date.
+The session list shows the number of valid samples (a trailing number on Legacy). `No history` / `No samples`
+indicate empty history. `History unavailable` or the session-list error indicator (`error` on MY23, `!` on Legacy)
+means a storage operation failed; previous valid records remain readable.
+
+The oldest sessions are replaced automatically. Logging does not wake the car.
+Old Flash pages are erased only during initialization or vehicle sleep with
+confirmed CAN inactivity; if no
+prepared space is available, a new session cannot be recorded until reclamation.
+Power interruption may lose the final in-progress record. There is no CSV export,
+calendar clock, or History setting to save. Physical 128 KiB Flash is required.
+
 ## USB CAN capture and diagnostics
 
-C1 reserves 96 KiB for the application and 20 KiB for optional USB file storage.
-Standard C1 firmware uses serial USB and **does not expose this disk**. When
-upgrading a custom mass-storage build from the 16 KiB layout, copy its files
-before flashing: the disk start address changes and the disk may need formatting.
-Saved settings keep their existing storage address. CAN recordings are stored
-on the computer, so their capacity is unaffected.
+C1 reserves 104 KiB for the application and 12 KiB for battery history.
+C1 USB mass storage is unavailable; serial CAN capture and ELM327 remain available.
+Before upgrading a custom C1 mass-storage build, copy its files: the previous disk
+area is reused. Settings retain their existing address. CAN captures remain on
+the computer. Downgrading firmware or a full-chip erase can destroy history.
 
 USB is optional for normal menu use. Runtime USB modes are different from the
 STM32 **DFU bootloader** used for flashing: seeing a device in `dfu-util --list`

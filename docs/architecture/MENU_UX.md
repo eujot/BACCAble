@@ -683,3 +683,24 @@ Reply-triggered rendering does not transmit requests. Step changes reset the
 source cursor and cancel pending requests. Feature previews share pure draft
 transitions with real edits (including DNA/USB choices and numeric clamping),
 retain prerequisite messages and skip hidden Action entries before indexing.
+
+## Battery history
+
+Battery readings append a non-reading History sentinel, excluded from persisted
+reading IDs, UDS polling and automatic rotation. SELECT opens session/sample
+views; Back walks through sample, session, History and Battery group. History
+views are persistent like live readings. MY23 uses two lines; Legacy retains
+minute/SOC/voltage on one line. The logger is independent of menu visibility.
+C1 code ends at 0x0801a000; six 2 KiB history pages end at settings 0x0801d000.
+Twelve 1 KiB session slots retain the newest ten committed headers. Each slot
+contains up to 73 ten-byte CRC16/commit records. Erasing never targets retained
+sessions and only occurs before operation or during low consumption. A torn
+record consumes a slot but is not displayed. No heap or full-history RAM copy.
+History diagnostic requests use the existing single outstanding request engine
+with background reply ownership; navigation cancellation retains the drain guard.
+Physical Flash erase/program effects on CAN and steering remain vehicle acceptance
+items; host fault injection verifies data integrity, not physical interrupt latency.
+
+History maintenance rechecks the CAN inactivity interval before erasing, even
+when the power state still says asleep. The final twelve-hour sample allows
+a five-second collection window so loop scheduling does not drop it.

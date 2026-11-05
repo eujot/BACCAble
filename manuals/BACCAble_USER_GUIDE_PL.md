@@ -137,6 +137,7 @@ Menu główne
 │  ├─ Engine
 │  ├─ Fuel
 │  ├─ Battery
+│  │  └─ History
 │  ├─ Diesel / DPF
 │  ├─ Driving
 │  ├─ Performance
@@ -994,14 +995,47 @@ Wartość, na którą ECU nie odpowiada, pokazuje `--`.
 | Turbo pct | % | diesel |
 | Boost req | bar | diesel |
 
+## Historia akumulatora
+
+Otwórz `Readings → Battery → History`, za poszczególnymi odczytami akumulatora.
+Urządzenie przechowuje w pamięci Flash C1 ostatnich dziesięć sesji rozruchu.
+Sesja zaczyna się po wykryciu zapłonu RUN i dwóch sekundach aktualnych obrotów
+powyżej 400 RPM. Automatyczny Start/Stop nie dzieli sesji. Wyłączenie zapłonu
+lub uśpienie urządzenia kończy sesję. Restart urządzenia rozpoczyna nowy zapis
+po ponownym potwierdzeniu pracy silnika.
+
+Pierwsza próbka czeka na aktualny SOC IBS lub napięcie akumulatora. Kolejne
+próbki przypadają co dziesięć minut od wykrytego rozruchu, przez maksymalnie
+dwanaście godzin (do 73 próbek). Zapisywane są wartości bieżące, niezależnie
+od Peak hold i otwarcia Readings. Krótkie zapytania diagnostyczne pobierają
+napięcie z tego samego źródła co Readings. Operacje DTC wstrzymują te zapytania;
+brakujące pola pokazują `--`. SOC podczas IBS override jest pomijany.
+Diagnostyka USB może powodować luki; pominięte przedziały nie są uzupełniane wstecz.
+
+Góra/dół wybiera `Current start`, `Last start` lub starszą sesję. Krótki RES
+otwiera najnowszą próbkę; góra/dół przegląda próbki. Dwuklik RES wraca do sesji,
+a kolejny do History. MY23 pokazuje `+00:30 SOC 72%` i `Battery 14.2 V`;
+Legacy: `30m 72% 14.2V`. Czas jest liczony od wykrytego rozruchu, nie jest datą.
+Lista sesji pokazuje liczbę poprawnych próbek (końcową liczbę na Legacy). `No history` / `No samples`
+oznaczają brak zapisów. `History unavailable` lub wskaźnik błędu na liście sesji (`error` na MY23, `!` na Legacy)
+oznacza niepowodzenie operacji pamięci; wcześniejsze poprawne rekordy pozostają dostępne.
+
+Najstarsze sesje są zastępowane automatycznie. Zapis nie budzi samochodu.
+Stare strony Flash są kasowane wyłącznie przy inicjalizacji lub uśpieniu samochodu
+z potwierdzoną bezczynnością CAN.
+Jeżeli zabraknie przygotowanego miejsca, nowa sesja nie będzie zapisywana do czasu
+odzyskania przestrzeni. Przerwanie zasilania może utracić ostatni zapisywany rekord.
+Nie ma eksportu CSV, zegara kalendarzowego ani ustawienia History do zapisania.
+Wymagane jest fizyczne 128 KiB pamięci Flash.
+
 ## Przechwytywanie CAN i diagnostyka przez USB
 
-C1 rezerwuje 96 KiB na aplikację i 20 KiB na opcjonalny dysk USB.
-Standardowe firmware C1 korzysta z szeregowego USB i **nie udostępnia tego dysku**.
-Przy aktualizacji własnej kompilacji z dyskiem 16 KiB skopiuj pliki przed
-wgraniem: zmienia się adres początku dysku i może być potrzebne formatowanie.
-Ustawienia zachowują dotychczasowy adres w pamięci. Nagrania CAN są zapisywane
-na komputerze, więc ich pojemność się nie zmienia.
+C1 rezerwuje 104 KiB na aplikację i 12 KiB na historię akumulatora.
+Dysk USB C1 jest niedostępny; szeregowe przechwytywanie CAN i ELM327 pozostają dostępne.
+Przed aktualizacją własnej kompilacji C1 z dyskiem skopiuj pliki: dotychczasowy
+obszar dysku zostanie wykorzystany ponownie. Ustawienia zachowują swój adres.
+Nagrania CAN pozostają na komputerze. Wgranie starszego firmware lub skasowanie
+całego układu może zniszczyć historię.
 
 USB nie jest potrzebne do zwykłej obsługi menu. Tryby USB działające w aplikacji
 różnią się od **bootloadera DFU** układu STM32, który służy do wgrywania

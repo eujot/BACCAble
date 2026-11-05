@@ -16,9 +16,24 @@
 #include "diagnostics/parameter_request.h"
 #include "storage/flash_records.h"
 #include "storage/record_store.h"
+#include "features/battery_history.h"
 #include "storage/ui_layout_store.h"
 #include "vehicle/vehicle_runtime.h"
 #include <assert.h>
+static uint8_t history_flash[HISTORY_PAGES * HISTORY_PAGE_SIZE];
+static int history_budget = -1;
+static unsigned history_erases;
+static bool history_erase(unsigned page) {
+    assert(page < HISTORY_PAGES); ++history_erases;
+    memset(history_flash + page * HISTORY_PAGE_SIZE, 255, HISTORY_PAGE_SIZE); return true;
+}
+static bool history_program(size_t offset, uint16_t value) {
+    assert(offset + 1 < sizeof(history_flash) && !(offset & 1));
+    if (history_budget == 0) return false;
+    if (history_budget > 0) --history_budget;
+    history_flash[offset] &= value; history_flash[offset + 1] &= value >> 8; return true;
+}
+HistoryStorage history_flash_storage(void) { return (HistoryStorage){history_flash, history_erase, history_program}; }
 static uint8_t combined_record[SETUP_FLASH_PARAM_BUFFER_SIZE * 2 + VEHICLE_PROFILE_WIRE_SIZE];
 static bool have_combined;
 static bool real_flash;
@@ -346,6 +361,7 @@ static void test_shared_renderers(void) {
 }
 
 #include "test_vehicle_fixes.c"
+#include "test_battery_history.c"
 
 int main(void) {
 #if defined(IPC_MY23_IS_INSTALLED)
@@ -362,6 +378,11 @@ int main(void) {
         HOST_TEST(test_ergonomics_features_and_info),
         HOST_TEST(test_ergonomics_action_confirmation),
         HOST_TEST(test_information_input_labels),
+        HOST_TEST(test_battery_history_store),
+        HOST_TEST(test_battery_history_runtime),
+        HOST_TEST(test_battery_history_menu),
+        HOST_TEST(test_battery_history_limits),
+        HOST_TEST(test_battery_history_wake_race),
         HOST_TEST(test_demo_live_tour),
         HOST_TEST(test_demo_query_pacing),
         HOST_TEST(test_demo_visible_actions),

@@ -4,6 +4,88 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## PR 102 audit corrections, 2026-11-05
+
+Fixed two reproduced boundary bugs on feat/battery-history: the logger runs
+before power_process, so a stale low-consumption flag could permit page erasure
+on a loop that had just received CAN wake traffic. Maintenance now independently
+requires the full CAN inactivity interval. Also permit five seconds to collect
+the final twelve-hour sample; the previous exact millisecond cutoff dropped it
+under normal scheduling jitter. Added a wake-race regression and shifted the
+full twelve-hour schedule test 25 ms off exact boundaries.
+
+Full host ASan/UBSan suite passes; C1 cppcheck and ARM build pass with Arm GNU
+15.2.Rel1. Flash 99,316/106,496 B, static RAM 13,384 B. Both guides updated.
+Existing settings boundaries, retained-page protection and DTC query exclusion
+were reviewed. Physical Flash programming/CAN latency remains unverified.
+Pre-existing untracked user files remain untouched; no flashing or merge.
+
+## Battery history implementation, 2026-11-04
+
+Implemented on feat/battery-history from master 6f7fa6d, following the owner's
+approved 104 KiB code / 12 KiB history partition. Existing settings stay at
+0x0801d000; C1 optional USB mass storage is rejected to prevent overlap. C2/BH
+storage and serial USB modes retain their existing layout. CI size budget agrees
+with the C1 linker. A custom old C1 disk must be backed up before flashing.
+
+History retains ten engine-start sessions, detected by RFHUB RUN and two seconds
+of fresh RPM >400. OFF/sleep ends a session; Start/Stop pauses do not split it.
+First data waits for a fresh measurement; further samples use ten-minute offsets
+and a twelve-hour/73-sample cap. IBS SOC and Readings voltage use live cache
+values independently of Peak hold. Background UDS voltage requests share the
+existing request engine and remain bounded, pause for DTC operations, and accept
+replies with the menu closed. Missing data stays missing; no backfilled samples.
+ELM diagnostic operation may leave gaps. No RTC or CSV was added.
+
+Six Flash pages hold twelve session slots; the newest ten valid headers are
+retained. Ten-byte samples have CRC16 and a last-written commit halfword. Old
+pages are reclaimed only at initialization or low consumption; space/write
+failure is visible rather than erasing retained sessions while driving. There
+is no complete-history RAM copy. Battery History is a non-reading menu entry;
+SELECT opens sessions/samples, Back returns to their parent. Legacy and MY23
+renderers, Demo previews and both user guides include History.
+
+Validation: 246 reported full host ASan/UBSan cases passed, including 40-session
+retention, header/sample power-cut injection, corrupted records, background ECU
+responses, DTC exclusion, Peak hold bypass, missing sources, Start/Stop, clock
+wrap, twelve-hour cap and navigation in four builds/three display profiles.
+Final scoped menu tests pass after maintenance retry/preview adjustments.
+All four ARM builds and cppcheck pass; final C1 was rebuilt/rechecked after the
+last changes. Arm GNU 15.2.Rel1: Flash 99,280/106,496 B (7,216 B free), static
+RAM 13,384/16,384 B (remaining space includes runtime stack/heap).
+Eight CI-script tests and 26 knowledge tests pass; three source hashes refreshed,
+CAN meanings unchanged and readable catalog regenerated without content changes.
+No flashing or hardware acceptance. Physical CAN/input latency during halfword
+programming and real ignition/start/stop behavior still need vehicle checks.
+Pre-existing user captures/release directories/research note remain untouched.
+
+## Battery history memory feasibility, 2026-11-04
+
+Branch feat/battery-history, master baseline 6f7fa6d. User scope: SOC IBS and
+Readings voltage, first valid sample then every ten minutes, last ten engine
+starts, up to twelve hours per session, menu access in Battery; no CSV or RTC.
+The implementation is recorded above; the measurements below are the pre-change baseline.
+
+Isolated C1 size experiments with Arm GNU 15.2.Rel1 and VERSION=memory-audit:
+- Baseline Flash 95,944 B, static RAM 13,340 B; code budget 98,304 B leaves 2,360 B.
+- Stubbed Demo page resolver: Flash 94,248 B (saves 1,696 B), RAM 13,324 B.
+- Disabled ACT_AS_ELM327: Flash 86,556 B (saves 9,388 B), RAM 12,340 B.
+- Disabling exponential/long-long printf adds no savings; already disabled by config.
+These are size probes, not functional feature-removal patches or hardware tests.
+Experiment sources/builds reside in /private/tmp/baccable-memory-audit;
+production firmware on the task branch is unchanged.
+
+A compact proposed 8-byte sample needs 5,840 B for 10 x 73 samples, excluding
+session metadata, torn-write handling and page reclamation. Avoid a full RAM copy.
+An alternative to removing features is increasing C1 program allocation from
+96 to 104 KiB, leaving 12 KiB between code and existing settings at 0x0801d000.
+This would give 10,552 B code headroom, but requires coordinated linker/storage/
+budget changes and explicit exclusion or redesign of C1 optional mass storage
+(the documented FAT minimum is 16 KiB). History must not share writable disk
+sectors. Physical 128 KiB Flash verification and existing settings addresses remain
+mandatory. A completed implementation/build is still needed to prove final fit;
+RAM headroom includes the runtime stack requirement, not just logger state.
+
 ## PR 100 review corrections, 2026-11-03
 
 On feat/demo-and-audio-source-fixes; fresh fetch confirms origin/master 047cbf8.
