@@ -966,7 +966,8 @@ indicate empty history. `History unavailable` or the session-list error indicato
 means a storage operation failed; previous valid records remain readable.
 
 The oldest sessions are replaced automatically. Logging does not wake the car.
-Old Flash pages are erased only during initialization or vehicle sleep; if no
+Old Flash pages are erased only during initialization or vehicle sleep with
+confirmed CAN inactivity; if no
 prepared space is available, a new session cannot be recorded until reclamation.
 Power interruption may lose the final in-progress record. There is no CSV export,
 calendar clock, or History setting to save. Physical 128 KiB Flash is required.

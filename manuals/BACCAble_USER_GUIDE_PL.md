@@ -1021,7 +1021,8 @@ oznaczają brak zapisów. `History unavailable` lub wskaźnik błędu na liście
 oznacza niepowodzenie operacji pamięci; wcześniejsze poprawne rekordy pozostają dostępne.
 
 Najstarsze sesje są zastępowane automatycznie. Zapis nie budzi samochodu.
-Stare strony Flash są kasowane wyłącznie przy inicjalizacji lub uśpieniu samochodu.
+Stare strony Flash są kasowane wyłącznie przy inicjalizacji lub uśpieniu samochodu
+z potwierdzoną bezczynnością CAN.
 Jeżeli zabraknie przygotowanego miejsca, nowa sesja nie będzie zapisywana do czasu
 odzyskania przestrzeni. Przerwanie zasilania może utracić ostatni zapisywany rekord.
 Nie ma eksportu CSV, zegara kalendarzowego ani ustawienia History do zapisania.

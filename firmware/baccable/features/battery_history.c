@@ -28,6 +28,9 @@ bool battery_history_current(void) { return active; }
 bool battery_history_error(void) { return failed; }
 void battery_history_process(void) {
     if (runtime_state.low_consume_is_active) {
+        /* CAN receive runs before power_process clears the sleep flag. */
+        if (currentTime - runtime_state.last_received_can_msg_time <=
+            TIMING__C1____CAN_INACTIVITY_TIMEOUT_BEFORE_SLEEP_MS) return;
         active = running = collecting = attempted = false; ignition = 0;
         if (!prepared && !maintenance_attempted) {
             maintenance_attempted = true;
@@ -48,7 +51,7 @@ void battery_history_process(void) {
         next_due = samples = 0; collecting = false;
     }
     uint32_t elapsed = currentTime - started;
-    if (elapsed > 43200000U) samples = HISTORY_SAMPLES;
+    if (elapsed > 43205000U) samples = HISTORY_SAMPLES;
     if (samples >= HISTORY_SAMPLES) return;
     if (elapsed < next_due) return;
     if (!collecting) { collecting = true; collection_at = currentTime; query_at = currentTime - 1000U; }

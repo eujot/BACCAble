@@ -4,6 +4,22 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## PR 102 audit corrections, 2026-11-05
+
+Fixed two reproduced boundary bugs on feat/battery-history: the logger runs
+before power_process, so a stale low-consumption flag could permit page erasure
+on a loop that had just received CAN wake traffic. Maintenance now independently
+requires the full CAN inactivity interval. Also permit five seconds to collect
+the final twelve-hour sample; the previous exact millisecond cutoff dropped it
+under normal scheduling jitter. Added a wake-race regression and shifted the
+full twelve-hour schedule test 25 ms off exact boundaries.
+
+Full host ASan/UBSan suite passes; C1 cppcheck and ARM build pass with Arm GNU
+15.2.Rel1. Flash 99,316/106,496 B, static RAM 13,384 B. Both guides updated.
+Existing settings boundaries, retained-page protection and DTC query exclusion
+were reviewed. Physical Flash programming/CAN latency remains unverified.
+Pre-existing untracked user files remain untouched; no flashing or merge.
+
 ## Battery history implementation, 2026-11-04
 
 Implemented on feat/battery-history from master 6f7fa6d, following the owner's

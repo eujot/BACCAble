@@ -382,6 +382,7 @@ int main(void) {
         HOST_TEST(test_battery_history_runtime),
         HOST_TEST(test_battery_history_menu),
         HOST_TEST(test_battery_history_limits),
+        HOST_TEST(test_battery_history_wake_race),
         HOST_TEST(test_demo_live_tour),
         HOST_TEST(test_demo_query_pacing),
         HOST_TEST(test_demo_visible_actions),

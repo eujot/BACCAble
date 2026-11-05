@@ -80,7 +80,7 @@ static void test_battery_history_limits(void) {
     parameter_cache_put(3, 72, start + 9000U); parameter_cache_put(source, 14.2f, start + 9000U);
     history_tick(start + 9000U, 800); assert(history_store_samples(0) == 1);
     for (unsigned n = 1; n <= 72; ++n) {
-        uint32_t time = start + n * 600000U;
+        uint32_t time = start + n * 600000U + 25U;
         parameter_cache_put(3, 73, time); parameter_cache_put(source, 14.1f, time);
         history_tick(time, 800);
     }
@@ -91,6 +91,22 @@ static void test_battery_history_limits(void) {
     /* Unavailable hardware remains readable as an empty store, never dereferenced. */
     history_store_init((HistoryStorage){0}); assert(history_store_count() == 0);
     assert(!history_store_begin() && !history_store_prepare() && !history_store_read(0, 0, &sample));
+}
+static void test_battery_history_wake_race(void) {
+    ergonomics_reset(VEHICLE_DISPLAY_MY23); history_reset();
+    for (unsigned n = 0; n < HISTORY_SLOTS; ++n) assert(history_store_begin());
+    battery_history_init(); /* Reclaims one old page. */
+    assert(history_store_begin());
+    uint32_t start = now + 1000;
+    history_tick(start, 800); history_tick(start + 2000, 800);
+    assert(battery_history_current());
+    unsigned erases = history_erases;
+    runtime_state.low_consume_is_active = 1;
+    runtime_state.last_received_can_msg_time = now;
+    battery_history_process(); assert(history_erases == erases);
+    now += TIMING__C1____CAN_INACTIVITY_TIMEOUT_BEFORE_SLEEP_MS + 1;
+    battery_history_process(); assert(history_erases == erases + 1);
+    runtime_state.low_consume_is_active = 0;
 }
 static void test_battery_history_menu(void) {
     for (unsigned display = VEHICLE_DISPLAY_LEGACY18; display <= VEHICLE_DISPLAY_MY23; ++display) {

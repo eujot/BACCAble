@@ -700,3 +700,7 @@ History diagnostic requests use the existing single outstanding request engine
 with background reply ownership; navigation cancellation retains the drain guard.
 Physical Flash erase/program effects on CAN and steering remain vehicle acceptance
 items; host fault injection verifies data integrity, not physical interrupt latency.
+
+History maintenance rechecks the CAN inactivity interval before erasing, even
+when the power state still says asleep. The final twelve-hour sample allows
+a five-second collection window so loop scheduling does not drop it.
