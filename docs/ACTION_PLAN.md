@@ -4034,3 +4034,11 @@ review corrections to query pacing/Feature previews/hidden Actions, and FM/DAB
 source tracking. PR #100 CI passed before release preparation; no board was
 flashed. Create the beta tag/release from the fully merged master only after the
 release workflow succeeds. Vehicle Demo and visible icon acceptance remain open.
+
+## v5-beta-38 release notes, 2026-11-05
+
+PR #102 merged to master at `f0cc4b7`. Prepared [v5-beta-38 notes](releases/v5-beta-38.md)
+covering C1 SOC IBS/voltage history and the 104/12 KiB Flash allocation. CI passed;
+no vehicle flash or hardware acceptance was performed. Release from merged master
+using the beta workflow; preserve the documented custom C1 mass-storage backup
+notice and outstanding Flash/CAN timing acceptance.
