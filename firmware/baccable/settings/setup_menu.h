@@ -16,7 +16,7 @@
 #if defined(BACCABLE_C1)
 
     #define SETUP_FLASH_SLOTS 30 // minimum reserved flash slots (1..SETUP_FLASH_SLOTS)
-    #define SETUP_FLASH_PARAM_BUFFER_SIZE 42
+    #define SETUP_FLASH_PARAM_BUFFER_SIZE 44
 uint8_t setup_menu_pages_count(void);
 unsigned setup_demo_phases(uint8_t page);
 void setup_demo_preview(uint8_t page, unsigned phase);

@@ -704,3 +704,28 @@ items; host fault injection verifies data integrity, not physical interrupt late
 History maintenance rechecks the CAN inactivity interval before erasing, even
 when the power state still says asleep. The final twelve-hour sample allows
 a five-second collection window so loop scheduling does not drop it.
+
+## Configured IBS SOC override
+
+Features Comfort adds IBS SOC auto (default OFF) and IBS SOC % (0..100, step 5,
+default 75). Slots 43/44 extend settings to 44 halfwords; loaders import the
+previous 42-slot combined profile record and 40/41/42-slot legacy records. New
+fields default without replacing the saved Vehicle profile. Action confirmation
+uses ignition RUN instead of an engine-speed prerequisite. The manual action
+lasts for one ignition cycle; saved auto preference re-arms on the next RUN edge.
+Autonomous transmission uses a standard C1 0x41A/DLC7 report every 100 ms,
+with the first attempt immediately on enable. Input observation is removed.
+The recorded D1 ss 00 A6 00 00 00 layout uses SOC high bit zero and fixed
+auxiliary bytes. Zero raw current matches captures; the existing decoder maps
+it to -250 A, so this is not a validated 0 A representation. Receiver acceptance
+and other field semantics remain unverified. No backlog is sent after queue
+failure or scheduler delay. OFF/stale RUN/sleep prevent TX; diagnostics cancels
+the current session. No other bus sender is suppressed.
+
+SOC override audit: a >2 s ignition-report gap ends the session, including gaps
+while the main feature loop is bypassed by diagnostics. The next fresh RUN uses
+the auto preference; crank alone cannot re-arm. Explicit cancellation also
+synchronizes the observed auto preference, so a pending preference change cannot
+undo cancellation. SOC enqueue waits for can_tx_idle; congestion stretches the
+interval rather than accumulating reports. An already submitted frame may still
+complete after OFF.

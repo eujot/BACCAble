@@ -68,9 +68,11 @@ static void receive_can_frames(void) {
         rain_lights_observe(&header, data);
         rain_lights_frame(&header, data);
     #if defined(BACCABLE_C1)
-        ibs_override_observe(&header, data);
         if (header.IDE == CAN_ID_STD && header.RTR == CAN_RTR_DATA && header.StdId == 0x1ef && header.DLC == 8)
+        {
             battery_history_ignition(data[0] & 15, currentTime);
+            ibs_override_ignition(data[0] & 15, currentTime);
+        }
         if (header.IDE == CAN_ID_STD && header.RTR == CAN_RTR_DATA && header.StdId == 0x41a &&
             header.DLC >= 2) {
             parameter_cache_put(95, data[0], currentTime);

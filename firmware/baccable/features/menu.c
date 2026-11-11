@@ -361,7 +361,7 @@ static const char *action_unavailable(MenuAction id) {
             return "DTC clear active";
         return fault_reader_busy() ? "BCM read active" : NULL;
     case ACTION_IBS:
-        return telemetry_state.current_rpm_speed <= 400 ? "Start engine" : NULL;
+        return !ibs_override_ignition_active() ? "Ignition RUN" : NULL;
     case ACTION_DYNO:
         if (chassis_state.front_brake_forced)
             return "Release brake";
@@ -736,8 +736,8 @@ static void action_run(void) {
     uint8_t command[2] = {C2BusID, 0};
     switch (id) {
     case ACTION_IBS:
-        if (telemetry_state.current_rpm_speed <= 400) {
-            menu_notice(UI_SYMBOL_WARNING " Start engine");
+        if (!ibs_override_ignition_active()) {
+            menu_notice(UI_SYMBOL_WARNING " Ignition RUN");
             return;
         }
         ibs_override_enable(!ibs_override_enabled());

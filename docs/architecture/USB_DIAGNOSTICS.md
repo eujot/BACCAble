@@ -36,11 +36,23 @@ still an acceptance check.
   more than the displayed limit of 20 codes. Reading does not clear faults.
 - `Auto PDC mute` and `Mute audio in R` are independent options in Features.
   They require valid current vehicle messages before acting.
-- `Actions` → `IBS SOC override` is experimental and requires action confirmation
-  and a running engine. It substitutes 75% in a short burst of otherwise copied
-  IBS messages when the observed SOC is within the upstream range. It is not a
-  verified way to improve battery charging. It is off after startup and stops at
-  engine stop or diagnostic-mode entry.
+- `Settings` → `Features` → `IBS SOC %` stores a 0..100% target in five-percent
+  steps (default 75); `IBS SOC auto` arms it from ignition RUN (default OFF).
+  `Actions` → `IBS SOC override` toggles the current session with confirmation.
+  Sends one autonomous C1 0x41A/DLC7 every 100 ms, starting immediately in RUN,
+  without IBS input. Pattern D1 ss 00 A6 00 00 00 has configured SOC and fixed
+  recorded auxiliary fields (SOC high bit clear). Raw zero current matches the
+  captures, but Readings decodes it as -250 A; 0 A semantics are not validated.
+  OFF, stale RUN, sleep and diagnostics prevent further transmission. Other
+  senders remain on CAN; charging benefit and receiver acceptance are unverified.
+
+  SOC override audit: a >2 s ignition-report gap ends the session, including gaps
+  while the main feature loop is bypassed by diagnostics. The next fresh RUN uses
+  the auto preference; crank alone cannot re-arm. Explicit cancellation also
+  synchronizes the observed auto preference, so a pending preference change cannot
+  undo cancellation. SOC enqueue waits for can_tx_idle; congestion stretches the
+  interval rather than accumulating reports. An already submitted frame may still
+  complete after OFF.
 
 Leave Features to persist committed changes automatically. New settings are initially off;
 existing saved settings take priority over compiled defaults. Despite its current

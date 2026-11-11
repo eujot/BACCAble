@@ -56,6 +56,26 @@ static void test_profile_atomic_restart(void) {
     setup_load_from_flash();
     assert(settings_state.rain_lights_enabled && vehicle_profile_current()->legacy_permissions);
 }
+static void test_ibs_settings_migration(void) {
+    fixes_reset();
+    VehicleProfile original = *vehicle_profile_current();
+    uint8_t old[84 + VEHICLE_PROFILE_WIRE_SIZE] = {0};
+    memset(flash_pages[SETTINGS_RECORD], 0xff, sizeof(flash_pages[SETTINGS_RECORD]));
+    old[82] = 1; /* Rain lights in old slot 42. */
+    assert(vehicle_profile_encode(&original, old + 84));
+    assert(flash_record_save(SETTINGS_RECORD, 0x108, old, sizeof(old)));
+    setup_load_from_flash();
+    uint8_t restored[VEHICLE_PROFILE_WIRE_SIZE];
+    assert(vehicle_profile_encode(vehicle_profile_current(), restored));
+    assert(!memcmp(old + 84, restored, sizeof(restored)));
+    assert(settings_state.rain_lights_enabled && !settings_state.ibs_soc_auto && settings_state.ibs_soc_target == 75);
+    settings_state.ibs_soc_auto = 1; settings_state.ibs_soc_target = 0;
+    assert(settings_save() == 0); setup_load_from_flash();
+    assert(settings_state.ibs_soc_auto && settings_state.ibs_soc_target == 0);
+    settings_state.ibs_soc_target = 100;
+    assert(settings_save() == 0); setup_load_from_flash(); assert(settings_state.ibs_soc_target == 100);
+    assert(setup_read_flash_value(43, 97) == 75);
+}
 static void test_profile_editor_failure(void) {
     fixes_reset();
     vehicle_editor_begin(); vehicle_editor_select(); vehicle_editor_navigate(1); /* Giulia -> Stelvio */

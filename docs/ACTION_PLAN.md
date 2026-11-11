@@ -4,6 +4,90 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## SOC override audit corrections, 2026-11-11
+
+Reviewed both commits on feat/configurable-ibs-soc; fresh origin fetch still
+places the branch on master ae55edb. Fixed three edge cases: a missed OFF and
+>2 s report gap could retain a manual override across sessions; explicit
+cancellation could be undone by an unprocessed auto preference change; periodic
+reports could accumulate in the CAN queue despite producer-side 100 ms pacing.
+Both receive and process paths now expire the session. Fresh RUN reapplies auto;
+crank alone cannot start one. Cancellation synchronizes the observed preference.
+SOC waits for the existing can_tx_idle guard without advancing its timer while
+busy. At most one SOC report is outstanding; an already submitted report can
+still complete after OFF. Congestion can extend the nominal 100 ms interval.
+
+Reviewed setting ranges, combined-profile migration, menu prerequisites and
+history exclusion; no additional defect established in those paths. Extended
+host regressions cover congestion/recovery, missed OFF with skipped processing,
+manual ON with auto OFF, pending-auto cancellation, cranking and expiry. Full
+ASan/UBSan suite passes (254 reported cases), C1 cppcheck and ARM build pass
+(Arm GNU 15.2.Rel1): Flash 99,760/106,496 B, static RAM 13,408/16,384 B. All 26
+knowledge tests pass. Both user guides and technical behavior notes updated;
+source hash refreshed and readable catalog regenerated, signal meanings unchanged.
+No vehicle flashing or acceptance; physical cadence under load and receiver
+acceptance of the recorded fixed layout remain unverified. Existing user untracked
+captures, release directories and research note preserved. No release or PR yet.
+
+## Autonomous SOC transmission with disconnected IBS, 2026-11-11
+
+Owner clarified that IBS is disconnected and requested autonomous 100 ms output
+using configured SOC and the zero current bytes seen in recordings. This
+supersedes the receive-triggered burst implementation described below.
+Removed ibs_override_observe and its receive hook. Enabled RUN now attempts one
+standard C1 0x41A/DLC7 immediately, then at most one per 100 ms; loop delays and
+queue rejection are paced without catch-up. No incoming 0x41A is needed. Existing
+0..100/5% preference, auto RUN arming, manual session toggle, OFF/stale RUN/sleep
+stops and diagnostic cancellation remain. History still omits synthetic SOC.
+
+Frame pattern is D1 ss 00 A6 00 00 00, SOC high bit clear. Read-only session
+queries found 26 exact-layout frames in 20261010-104325Z (example D14C00A6000000)
+and 2,499 in 20261010-111025Z (D14B00A6000000). Across those two and
+20260928-204607Z, all 25,590 C1 0x41A frames have DLC7 and zero bytes 4..6.
+No C1 capture_loss rows were recorded in those three sessions; this does not
+prove perfect capture. These are recorded report layouts, not proof of sender
+identity or receiver acceptance. Other fields remain fixed rather than inventing
+counters or live measurements. Existing decoder interprets raw zero current as
+-250 A; the owner's requested raw pattern is retained without relabelling the
+unvalidated current encoding as a physical 0 A. Both guides explain this limit.
+
+Validation: full host ASan/UBSan suite passes (254 reported cases), including
+no-RX/zero-RPM operation, all 21 SOC targets, first TX, 99/100 ms boundaries,
+clock wrap, delayed loops, queue failure, stale RUN, sleep, OFF and cancellation.
+C1 cppcheck and ARM build pass, Arm GNU 15.2.Rel1: Flash 99,460/106,496 B,
+static RAM 13,408/16,384 B. All 26 knowledge tests pass; source hashes refreshed
+and readable dictionary regenerated without changing signal interpretations.
+No flashing or vehicle acceptance. Previous user untracked files untouched.
+
+## Configurable ignition-driven IBS SOC override, 2026-11-11
+
+Branch feat/configurable-ibs-soc starts at origin/master ae55edb. Owner requested
+fixed configured SOC independent of incoming SOC and activation from ignition,
+not engine startup. Features Comfort now provides IBS SOC % (0..100, step 5,
+default 75) and IBS SOC auto (default OFF). Persisted auto ON arms at RFHUB RUN;
+manual Actions override changes the current ignition session. OFF cancels;
+cranking preserves RUN. Fresh RUN (<=2 s), awake state and a complete DLC7 IBS
+template are required for TX. Engine RPM no longer disables override. Original
+factory SOC range filtering is removed, while the existing ten-copy, >=3 ms,
+<=100 ms burst remains. Only seven SOC bits change; original reports coexist
+on CAN. Diagnostics cancels until manual enable or the next ignition cycle.
+Battery history continues to omit SOC while override is enabled.
+
+Settings extend from 42 to 44 halfwords (slots 43/44); the loader imports the
+previous combined 42-slot/profile record and legacy 40/41/42-slot records without
+replacing Vehicle configuration. Tests cover migration and 0/100 persistence.
+Both guides, USB_DIAGNOSTICS and MENU_UX updated. Source hashes refreshed and
+readable CAN catalog regenerated; signal meanings/recordings unchanged.
+
+Validation: 254 host ASan/UBSan reported cases pass, including all 21 target
+values x all 128 incoming SOC codes, no engine RPM, burst count, field preservation,
+stale template, malformed DLC, OFF and manual cancellation. All four cppcheck
+and ARM builds pass with Arm GNU 15.2.Rel1; C1 Flash 99,764 B / 106,496 B,
+static RAM 13,416 B / 16,384 B. All 26 knowledge tests pass.
+No flashing, release or charging/vehicle acceptance. Existing untracked capture,
+release and research files remain untouched. Older firmware may not read new
+saved preferences after downgrade.
+
 ## PR 102 audit corrections, 2026-11-05
 
 Fixed two reproduced boundary bugs on feat/battery-history: the logger runs

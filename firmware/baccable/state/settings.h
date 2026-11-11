@@ -60,6 +60,8 @@ typedef struct {
 
     /* Force the lane-keeping assist off while set. */
     uint8_t lane_assist_disabled;
+    uint8_t ibs_soc_target; /* 0..100 percent, in steps of five. */
+    uint8_t ibs_soc_auto; /* Arm override at ignition RUN. */
 } SettingsState;
 extern SettingsState settings_state;
 #endif

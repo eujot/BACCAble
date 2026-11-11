@@ -103,12 +103,13 @@ static void test_pending_action_feedback(void) {
 static void test_conditional_actions(void) {
     open_test_action("IBS SOC override");
     ibs_override_enable(false);
-    telemetry_state.current_rpm_speed = 400;
+    ibs_override_ignition(2, now);
     menu_render();
-    assert(strstr(screen, "Start engine"));
+    assert(strstr(screen, "Ignition RUN"));
     menu_event(MENU_SELECT);
     assert(!ibs_override_enabled());
-    telemetry_state.current_rpm_speed = 401;
+    ibs_override_ignition(8, now);
+    telemetry_state.current_rpm_speed = 0;
     menu_event(MENU_SELECT);
     menu_event(MENU_HOLD);
     assert(ibs_override_enabled());

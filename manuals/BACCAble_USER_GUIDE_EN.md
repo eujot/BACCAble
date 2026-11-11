@@ -403,6 +403,8 @@ workflow; their draft does not control the car before successful persistence.
 | `Close windows` | OFF / 1 lock / 2 locks | Choose the key-fob lock gesture that starts window closing. Narrow screens use `Close win`. |
 | `Open windows` | OFF / 1 unlock / 2 unlocks | Choose the key-fob unlock gesture that starts window opening. Narrow screens use `Open win`. |
 | `QV exhaust` | Off / on | Permit the exhaust-valve request action and the gear-lever release-button gesture on compatible hardware. |
+| `IBS SOC auto` | OFF / ON | Automatically enable the configured override from ignition RUN; default OFF. |
+| `IBS SOC %` | 0..100, step 5 | Fixed SOC target; default 75%. Zero is a valid target. |
 | `Rain lights` | OFF / ON; default OFF | In AUTO, ask BH to report darkness after three detected wiper cycles within 15 seconds. Keep the request until 60 seconds after the last cycle. Requires matching C1/C2/BH firmware. Vehicle lamp operation remains unverified. |
 | `Auto PDC mute` | Off / on | Temporarily mute active parking-sensor beeps while braking outside Reverse, then restore the change BACCAble made when braking is released or Reverse is selected. Requires current brake, gear and PDC reports. |
 | `Mute audio in R` | Off / on | Mute audio in Reverse and restore audio afterwards if BACCAble muted it. Previously muted audio and a manual unmute are respected. This is independent of PDC mute. |
@@ -645,7 +647,7 @@ action executes.
 | `Clear DTCs` | DTC clear action; no conflicting BCM read/clear | Run a clear request across the configured controllers on the vehicle buses. The MY23 confirmation `Clear all ECUs?` makes this broader scope explicit; it does not repair the fault. |
 | `Reset best times` | No feature permission required | Clear the saved best acceleration records. Confirmation is required; a completed save reports `Records cleared`. |
 | `Peak hold` | No feature permission required | Immediately toggle numerical maximum hold for the current reading. |
-| `IBS SOC override` | Running engine; explicit confirmation | Toggle a temporary experimental SOC-message override. See the limitations below. |
+| `IBS SOC override` | Ignition RUN; explicit confirmation | Toggle the configured SOC-message override for this ignition session. See the limitations below. |
 
 The first `Rain test` page is unchanged: `Wiper` counts rising wiper phases even
 with `Rain lights` OFF; the first sample after a gap is only a baseline. `A`
@@ -724,14 +726,39 @@ The medium temperature labels `Gbox` and `Int air` distinguish them from
 
 ### IBS SOC override
 
-This experimental action **transmits modified battery-sensor reports**. For an
-observed IBS SOC from 75% up to but excluding 98%, it briefly repeats reports
-with SOC replaced by 75%. It is not a verified charging improvement and does not
-restore a missing SOC reading.
+Set `Settings → Features → IBS SOC %` to 0..100% in steps of 5% (default 75%),
+and save `IBS SOC auto: ON` to enable automatic operation from ignition RUN.
+The automatic preference defaults to OFF. Both settings persist through restart.
+The target may be zero; this does not mean OFF. The engine need not be running.
 
-It is off after startup, stops with the engine, and is cancelled by diagnostic
-mode entry. Browsing SOC pages never enables it. Before changing USB mode,
-disable the override; otherwise the menu displays `! Stop IBS first`.
+BACCAble sends its own standard C1 `0x41A`/DLC7 frame immediately after enabling
+in RUN and then once every 100 ms. No incoming IBS report is needed. The fixed
+recorded layout is `D1 ss 00 A6 00 00 00`, where `ss` is the configured SOC and
+its high bit is clear. Other fields remain fixed; received IBS data is ignored.
+This mode is intended for the owner's disconnected IBS configuration. Any other
+sender of 0x41A still coexists on the bus; BACCAble does not suppress it.
+
+The current bytes are zero, matching the recordings requested by the owner.
+This is not a validated 0 A encoding: the existing Readings decoder maps these
+bytes to -250 A. The meanings of the other fixed fields and receiver acceptance
+have not been established. No live current or voltage measurement is synthesized.
+Missed periods and queue rejection never trigger catch-up bursts. OFF, sleep or
+RUN reports older than two seconds stop transmission; cranking preserves RUN.
+Engine Start/Stop does not disable it. A report gap longer than two seconds
+ends the ignition session, even if OFF was missed. The next fresh RUN applies
+the saved auto preference; cranking alone cannot start a session.
+Transmission waits for the CAN queue and hardware mailboxes to drain, preventing
+an accumulation of SOC reports during congestion. The interval can therefore
+exceed 100 ms. A frame already submitted to CAN may still complete after OFF.
+
+`Actions → IBS SOC override` manually toggles operation for the current ignition
+session and requires confirmation. The saved auto preference applies again at
+the next ignition cycle. Diagnostic mode cancels operation until manually enabled
+or the next ignition session (including RUN after a report gap). Stop the override before changing USB mode (`Stop IBS`).
+History omits SOC while override is enabled. This remains an experimental change
+to battery reports, without verified charging benefits or vehicle acceptance.
+The expanded settings record imports the previous 42-slot/profile record;
+older firmware may not read newly saved preferences on downgrade.
 
 ## Information
 
