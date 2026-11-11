@@ -7,6 +7,5 @@ void ibs_override_ignition(unsigned code, uint32_t now);
 bool ibs_override_ignition_active(void);
 void ibs_override_enable(bool enabled);
 bool ibs_override_enabled(void);
-void ibs_override_observe(const CAN_RxHeaderTypeDef *header, const uint8_t *data);
 void ibs_override_process(void);
 #endif

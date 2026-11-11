@@ -39,10 +39,12 @@ still an acceptance check.
 - `Settings` → `Features` → `IBS SOC %` stores a 0..100% target in five-percent
   steps (default 75); `IBS SOC auto` arms it from ignition RUN (default OFF).
   `Actions` → `IBS SOC override` toggles the current session with confirmation.
-  Each complete 0x41A/DLC7 template triggers the existing ten-copy/3 ms burst,
-  independently of factory SOC. Other bytes and the SOC high bit are preserved.
-  OFF, stale RUN, sleep and diagnostics prevent further transmission. Original
-  factory frames remain on CAN; charging benefit and vehicle acceptance are unverified.
+  Sends one autonomous C1 0x41A/DLC7 every 100 ms, starting immediately in RUN,
+  without IBS input. Pattern D1 ss 00 A6 00 00 00 has configured SOC and fixed
+  recorded auxiliary fields (SOC high bit clear). Raw zero current matches the
+  captures, but Readings decodes it as -250 A; 0 A semantics are not validated.
+  OFF, stale RUN, sleep and diagnostics prevent further transmission. Other
+  senders remain on CAN; charging benefit and receiver acceptance are unverified.
 
 Leave Features to persist committed changes automatically. New settings are initially off;
 existing saved settings take priority over compiled defaults. Despite its current

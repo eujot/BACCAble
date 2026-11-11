@@ -4,6 +4,36 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Autonomous SOC transmission with disconnected IBS, 2026-11-11
+
+Owner clarified that IBS is disconnected and requested autonomous 100 ms output
+using configured SOC and the zero current bytes seen in recordings. This
+supersedes the receive-triggered burst implementation described below.
+Removed ibs_override_observe and its receive hook. Enabled RUN now attempts one
+standard C1 0x41A/DLC7 immediately, then at most one per 100 ms; loop delays and
+queue rejection are paced without catch-up. No incoming 0x41A is needed. Existing
+0..100/5% preference, auto RUN arming, manual session toggle, OFF/stale RUN/sleep
+stops and diagnostic cancellation remain. History still omits synthetic SOC.
+
+Frame pattern is D1 ss 00 A6 00 00 00, SOC high bit clear. Read-only session
+queries found 26 exact-layout frames in 20261010-104325Z (example D14C00A6000000)
+and 2,499 in 20261010-111025Z (D14B00A6000000). Across those two and
+20260928-204607Z, all 25,590 C1 0x41A frames have DLC7 and zero bytes 4..6.
+No C1 capture_loss rows were recorded in those three sessions; this does not
+prove perfect capture. These are recorded report layouts, not proof of sender
+identity or receiver acceptance. Other fields remain fixed rather than inventing
+counters or live measurements. Existing decoder interprets raw zero current as
+-250 A; the owner's requested raw pattern is retained without relabelling the
+unvalidated current encoding as a physical 0 A. Both guides explain this limit.
+
+Validation: full host ASan/UBSan suite passes (254 reported cases), including
+no-RX/zero-RPM operation, all 21 SOC targets, first TX, 99/100 ms boundaries,
+clock wrap, delayed loops, queue failure, stale RUN, sleep, OFF and cancellation.
+C1 cppcheck and ARM build pass, Arm GNU 15.2.Rel1: Flash 99,460/106,496 B,
+static RAM 13,408/16,384 B. All 26 knowledge tests pass; source hashes refreshed
+and readable dictionary regenerated without changing signal interpretations.
+No flashing or vehicle acceptance. Previous user untracked files untouched.
+
 ## Configurable ignition-driven IBS SOC override, 2026-11-11
 
 Branch feat/configurable-ibs-soc starts at origin/master ae55edb. Owner requested

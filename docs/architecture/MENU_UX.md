@@ -713,7 +713,11 @@ previous 42-slot combined profile record and 40/41/42-slot legacy records. New
 fields default without replacing the saved Vehicle profile. Action confirmation
 uses ignition RUN instead of an engine-speed prerequisite. The manual action
 lasts for one ignition cycle; saved auto preference re-arms on the next RUN edge.
-The existing ten-copy/3 ms/100 ms burst is retained. SOC input range filtering
-is removed; a complete DLC7 template still supplies current and unknown fields.
-Only seven SOC bits change. OFF/stale RUN/sleep prevent TX and diagnostics cancel
-the current session. Real factory reports still coexist on the shared CAN bus.
+Autonomous transmission uses a standard C1 0x41A/DLC7 report every 100 ms,
+with the first attempt immediately on enable. Input observation is removed.
+The recorded D1 ss 00 A6 00 00 00 layout uses SOC high bit zero and fixed
+auxiliary bytes. Zero raw current matches captures; the existing decoder maps
+it to -250 A, so this is not a validated 0 A representation. Receiver acceptance
+and other field semantics remain unverified. No backlog is sent after queue
+failure or scheduler delay. OFF/stale RUN/sleep prevent TX; diagnostics cancels
+the current session. No other bus sender is suppressed.

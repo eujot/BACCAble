@@ -778,13 +778,20 @@ a następnie zapisz `IBS SOC auto: ON`, aby włączać funkcję automatycznie od
 RUN. Automatyczne włączanie jest domyślnie OFF. Oba ustawienia przetrwają restart.
 Wartość zero oznacza 0% SOC, nie wyłączenie funkcji. Silnik nie musi pracować.
 
-Każda kompletna, aktualna ramka C1 `0x41A`/DLC7 dostarcza wzorzec, niezależnie od
-jej SOC. BACCAble zachowuje pozostałe bajty i najwyższy bit bajtu SOC, podstawia
-ustawione siedem bitów SOC i wysyła do dziesięciu kopii z odstępem co najmniej
-3 ms, w ciągu 100 ms od odebrania ramki, tak jak dotychczasowy mechanizm serii.
-Fabryczne ramki nadal występują na CAN; nie jest to zastępowanie ich w torze.
-Bez aktualnej ramki nie ma wzorca ani transmisji. OFF, uśpienie lub nieaktualne
-raporty RUN zatrzymują transmisję; rozruch podtrzymuje RUN. Start/Stop jej nie wyłącza.
+BACCAble nadaje własną standardową ramkę C1 `0x41A`/DLC7 od razu po włączeniu
+funkcji przy RUN, a następnie raz na 100 ms. Nie wymaga żadnej ramki z IBS.
+Stały wzorzec z nagrań to `D1 ss 00 A6 00 00 00`, gdzie `ss` jest ustawionym SOC,
+a jego najwyższy bit wynosi zero. Pozostałe pola są stałe; odebrane dane IBS są
+ignorowane. Tryb jest przeznaczony dla konfiguracji właściciela z odłączonym IBS.
+Inny nadajnik 0x41A nadal może występować na magistrali; BACCAble go nie blokuje.
+
+Bajty prądu wynoszą zero, zgodnie z nagraniami wskazanymi przez właściciela.
+Nie jest to potwierdzone kodowanie 0 A: dotychczasowy dekoder Readings przelicza
+te bajty na -250 A. Znaczenie pozostałych stałych pól i akceptacja przez odbiornik
+nie zostały ustalone. Nie powstaje pomiar rzeczywistego prądu ani napięcia.
+Pominięte okresy i odrzucenie przez kolejkę nie powodują serii nadrabiającej.
+OFF, uśpienie lub raporty RUN starsze niż dwie sekundy zatrzymują nadawanie;
+rozruch podtrzymuje RUN. Start/Stop nie wyłącza funkcji.
 
 `Actions → IBS SOC override` ręcznie przełącza działanie na bieżący cykl zapłonu
 po potwierdzeniu. Zapisane automatyczne włączanie zadziała ponownie przy następnym

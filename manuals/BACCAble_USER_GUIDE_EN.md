@@ -731,13 +731,20 @@ and save `IBS SOC auto: ON` to enable automatic operation from ignition RUN.
 The automatic preference defaults to OFF. Both settings persist through restart.
 The target may be zero; this does not mean OFF. The engine need not be running.
 
-Every complete, fresh C1 `0x41A`/DLC7 report supplies a template, regardless of
-its SOC. BACCAble preserves the remaining bytes and SOC high bit, substitutes
-the configured seven-bit SOC and sends up to ten copies at intervals of at
-least 3 ms, within 100 ms of that report, as in the previous burst mechanism.
-Factory reports still coexist on CAN; this is not an inline replacement.
-No report means no template and no transmission. OFF, sleep or stale RUN reports
-stop transmission; cranking preserves RUN. Engine Start/Stop does not disable it.
+BACCAble sends its own standard C1 `0x41A`/DLC7 frame immediately after enabling
+in RUN and then once every 100 ms. No incoming IBS report is needed. The fixed
+recorded layout is `D1 ss 00 A6 00 00 00`, where `ss` is the configured SOC and
+its high bit is clear. Other fields remain fixed; received IBS data is ignored.
+This mode is intended for the owner's disconnected IBS configuration. Any other
+sender of 0x41A still coexists on the bus; BACCAble does not suppress it.
+
+The current bytes are zero, matching the recordings requested by the owner.
+This is not a validated 0 A encoding: the existing Readings decoder maps these
+bytes to -250 A. The meanings of the other fixed fields and receiver acceptance
+have not been established. No live current or voltage measurement is synthesized.
+Missed periods and queue rejection never trigger catch-up bursts. OFF, sleep or
+RUN reports older than two seconds stop transmission; cranking preserves RUN.
+Engine Start/Stop does not disable it.
 
 `Actions → IBS SOC override` manually toggles operation for the current ignition
 session and requires confirmation. The saved auto preference applies again at

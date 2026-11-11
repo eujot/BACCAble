@@ -1,10 +1,9 @@
-/* Optional IBS experiment adapted from netzmark BACCAble a3ca082. */
+/* Autonomous 0x41A experiment using a recorded C1 layout; see ACTION_PLAN.md. */
 #include "features/ibs_override.h"
 #if defined(BACCABLE_C1)
     #include "app/powertrain.h"
 static bool enabled;
-static uint8_t pending, replacement[7];
-static uint32_t observed, sent, ignition_at;
+static uint32_t sent, ignition_at;
 static uint8_t ignition, auto_setting;
 
 /* RFHUB RUN arms the saved preference; OFF cancels, cranking preserves RUN. */
@@ -25,42 +24,28 @@ bool ibs_override_ignition_active(void) {
 /* Manual action changes this ignition session only; startup preference is saved separately. */
 void ibs_override_enable(bool on) {
     enabled = on;
-    pending = 0;
+    if (on) sent = currentTime - 100U;
 }
 
 /* Report whether the temporary charging experiment is enabled. */
 bool ibs_override_enabled(void) { return enabled; }
 
-/* Reuse a complete factory template, independently of its reported SOC. */
-void ibs_override_observe(const CAN_RxHeaderTypeDef *h, const uint8_t *data) {
-    if (!enabled || h->IDE != CAN_ID_STD || h->RTR != CAN_RTR_DATA || h->StdId != 0x41a || h->DLC < 7)
-        return;
-    if (!ibs_override_ignition_active() || h->DLC != 7) return;
-    memcpy(replacement, data, sizeof(replacement));
-    observed = currentTime;
-    pending = 10;
-}
-
-/* Repeat the upstream SOC override briefly, stopping on stale input or ignition shutdown. */
+/* Emit one report per 100 ms without requiring any incoming IBS data. */
 void ibs_override_process(void) {
     if (auto_setting != settings_state.ibs_soc_auto) {
         auto_setting = settings_state.ibs_soc_auto;
         ibs_override_enable(auto_setting && ibs_override_ignition_active());
     }
-    if (!ibs_override_ignition_active()) { pending = 0; return; }
-    if (!enabled || !pending)
-        return;
-    if (currentTime - observed > 100) {
-        pending = 0;
-        return;
-    }
-    CAN_TxHeaderTypeDef header = {.StdId = 0x41a, .IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .DLC = 7};
+    if (!ibs_override_ignition_active() || !enabled || currentTime - sent < 100U) return;
     uint8_t target = settings_state.ibs_soc_target;
-    if (target > 100 || target % 5) { pending = 0; return; }
-    replacement[1] = (replacement[1] & 0x80) | target;
-    if (currentTime - sent >= 3 && can_tx(&header, replacement) == HAL_OK) {
-        --pending;
-        sent = currentTime;
-    }
+    if (target > 100 || target % 5) return;
+    /* Recorded D1 xx 00 A6 00 00 00 layout, SOC high bit fixed clear.
+     * Zero raw current bytes match the captures, not a validated 0 A encoding.
+     * The existing Readings decoder maps those bytes to -250 A. */
+    uint8_t data[8] = {0xd1, target, 0, 0xa6, 0, 0, 0, 0};
+    CAN_TxHeaderTypeDef header = {.StdId = 0x41a, .IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .DLC = 7};
+    /* Pace queue rejections too; missed cycles never become a catch-up burst. */
+    sent = currentTime;
+    (void)can_tx(&header, data);
 }
 #endif
