@@ -166,6 +166,8 @@ static uint8_t setup_group(uint8_t id) {
     case 28:
     case 31:
     case 32:
+    case 43:
+    case 44:
     case 42:
         return 1; /* Comfort */
     case 9:
@@ -240,6 +242,7 @@ uint16_t setup_read_flash_value(uint8_t flash_index, uint16_t stored_value) {
     const SetupParam *param = setup_find_by_flash_index(flash_index);
     if (!param)
         return 0;
+    if (flash_index == 43 && stored_value % 5) return param->default_value;
     if (stored_value == 0xFFFF || stored_value > param->max_value)
         return param->default_value;
     if (param->entry_type == UI_ENTRY_NUMBER) {

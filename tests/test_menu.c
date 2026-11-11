@@ -153,7 +153,7 @@ float native_parameter_read(uint8_t id) {
 bool flash_record_load(unsigned slot, uint16_t type, void *data, size_t size) {
     if (real_flash) { RecordStorage storage = test_storage(slot); return record_load(&storage, type, data, size); }
     (void)slot;
-    if (type == 0x108 && have_combined) { assert(size == sizeof(combined_record)); memcpy(data, combined_record, size); return true; }
+    if (type == 0x108 && have_combined) { if (size != sizeof(combined_record)) return false; memcpy(data, combined_record, size); return true; }
     if (type == 0x101 && size == settings_record_size) {
         memcpy(data, settings_record, size);
         if (size == 80) ++old_settings_reads;
@@ -225,7 +225,7 @@ static void test_settings_migration(void) {
     fail_save = true;
     assert(settings_save() != 0 && settings_record_size == old_size);
     fail_save = false;
-    assert(settings_save() == 0 && settings_record_size == 84);
+    assert(settings_save() == 0 && settings_record_size == SETUP_FLASH_PARAM_BUFFER_SIZE * 2);
     assert(have_profile);
     assert(settings_record[35] == 1 && settings_record[40] == 1 && settings_record[41] == 1);
     settings_state.gasoline_v6 = 0;
@@ -399,6 +399,7 @@ int main(void) {
         HOST_TEST(test_split_profile_migration),
         HOST_TEST(test_cancelled_same_did),
         HOST_TEST(test_profile_atomic_restart),
+        HOST_TEST(test_ibs_settings_migration),
         HOST_TEST(test_profile_editor_failure),
         HOST_TEST(test_favorite_validation_restart),
         HOST_TEST(test_favorite_widths),

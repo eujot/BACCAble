@@ -430,6 +430,8 @@ Szkic nie steruje samochodem przed udanym zapisem.
 | `Close windows` | OFF / 1 lock / 2 locks | Wybiera zamykanie szyb po jednym lub dwóch naciśnięciach zamykania na pilocie. OFF wyłącza funkcję. Krótsza nazwa na wyświetlaczu to `Close win`. |
 | `Open windows` | OFF / 1 unlock / 2 unlocks | Wybiera otwieranie szyb po jednym lub dwóch naciśnięciach otwierania na pilocie. OFF wyłącza funkcję. Krótsza nazwa to `Open win`. |
 | `QV exhaust` | Wyłączona / włączona | Udostępnia sterowanie klapami wydechu przez akcję w menu i podwójne naciśnięcie przycisku odblokowania dźwigni zmiany biegów. Wymaga zgodnego sprzętu. |
+| `IBS SOC auto` | OFF / ON | Automatyczne nadpisywanie od zapłonu RUN; domyślnie OFF. |
+| `IBS SOC %` | 0..100, krok 5 | Stały docelowy SOC; domyślnie 75%. Zero jest poprawną wartością. |
 | `Rain lights` | OFF / ON; domyślnie OFF | W AUTO prosi płytkę BH o zgłoszenie ciemności po trzech wykrytych cyklach wycieraczek w ciągu 15 sekund. Podtrzymuje żądanie przez 60 sekund od ostatniego cyklu. Wymaga zgodnego firmware C1/C2/BH. Działanie lamp wymaga jeszcze potwierdzenia w samochodzie. |
 | `Auto PDC mute` | Wyłączona / włączona | Chwilowo wycisza aktywny sygnał czujników parkowania podczas hamowania poza biegiem wstecznym. Przywraca działanie zmienione przez BACCAble po odpuszczeniu hamulca lub wybraniu wstecznego. Wymaga aktualnych danych o hamulcu, biegu i czujnikach PDC. |
 | `Mute audio in R` | Wyłączona / włączona | Wycisza dźwięk systemu audio na wstecznym i przywraca go po zakończeniu cofania, jeśli to BACCAble go wyciszyło. Uwzględnia wcześniejsze wyciszenie oraz ręczne przywrócenie dźwięku. Działa niezależnie od wyciszania PDC. |
@@ -682,7 +684,7 @@ urządzenie ponownie sprawdza wymagane warunki.
 | `Clear DTCs` | DTC clear action; brak równoczesnego odczytu BCM lub kasowania | Wysyła polecenia kasowania błędów do skonfigurowanych sterowników na magistralach samochodu. Zakres jest szerszy niż odczyt BCM. Nie usuwa przyczyny usterki.  Na MY23 potwierdzenie `Clear all ECUs?` przypomina o szerszym zakresie niż odczyt BCM. |
 | `Reset best times` | Nie wymaga osobnego ustawienia w Features | Kasuje zapisane najlepsze czasy przyspieszenia. Wymaga potwierdzenia; udany zapis kończy komunikat `Records cleared`. |
 | `Peak hold` | Nie wymaga osobnego ustawienia w Features | Od razu włącza/wyłącza pokazywanie najwyższych wartości liczbowych dla bieżącej strony. |
-| `IBS SOC override` | Pracujący silnik; potwierdzenie | Włącza/wyłącza tymczasowe, eksperymentalne podmienianie SOC w komunikatach. Ograniczenia opisano niżej. |
+| `IBS SOC override` | Zapłon RUN; potwierdzenie | Przełącza nadpisywanie ustawionym SOC na bieżący cykl zapłonu. Ograniczenia opisano niżej. |
 
 Pierwsza strona `Rain test` działa jak dotąd: `Wiper` liczy zbocza ruchu
 wycieraczek także przy wyłączonym `Rain lights`; pierwsza próbka po przerwie
@@ -771,15 +773,27 @@ krótszej etykiety lub dodatkowej podstrony we własnym układzie Favorites.
 
 ### IBS SOC override
 
-Ta eksperymentalna akcja **wysyła zmienione komunikaty czujnika akumulatora**.
-Gdy obserwowany SOC z IBS wynosi co najmniej 75%, ale mniej niż 98%, przez
-krótki czas powtarza komunikaty z SOC zastąpionym wartością 75%.
-Nie jest to potwierdzony sposób poprawy ładowania i nie naprawia braku odczytu SOC.
+Ustaw `Settings → Features → IBS SOC %` w zakresie 0..100%, co 5% (domyślnie 75%),
+a następnie zapisz `IBS SOC auto: ON`, aby włączać funkcję automatycznie od zapłonu
+RUN. Automatyczne włączanie jest domyślnie OFF. Oba ustawienia przetrwają restart.
+Wartość zero oznacza 0% SOC, nie wyłączenie funkcji. Silnik nie musi pracować.
 
-Po uruchomieniu urządzenia funkcja jest wyłączona. Zatrzymuje się po zgaszeniu
-silnika i jest anulowana przy wejściu w tryb diagnostyczny. Samo oglądanie stron
-SOC nigdy jej nie włącza. Przed zmianą trybu USB wyłącz tę funkcję; w przeciwnym
-razie menu pokaże `! Stop IBS first` — najpierw zatrzymaj podmienianie IBS.
+Każda kompletna, aktualna ramka C1 `0x41A`/DLC7 dostarcza wzorzec, niezależnie od
+jej SOC. BACCAble zachowuje pozostałe bajty i najwyższy bit bajtu SOC, podstawia
+ustawione siedem bitów SOC i wysyła do dziesięciu kopii z odstępem co najmniej
+3 ms, w ciągu 100 ms od odebrania ramki, tak jak dotychczasowy mechanizm serii.
+Fabryczne ramki nadal występują na CAN; nie jest to zastępowanie ich w torze.
+Bez aktualnej ramki nie ma wzorca ani transmisji. OFF, uśpienie lub nieaktualne
+raporty RUN zatrzymują transmisję; rozruch podtrzymuje RUN. Start/Stop jej nie wyłącza.
+
+`Actions → IBS SOC override` ręcznie przełącza działanie na bieżący cykl zapłonu
+po potwierdzeniu. Zapisane automatyczne włączanie zadziała ponownie przy następnym
+cyklu zapłonu. Diagnostyka anuluje działanie do ręcznego włączenia lub następnego
+cyklu zapłonu. Przed zmianą trybu USB zatrzymaj funkcję (`Stop IBS`). Historia
+pomija SOC podczas włączonego nadpisywania. Nadal jest to eksperymentalna zmiana
+komunikatów akumulatora, bez potwierdzonych korzyści ładowania i próby w samochodzie.
+Rozszerzony zapis ustawień importuje poprzedni rekord 42 pól i profilu;
+starsze firmware może nie odczytać nowych ustawień po cofnięciu wersji.
 
 ## Informacje: Information
 

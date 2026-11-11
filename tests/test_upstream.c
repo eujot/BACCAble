@@ -332,24 +332,32 @@ static void test_elm(void) {
 }
 static void test_ibs(void) {
     CAN_RxHeaderTypeDef h = {.StdId = 0x41a, .IDE = CAN_ID_STD, .RTR = CAN_RTR_DATA, .DLC = 7};
-    uint8_t data[8] = {1, 0x80 | 90, 2, 3, 4, 5, 6, 7};
-    telemetry_state.current_rpm_speed = 1000;
-    ibs_override_enable(true);
-    ibs_override_observe(&h, data);
-    now += 3;
-    ibs_override_process();
-    assert(last_data[1] == (0x80 | 75) && last_header.DLC == 7);
-    unsigned previous = sends;
-    now += 101;
-    ibs_override_process();
-    assert(sends == previous);
-    h.DLC = 6;
-    ibs_override_observe(&h, data);
-    ibs_override_process();
-    assert(sends == previous);
+    uint8_t data[8] = {1, 0x80, 2, 3, 4, 5, 6, 7};
+    runtime_state.low_consume_is_active = 0;
     telemetry_state.current_rpm_speed = 0;
-    ibs_override_process();
-    assert(!ibs_override_enabled());
+    settings_state.ibs_soc_auto = 1;
+    ibs_override_ignition(2, now); ibs_override_ignition(8, now);
+    assert(ibs_override_enabled());
+    for (unsigned target = 0; target <= 100; target += 5) {
+        settings_state.ibs_soc_target = target;
+        for (unsigned input = 0; input < 128; ++input) {
+            data[1] = 0x80 | input;
+            ibs_override_ignition(8, now);
+            ibs_override_observe(&h, data);
+            unsigned before = sends;
+            for (unsigned n = 0; n < 11; ++n) { now += 3; ibs_override_process(); }
+            assert(sends == before + 10 && last_data[1] == (0x80 | target));
+            assert(last_header.DLC == 7);
+            for (unsigned n = 0; n < 7; ++n) if (n != 1) assert(last_data[n] == data[n]);
+        }
+    }
+    unsigned before = sends;
+    h.DLC = 6; ibs_override_observe(&h, data); now += 3; ibs_override_process(); assert(sends == before);
+    h.DLC = 7; ibs_override_observe(&h, data); now += 101; ibs_override_process(); assert(sends == before);
+    ibs_override_observe(&h, data); ibs_override_ignition(2, now); now += 3;
+    ibs_override_process(); assert(!ibs_override_enabled() && sends == before);
+    ibs_override_ignition(8, now); assert(ibs_override_enabled());
+    ibs_override_enable(false); ibs_override_ignition(8, now); assert(!ibs_override_enabled());
 }
 static void test_usb_modes(void) {
     runtime_state.low_consume_is_active = 0;

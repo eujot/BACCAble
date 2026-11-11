@@ -39,12 +39,21 @@ static void load_settings(void) {
     combined_loaded = flash_record_load(SETTINGS_RECORD, SETTINGS_PROFILE_TYPE,
                                         saved_wire, sizeof(saved_wire)) &&
         vehicle_profile_decode(saved_wire + SETUP_FLASH_PARAM_BUFFER_SIZE * 2, &profile);
-    if (combined_loaded) {
-        for (unsigned i = 0; i < SETUP_FLASH_PARAM_BUFFER_SIZE; ++i)
+    bool old_combined = false;
+    uint8_t old_wire[42U * 2 + VEHICLE_PROFILE_WIRE_SIZE];
+    if (!combined_loaded) {
+        old_combined = flash_record_load(SETTINGS_RECORD, SETTINGS_PROFILE_TYPE, old_wire, sizeof(old_wire)) &&
+            vehicle_profile_decode(old_wire + 84, &profile);
+    }
+    if (combined_loaded || old_combined) {
+        memset(saved_settings, 0xff, sizeof(saved_settings));
+        if (old_combined) memcpy(saved_wire, old_wire, 84);
+        for (unsigned i = 0; i < (old_combined ? 42U : SETUP_FLASH_PARAM_BUFFER_SIZE); ++i)
             saved_settings[i] = saved_wire[2*i] | (uint16_t)saved_wire[2*i+1] << 8;
     } else {
         memset(saved_settings, 0xff, sizeof(saved_settings));
         bool imported = flash_record_load(SETTINGS_RECORD, 0x101, saved_settings, sizeof(saved_settings)) ||
+            flash_record_load(SETTINGS_RECORD, 0x101, saved_settings, 42U * sizeof(uint16_t)) ||
             flash_record_load(SETTINGS_RECORD, 0x101, saved_settings, 41U * sizeof(uint16_t)) ||
             flash_record_load(SETTINGS_RECORD, 0x101, saved_settings, 40U * sizeof(uint16_t));
         uint8_t old_profile[VEHICLE_PROFILE_WIRE_SIZE] = {0};

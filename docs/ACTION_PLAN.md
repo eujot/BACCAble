@@ -4,6 +4,35 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## Configurable ignition-driven IBS SOC override, 2026-11-11
+
+Branch feat/configurable-ibs-soc starts at origin/master ae55edb. Owner requested
+fixed configured SOC independent of incoming SOC and activation from ignition,
+not engine startup. Features Comfort now provides IBS SOC % (0..100, step 5,
+default 75) and IBS SOC auto (default OFF). Persisted auto ON arms at RFHUB RUN;
+manual Actions override changes the current ignition session. OFF cancels;
+cranking preserves RUN. Fresh RUN (<=2 s), awake state and a complete DLC7 IBS
+template are required for TX. Engine RPM no longer disables override. Original
+factory SOC range filtering is removed, while the existing ten-copy, >=3 ms,
+<=100 ms burst remains. Only seven SOC bits change; original reports coexist
+on CAN. Diagnostics cancels until manual enable or the next ignition cycle.
+Battery history continues to omit SOC while override is enabled.
+
+Settings extend from 42 to 44 halfwords (slots 43/44); the loader imports the
+previous combined 42-slot/profile record and legacy 40/41/42-slot records without
+replacing Vehicle configuration. Tests cover migration and 0/100 persistence.
+Both guides, USB_DIAGNOSTICS and MENU_UX updated. Source hashes refreshed and
+readable CAN catalog regenerated; signal meanings/recordings unchanged.
+
+Validation: 254 host ASan/UBSan reported cases pass, including all 21 target
+values x all 128 incoming SOC codes, no engine RPM, burst count, field preservation,
+stale template, malformed DLC, OFF and manual cancellation. All four cppcheck
+and ARM builds pass with Arm GNU 15.2.Rel1; C1 Flash 99,764 B / 106,496 B,
+static RAM 13,416 B / 16,384 B. All 26 knowledge tests pass.
+No flashing, release or charging/vehicle acceptance. Existing untracked capture,
+release and research files remain untouched. Older firmware may not read new
+saved preferences after downgrade.
+
 ## PR 102 audit corrections, 2026-11-05
 
 Fixed two reproduced boundary bugs on feat/battery-history: the logger runs

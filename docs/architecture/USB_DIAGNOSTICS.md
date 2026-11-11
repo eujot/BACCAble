@@ -36,11 +36,13 @@ still an acceptance check.
   more than the displayed limit of 20 codes. Reading does not clear faults.
 - `Auto PDC mute` and `Mute audio in R` are independent options in Features.
   They require valid current vehicle messages before acting.
-- `Actions` → `IBS SOC override` is experimental and requires action confirmation
-  and a running engine. It substitutes 75% in a short burst of otherwise copied
-  IBS messages when the observed SOC is within the upstream range. It is not a
-  verified way to improve battery charging. It is off after startup and stops at
-  engine stop or diagnostic-mode entry.
+- `Settings` → `Features` → `IBS SOC %` stores a 0..100% target in five-percent
+  steps (default 75); `IBS SOC auto` arms it from ignition RUN (default OFF).
+  `Actions` → `IBS SOC override` toggles the current session with confirmation.
+  Each complete 0x41A/DLC7 template triggers the existing ten-copy/3 ms burst,
+  independently of factory SOC. Other bytes and the SOC high bit are preserved.
+  OFF, stale RUN, sleep and diagnostics prevent further transmission. Original
+  factory frames remain on CAN; charging benefit and vehicle acceptance are unverified.
 
 Leave Features to persist committed changes automatically. New settings are initially off;
 existing saved settings take priority over compiled defaults. Despite its current

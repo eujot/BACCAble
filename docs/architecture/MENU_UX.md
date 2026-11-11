@@ -704,3 +704,16 @@ items; host fault injection verifies data integrity, not physical interrupt late
 History maintenance rechecks the CAN inactivity interval before erasing, even
 when the power state still says asleep. The final twelve-hour sample allows
 a five-second collection window so loop scheduling does not drop it.
+
+## Configured IBS SOC override
+
+Features Comfort adds IBS SOC auto (default OFF) and IBS SOC % (0..100, step 5,
+default 75). Slots 43/44 extend settings to 44 halfwords; loaders import the
+previous 42-slot combined profile record and 40/41/42-slot legacy records. New
+fields default without replacing the saved Vehicle profile. Action confirmation
+uses ignition RUN instead of an engine-speed prerequisite. The manual action
+lasts for one ignition cycle; saved auto preference re-arms on the next RUN edge.
+The existing ten-copy/3 ms/100 ms burst is retained. SOC input range filtering
+is removed; a complete DLC7 template still supplies current and unknown fields.
+Only seven SOC bits change. OFF/stale RUN/sleep prevent TX and diagnostics cancel
+the current session. Real factory reports still coexist on the shared CAN bus.

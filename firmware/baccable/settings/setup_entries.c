@@ -324,6 +324,9 @@ const SetupParam setup_params[] = {
                  settings_state.qv_exhaust_flap_function_enabled),
     SETUP_HIDDEN_TOGGLE(SETUP_FLASH_EUJOT, DEFAULT_EUJOT, settings_state.eujot_enabled),
 
+    SETUP_TOGGLE(44, "IBS SOC auto", 0, settings_state.ibs_soc_auto),
+    SETUP_NUMBER(43, "IBS SOC %", 100, 75, SETUP_VALUE_UINT8,
+                 settings_state.ibs_soc_target, NULL, 0, 5),
     SETUP_TOGGLE(42, "Rain lights", 0, settings_state.rain_lights_enabled),
     SETUP_TOGGLE(SETUP_FLASH_PDC_MUTE, "Auto PDC mute", 0, settings_state.parking_sensor_mute),
     SETUP_TOGGLE(SETUP_FLASH_REVERSE_AUDIO, "Mute audio in R", 0, settings_state.reverse_audio_mute),
