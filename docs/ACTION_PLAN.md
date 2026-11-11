@@ -4,6 +4,31 @@
 > [baccable_lab/docs/DECODE_ROADMAP.md](../baccable_lab/docs/DECODE_ROADMAP.md);
 > this file records status and acceptance, not the per-campaign procedure.
 
+## SOC override audit corrections, 2026-11-11
+
+Reviewed both commits on feat/configurable-ibs-soc; fresh origin fetch still
+places the branch on master ae55edb. Fixed three edge cases: a missed OFF and
+>2 s report gap could retain a manual override across sessions; explicit
+cancellation could be undone by an unprocessed auto preference change; periodic
+reports could accumulate in the CAN queue despite producer-side 100 ms pacing.
+Both receive and process paths now expire the session. Fresh RUN reapplies auto;
+crank alone cannot start one. Cancellation synchronizes the observed preference.
+SOC waits for the existing can_tx_idle guard without advancing its timer while
+busy. At most one SOC report is outstanding; an already submitted report can
+still complete after OFF. Congestion can extend the nominal 100 ms interval.
+
+Reviewed setting ranges, combined-profile migration, menu prerequisites and
+history exclusion; no additional defect established in those paths. Extended
+host regressions cover congestion/recovery, missed OFF with skipped processing,
+manual ON with auto OFF, pending-auto cancellation, cranking and expiry. Full
+ASan/UBSan suite passes (254 reported cases), C1 cppcheck and ARM build pass
+(Arm GNU 15.2.Rel1): Flash 99,760/106,496 B, static RAM 13,408/16,384 B. All 26
+knowledge tests pass. Both user guides and technical behavior notes updated;
+source hash refreshed and readable catalog regenerated, signal meanings unchanged.
+No vehicle flashing or acceptance; physical cadence under load and receiver
+acceptance of the recorded fixed layout remain unverified. Existing user untracked
+captures, release directories and research note preserved. No release or PR yet.
+
 ## Autonomous SOC transmission with disconnected IBS, 2026-11-11
 
 Owner clarified that IBS is disconnected and requested autonomous 100 ms output

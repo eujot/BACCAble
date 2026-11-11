@@ -26,7 +26,7 @@
     "firmware/baccable/vehicle/drive_mode.c": "1d85ce9070e2ffd26dc0da9b377c964597331df7b3ae5a5e2bb930366ff6e27d",
     "firmware/baccable/vehicle/mirrors_frames.c": "29f39b069635e06167bc971d19886a9855fdb7e2f7786ef2cf737b60eef554e1",
     "firmware/baccable/diagnostics/native_parameters.c": "4fa55c09d6565e36ca6571724f7992709365bf0f9554ea7c149e131b0d3475b6",
-    "firmware/baccable/features/ibs_override.c": "734a0adeee961e816acdb505d8a9dea3a32b53463afacfd44f4968a48e4bdb4f",
+    "firmware/baccable/features/ibs_override.c": "fea085f7da7a94ae74e537df5fbf8b00dbf48bd8e9701d7e5e5b87dce7eae5d2",
     "firmware/baccable/features/usb_modes.c": "8c632b9ff87433860597e58d94de0d3a9db9dac9a0d1ac9cd1837145d34c9809",
     "firmware/baccable/diagnostics/uds_decode.c": "25ab4028b943ba1e6bb825019be4208fb4a4739742a314aa8942e9b2708efae4",
     "firmware/baccable/diagnostics/parameter_request.c": "8990af67accdf2401735ba59a136121781d6fe66c8f0b34d7e09815eddd2fe1d",

@@ -721,3 +721,11 @@ it to -250 A, so this is not a validated 0 A representation. Receiver acceptance
 and other field semantics remain unverified. No backlog is sent after queue
 failure or scheduler delay. OFF/stale RUN/sleep prevent TX; diagnostics cancels
 the current session. No other bus sender is suppressed.
+
+SOC override audit: a >2 s ignition-report gap ends the session, including gaps
+while the main feature loop is bypassed by diagnostics. The next fresh RUN uses
+the auto preference; crank alone cannot re-arm. Explicit cancellation also
+synchronizes the observed auto preference, so a pending preference change cannot
+undo cancellation. SOC enqueue waits for can_tx_idle; congestion stretches the
+interval rather than accumulating reports. An already submitted frame may still
+complete after OFF.

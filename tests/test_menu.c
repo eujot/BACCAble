@@ -130,6 +130,7 @@ static uint8_t query_payload[8];
 static uint32_t query_dlc;
 static bool query_fail;
 static uint32_t query_ecu;
+uint8_t can_tx_idle(void) { return 1; }
 uint32_t can_tx(CAN_TxHeaderTypeDef *header, uint8_t *data) {
     query_dlc = header->DLC;
     query_ecu = header->IDE == CAN_ID_EXT ? header->ExtId : header->StdId;

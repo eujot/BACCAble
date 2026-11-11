@@ -43,6 +43,8 @@ static CAN_TxHeaderTypeDef last_header;
 static uint8_t last_data[8];
 static unsigned sends, response_mode, rx_count, rx_index, usb_busy;
 static bool ibs_tx_reject;
+static bool ibs_tx_busy;
+uint8_t can_tx_idle(void) { return !ibs_tx_busy; }
 static CAN_RxHeaderTypeDef replies[4];
 static uint8_t reply_data[4][8];
 static char output[4096];
@@ -371,6 +373,35 @@ static void test_ibs(void) {
     for (unsigned i = 0; i < 99; ++i) { ++now; ibs_override_process(); }
     assert(sends == before + 1);
     ibs_tx_reject = false; ++now; ibs_override_process(); assert(sends == before + 2);
+    /* A blocked transport must not collect periodic reports for later replay. */
+    ibs_tx_busy = true;
+    before = sends;
+    for (unsigned i = 0; i < 30; ++i) {
+        now += 100; ibs_override_ignition(8, now); ibs_override_process();
+    }
+    assert(sends == before);
+    ibs_tx_busy = false;
+    ibs_override_process(); assert(sends == before + 1);
+    ibs_override_process(); assert(sends == before + 1);
+    /* Manual OFF expires even if the OFF frame and process loop were missed. */
+    ibs_override_enable(false); now += 2001;
+    ibs_override_ignition(8, now); ibs_override_process();
+    assert(ibs_override_enabled() && sends == before + 2);
+    /* Manual ON with auto OFF must not leak into a new ignition session. */
+    settings_state.ibs_soc_auto = 0; ibs_override_enable(true);
+    now += 2001; ibs_override_ignition(10, now); ibs_override_process();
+    assert(!ibs_override_enabled());
+    ibs_override_ignition(8, now); ibs_override_process();
+    assert(!ibs_override_enabled());
+    /* Cancellation wins over an auto preference not yet processed. */
+    settings_state.ibs_soc_auto = 1; ibs_override_enable(false);
+    before = sends; ibs_override_process();
+    assert(!ibs_override_enabled() && sends == before);
+    /* A fresh crank report preserves an already established RUN session. */
+    ibs_override_ignition(2, now); ibs_override_ignition(8, now);
+    now += 100; ibs_override_ignition(10, now); ibs_override_process();
+    assert(sends == before + 1);
+    now += 2001; ibs_override_process(); assert(!ibs_override_enabled());
     ibs_override_enable(false);
 }
 static void test_usb_modes(void) {

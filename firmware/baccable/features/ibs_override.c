@@ -9,6 +9,12 @@ static uint8_t ignition, auto_setting;
 /* RFHUB RUN arms the saved preference; OFF cancels, cranking preserves RUN. */
 void ibs_override_ignition(unsigned code, uint32_t now) {
     if (code != 2 && code != 8 && code != 10) return;
+    /* A missed OFF must not carry a manual override into another ignition session.
+     * Check before refreshing, including when diagnostics skipped the process loop. */
+    if (now - ignition_at > 2000U) {
+        ignition = 0;
+        enabled = false;
+    }
     ignition_at = now;
     if (code == 10) return;
     if (code != ignition) {
@@ -23,6 +29,7 @@ bool ibs_override_ignition_active(void) {
 
 /* Manual action changes this ignition session only; startup preference is saved separately. */
 void ibs_override_enable(bool on) {
+    auto_setting = settings_state.ibs_soc_auto;
     enabled = on;
     if (on) sent = currentTime - 100U;
 }
@@ -32,11 +39,19 @@ bool ibs_override_enabled(void) { return enabled; }
 
 /* Emit one report per 100 ms without requiring any incoming IBS data. */
 void ibs_override_process(void) {
+    if (currentTime - ignition_at > 2000U) {
+        ignition = 0;
+        enabled = false;
+    }
     if (auto_setting != settings_state.ibs_soc_auto) {
         auto_setting = settings_state.ibs_soc_auto;
         ibs_override_enable(auto_setting && ibs_override_ignition_active());
     }
     if (!ibs_override_ignition_active() || !enabled || currentTime - sent < 100U) return;
+    /* Do not accumulate periodic samples in a congested transport. Wait for
+     * idle without advancing the timer, so normal queued traffic cannot lock
+     * this sender into repeatedly missing the same 100 ms phase. */
+    if (!can_tx_idle()) return;
     uint8_t target = settings_state.ibs_soc_target;
     if (target > 100 || target % 5) return;
     /* Recorded D1 xx 00 A6 00 00 00 layout, SOC high bit fixed clear.

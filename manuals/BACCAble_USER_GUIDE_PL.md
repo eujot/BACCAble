@@ -791,12 +791,17 @@ te bajty na -250 A. Znaczenie pozostałych stałych pól i akceptacja przez odbi
 nie zostały ustalone. Nie powstaje pomiar rzeczywistego prądu ani napięcia.
 Pominięte okresy i odrzucenie przez kolejkę nie powodują serii nadrabiającej.
 OFF, uśpienie lub raporty RUN starsze niż dwie sekundy zatrzymują nadawanie;
-rozruch podtrzymuje RUN. Start/Stop nie wyłącza funkcji.
+rozruch podtrzymuje RUN. Start/Stop nie wyłącza funkcji. Przerwa w raportach
+powyżej dwóch sekund kończy sesję zapłonu, nawet gdy pominięto OFF. Następny
+aktualny RUN stosuje zapisane automatyczne włączanie; sam rozruch nie zaczyna sesji.
+Nadawanie czeka na opróżnienie kolejki CAN i skrzynek sprzętowych, aby przy
+przeciążeniu nie gromadzić raportów SOC. Odstęp może więc przekroczyć 100 ms.
+Ramka już przekazana do CAN może jeszcze zakończyć nadawanie po OFF.
 
 `Actions → IBS SOC override` ręcznie przełącza działanie na bieżący cykl zapłonu
 po potwierdzeniu. Zapisane automatyczne włączanie zadziała ponownie przy następnym
-cyklu zapłonu. Diagnostyka anuluje działanie do ręcznego włączenia lub następnego
-cyklu zapłonu. Przed zmianą trybu USB zatrzymaj funkcję (`Stop IBS`). Historia
+cyklu zapłonu (także po przerwie w raportach). Diagnostyka anuluje działanie do
+ręcznego włączenia lub następnej sesji zapłonu, także po przerwie w raportach. Przed zmianą trybu USB zatrzymaj funkcję (`Stop IBS`). Historia
 pomija SOC podczas włączonego nadpisywania. Nadal jest to eksperymentalna zmiana
 komunikatów akumulatora, bez potwierdzonych korzyści ładowania i próby w samochodzie.
 Rozszerzony zapis ustawień importuje poprzedni rekord 42 pól i profilu;

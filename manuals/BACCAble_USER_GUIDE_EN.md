@@ -744,12 +744,17 @@ bytes to -250 A. The meanings of the other fixed fields and receiver acceptance
 have not been established. No live current or voltage measurement is synthesized.
 Missed periods and queue rejection never trigger catch-up bursts. OFF, sleep or
 RUN reports older than two seconds stop transmission; cranking preserves RUN.
-Engine Start/Stop does not disable it.
+Engine Start/Stop does not disable it. A report gap longer than two seconds
+ends the ignition session, even if OFF was missed. The next fresh RUN applies
+the saved auto preference; cranking alone cannot start a session.
+Transmission waits for the CAN queue and hardware mailboxes to drain, preventing
+an accumulation of SOC reports during congestion. The interval can therefore
+exceed 100 ms. A frame already submitted to CAN may still complete after OFF.
 
 `Actions → IBS SOC override` manually toggles operation for the current ignition
 session and requires confirmation. The saved auto preference applies again at
 the next ignition cycle. Diagnostic mode cancels operation until manually enabled
-or the next ignition cycle. Stop the override before changing USB mode (`Stop IBS`).
+or the next ignition session (including RUN after a report gap). Stop the override before changing USB mode (`Stop IBS`).
 History omits SOC while override is enabled. This remains an experimental change
 to battery reports, without verified charging benefits or vehicle acceptance.
 The expanded settings record imports the previous 42-slot/profile record;

@@ -46,6 +46,14 @@ still an acceptance check.
   OFF, stale RUN, sleep and diagnostics prevent further transmission. Other
   senders remain on CAN; charging benefit and receiver acceptance are unverified.
 
+  SOC override audit: a >2 s ignition-report gap ends the session, including gaps
+  while the main feature loop is bypassed by diagnostics. The next fresh RUN uses
+  the auto preference; crank alone cannot re-arm. Explicit cancellation also
+  synchronizes the observed auto preference, so a pending preference change cannot
+  undo cancellation. SOC enqueue waits for can_tx_idle; congestion stretches the
+  interval rather than accumulating reports. An already submitted frame may still
+  complete after OFF.
+
 Leave Features to persist committed changes automatically. New settings are initially off;
 existing saved settings take priority over compiled defaults. Despite its current
 `Clear DTCs` label, clearing still requests the existing multi-controller sweep;
